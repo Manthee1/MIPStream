@@ -1,0 +1,11 @@
+\babel@toc {slovak}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduction}{1}{}%
+\contentsline {chapter}{\numberline {2}Analysis}{1}{}%
+\contentsline {chapter}{\numberline {3}Solution Proposal}{1}{}%
+\contentsline {chapter}{\numberline {4}Implementation}{5}{}%
+\contentsline {chapter}{\numberline {5}Solution Verification}{9}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{13}{}%
+\contentsline {section}{\numberline {6.1}Summary}{13}{}%
+\contentsline {section}{\numberline {6.2}Future Work}{15}{}%
+\contentsline {chapter}{\numberline {A}First Appendix }{27}{}%
+\contentsline {chapter}{\numberline {B}Contents of Included CD–ROM }{29}{}%

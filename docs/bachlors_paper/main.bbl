@@ -1,0 +1,187 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated as
+% required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+\datalist[entry]{nty/global//global/global}
+  \entry{forgetting}{article}{}
+    \name{author}{3}{}{%
+      {{hash=AMC}{%
+         family={Anderson},
+         familyi={A\bibinitperiod},
+         given={Michael\bibnamedelima C.},
+         giveni={M\bibinitperiod\bibinitdelim C\bibinitperiod},
+      }}%
+      {{hash=BEL}{%
+         family={Bjork},
+         familyi={B\bibinitperiod},
+         given={Elizabeth\bibnamedelima L.},
+         giveni={E\bibinitperiod\bibinitdelim L\bibinitperiod},
+      }}%
+      {{hash=BRA}{%
+         family={Bjork},
+         familyi={B\bibinitperiod},
+         given={Robert\bibnamedelima A.},
+         giveni={R\bibinitperiod\bibinitdelim A\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{AMCBELBRA1}
+    \strng{fullhash}{AMCBELBRA1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{A}
+    \field{sortinithash}{A}
+    \field{pages}{522 \bibrangedash  530}
+    \field{title}{{Retrieval-induced forgetting: Evidence for a recall-specific mechanism}}
+    \verb{url}
+    \verb http://www.memorycontrol.net/abb2000.pdf
+    \endverb
+    \field{journaltitle}{Psychonomic Bulletin \& Review}
+    \field{year}{2000}
+  \endentry
+
+  \entry{interruptions}{article}{}
+    \name{author}{2}{}{%
+      {{hash=IST}{%
+         family={Iqbal},
+         familyi={I\bibinitperiod},
+         given={Shamsi\bibnamedelima T.},
+         giveni={S\bibinitperiod\bibinitdelim T\bibinitperiod},
+      }}%
+      {{hash=HE}{%
+         family={Horvitz},
+         familyi={H\bibinitperiod},
+         given={Eric},
+         giveni={E\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{ISTHE1}
+    \strng{fullhash}{ISTHE1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{I}
+    \field{sortinithash}{I}
+    \field{title}{{Disruption and Recovery of Computing Tasks: Field Study, Analysis, and Directions}}
+    \verb{url}
+    \verb http://research.microsoft.com/en-us/um/people/horvitz/chi_2007_iqbal_
+    \verb horvitz.pdf
+    \endverb
+    \field{journaltitle}{CHI 2007}
+    \field{year}{2007}
+  \endentry
+
+  \entry{distractions2}{article}{}
+    \name{author}{2}{}{%
+      {{hash=JQR}{%
+         family={Jett},
+         familyi={J\bibinitperiod},
+         given={Quintus\bibnamedelima R.},
+         giveni={Q\bibinitperiod\bibinitdelim R\bibinitperiod},
+      }}%
+      {{hash=GJM}{%
+         family={George},
+         familyi={G\bibinitperiod},
+         given={Jennifer\bibnamedelima M.},
+         giveni={J\bibinitperiod\bibinitdelim M\bibinitperiod},
+      }}%
+    }
+    \keyw{EMPLOYEES, WORK environment, LABOR productivity, ORGANIZATIONAL behavior, WORK attitudes, WORK ethic, PERSONNEL management, REST periods, DISTRACTION (Psychology), PERFORMANCE}
+    \strng{namehash}{JQRGJM1}
+    \strng{fullhash}{JQRGJM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{J}
+    \field{sortinithash}{J}
+    \field{issn}{03637425}
+    \field{number}{3}
+    \field{pages}{494 \bibrangedash  507}
+    \field{title}{{Work Interrupted: A Closer Look at the Role of Interruptions in Organizational Life}}
+    \verb{url}
+    \verb http://search.ebscohost.com/login.aspx?direct=true&db=buh&AN=10196791
+    \verb &lang=cs&site=ehost-live
+    \endverb
+    \field{volume}{28}
+    \field{journaltitle}{Academy of Management Review}
+    \field{year}{2003}
+  \endentry
+
+  \entry{dynabook}{article}{}
+    \name{author}{1}{}{%
+      {{hash=KAC}{%
+         family={Kay},
+         familyi={K\bibinitperiod},
+         given={Alan\bibnamedelima C.},
+         giveni={A\bibinitperiod\bibinitdelim C\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {Xerox Palo Alto Research Center}%
+    }
+    \strng{namehash}{KAC1}
+    \strng{fullhash}{KAC1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{K}
+    \field{sortinithash}{K}
+    \field{title}{{A Personal Computer for Children of All Ages}}
+    \verb{url}
+    \verb http://history-computer.com/Library/Kay72.pdf
+    \endverb
+    \field{year}{1972}
+  \endentry
+
+  \entry{distractions1}{article}{}
+    \name{author}{3}{}{%
+      {{hash=MPM}{%
+         family={Mastrangelo},
+         familyi={M\bibinitperiod},
+         given={Paul\bibnamedelima M.},
+         giveni={P\bibinitperiod\bibinitdelim M\bibinitperiod},
+      }}%
+      {{hash=EW}{%
+         family={Everton},
+         familyi={E\bibinitperiod},
+         given={Wendi},
+         giveni={W\bibinitperiod},
+      }}%
+      {{hash=JJA}{%
+         family={Jolton},
+         familyi={J\bibinitperiod},
+         given={Jeffery\bibnamedelima A.},
+         giveni={J\bibinitperiod\bibinitdelim A\bibinitperiod},
+      }}%
+    }
+    \keyw{PERSONAL Internet use in the workplace, INTERNET users, COMPUTER users, WORK environment, WORK ethic, WORK values, INDUSTRIAL policy}
+    \strng{namehash}{MPMEWJJA1}
+    \strng{fullhash}{MPMEWJJA1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{M}
+    \field{sortinithash}{M}
+    \field{issn}{10949313}
+    \field{number}{6}
+    \field{pages}{730 \bibrangedash  741}
+    \field{title}{{Personal Use of Work Computers: Distraction versus Destruction.}}
+    \verb{url}
+    \verb http://search.ebscohost.com/login.aspx?direct=true&db=a9h&AN=23579773
+    \verb &lang=cs&site=ehost-live
+    \endverb
+    \field{volume}{9}
+    \field{journaltitle}{CyberPsychology \& Behavior}
+    \field{year}{2006}
+  \endentry
+\enddatalist
+\endinput
