@@ -1,11 +1,21 @@
-\babel@toc {slovak}{}\relax 
+\babel@toc {english}{}\relax 
 \contentsline {chapter}{\numberline {1}Introduction}{1}{}%
-\contentsline {chapter}{\numberline {2}Analysis}{1}{}%
+\contentsline {chapter}{\numberline {2}Analysis}{5}{}%
+\contentsline {section}{\numberline {2.1}Instruction Pipelining}{5}{}%
+\contentsline {subsection}{\numberline {2.1.1}Introduction}{5}{}%
+\contentsline {subsection}{\numberline {2.1.2}Instruction Pipeline Stages}{6}{}%
+\contentsline {subsection}{\numberline {2.1.3}Pipeline Hazards}{6}{}%
+\contentsline {subsubsection}{\numberline {2.1.3.1}Structural Hazards}{7}{}%
+\contentsline {subsubsection}{\numberline {2.1.3.2}Data Hazards}{7}{}%
+\contentsline {subsubsection}{\numberline {2.1.3.3}Control Hazards}{8}{}%
+\contentsline {subsection}{\numberline {2.1.4}Pipeline Stalls}{8}{}%
+\contentsline {subsection}{\numberline {2.1.5}Pipeline Performance Metrics}{8}{}%
+\contentsline {section}{\numberline {2.2}Existing Solutions}{9}{}%
 \contentsline {chapter}{\numberline {3}Solution Proposal}{1}{}%
 \contentsline {chapter}{\numberline {4}Implementation}{5}{}%
-\contentsline {chapter}{\numberline {5}Solution Verification}{9}{}%
-\contentsline {chapter}{\numberline {6}Conclusion}{13}{}%
-\contentsline {section}{\numberline {6.1}Summary}{13}{}%
-\contentsline {section}{\numberline {6.2}Future Work}{15}{}%
+\contentsline {chapter}{\numberline {5}Solution Verification}{7}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{11}{}%
+\contentsline {section}{\numberline {6.1}Summary}{11}{}%
+\contentsline {section}{\numberline {6.2}Future Work}{13}{}%
 \contentsline {chapter}{\numberline {A}First Appendix }{27}{}%
 \contentsline {chapter}{\numberline {B}Contents of Included CD–ROM }{29}{}%

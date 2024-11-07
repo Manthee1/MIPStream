@@ -1,6 +1,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[slovak]{babel}
+\usepackage[english]{babel}
 \usepackage[a4paper]{geometry}
 \usepackage[
     left = \glqq,% 
@@ -48,12 +48,8 @@
 %style=iso-numeric
 %style=authortitle-dw
 \usepackage[backend=bibtex,defernums=true]{biblatex}
-\defbibheading{references}[Literatúra]{ 
+\defbibheading{references}[References]{ 
   \chapter*{#1}
-  \markboth{#1}{#1}
-}
-\defbibheading{referencessec}[Literatúra]{ 
-  \section*{#1}
   \markboth{#1}{#1}
 }
 \bibliography{\myBibliography}

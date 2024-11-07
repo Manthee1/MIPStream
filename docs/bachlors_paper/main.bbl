@@ -17,171 +17,179 @@
 \endgroup
 
 \datalist[entry]{nty/global//global/global}
-  \entry{forgetting}{article}{}
-    \name{author}{3}{}{%
-      {{hash=AMC}{%
-         family={Anderson},
+  \entry{aletan1992overview}{inproceedings}{}
+    \name{author}{1}{}{%
+      {{hash=ASO}{%
+         family={Aletan},
          familyi={A\bibinitperiod},
-         given={Michael\bibnamedelima C.},
-         giveni={M\bibinitperiod\bibinitdelim C\bibinitperiod},
-      }}%
-      {{hash=BEL}{%
-         family={Bjork},
-         familyi={B\bibinitperiod},
-         given={Elizabeth\bibnamedelima L.},
-         giveni={E\bibinitperiod\bibinitdelim L\bibinitperiod},
-      }}%
-      {{hash=BRA}{%
-         family={Bjork},
-         familyi={B\bibinitperiod},
-         given={Robert\bibnamedelima A.},
-         giveni={R\bibinitperiod\bibinitdelim A\bibinitperiod},
+         given={Samuel\bibnamedelima O},
+         giveni={S\bibinitperiod\bibinitdelim O\bibinitperiod},
       }}%
     }
-    \strng{namehash}{AMCBELBRA1}
-    \strng{fullhash}{AMCBELBRA1}
+    \strng{namehash}{ASO1}
+    \strng{fullhash}{ASO1}
     \field{labelnamesource}{author}
     \field{labeltitlesource}{title}
     \field{sortinit}{A}
     \field{sortinithash}{A}
-    \field{pages}{522 \bibrangedash  530}
-    \field{title}{{Retrieval-induced forgetting: Evidence for a recall-specific mechanism}}
-    \verb{url}
-    \verb http://www.memorycontrol.net/abb2000.pdf
-    \endverb
-    \field{journaltitle}{Psychonomic Bulletin \& Review}
-    \field{year}{2000}
+    \field{booktitle}{Proceedings of the 1992 ACM/SIGAPP Symposium on Applied computing: technological challenges of the 1990's}
+    \field{pages}{11\bibrangedash 20}
+    \field{title}{An overview of RISC architecture}
+    \field{year}{1992}
   \endentry
 
-  \entry{interruptions}{article}{}
+  \entry{he2023survey}{inproceedings}{}
     \name{author}{2}{}{%
-      {{hash=IST}{%
-         family={Iqbal},
-         familyi={I\bibinitperiod},
-         given={Shamsi\bibnamedelima T.},
-         giveni={S\bibinitperiod\bibinitdelim T\bibinitperiod},
-      }}%
-      {{hash=HE}{%
-         family={Horvitz},
+      {{hash=HY}{%
+         family={He},
          familyi={H\bibinitperiod},
-         given={Eric},
-         giveni={E\bibinitperiod},
+         given={Yan},
+         giveni={Y\bibinitperiod},
       }}%
-    }
-    \strng{namehash}{ISTHE1}
-    \strng{fullhash}{ISTHE1}
-    \field{labelnamesource}{author}
-    \field{labeltitlesource}{title}
-    \field{sortinit}{I}
-    \field{sortinithash}{I}
-    \field{title}{{Disruption and Recovery of Computing Tasks: Field Study, Analysis, and Directions}}
-    \verb{url}
-    \verb http://research.microsoft.com/en-us/um/people/horvitz/chi_2007_iqbal_
-    \verb horvitz.pdf
-    \endverb
-    \field{journaltitle}{CHI 2007}
-    \field{year}{2007}
-  \endentry
-
-  \entry{distractions2}{article}{}
-    \name{author}{2}{}{%
-      {{hash=JQR}{%
-         family={Jett},
-         familyi={J\bibinitperiod},
-         given={Quintus\bibnamedelima R.},
-         giveni={Q\bibinitperiod\bibinitdelim R\bibinitperiod},
-      }}%
-      {{hash=GJM}{%
-         family={George},
-         familyi={G\bibinitperiod},
-         given={Jennifer\bibnamedelima M.},
-         giveni={J\bibinitperiod\bibinitdelim M\bibinitperiod},
-      }}%
-    }
-    \keyw{EMPLOYEES, WORK environment, LABOR productivity, ORGANIZATIONAL behavior, WORK attitudes, WORK ethic, PERSONNEL management, REST periods, DISTRACTION (Psychology), PERFORMANCE}
-    \strng{namehash}{JQRGJM1}
-    \strng{fullhash}{JQRGJM1}
-    \field{labelnamesource}{author}
-    \field{labeltitlesource}{title}
-    \field{sortinit}{J}
-    \field{sortinithash}{J}
-    \field{issn}{03637425}
-    \field{number}{3}
-    \field{pages}{494 \bibrangedash  507}
-    \field{title}{{Work Interrupted: A Closer Look at the Role of Interruptions in Organizational Life}}
-    \verb{url}
-    \verb http://search.ebscohost.com/login.aspx?direct=true&db=buh&AN=10196791
-    \verb &lang=cs&site=ehost-live
-    \endverb
-    \field{volume}{28}
-    \field{journaltitle}{Academy of Management Review}
-    \field{year}{2003}
-  \endentry
-
-  \entry{dynabook}{article}{}
-    \name{author}{1}{}{%
-      {{hash=KAC}{%
-         family={Kay},
-         familyi={K\bibinitperiod},
-         given={Alan\bibnamedelima C.},
-         giveni={A\bibinitperiod\bibinitdelim C\bibinitperiod},
+      {{hash=CX}{%
+         family={Chen},
+         familyi={C\bibinitperiod},
+         given={Xiangning},
+         giveni={X\bibinitperiod},
       }}%
     }
     \list{organization}{1}{%
-      {Xerox Palo Alto Research Center}%
+      {IEEE}%
     }
-    \strng{namehash}{KAC1}
-    \strng{fullhash}{KAC1}
+    \strng{namehash}{HYCX1}
+    \strng{fullhash}{HYCX1}
     \field{labelnamesource}{author}
     \field{labeltitlesource}{title}
-    \field{sortinit}{K}
-    \field{sortinithash}{K}
-    \field{title}{{A Personal Computer for Children of All Ages}}
-    \verb{url}
-    \verb http://history-computer.com/Library/Kay72.pdf
-    \endverb
-    \field{year}{1972}
+    \field{sortinit}{H}
+    \field{sortinithash}{H}
+    \field{booktitle}{2023 8th International Conference on Computer and Communication Systems (ICCCS)}
+    \field{pages}{785\bibrangedash 790}
+    \field{title}{Survey and Comparison of Pipeline of Some RISC and CISC System Architectures}
+    \field{year}{2023}
   \endentry
 
-  \entry{distractions1}{article}{}
-    \name{author}{3}{}{%
-      {{hash=MPM}{%
-         family={Mastrangelo},
-         familyi={M\bibinitperiod},
-         given={Paul\bibnamedelima M.},
-         giveni={P\bibinitperiod\bibinitdelim M\bibinitperiod},
+  \entry{olanrewaju2017design}{article}{}
+    \name{author}{6}{}{%
+      {{hash=ORF}{%
+         family={Olanrewaju},
+         familyi={O\bibinitperiod},
+         given={Rashid\bibnamedelima F},
+         giveni={R\bibinitperiod\bibinitdelim F\bibinitperiod},
       }}%
-      {{hash=EW}{%
-         family={Everton},
-         familyi={E\bibinitperiod},
-         given={Wendi},
-         giveni={W\bibinitperiod},
+      {{hash=FFE}{%
+         family={Fajingbesi},
+         familyi={F\bibinitperiod},
+         given={Fawwaj\bibnamedelima E},
+         giveni={F\bibinitperiod\bibinitdelim E\bibinitperiod},
       }}%
-      {{hash=JJA}{%
-         family={Jolton},
+      {{hash=JS}{%
+         family={Junaid},
          familyi={J\bibinitperiod},
-         given={Jeffery\bibnamedelima A.},
-         giveni={J\bibinitperiod\bibinitdelim A\bibinitperiod},
+         given={SB},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=AR}{%
+         family={Alahudin},
+         familyi={A\bibinitperiod},
+         given={Ridzwan},
+         giveni={R\bibinitperiod},
+      }}%
+      {{hash=AF}{%
+         family={Anwar},
+         familyi={A\bibinitperiod},
+         given={Farhat},
+         giveni={F\bibinitperiod},
+      }}%
+      {{hash=PBR}{%
+         family={Pampori},
+         familyi={P\bibinitperiod},
+         given={Bisma\bibnamedelima Rasool},
+         giveni={B\bibinitperiod\bibinitdelim R\bibinitperiod},
       }}%
     }
-    \keyw{PERSONAL Internet use in the workplace, INTERNET users, COMPUTER users, WORK environment, WORK ethic, WORK values, INDUSTRIAL policy}
-    \strng{namehash}{MPMEWJJA1}
-    \strng{fullhash}{MPMEWJJA1}
+    \strng{namehash}{ORF+1}
+    \strng{fullhash}{ORFFFEJSARAFPBR1}
     \field{labelnamesource}{author}
     \field{labeltitlesource}{title}
-    \field{sortinit}{M}
-    \field{sortinithash}{M}
-    \field{issn}{10949313}
-    \field{number}{6}
-    \field{pages}{730 \bibrangedash  741}
-    \field{title}{{Personal Use of Work Computers: Distraction versus Destruction.}}
-    \verb{url}
-    \verb http://search.ebscohost.com/login.aspx?direct=true&db=a9h&AN=23579773
-    \verb &lang=cs&site=ehost-live
-    \endverb
-    \field{volume}{9}
-    \field{journaltitle}{CyberPsychology \& Behavior}
-    \field{year}{2006}
+    \field{sortinit}{O}
+    \field{sortinithash}{O}
+    \field{number}{3}
+    \field{pages}{1\bibrangedash 9}
+    \field{title}{Design and Implementation of a five stage pipelining architecture simulator for RiSC-16 instruction set}
+    \field{volume}{10}
+    \field{journaltitle}{Indian J Sci Technol}
+    \field{year}{2017}
+  \endentry
+
+  \entry{pandey2016study}{inproceedings}{}
+    \name{author}{1}{}{%
+      {{hash=PA}{%
+         family={Pandey},
+         familyi={P\bibinitperiod},
+         given={Amit},
+         giveni={A\bibinitperiod},
+      }}%
+    }
+    \list{organization}{1}{%
+      {IEEE}%
+    }
+    \strng{namehash}{PA1}
+    \strng{fullhash}{PA1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{P}
+    \field{sortinithash}{P}
+    \field{booktitle}{2016 International Conference on Inventive Computation Technologies (ICICT)}
+    \field{pages}{1\bibrangedash 4}
+    \field{title}{Study of data hazard and control hazard resolution techniques in a simulated five stage pipelined RISC processor}
+    \field{volume}{2}
+    \field{year}{2016}
+  \endentry
+
+  \entry{proebsting1994detecting}{inproceedings}{}
+    \name{author}{2}{}{%
+      {{hash=PTA}{%
+         family={Proebsting},
+         familyi={P\bibinitperiod},
+         given={Todd\bibnamedelima A},
+         giveni={T\bibinitperiod\bibinitdelim A\bibinitperiod},
+      }}%
+      {{hash=FCW}{%
+         family={Fraser},
+         familyi={F\bibinitperiod},
+         given={Christopher\bibnamedelima W},
+         giveni={C\bibinitperiod\bibinitdelim W\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{PTAFCW1}
+    \strng{fullhash}{PTAFCW1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{P}
+    \field{sortinithash}{P}
+    \field{booktitle}{Proceedings of the 21st ACM SIGPLAN-SIGACT symposium on Principles of programming languages}
+    \field{pages}{280\bibrangedash 286}
+    \field{title}{Detecting pipeline structural hazards quickly}
+    \field{year}{1994}
+  \endentry
+
+  \entry{enwiki:1255528196}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=W}{%
+         family={{Wikipedia contributors}},
+         familyi={W\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{W1}
+    \strng{fullhash}{W1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{W}
+    \field{sortinithash}{W}
+    \field{howpublished}{\url{https://en.wikipedia.org/w/index.php?title=Classic_RISC_pipeline&oldid=1255528196}}
+    \field{note}{[Online; accessed 6-November-2024]}
+    \field{title}{Classic RISC pipeline --- {Wikipedia}{,} The Free Encyclopedia}
+    \field{year}{2024}
   \endentry
 \enddatalist
 \endinput
