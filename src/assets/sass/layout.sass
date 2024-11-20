@@ -1,0 +1,169 @@
+@import './_variables'
+
+.flex
+    display: flex
+    flex-wrap: wrap
+    justify-content: space-between
+
+.flex-row
+    flex-direction: row
+
+.flex-column
+    flex-direction: column
+
+.flex-space-between
+    justify-content: space-between
+
+.flex-nowrap
+    flex-wrap: nowrap
+
+.flex-wrap
+    flex-wrap: wrap
+
+.flex-top-left
+    align-items: flex-start
+    justify-content: flex-start
+
+.flex-top
+    align-items: flex-start
+    justify-content: center
+
+    &-right
+        align-items: flex-start
+        justify-content: flex-end
+
+.flex-left
+    align-items: center
+    justify-content: flex-start
+
+.flex-center
+    align-items: center
+    justify-content: center
+
+.flex-right
+    align-items: center
+    justify-content: flex-end
+
+.flex-bottom-left
+    align-items: flex-end
+    justify-content: flex-start
+
+.flex-bottom
+    align-items: flex-end
+    justify-content: center
+
+    &-right
+        align-items: flex-end
+        justify-content: flex-end
+
+.flex-stretch
+    align-items: stretch
+    justify-content: stretch
+
+.flex-baseline
+    align-items: baseline
+    justify-content: center
+
+.position-relative
+    position: relative
+
+.position-absolute
+    position: absolute
+
+.position-fixed
+    position: fixed
+
+.position-static
+    position: static
+
+.flex-auto
+    flex: 1 1 auto
+
+.flex-0
+    flex: 0 0 auto
+
+.flex-12
+    flex: 1 1 calc(100% - var(--gap))
+
+.flex-11
+    flex: 1 1 calc(91.6666666667% - var(--gap))
+
+.flex-10
+    flex: 1 1 calc(83.3333333333% - var(--gap))
+
+.flex-9
+    flex: 1 1 calc(75% - var(--gap))
+
+.flex-8
+    flex: 1 1 calc(66.6666666667% - var(--gap))
+
+.flex-7
+    flex: 1 1 calc(58.3333333333% - var(--gap))
+
+.flex-6
+    flex: 1 1 calc(50% - var(--gap))
+
+.flex-5
+    flex: 1 1 calc(41.6666666667% - var(--gap))
+
+.flex-4
+    flex: 1 1 calc(33.3333333333% - var(--gap))
+
+.flex-3
+    flex: 1 1 calc(25% - var(--gap))
+
+.flex-2
+    flex: 1 1 calc(16.6666666667% - var(--gap))
+
+.flex-1
+    flex: 1 1 calc(8.3333333333% - var(--gap))
+
+@each $size, $value in $sizes
+    .gap-#{$size}
+        gap: $value
+
+    .m-#{$size}
+        margin: $value
+
+    .p-#{$size}
+        padding: $value
+
+    .mt-#{$size}
+        margin-top: $value
+
+    .pt-#{$size}
+        padding-top: $value
+
+    .mr-#{$size}
+        margin-right: $value
+
+    .pr-#{$size}
+        padding-right: $value
+
+    .mb-#{$size}
+        margin-bottom: $value
+
+    .pb-#{$size}
+        padding-bottom: $value
+
+    .ml-#{$size}
+        margin-left: $value
+
+    .pl-#{$size}
+        padding-left: $value
+
+    .mx-#{$size}
+        margin-left: $value
+        margin-right: $value
+
+    .px-#{$size}
+        padding-left: $value
+        padding-right: $value
+
+    .my-#{$size}
+        margin-top: $value
+        margin-bottom: $value
+
+    .py-#{$size}
+        padding-top: $value
+        padding-bottom: $value

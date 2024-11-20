@@ -1,0 +1,147 @@
+
+@use 'sass:map'
+@import './_variables'
+
+@import './componentes'
+@import './layout'
+
+@import './lib/normalize'
+@import './lib/skeleton'
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap')
+
+:root
+    --color-main-100: #FFFFFF
+    --color-main-200: #D6D6D6
+    --color-main-300: #626262
+    --color-main-400: #303030
+    --color-main-500: #1B1B1B
+    --color-main-600: #0B0B0B
+    --color-main-700: #040404
+    --color-main-800: #000000
+
+    --color-base-background: #FCFCFC
+    --color-base-background-dark: #F5F6F8
+    --color-shadow-light: #0000001A
+    --color-shadow-dark: #0000003D
+
+    --color-system-success: #34B234
+    --color-system-error: #C91D1D
+    --color-system-warning: #E8B130
+    --color-system-info: #1D7CC9
+
+    --color-text: #3E3E3E
+    --color-subtext: #9A9A9A
+    --color-paragraph: #292929
+
+    --navbar-height: #{$navbar-height}
+
+    --size-0: #{map.get($sizes, 0)}
+    --size-1: #{map.get($sizes, 1)}
+    --size-2: #{map.get($sizes, 2)}
+    --size-3: #{map.get($sizes, 3)}
+    --size-4: #{map.get($sizes, 4)}
+    --size-5: #{map.get($sizes, 5)}
+    --size-6: #{map.get($sizes, 6)}
+
+    --size-screen-xs: #{$size-screen-xs}
+    --size-screen-sm: #{$size-screen-sm}
+    --size-screen-md: #{$size-screen-md}
+    --size-screen-lg: #{$size-screen-lg}
+    --size-screen-xl: #{$size-screen-xl}
+
+    --gap: #{$gap}
+
+*,
+*:after,
+*:before
+    box-sizing: inherit
+
+html
+    font-family: "Poppins", sans-serif
+    height: 100%
+    margin: 0
+    padding: 0
+    &.theme-dark
+        --color-main-100: #000000
+        --color-main-200: #292929
+        --color-main-300: #9d9d9d
+        --color-main-400: #cfcfcf
+        --color-main-500: #e4e4e4
+        --color-main-600: #f4f4f4
+        --color-main-700: #fbfbfb
+        --color-main-800: #FFFFFF
+
+        --color-base-background: #1B1B1B
+        --color-base-background-dark: #303030
+        --color-shadow-light: #FFFFFF1A
+        --color-shadow-dark: #FFFFFF3D
+
+        --color-system-success: #34B234
+        --color-system-error: #C91D1D
+        --color-system-warning: #E8B130
+        --color-system-info: #1D7CC9
+
+        --color-text: #D6D6D6
+        --color-subtext: #9A9A9A
+        --color-paragraph: #FFFFFF
+body
+    margin: 0px
+    padding: 0px
+    box-sizing: border-box
+    width: 100vw
+    height: 100vh
+    overflow: auto
+    overflow-x: hidden
+    background-color: var(--color-base-background)
+
+#app
+    height: 100%
+    width: 100%
+    padding: 0px
+    box-sizing: border-box
+    overflow: visible
+
+main
+    width: 100%
+    height: 100%
+    padding: 0px
+    box-sizing: border-box
+    overflow: visible
+
+/* Custom user selection */
+::selection
+    background-color: var(--color-main-500)
+    color: var(--color-main-100)
+
+@media (max-width: $size-screen-xs)
+    .hidden-xs
+        display: none
+
+@media (max-width: $size-screen-sm)
+    .hidden-sm
+        display: none
+
+@media (max-width: $size-screen-md)
+    .hidden-md
+        display: none
+
+@media (max-width: $size-screen-lg)
+    .hidden-lg
+        display: none
+
+@media (min-width: $size-screen-xs)
+    .visible-xs
+        display: none
+
+@media (min-width: $size-screen-sm)
+    .visible-sm
+        display: none
+
+@media (min-width: $size-screen-md)
+    .visible-md
+        display: none
+
+@media (min-width: $size-screen-lg)
+    .visible-lg
+        display: none

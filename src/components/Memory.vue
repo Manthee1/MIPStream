@@ -1,0 +1,97 @@
+<script setup lang="ts">
+import { decToHex } from '../assets/js/utils';
+import Window from './Window.vue';
+</script>
+
+<template>
+    <Window title="Memory" class="memory-window">
+
+        <!-- header -->
+
+        <!-- Print individual bytes of memory -->
+        <div class="memory-list" @onmouseover="showMemoryAddress">
+            <ol class="memory-row">
+                <li></li>
+                <li class="text-center" v-for="index in 16" :key="index">{{ decToHex(index - 1, 8) }}</li>
+            </ol>
+            <ol class="memory-row" v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
+                <li class="memory-address">{{ decToHex(rowIndex * 16, 8) }}</li>
+                <li class="memory-item" v-for="(value, index) in row"
+                    :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index">{{ decToHex(value, 8) }}</li>
+            </ol>
+        </div>
+    </Window>
+</template>
+
+
+
+
+<script lang="ts">
+
+
+export default {
+    name: 'Memory',
+
+    computed: {
+        memoryRows(): number[] {
+            // @ts-ignore
+            const data = this.$dlxStore.DLXCore.memory.data
+            // Split the memory into 8 byte rows
+            return data.reduce((rows: number[][], value: number, index: number) => {
+                const rowIndex = Math.floor(index / 16)
+                if (!rows[rowIndex]) {
+                    rows[rowIndex] = []
+                }
+                rows[rowIndex].push(value)
+                return rows
+            }, [])
+
+        }
+    },
+    methods: {
+        showMemoryAddress(e) {
+            // Check which element is being hovered
+            console.log(e);
+        }
+    },
+};
+</script>
+
+<style lang="sass" scoped>
+// Simmple compact code like style for the memory list
+.memory-window
+    display: flex
+    flex-flow: column wrap
+    flex: 1 1 auto
+
+.memory-list
+    display: grid
+    grid-template-columns: repeat(17, 1fr)
+    gap: 0.2rem
+    ol,ul
+        list-style-type: none
+        padding: 0
+        margin: 0
+    .memory-row
+        display: contents
+        .memory-item
+            display: block
+            border: 1px solid #ccc
+            text-align: center
+            // Make memory itme on hover show a tooltip with the memory address
+            &:hover
+                position: relative
+                background-color: var(--color-main-200)
+                cursor: pointer
+                &:after
+                    content: attr(data-address)
+                    position: absolute
+                    top: 100%
+                    left: 50%
+                    transform: translateX(-50%)
+                    background-color: #f5f5f5
+                    padding: 0.2rem
+                    border: 1px solid #ccc
+                    border-radius: 5px
+                    z-index: 100
+</style>
