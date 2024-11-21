@@ -11,45 +11,48 @@
 
 <script lang="ts">
 
-import * as monaco from 'monaco-editor';
-import * as themeData from 'monaco-themes/themes/Dawn.json';
+import monaco from "../assets/js/config/monaco";
+import { validate } from "../assets/js/config/monaco";
 
-const options = {
-    language: 'asm',
-    minimap: {
-        enabled: true
+export default {
+    data() {
+        return {
+        }
     },
-    automaticLayout: true,
-    theme: 'dawn',
-    padding: {
-        top: 10,
-        bottom: 10
-    },
-    value: `ADDI R1, R0, 5
+    mounted() {
+        const editorEl = this.$refs.editor as HTMLElement;
+        monaco.editor.create(editorEl, {
+            language: 'asm',
+            minimap: {
+                enabled: true
+            },
+            automaticLayout: true,
+            theme: 'dlx',
+            padding: {
+                top: 10,
+                bottom: 10
+            },
+            value: `ADDI R1, R0, 5
 SW R1, 0(R0)
 LW R2, 0(R0)
 ADDI R3, R0, 10
 HALT`
 
-}
-export default {
-    data() {
-        return {
-            options: options
-        }
-    },
-    mounted() {
-        const editorEl = this.$refs.editor as HTMLElement;
-        monaco.editor.create(editorEl, options);
-        monaco.editor.defineTheme('monokai', themeData as monaco.editor.IStandaloneThemeData);
-        monaco.editor.setTheme('monokai');
+        });
+        const model = monaco.editor.getModels()[0];
+        validate(model);
         // Listener for changes in the editor
         this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
         monaco.editor.getModels()[0].onDidChangeContent(() => {
             console.log('Content changed');
             console.log(monaco.editor.getModels()[0].getValue());
             this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
+            validate(model);
         });
+
+
+
+
     }
 
 }
