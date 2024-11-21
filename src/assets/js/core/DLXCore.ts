@@ -25,16 +25,7 @@ export default class DLXCore {
     }
 
     constructor() {
-        this.cpu.intRegisters[0] = 0; // Zero register
-        this.cpu.intRegisters[29] = 256; // Stack pointer
-        this.cpu.intRegisters[30] = 256; // Frame pointer
-        this.cpu.intRegisters[31] = 256; // Return addres
-
-        this.cpu.stages[0].NPC = 3;
-        this.cpu.stages[1].NPC = 2;
-        this.cpu.stages[2].NPC = 1;
-        this.cpu.stages[3].NPC = 0;
-        this.cpu.stages[4].NPC = 0;
+        this.reset();
     }
 
     encodeInstruction(instruction: string): InstructionR | InstructionI | InstructionJ {
@@ -138,9 +129,50 @@ export default class DLXCore {
         return encodedInstruction;
     }
 
+    clearMemory() {
+        this.memory = {
+            data: Array.from({ length: 256 }, () => 0),
+            instructions: []
+        }
+    }
+
+    clearRegisters() {
+        this.cpu = {
+            intRegisters: Array.from({ length: 32 }, () => 0),
+            FPRegisters: Array.from({ length: 32 }, () => 0),
+            PC: 0,
+            stages: Array.from({ length: 5 }, () => ({
+                IR: { opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI,
+                NPC: 0,
+                A: 0,
+                B: 0,
+                I: 0,
+                ALUOutput: 0,
+                LMD: 0
+            }))
+        }
+    }
+
+
+    reset() {
+        this.clearMemory();
+        this.clearRegisters();
+
+        this.cpu.intRegisters[0] = 0; // Zero register
+        this.cpu.intRegisters[29] = 256; // Stack pointer
+        this.cpu.intRegisters[30] = 256; // Frame pointer
+        this.cpu.intRegisters[31] = 256; // Return addres
+
+        this.cpu.stages[0].NPC = 3;
+        this.cpu.stages[1].NPC = 2;
+        this.cpu.stages[2].NPC = 1;
+        this.cpu.stages[3].NPC = 0;
+        this.cpu.stages[4].NPC = 0;
+    }
+
 
     loadProgram(program: Array<string>) {
-
+        this.reset();
         program.forEach((instruction) => {
             const encodedInstruction = this.encodeInstruction(instruction);
 
@@ -201,8 +233,9 @@ export default class DLXCore {
     }
 
     halt() {
-        this.cpu.PC = 0;
         console.log('HALTING');
+        this.cpu.PC = 0;
+        this.clearRegisters();
     }
 
     runCycle() {

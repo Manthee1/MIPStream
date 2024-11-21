@@ -23,6 +23,15 @@ const router = createRouter({
 
 app.use(pinia);
 const dlxStore = useDlxStore();
+
+declare module '@vue/runtime-core' {
+    interface ComponentCustomProperties {
+        $dlxStore: ReturnType<typeof useDlxStore>
+    }
+}
+// @ts-ignore
+window.dlxStore = dlxStore;
+
 app.config.globalProperties.$dlxStore = dlxStore;
 
 app.use(router);
