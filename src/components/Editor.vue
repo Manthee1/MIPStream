@@ -11,10 +11,11 @@
 
 <script lang="ts">
 
+import { defineComponent } from 'vue';
 import monaco from "../assets/js/config/monaco";
 import { validate } from "../assets/js/config/monaco";
 
-export default {
+export default defineComponent({
     data() {
         return {
         }
@@ -50,12 +51,8 @@ HALT`
             validate(model);
         });
 
-
-
-
     }
-
-}
+})
 </script>
 <style lang="sass">
 .editor-container
@@ -64,7 +61,6 @@ HALT`
     width: 100%
     height: 100%
     .monaco-editor
-        border: 1px var(--color-main-200) solid
-        border-radius: 5px
+        border: 1px var(--color-light) solid
         overflow: hidden
 </style>

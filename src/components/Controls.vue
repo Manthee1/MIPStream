@@ -4,23 +4,27 @@
 
 <template>
     <div class="controls">
-        <button class="button-filled" @click="run">Run</button>
-        <button class="button-filled" @click="pause">Pause</button>
-        <button class="button-filled" @click="stop">Stop</button>
-        <button class="button-filled" @click="step">Step</button>
-        <button class="button-filled" @click="reloadProgram">Reload Program</button>
+        <MButton outlined small icon="play" @click="run" title="Run"></MButton>
+        <MButton outlined small icon="pause" @click="pause" title="Pause"></MButton>
+        <MButton outlined small icon="square" @click="stop" title="Stop"></MButton>
+        <MButton outlined small icon="skip-forward" @click="step" title="Step"></MButton>
+        <MButton outlined small icon="refresh-cw" @click="reloadProgram" title="Reload Program"></MButton>
         <span>Status: {{ $dlxStore.status }}</span>
     </div>
 </template>
 
 <script>
+import { defineComponent } from "vue";
+import MButton from "./MButton.vue";
 
 
 
-export default {
+
+export default defineComponent({
 
     name: 'Controls',
     components: {
+        MButton
     },
     methods: {
         run() {
@@ -49,7 +53,7 @@ export default {
             // Add your reload program logic here
         }
     }
-}
+});
 </script>
 
 <style scoped>
@@ -57,6 +61,7 @@ export default {
     display: flex;
     gap: 10px;
     flex: 1 1 auto;
+    padding: 10px;
 }
 
 button {
