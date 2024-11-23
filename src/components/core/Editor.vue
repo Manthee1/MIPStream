@@ -12,8 +12,8 @@
 <script lang="ts">
 
 import { defineComponent } from 'vue';
-import monaco from "../assets/js/config/monaco";
-import { validate } from "../assets/js/config/monaco";
+import monaco from "../../assets/js/config/monaco";
+import { validate } from "../../assets/js/config/monaco";
 
 export default defineComponent({
     data() {

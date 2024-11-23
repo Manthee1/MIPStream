@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import Editor from '@/components/Editor.vue';
-import Registers from '@/components/Registers.vue';
-import Memory from '../components/Memory.vue';
-import Stages from '../components/Stages.vue';
-import Controls from '../components/Controls.vue';
-import TopBar from '../components/TopBar.vue';
-import SideBar from '../components/SideBar.vue';
-import Settings from '../components/Settings.vue';
-import CpuView from '../components/CpuView.vue';
-import Window from '../components/Window.vue';
+import Editor from '@/components/core/Editor.vue';
+import Controls from '@/components/core/Controls.vue';
+import TopBar from '@/components/layout/TopBar.vue';
+import SideBar from '@/components/layout/SideBar.vue';
+import Settings from '@/components/windows/Settings.vue';
+import CpuView from '@/components/core/CpuView.vue';
+import Window from '@/components/common/Window.vue';
 
 </script>
 
@@ -38,9 +35,6 @@ export default defineComponent({
     components: {
         TopBar,
         Editor,
-        Registers,
-        Memory,
-        Stages,
         Controls,
         SideBar,
         CpuView,

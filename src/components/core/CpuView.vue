@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import Window from './Window.vue';
+import Window from '@/components/common/Window.vue';
 export default {
     components: { Window },
     name: 'CpuView',

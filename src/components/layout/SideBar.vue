@@ -13,10 +13,10 @@
 </template>
 
 <script>
-import Accordion from './Accordion.vue';
-import Memory from './Memory.vue';
-import Registers from './Registers.vue';
-import Stages from './Stages.vue';
+import Accordion from '../common/Accordion.vue';
+import Memory from '../features/Memory.vue';
+import Registers from '../features/Registers.vue';
+import Stages from '../features/Stages.vue';
 export default {
     components: { Accordion, Stages, Registers, Memory },
     name: 'SideBar',

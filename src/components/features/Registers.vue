@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import { decToHex } from '../assets/js/utils';
-import Window from './Window.vue';
+import { decToHex } from '../../assets/js/utils';
+import Window from '../Window.vue';
 </script>
 
 <template>

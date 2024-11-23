@@ -15,7 +15,7 @@
 
 <script>
 import { defineComponent } from "vue";
-import MButton from "./MButton.vue";
+import MButton from "@/components/common/MButton.vue";
 
 
 

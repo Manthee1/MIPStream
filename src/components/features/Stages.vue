@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { defineComponent } from 'vue';
-import INSTRUCTION_SET from '../assets/js/config/instructionSet';
-import { getStageName } from '../assets/js/utils';
+import INSTRUCTION_SET from '../../assets/js/config/instructionSet';
+import { getStageName } from '../../assets/js/utils';
 
 </script>
 

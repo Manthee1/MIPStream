@@ -33,8 +33,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { settings } from '../assets/js/config/settings';
-import Window from './Window.vue';
+import { settings } from '../../assets/js/config/settings';
+import Window from '@/components/common/Window.vue';
 
 export default defineComponent({
     name: 'Settings',

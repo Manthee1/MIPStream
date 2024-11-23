@@ -12,8 +12,8 @@
 
 <script>
 import { defineComponent } from 'vue';
-import Dropdown from './Dropdown.vue';
-import MButton from './MButton.vue';
+import Dropdown from '@/components/common/Dropdown.vue';
+import MButton from '@/components/common/MButton.vue';
 export default defineComponent({
     name: 'TopBar',
     components: {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import { decToHex } from '../assets/js/utils';
+import { decToHex } from '../../assets/js/utils';
 </script>
 
 <template>
