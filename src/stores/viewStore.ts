@@ -3,8 +3,8 @@ import { DropdownItem } from '../types';
 
 
 // Get system theme
-// const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-const systemTheme = 'light';
+const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+// const systemTheme = 'light';
 
 // Add the theme to the html element
 document.documentElement.classList.add(`theme-${systemTheme}`);
@@ -39,9 +39,17 @@ export const useViewStore = defineStore('view', {
             this.showSettings = !this.showSettings;
         },
         toggleTheme() {
-            this.theme = this.theme === 'light' ? 'dark' : 'light';
+            const newTheme = this.theme === 'light' ? 'dark' : 'light';
+
+            // Add a transition class to html
+            document.documentElement.classList.add('theme-transition');
+            this.theme = newTheme;
             document.documentElement.classList.remove('theme-light', 'theme-dark');
             document.documentElement.classList.add(`theme-${this.theme}`);
+            // Remove the transition style after the transition is complete
+            setTimeout(() => {
+                document.documentElement.classList.remove('theme-transition');
+            }, 500);
         },
         async confirm(title: string, message?: string, confirmText?: string, cancelText?: string): Promise<boolean> {
             // If no message is provided, use the title as the message
