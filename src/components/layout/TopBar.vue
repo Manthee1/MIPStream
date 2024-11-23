@@ -48,6 +48,9 @@ export default defineComponent({
                     }
                 },
                 {
+                    type: 'separator'
+                },
+                {
                     label: 'Settings',
                     action: () => {
                         this.$viewStore.toggleSettings();
@@ -63,6 +66,15 @@ export default defineComponent({
                     label: 'About',
                     action: () => {
                         console.log('About clicked');
+                    }
+                },
+                {
+                    type: 'separator'
+                },
+                {
+                    label: 'Exit',
+                    action: () => {
+                        console.log('Exit clicked');
                     }
                 }
             ]

@@ -1,12 +1,13 @@
 <template>
     <div class="dropdown" :class="{ compact }" @click="toggleDropdown" ref="dropdown">
-        <MButton class="dropdown-toggle" :icon="icon">{{ label }}
-
-        </MButton>
+        <MButton class="dropdown-toggle" :icon="icon">{{ label }}</MButton>
         <ul class="dropdown-menu" :class="{ show: isOpen }">
-            <li v-for="item in items" :key="item.label" class="dropdown-item" @click="item.action">
-                {{ item.label }}
-            </li>
+            <template v-for="item in items" :key="item.label" >
+                <li class="dropdown-item" @click="item.action" v-if="item.type !== 'separator'">
+                    {{ item.label }}
+                </li>
+                <li v-else class="dropdown-separator"></li>
+            </template>
         </ul>
     </div>
 </template>
@@ -16,8 +17,9 @@ import { defineComponent } from 'vue';
 import MButton from './MButton.vue';
 
 interface DropdownItem {
-    label: string;
-    action: () => void;
+    label?: string;
+    action?: () => void;
+    type?: 'item' | 'separator';
 }
 
 export default defineComponent({
@@ -38,7 +40,7 @@ export default defineComponent({
             type: Array as () => DropdownItem[],
             required: true,
             validator: (items: DropdownItem[]) => {
-                return items.every(item => 'label' in item && 'action' in item);
+                return items.every(item => (item.type === 'separator') || ('label' in item && 'action' in item));
             }
         },
         compact: {
@@ -88,7 +90,7 @@ export default defineComponent({
         min-width: 10em
         padding: 0.5em 0.5em
         background-color: var(--color-background-dark)
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1)
+        box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
         z-index: 1000
         list-style: none
         &.show
@@ -107,10 +109,16 @@ export default defineComponent({
             &:hover,
             &:focus
                 background-color: var(--color-light)
+
+        .dropdown-separator
+            height: 1px
+            margin: 0.5em 0
+            background-color: var(--color-light)
+
 .dropdown.compact
     .dropdown-menu
         padding: 0.5em 0em
-        box-shadow: none
+        // box-shadow: none
         .dropdown-item
             padding: 0.2em 1em
             &:hover,
