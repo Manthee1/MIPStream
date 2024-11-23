@@ -1,26 +1,21 @@
 <script setup lang="ts">
+import { defineComponent } from 'vue';
 import { decToHex } from '../assets/js/utils';
-import Window from './Window.vue';
 </script>
 
 <template>
-    <Window title="Memory" class="memory-window">
-
-        <!-- header -->
-
-        <!-- Print individual bytes of memory -->
-        <div class="memory-list" @onmouseover="showMemoryAddress">
-            <ol class="memory-row">
-                <li></li>
-                <li class="text-center" v-for="index in 16" :key="index">{{ decToHex(index - 1, 8) }}</li>
-            </ol>
-            <ol class="memory-row" v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
-                <li class="memory-address">{{ decToHex(rowIndex * 16, 8) }}</li>
-                <li class="memory-item" v-for="(value, index) in row"
-                    :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index">{{ decToHex(value, 8) }}</li>
-            </ol>
-        </div>
-    </Window>
+    <!-- Print individual bytes of memory -->
+    <div class="memory-list" @onmouseover="showMemoryAddress">
+        <ol class="memory-row">
+            <li></li>
+            <li class="text-center" v-for="index in 16" :key="index">{{ decToHex(index - 1, 8) }}</li>
+        </ol>
+        <ol class="memory-row" v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
+            <li class="memory-address">{{ decToHex(rowIndex * 16, 8) }}</li>
+            <li class="memory-item" v-for="(value, index) in row"
+                :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index">{{ decToHex(value, 8) }}</li>
+        </ol>
+    </div>
 </template>
 
 
@@ -29,11 +24,11 @@ import Window from './Window.vue';
 <script lang="ts">
 
 
-export default {
+export default defineComponent({
     name: 'Memory',
 
     computed: {
-        memoryRows(): number[] {
+        memoryRows(): number[][] {
             // @ts-ignore
             const data = this.$dlxStore.DLXCore.memory.data
             // Split the memory into 8 byte rows
@@ -49,24 +44,20 @@ export default {
         }
     },
     methods: {
-        showMemoryAddress(e) {
+        showMemoryAddress(e: MouseEvent) {
             // Check which element is being hovered
             console.log(e);
         }
     },
-};
+});
 </script>
 
 <style lang="sass" scoped>
 // Simmple compact code like style for the memory list
-.memory-window
-    display: flex
-    flex-flow: column wrap
-    flex: 1 1 auto
-
 .memory-list
     display: grid
     grid-template-columns: repeat(17, 1fr)
+    font-size: 1rem
     gap: 0.2rem
     ol,ul
         list-style-type: none
@@ -81,7 +72,7 @@ export default {
             // Make memory itme on hover show a tooltip with the memory address
             &:hover
                 position: relative
-                background-color: var(--color-main-200)
+                background-color: var(--color-light)
                 cursor: pointer
                 &:after
                     content: attr(data-address)

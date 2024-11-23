@@ -1,33 +1,30 @@
 <script lang="ts" setup>
+import { defineComponent } from 'vue';
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
 import { getStageName } from '../assets/js/utils';
-import Window from './Window.vue';
 
 </script>
 
 <template>
-    <Window title="Stages" class="stages-window">
-        <ol class="stages-list">
-            <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-'+index">
-                <div>{{ getStageName(index) }}</div>
-                <div>{{ INSTRUCTION_SET[stage.IR.opcode].mnemonic }}</div>
-            </li>
-        </ol>
-    </Window>
+    <ol class="stages-list">
+        <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-' + index">
+            <div>{{ getStageName(index) }}</div>
+            <div>{{ INSTRUCTION_SET[stage.IR.opcode].mnemonic }}</div>
+        </li>
+    </ol>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
 
 export default defineComponent({
-  name: 'Stages',
-  data() {
-    return {
-    };
-  },
+    name: 'Stages',
+    data() {
+        return {
+        };
+    },
     computed: {
-        stages() : any {
-        return this.$dlxStore.DLXCore.cpu.stages;
+        stages(): any {
+            return this.$dlxStore.DLXCore.cpu.stages;
         },
     },
 });
@@ -42,7 +39,7 @@ export default defineComponent({
     margin: 0
     
     .stage-item
-        border: 1px solid #000
+        border: 1px solid var(--color-black)
         padding: 0.5rem
         text-align: center
 
