@@ -14,7 +14,7 @@ body {
     font-weight: 400;
     font-family: "Poppins", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
     color: var(--color-text);
-    background-color: var(--color-base-background);
+    background-color: var(--color-background);
 }
 
 /* Make sure the text anntialiasig is good */
@@ -41,7 +41,7 @@ h6 {
     margin-top: 0;
     margin-bottom: 2rem;
     font-weight: 300;
-    color: var(--color-main-400);
+    color: var(--color-regular);
 }
 
 h1 {
@@ -210,7 +210,7 @@ p {
 /* Links
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 a {
-    color: var(--color-main-400);
+    color: var(--color-regular);
     text-decoration: none;
     min-width: fit-content;
     white-space: nowrap;
@@ -222,185 +222,7 @@ a:hover {
 }
 
 
-/* Buttons
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-.button,
-button,
-input[type="submit"],
-input[type="reset"],
-input[type="button"] {
-    display: inline-block;
-    /* height: 38px; */
-    padding: 1rem 4rem;
-    color: var(--color-main-400);
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    /* line-height: 38px; */
-    letter-spacing: .1rem;
-    /* text-transform: uppercase; */
-    text-decoration: none;
-    white-space: nowrap;
-    background-color: transparent;
-    border: 2px solid var(--color-main-400);
-    cursor: pointer;
-    box-sizing: border-box;
-    transition: all 0.3s;
-}
 
-.button:hover,
-button:hover,
-input[type="submit"]:hover,
-input[type="reset"]:hover,
-input[type="button"]:hover {
-    color: #333;
-    outline: 0;
-    scale: 1.05;
-    text-decoration: none;
-}
-
-.button:active,
-button:active,
-input[type="submit"]:active,
-input[type="reset"]:active,
-input[type="button"]:active {
-    scale: 1;
-}
-
-
-/* Filled */
-.button.button-filled,
-button.button-filled {
-    color: var(--color-main-100);
-    background-color: var(--color-main-400);
-    border-color: var(--color-main-400);
-}
-
-.button.button-filled:hover,
-button.button-filled:hover {
-    color: var(--color-main-100);
-    background-color: var(--color-main-500);
-    border-color: var(--color-main-500);
-}
-
-.button.button-filled:active,
-button.button-filled:active {
-    color: var(--color-main-100);
-    background-color: var(--color-main-600);
-    border-color: var(--color-main-600);
-}
-
-/* Outlined */
-.button.button-outline,
-button.button-outline {
-    color: var(--color-main-400);
-    background-color: transparent;
-    border-color: var(--color-main-400);
-}
-
-.button.button-outline:hover,
-button.button-outline:hover {
-    color: var(--color-main-500);
-    background-color: var(--color-main-400);
-    border-color: var(--color-main-400);
-}
-
-.button.button-outline:active,
-button.button-outline:active {
-    color: var(--color-main-100);
-    background-color: var(--color-main-600);
-    border-color: var(--color-main-600);
-    box-shadow: -0px -100px 0 var(--color-main-400) inset;
-}
-
-/* Clear */
-.button.button-clear,
-button.button-clear {
-    color: var(--color-main-400);
-    background-color: transparent;
-    border: none;
-    padding: 0.5rem 2rem;
-    text-decoration: underline;
-    text-underline-offset: 0.2rem;
-    /* text-underline-position: under; */
-    /* border-bottom: 2px solid var(--color-main-400); */
-}
-
-.button.button-clear:hover,
-button.button-clear:hover {
-    color: var(--color-main-800);
-    /* background-color: var(--color-main-200); */
-    border-radius: 0;
-}
-
-.button.button-clear:active,
-button.button-clear:active {
-    /* color: var(--color-main-100); */
-    /* background-color: var(--color-main-600); */
-    border-color: var(--color-main-600);
-}
-
-.button.button-icon,
-button.button-icon {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    align-content: flex-start;
-    padding: 1rem;
-    border: none;
-    background-color: var(--color-main-400);
-    color: var(--color-main-100);
-    /* font-size: 1.8rem; */
-    line-height: 1;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.button.button-icon-clear,
-button.button-icon-clear {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    align-content: flex-start;
-    padding: 1rem;
-    border: none;
-    background-color: transparent;
-    color: var(--color-main-400);
-    /* font-size: 1.8rem; */
-    line-height: 1;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.button.button-icon:hover,
-button.button-icon:hover,
-.button.button-icon-clear:hover,
-button.button-icon-clear:hover {
-    text-decoration: none;
-    filter: brightness(0.8);
-    scale: 1;
-}
-
-.button.button-small,
-button.button-small {
-    padding: 0.5rem 2rem;
-    font-size: 1.4rem;
-}
-
-.button.button-small.button-icon,
-button.button-small.button-icon,
-.button.button-small.button-icon-clear,
-button.button-small.button-icon-clear {
-    padding: 0.5rem;
-    font-size: 1.4rem;
-}
-
-
-.vue-feather {
-    margin-right: 0.5rem;
-}
 
 /* Forms
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -415,9 +237,9 @@ input[type="password"],
 textarea,
 select {
     padding: 1.4rem 2rem;
-    color: var(--color-main-400);
+    color: var(--color-regular);
     /* The 6px vertically centers text on FF, ignored by Webkit */
-    background-color: var(--color-base-background-dark);
+    background-color: var(--color-background-dark);
     border: none;
     border-radius: 0px;
     box-shadow: none;
@@ -434,10 +256,10 @@ input[type="tel"].input-clear,
 input[type="url"].input-clear,
 input[type="password"].input-clear {
     padding: 0.5rem 1rem;
-    color: var(--color-main-400);
+    color: var(--color-regular);
     background-color: transparent;
     border: none;
-    border-bottom: 2px solid var(--color-main-400);
+    border-bottom: 2px solid var(--color-regular);
 }
 
 /* Input small */
@@ -540,7 +362,7 @@ fieldset {
 input[type="checkbox"],
 input[type="radio"] {
     display: inline-block;
-    border: 2px solid var(--color-main-400);
+    border: 2px solid var(--color-regular);
     border-radius: 0.2rem;
     min-width: 1.5rem;
     min-height: 1.5rem;
@@ -563,7 +385,7 @@ input[type="radio"]:checked::after {
     display: block;
     width: 100%;
     height: 100%;
-    background-color: var(--color-main-400);
+    background-color: var(--color-regular);
     border-radius: 0.2rem;
     transition: all 0.3s;
 }
@@ -594,7 +416,7 @@ label>.label-body {
 
 .tab-button {
     padding: 0.2rem 0.4rem;
-    color: var(--color-main-300);
+    color: var(--color-medium);
     text-align: center;
     font-size: 1.2rem;
     font-weight: normal;
@@ -607,7 +429,7 @@ label>.label-body {
 }
 
 .tab-button:hover {
-    color: var(--color-main-500);
+    color: var(--color-soft-black);
     text-decoration: none;
 }
 
@@ -620,12 +442,12 @@ input[type='radio']:checked+.tab-button {
 .tag-bubble {
     display: inline-block;
     padding: 0.2rem 0.4rem;
-    color: var(--color-main-300);
+    color: var(--color-medium);
     text-align: center;
     font-weight: normal;
     text-decoration: none;
     white-space: nowrap;
-    background-color: var(--color-main-200);
+    background-color: var(--color-light);
     border-radius: 1rem;
     box-sizing: border-box;
     width: fit-content;
@@ -674,7 +496,7 @@ th,
 td {
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 2px solid var(--color-main-200);
+    border-bottom: 2px solid var(--color-light);
 }
 
 td {
@@ -748,7 +570,7 @@ tfoot {
 
 /* Hieght 100vh - navbar height */
 .height-100vh {
-    height: calc(100vh - var(--navbar-height));
+    height: calc(100vh - var(--top-bar-height));
 }
 
 .max-height-fit {
@@ -792,7 +614,7 @@ hr {
     margin-top: 0rem;
     margin-bottom: 0rem;
     border-width: 0;
-    border-top: 2px solid var(--color-main-200);
+    border-top: 2px solid var(--color-light);
     width: 100%;
 }
 
@@ -800,7 +622,7 @@ hr {
 /* Prototypeing */
 img.scaffhold {
 
-    border: 2px solid var(--color-main-400);
+    border: 2px solid var(--color-regular);
     min-width: 280px;
     min-height: 210px;
 }
