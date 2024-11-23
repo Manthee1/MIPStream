@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import Editor from '@/components/core/Editor.vue';
 import Controls from '@/components/core/Controls.vue';
-import TopBar from '@/components/layout/TopBar.vue';
 import SideBar from '@/components/layout/SideBar.vue';
 import Settings from '@/components/windows/Settings.vue';
 import CpuView from '@/components/core/CpuView.vue';
 import Window from '@/components/common/Window.vue';
-
 </script>
 
 <template>
-    <TopBar fileName="Test"></TopBar>
     <div class="content-wrapper">
         <SideBar />
         <div class="editor-wrapper">
@@ -36,7 +33,6 @@ import ConfirmModal from '../components/common/ConfirmModal.vue';
 
 export default defineComponent({
     components: {
-        TopBar,
         Editor,
         Controls,
         SideBar,
