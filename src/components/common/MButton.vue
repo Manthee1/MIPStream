@@ -62,7 +62,7 @@ export default defineComponent({
 .m-button
     display: flex
     align-items: center
-    padding: 0.5em 0.5em
+    padding: 0.5em 1em
     border: none
     border-radius: 4px
     background-color: transparent
