@@ -43,6 +43,8 @@ export default defineComponent({
         console.log(item);
         
     });
+
+    this.lastHoveredItemIndex = -1;
   },
 
   methods: {
