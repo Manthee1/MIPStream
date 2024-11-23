@@ -36,6 +36,33 @@ export default defineComponent({
                     }
                 },
                 {
+                    label: 'Open Recent',
+                    action: () => {
+                        console.log('Open clicked');
+                    },
+                    type: 'submenu',
+                    items: [
+                        {
+                            label: 'File 1',
+                            action: () => {
+                                console.log('File 1 clicked');
+                            }
+                        },
+                        {
+                            label: 'File 2',
+                            action: () => {
+                                console.log('File 2 clicked');
+                            }
+                        },
+                        {
+                            label: 'File 3',
+                            action: () => {
+                                console.log('File 3 clicked');
+                            }
+                        }
+                    ]
+                },
+                {
                     label: 'Save',
                     action: () => {
                         console.log('Save clicked');

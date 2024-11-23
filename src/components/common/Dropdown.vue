@@ -1,31 +1,21 @@
 <template>
     <div class="dropdown" :class="{ compact }" @click="toggleDropdown" ref="dropdown">
         <MButton class="dropdown-toggle" :icon="icon">{{ label }}</MButton>
-        <ul class="dropdown-menu" :class="{ show: isOpen }">
-            <template v-for="item in items" :key="item.label" >
-                <li class="dropdown-item" @click="item.action" v-if="item.type !== 'separator'">
-                    {{ item.label }}
-                </li>
-                <li v-else class="dropdown-separator"></li>
-            </template>
-        </ul>
+        
+        <DropdownMenu :class="{ show: isOpen }" :items="items" />
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import {default as DropdownMenu, DropdownItem} from './DropdownMenu.vue';
 import MButton from './MButton.vue';
-
-interface DropdownItem {
-    label?: string;
-    action?: () => void;
-    type?: 'item' | 'separator';
-}
 
 export default defineComponent({
     name: 'Dropdown',
     components: {
-        MButton
+        MButton,
+        DropdownMenu
     },
     props: {
         label: {
@@ -87,7 +77,7 @@ export default defineComponent({
         top: 100%
         left: 0
         display: none
-        min-width: 10em
+        min-width: 12em
         padding: 0.5em 0.5em
         background-color: var(--color-background-dark)
         box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
@@ -115,6 +105,25 @@ export default defineComponent({
             margin: 0.5em 0
             background-color: var(--color-light)
 
+        .dropdown-submenu
+            >.icon
+                margin: auto 0
+                margin-left: auto
+                width: 1em
+                height: 1em
+            .dropdown-menu
+                position: absolute
+                display: block
+                top: -2.8rem
+                transform: translateY(100%)
+                left: 100%
+                padding: 0.5em 0.5em
+                background-color: var(--color-background-dark)
+                box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
+                z-index: 1000
+                list-style: none
+                &.show
+                    display: block
 .dropdown.compact
     .dropdown-menu
         padding: 0.5em 0em
