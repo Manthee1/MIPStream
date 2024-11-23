@@ -52,6 +52,8 @@ export default defineComponent({
     background-color: var(--color-background)
     color: var(--color-regular)
     padding: 0em 0.4em
+    height: var(--topbar-height)
+    border-bottom: 2px solid var(--color-regular)
 
     .hamburger-menu,
     .toggle-view 

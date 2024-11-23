@@ -1,6 +1,6 @@
 <template>
+    <TopBar fileName="Test"/>
     <main>
-        <TopBar fileName="Test"/>
         <router-view />
     </main>
 </template>

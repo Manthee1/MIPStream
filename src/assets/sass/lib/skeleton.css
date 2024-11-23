@@ -210,7 +210,7 @@ p {
 /* Links
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 a {
-    color: var(--color-regular);
+    color: var(--color-accent);
     text-decoration: none;
     min-width: fit-content;
     white-space: nowrap;
@@ -570,7 +570,7 @@ tfoot {
 
 /* Hieght 100vh - navbar height */
 .height-100vh {
-    height: calc(100vh - var(--top-bar-height));
+    height: calc(100vh - var(--topbar-height));
 }
 
 .max-height-fit {
