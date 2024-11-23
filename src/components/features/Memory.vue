@@ -13,7 +13,8 @@ import { decToHex } from '../../assets/js/utils';
         <ol class="memory-row" v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
             <li class="memory-address">{{ decToHex(rowIndex * 16, 8) }}</li>
             <li class="memory-item" v-for="(value, index) in row"
-                :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index">{{ decToHex(value, 8) }}</li>
+            :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index"
+            :class="{ 'non-zero': value !== 0 }">{{ decToHex(value, 8) }}</li>
         </ol>
     </div>
 </template>
@@ -58,7 +59,9 @@ export default defineComponent({
     display: grid
     grid-template-columns: repeat(17, 1fr)
     font-size: 1rem
+    padding: 0.5rem
     gap: 0.2rem
+    background-color: var(--color-background)
     ol,ul
         list-style-type: none
         padding: 0
@@ -67,8 +70,10 @@ export default defineComponent({
         display: contents
         .memory-item
             display: block
-            border: 1px solid #ccc
+            border: 1px solid var(--color-light)
             text-align: center
+            &.non-zero
+                background-color: var(--color-light)
             // Make memory itme on hover show a tooltip with the memory address
             &:hover
                 position: relative
@@ -80,9 +85,9 @@ export default defineComponent({
                     top: 100%
                     left: 50%
                     transform: translateX(-50%)
-                    background-color: #f5f5f5
+                    background-color: var(--color-background-dark)
                     padding: 0.2rem
-                    border: 1px solid #ccc
+                    border: 1px solid var(--color-light)
                     border-radius: 5px
                     z-index: 100
 </style>

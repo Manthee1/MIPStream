@@ -7,7 +7,7 @@ import { getStageName } from '../../assets/js/utils';
 
 <template>
     <ol class="stages-list">
-        <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-' + index">
+        <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-' + index" :title="JSON.stringify(stage, null, 2)">
             <div>{{ getStageName(index) }}</div>
             <div>{{ INSTRUCTION_SET[stage.IR.opcode].mnemonic }}</div>
         </li>
@@ -42,5 +42,6 @@ export default defineComponent({
         border: 1px solid var(--color-black)
         padding: 0.5rem
         text-align: center
+        flex: 1 1 auto
 
 </style>
