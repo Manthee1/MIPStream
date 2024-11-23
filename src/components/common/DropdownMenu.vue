@@ -16,13 +16,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { DropdownItem } from "../../types";
 
-export interface DropdownItem {
-    label?: string;
-    action?: () => void;
-    type?: 'item' | 'separator' | 'submenu';
-    items?: DropdownItem[]; // Only for submenu
-}
 
 export default defineComponent({
   name: "DropdownMenu",
@@ -40,8 +35,6 @@ export default defineComponent({
   mounted() {
     this.items.forEach((item: DropdownItem) => {
         item.type = item.type || 'item';
-        console.log(item);
-        
     });
 
     this.lastHoveredItemIndex = -1;

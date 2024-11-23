@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { DropdownItem } from '../types';
 
 
 // Get system theme
@@ -21,6 +22,10 @@ export const useViewStore = defineStore('view', {
             confirmText: 'Confirm',
             onCancel: () => { },
             cancelText: 'Cancel',
+        },
+        topBar: {
+            title: '',
+            dropdownItems: [] as DropdownItem[]
         },
     }),
     getters: {
@@ -61,8 +66,21 @@ export const useViewStore = defineStore('view', {
                     cancelText: cancelText || 'Cancel',
                 };
             });
-        }
-    }
+        },
+
+        setTopBar(title: string, dropdownItems: DropdownItem[]) {
+
+            this.topBar = {
+                title: title,
+                dropdownItems
+            };
+        },
+
+    },
+
+
+
+
 })
 
 

@@ -7,25 +7,14 @@ import { useViewStore } from './stores/viewStore'
 import { useSettingsStore } from './stores/settingsStore'
 import VueFeather from 'vue-feather';
 
-import { createRouter, createWebHistory } from 'vue-router'
-import routes from './routes.ts'
+import { initRouter } from './router'
 
 const pinia = createPinia()
 
-const router = createRouter({
-    history: createWebHistory(),
-    routes,
-})
 
 const app = createApp(App);
 
-
 app.use(pinia);
-
-app.use(router);
-
-app.component(VueFeather.name ?? '', VueFeather);
-
 // Stores
 const dlxStore = useDlxStore();
 const viewStore = useViewStore();
@@ -35,9 +24,10 @@ declare module '@vue/runtime-core' {
     interface ComponentCustomProperties {
         $dlxStore: ReturnType<typeof useDlxStore>
         $settings: ReturnType<typeof useSettingsStore>
-
         $viewStore: ReturnType<typeof useViewStore>
         $confirm: (title: string, message: string) => Promise<boolean>
+        $router: typeof router
+        $route: typeof router
     }
 }
 // @ts-ignore
@@ -45,14 +35,14 @@ window.dlxStore = dlxStore;
 
 app.config.globalProperties.$dlxStore = dlxStore;
 app.config.globalProperties.$settings = settings;
-
 app.config.globalProperties.$viewStore = viewStore;
 app.config.globalProperties.$confirm = viewStore.confirm;
 
+const router = initRouter();
+app.use(router);
+
+app.component(VueFeather.name ?? '', VueFeather);
+
+
 
 app.mount("#app");
-
-
-
-// Set dark mode
-// document.documentElement.classList.add('theme-dark');

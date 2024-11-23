@@ -1,11 +1,11 @@
 <template>
     <div class="top-bar">
         <Dropdown compact :items="dropdownItems" label="" icon="menu" />
-        <span class="file-name">DLXSim - {{ fileName }}</span>
+        <span class="file-name">{{ title }}</span>
         <!-- Theme -->
         <div class="flex">
             <MButton :icon="$viewStore.theme === 'light' ? 'sun' : 'moon'" @click="$viewStore.toggleTheme" />
-            <MButton icon="cpu" @click="toggleView" class="toggle-view" :class="{ active: showCpuView }" />
+            <MButton v-if="$route?.name && $route.name == 'Workspace'" icon="cpu" @click="toggleView" class="toggle-view" :class="{ active: showCpuView }" />
         </div>
     </div>
 </template>
@@ -22,99 +22,16 @@ export default defineComponent({
     },
     data() {
         return {
-            dropdownItems: [
-                {
-                    label: 'New',
-                    action: () => {
-                        console.log('New clicked');
-                    }
-                },
-                {
-                    label: 'Open',
-                    action: () => {
-                        console.log('Open clicked');
-                    }
-                },
-                {
-                    label: 'Open Recent',
-                    action: () => {
-                        console.log('Open clicked');
-                    },
-                    type: 'submenu',
-                    items: [
-                        {
-                            label: 'File 1',
-                            action: () => {
-                                console.log('File 1 clicked');
-                            }
-                        },
-                        {
-                            label: 'File 2',
-                            action: () => {
-                                console.log('File 2 clicked');
-                            }
-                        },
-                        {
-                            label: 'File 3',
-                            action: () => {
-                                console.log('File 3 clicked');
-                            }
-                        }
-                    ]
-                },
-                {
-                    label: 'Save',
-                    action: () => {
-                        console.log('Save clicked');
-                    }
-                },
-                {
-                    label: 'Save As',
-                    action: () => {
-                        console.log('Save As clicked');
-                    }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Settings',
-                    action: () => {
-                        this.$viewStore.toggleSettings();
-                    }
-                },
-                {
-                    label: 'Help',
-                    action: () => {
-                        console.log('Help clicked');
-                    }
-                },
-                {
-                    label: 'About',
-                    action: () => {
-                        console.log('About clicked');
-                    }
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Exit',
-                    action: async () => {
-                        console.log('Exit clicked');
-                        const confirmed = await this.$confirm('Are you sure you want to exit? 🥺',null,'Exit', 'Stay');
-                    }
-                }
-            ]
-        }
-    },
-    props: {
-        fileName: {
-            type: String,
-            required: true
+            
         }
     },
     computed: {
+        dropdownItems(){
+            return this.$viewStore.topBar.dropdownItems;
+        },
+        title() {
+            return this.$viewStore.topBar.title;
+        },
         showCpuView() {
             return this.$viewStore.showCpuView;
         }

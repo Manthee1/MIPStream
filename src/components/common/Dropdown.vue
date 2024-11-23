@@ -8,7 +8,9 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import {default as DropdownMenu, DropdownItem} from './DropdownMenu.vue';
+import DropdownMenu from './DropdownMenu.vue';
+import { DropdownItem } from "../../types";
+
 import MButton from './MButton.vue';
 
 export default defineComponent({
