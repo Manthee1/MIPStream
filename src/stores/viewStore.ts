@@ -13,6 +13,15 @@ export const useViewStore = defineStore('view', {
         showCpuView: false,
         showSettings: false,
         theme: systemTheme as 'light' | 'dark',
+        confirmModal: {
+            show: false,
+            title: '',
+            message: '',
+            onConfirm: () => { },
+            confirmText: 'Confirm',
+            onCancel: () => { },
+            cancelText: 'Cancel',
+        },
     }),
     getters: {
 
@@ -29,7 +38,30 @@ export const useViewStore = defineStore('view', {
             document.documentElement.classList.remove('theme-light', 'theme-dark');
             document.documentElement.classList.add(`theme-${this.theme}`);
         },
-
+        async confirm(title: string, message?: string, confirmText?: string, cancelText?: string): Promise<boolean> {
+            // If no message is provided, use the title as the message
+            if (!message) {
+                message = title;
+                title = '';
+            }
+            return new Promise((resolve) => {
+                this.confirmModal = {
+                    show: true,
+                    title,
+                    message,
+                    onConfirm: () => {
+                        this.confirmModal.show = false;
+                        resolve(true);
+                    },
+                    confirmText: confirmText || 'Confirm',
+                    onCancel: () => {
+                        this.confirmModal.show = false;
+                        resolve(false);
+                    },
+                    cancelText: cancelText || 'Cancel',
+                };
+            });
+        }
     }
 })
 

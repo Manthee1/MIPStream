@@ -25,11 +25,14 @@ import Window from '@/components/common/Window.vue';
         </Window>
     </div>
 
+    <!-- Confrim Modal -->
+    <ConfirmModal />
 
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import ConfirmModal from '../components/common/ConfirmModal.vue';
 
 export default defineComponent({
     components: {
@@ -38,7 +41,8 @@ export default defineComponent({
         Controls,
         SideBar,
         CpuView,
-        Window
+        Window,
+        ConfirmModal
     },
     name: 'Main',
 

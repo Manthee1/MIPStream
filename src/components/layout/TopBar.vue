@@ -100,8 +100,9 @@ export default defineComponent({
                 },
                 {
                     label: 'Exit',
-                    action: () => {
+                    action: async () => {
                         console.log('Exit clicked');
+                        const confirmed = await this.$confirm('Are you sure you want to exit? 🥺',null,'Exit', 'Stay');
                     }
                 }
             ]

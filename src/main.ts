@@ -34,16 +34,20 @@ const settings = useSettingsStore();
 declare module '@vue/runtime-core' {
     interface ComponentCustomProperties {
         $dlxStore: ReturnType<typeof useDlxStore>
-        $viewStore: ReturnType<typeof useViewStore>
         $settings: ReturnType<typeof useSettingsStore>
+
+        $viewStore: ReturnType<typeof useViewStore>
+        $confirm: (title: string, message: string) => Promise<boolean>
     }
 }
 // @ts-ignore
 window.dlxStore = dlxStore;
 
 app.config.globalProperties.$dlxStore = dlxStore;
-app.config.globalProperties.$viewStore = viewStore;
 app.config.globalProperties.$settings = settings;
+
+app.config.globalProperties.$viewStore = viewStore;
+app.config.globalProperties.$confirm = viewStore.confirm;
 
 
 app.mount("#app");
