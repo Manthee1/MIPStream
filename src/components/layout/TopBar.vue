@@ -4,7 +4,7 @@
         <span class="file-name">{{ title }}</span>
         <!-- Theme -->
         <div class="flex">
-            <MButton :icon="$viewStore.theme === 'light' ? 'sun' : 'moon'" @click="$viewStore.toggleTheme" />
+            <MButton :icon="$viewStore.theme === 'light' ? 'sun' : 'moon'" @click="togleTheme()" />
             <MButton v-if="$route?.name && $route.name == 'Workspace'" icon="cpu" @click="toggleView" class="toggle-view" :class="{ active: showCpuView }" />
         </div>
     </div>
@@ -39,6 +39,11 @@ export default defineComponent({
     methods: {
         toggleView() {
             this.$viewStore.toggleCpuView();
+        },
+        togleTheme() {
+            const newTheme = this.$viewStore.theme === 'light' ? 'dark' : 'light';
+            $settings.setSetting('theme',newTheme);
+            $viewStore.setTheme(newTheme);
         }
     }
 })

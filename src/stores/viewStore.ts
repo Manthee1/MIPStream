@@ -1,19 +1,18 @@
 import { defineStore } from 'pinia'
 import { DropdownItem } from '../types';
+import { settings } from '../storage/settingsStorage';
 
 
-// Get system theme
-const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-// const systemTheme = 'light';
+const theme = settings.theme;
 
 // Add the theme to the html element
-document.documentElement.classList.add(`theme-${systemTheme}`);
+document.documentElement.classList.add(`theme-${theme}`);
 
 export const useViewStore = defineStore('view', {
     state: () => ({
         showCpuView: false,
         showSettings: false,
-        theme: systemTheme as 'light' | 'dark',
+        theme: theme,
         confirmModal: {
             show: false,
             title: '',
@@ -38,10 +37,7 @@ export const useViewStore = defineStore('view', {
         toggleSettings() {
             this.showSettings = !this.showSettings;
         },
-        toggleTheme() {
-            const newTheme = this.theme === 'light' ? 'dark' : 'light';
-
-            // Add a transition class to html
+        setTheme(newTheme: string) {
             document.documentElement.classList.add('theme-transition');
             this.theme = newTheme;
             document.documentElement.classList.remove('theme-light', 'theme-dark');
