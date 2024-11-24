@@ -9,8 +9,8 @@
         </Window>
     </div>
 
-    <!-- Confrim Modal -->
-    <ConfirmModal />
+    <!-- Modal -->
+    <Modal />
 </template>
 
 <script lang="ts">
@@ -18,7 +18,7 @@ import { defineComponent } from 'vue';
 import TopBar from '@/components/layout/TopBar.vue';
 import Settings from './components/windows/Settings.vue';
 import Window from './components/common/Window.vue';
-import ConfirmModal from './components/common/ConfirmModal.vue';
+import Modal from './components/common/Modal.vue';
 
 export default defineComponent({
     name: 'App',
@@ -26,7 +26,7 @@ export default defineComponent({
         TopBar,
         Settings,
         Window,
-        ConfirmModal,
+        Modal,
     },
 });
 </script>

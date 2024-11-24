@@ -1,15 +1,19 @@
 <template>
     <transition name="fade-scale">
-        <div v-show="show" class="confirm-modal">
-            <div class="confirm-modal-content">
+        <div v-show="show" class="modal">
+            <div class="modal-content">
                 <MButton @click="cancelAction" class="close-button" icon='x' />
-                <div class="confirm-modal-header">
+                <div class="modal-header">
                     <h3>{{ title }}</h3>
                 </div>
-                <div class="confirm-modal-body">
+                <div class="modal-body">
                     <p>{{ message }}</p>
+                    <div v-if="type=='prompt'" class="input-wrapper">
+                        <input v-model="$viewStore.modalData.input" :placeholder="inputPlaceholder" type="text" />
+                        <span class="error" v-if="error?.trim()?.length > 0">{{ error }}</span>
+                    </div>                    
                 </div>
-                <div class="confirm-modal-footer">
+                <div class="modal-footer">
                     <MButton outlined @click="cancelAction">{{ cancelText }}</MButton>
                     <MButton filled @click="confirmAction">{{ confirmText }}</MButton>
                 </div>
@@ -23,35 +27,66 @@ import { defineComponent } from 'vue';
 import MButton from '@/components/common/MButton.vue';
 
 export default defineComponent({
-    name: 'ConfirmModal',
+    name: 'Modal',
     components: {
         MButton
     },
+    data() {
+        return {
+            error: '',
+        };
+    },
     computed: {
         show() {
-            return this.$viewStore.confirmModal.show;
+            return this.$viewStore.modalData.show;
+        },
+        type() {
+            return this.$viewStore.modalData.type;
         },
         title() {
-            return this.$viewStore.confirmModal.title;
+            return this.$viewStore.modalData.title;
         },
         message() {
-            return this.$viewStore.confirmModal.message;
+            return this.$viewStore.modalData.message;
         },
         onConfirm() {
-            return this.$viewStore.confirmModal.onConfirm;
+            return this.$viewStore.modalData?.onConfirm ?? (() => {});
         },
         confirmText() {
-            return this.$viewStore.confirmModal.confirmText;
+            return this.$viewStore.modalData.confirmText;
         },
         onCancel() {
-            return this.$viewStore.confirmModal.onCancel;
+            return this.$viewStore.modalData?.onCancel ?? (() => {});
         },
         cancelText() {
-            return this.$viewStore.confirmModal.cancelText;
+            return this.$viewStore.modalData.cancelText;
+        },
+        input() {
+            return this.$viewStore.modalData.input;
+        },
+        inputPlaceholder() {
+            return this.$viewStore.modalData.inputPlaceholder;
+        },
+        verifyInput() {
+            return this.$viewStore.modalData?.verifyInput ?? ((input) => true);
         }
     },
     methods: {
         confirmAction() {
+
+            console.log('confirmAction', this.$viewStore.modalData);
+            
+            if (this.type == 'prompt') {
+                try {
+                    this.verifyInput(this.input);
+                } catch (error: any) {
+                    this.error = error;
+                    return;
+                }
+                this.error = '';
+                
+            }
+
             this.onConfirm();
         },
         cancelAction() {
@@ -62,7 +97,7 @@ export default defineComponent({
 </script>
 
 <style lang="sass" scoped>
-.confirm-modal
+.modal
     display: flex
     position: fixed
     top: 0
@@ -78,7 +113,7 @@ export default defineComponent({
     transition: opacity 0.1s
 
 
-    .confirm-modal-content
+    .modal-content
         position: relative
         background-color: var(--color-background)
         padding: 4rem 5rem
@@ -93,7 +128,7 @@ export default defineComponent({
             position: absolute
             top: 1rem
             right: 1rem
-    .confirm-modal-header
+    .modal-header
         display: flex
         justify-content: space-between
         align-items: center
@@ -101,10 +136,18 @@ export default defineComponent({
     
             
 
-    .confirm-modal-body
+    .modal-body
         margin-bottom: 1rem
+        .input-wrapper
+            display: flex
+            flex-flow: column nowrap
+            gap: 0.8rem
+            margin-top: 1rem
+         
+            .error
+                color: var(--color-system-error)
 
-    .confirm-modal-footer
+    .modal-footer
         display: flex
         justify-content: space-between
         margin-top: 5rem
@@ -112,11 +155,11 @@ export default defineComponent({
 
 .fade-scale-enter-active, .fade-scale-leave-active
     opacity: 1
-    .confirm-modal-content
+    .modal-content
         scale: 1
 
 .fade-scale-enter-from, .fade-scale-leave-to
     opacity: 0
-    .confirm-modal-content
+    .modal-content
         scale: 0.9
 </style>

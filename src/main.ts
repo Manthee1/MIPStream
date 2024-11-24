@@ -8,6 +8,7 @@ import { useSettingsStore } from './stores/settingsStore'
 import VueFeather from 'vue-feather';
 
 import { initRouter } from './router'
+import { ModalData } from "./types";
 
 const pinia = createPinia()
 
@@ -25,7 +26,8 @@ declare module '@vue/runtime-core' {
         $dlxStore: ReturnType<typeof useDlxStore>
         $settings: ReturnType<typeof useSettingsStore>
         $viewStore: ReturnType<typeof useViewStore>
-        $confirm: (title: string, message: string) => Promise<boolean>
+        $confirm: (data: ModalData) => Promise<boolean | string>
+        $prompt: (data: ModalData) => Promise<boolean | string>
         $router: typeof router
         $route: typeof router
     }
@@ -37,12 +39,11 @@ app.config.globalProperties.$dlxStore = dlxStore;
 app.config.globalProperties.$settings = settings;
 app.config.globalProperties.$viewStore = viewStore;
 app.config.globalProperties.$confirm = viewStore.confirm;
+app.config.globalProperties.$prompt = viewStore.prompt;
 
 const router = initRouter();
 app.use(router);
 
 app.component(VueFeather.name ?? '', VueFeather);
-
-
 
 app.mount("#app");
