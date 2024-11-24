@@ -1,0 +1,89 @@
+import { saveToStorage, loadFromStorage, removeFromStorage } from './storage';
+
+const PROJECTS_KEY = 'projects';
+
+export interface Project {
+    id: string;
+    name: string;
+    code: string;
+    data: number[];
+    createdAt: Date;
+    updatedAt: Date;
+    size: number;
+}
+
+
+export const createProject = (name: string): Project => {
+    const id = Date.now().toString();
+    const project: Project = {
+        id,
+        name,
+        code: '',
+        data: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        size: 0
+    };
+
+    saveProject(project);
+
+    return project;
+}
+
+export const saveProject = (project: Project) => {
+    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    const existingProjectIndex = projects.findIndex((p: Project) => p.id === project.id);
+
+    if (existingProjectIndex !== -1) {
+        projects[existingProjectIndex] = project;
+    } else {
+        projects.push(project);
+    }
+
+    saveToStorage(PROJECTS_KEY, projects);
+};
+
+export const loadProjects = (loadOnlyMetadata: boolean = false): Project[] => {
+    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    if (loadOnlyMetadata) {
+        return projects.map((project: Project) => ({
+            id: project.id,
+            name: project.name,
+            createdAt: project.createdAt,
+            updatedAt: project.updatedAt,
+            size: project.size
+        }));
+    }
+    return projects;
+
+};
+
+export const existsProject = (id: string): boolean => {
+    const projects = loadProjects(true);
+    return projects.some((project: Project) => project.id === id);
+}
+
+export const loadProject = (id: string): Project | null => {
+
+    const projects = loadProjects();
+    console.log(projects, id);
+
+    return projects.find((project: Project) => project.id === id) || null;
+};
+
+export const removeProject = (id: string) => {
+    let projects = loadProjects(true);
+    projects = projects.filter((project: Project) => project.id !== id);
+    saveToStorage(PROJECTS_KEY, projects);
+};
+
+
+export const downloadProject = (project: Project) => {
+    const element = document.createElement('a');
+    const file = new Blob([JSON.stringify(project)], { type: 'application/json' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${project.name}.dlxs`;
+    document.body.appendChild(element); // Required for this to work in FireFox
+    element.click();
+    document.body.removeChild(element);
+}
