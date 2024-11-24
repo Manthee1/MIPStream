@@ -19,6 +19,10 @@ export default defineComponent({
         return {
         }
     },
+    props: {
+        modelValue: String
+    },
+
     mounted() {
         const editorEl = this.$refs.editor as HTMLElement;
         monaco.editor.create(editorEl, {
@@ -32,12 +36,7 @@ export default defineComponent({
                 top: 10,
                 bottom: 10
             },
-            value: `ADDI R1, R0, 5
-SW R1, 0(R0)
-LW R2, 0(R0)
-ADDI R3, R0, 10
-HALT`
-
+            value: this.modelValue
         });
         const model = monaco.editor.getModels()[0];
         validate(model);
@@ -46,7 +45,9 @@ HALT`
         monaco.editor.getModels()[0].onDidChangeContent(() => {
             console.log('Content changed');
             console.log(monaco.editor.getModels()[0].getValue());
-            this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
+            const code = monaco.editor.getModels()[0].getValue();
+            this.$dlxStore.program = code;
+            this.$emit('update:modelValue', code);
             validate(model);
         });
 

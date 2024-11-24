@@ -10,7 +10,7 @@
                     <th>Created At</th>
                     <th>Last Saved</th>
                     <th>Size</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -19,7 +19,7 @@
                         <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name }}</router-link>
                     </td>
                     <td>{{ project.createdAt }}</td>
-                    <td>{{ project.lastSaved }}</td>
+                    <td>{{ project.createdAt }}</td>
                     <td>{{ project.size }}</td>
                     <td class="flex">
                         <MButton filled class="delete-button" @click="deleteProject(project.id)" icon="trash" />
@@ -35,13 +35,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import MButton from '../components/common/MButton.vue';
-interface Project {
-  id: number;
-  name: string;
-  createdAt: string;
-  lastSaved: string;
-  size: string;
-}
+import { Project, loadProjects, createProject } from '../storage/projectsStorage';
+
 
 export default defineComponent({
   name: 'Projects',
@@ -50,27 +45,32 @@ export default defineComponent({
     },
     data() {
     return {
-      projects: [
-        {
-          id: 1,
-          name: 'Project 1',
-          createdAt: '2021-01-01',
-          lastSaved: '2021-01-01',
-          size: '1.2MB',
-        },
-        {
-          id: 2,
-          name: 'Project 2',
-          createdAt: '2021-01-01',
-          lastSaved: '2021-01-01',
-          size: '1.2MB',
-        },
-      ] as Project[],
+      projects: [] as Project[],
     };
   },
+  mounted() {
+    this.projects = loadProjects(true);
+  },
   methods: {
-    createProject() {
-      console.log('Create Project');
+   async createProject() {
+    const name = await this.$prompt({
+        title: 'Create Project',
+        message: 'Enter the name of the project',
+        inputPlaceholder: 'Project Name',
+        verifyInput: (input?: string) => {
+          if (!input) throw 'Project name is required';
+          if (input.length < 3) 
+            throw 'Project name must be at least 3 characters long';
+          
+          return true;
+        },
+        confirmText: 'Create Project',
+      });
+
+      if (!name || typeof name !== 'string') return;
+      
+      createProject(name);
+
     },
     editProject(id: number) {
       console.log('Edit Project', id);
@@ -91,11 +91,15 @@ export default defineComponent({
     height: 100%
 
     .content-container
-        padding: 20px
+        padding: 3rem
         max-width: 800px
         width: 100%
-        margin: 0 auto
-        margin-top: 10vh
+        margin: auto
+        margin-top: 18vh
+        background-color: var(--color-background)
+        border-radius: 10px
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1)
+
         .projects-table
             width: 100%
             margin-top: 20px
