@@ -1,7 +1,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import routes from './routes.ts'
-import { getRouteDropdownItems } from './assets/js/config/topbar-dropdown-items.ts';
+import { getRouteDropdownItems } from './config/topbar-dropdown-items.ts';
 import { useViewStore } from './stores/viewStore.ts';
 
 export function initRouter() {

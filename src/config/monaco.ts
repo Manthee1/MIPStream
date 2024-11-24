@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor';
 import * as themeData from 'monaco-themes/themes/Dawn.json';
-import INSTRUCTION_SET from './instructionSet';
-import { InstructionType, MemOp } from '../interfaces/instruction';
+import INSTRUCTION_SET from '../assets/js/config/instructionSet';
+import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -188,7 +188,7 @@ monaco.editor.defineTheme('dlx', {
     base: 'vs',
     inherit: false,
     rules: rules,
-    colors: themeData.colors,
+    colors: {}
 });
 
 export default monaco;

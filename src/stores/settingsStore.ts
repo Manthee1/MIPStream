@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { settings } from '../assets/js/config/settings';
+import { settings } from '../config/settings';
 
 
 
