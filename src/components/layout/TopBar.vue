@@ -67,9 +67,10 @@ export default defineComponent({
         color: var(--color-regular)
         font-size: 20px
         cursor: pointer
+        border-radius: 1em
         &.active
-            background-color: var(--color-light)
-            border-radius: 1em
+            background-color: var(--color-regular)
+            color: var(--color-background)
 
     .file-name 
         font-size: 16px

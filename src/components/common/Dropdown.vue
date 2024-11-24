@@ -100,7 +100,7 @@ export default defineComponent({
                 margin: auto 0px
             &:hover,
             &:focus
-                background-color: var(--color-light)
+                background-color: var(--color-medium)
 
         .dropdown-separator
             height: 1px
@@ -130,7 +130,5 @@ export default defineComponent({
         // box-shadow: none
         .dropdown-item
             padding: 0.2em 1em
-            &:hover,
-            &:focus
-                background-color: var(--color-light)
+
 </style>
