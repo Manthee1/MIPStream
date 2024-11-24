@@ -33,7 +33,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { settings } from '../../assets/js/config/settings';
+import { settingTabs } from '../../config/settings';
 import Window from '@/components/common/Window.vue';
 
 export default defineComponent({
@@ -48,10 +48,10 @@ export default defineComponent({
     },
     computed: {
         settingsTabs() {
-            return settings;
+            return settingTabs;
         },
         currentTab() {
-            return settings[this.currentTabIndex];
+            return settingTabs[this.currentTabIndex];
         },
     },
     methods: {

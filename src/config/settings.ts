@@ -13,7 +13,7 @@ interface SettingTab {
     settings: Setting[];
 }
 
-const settings: SettingTab[] = [
+const settingTabs: SettingTab[] = [
     {
         name: 'General',
         icon: 'settings',
@@ -29,4 +29,4 @@ const settings: SettingTab[] = [
     }
 ];
 
-export { settings };
+export { settingTabs };

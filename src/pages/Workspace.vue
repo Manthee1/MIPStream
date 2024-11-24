@@ -16,14 +16,6 @@ import Window from '@/components/common/Window.vue';
         </div>
         <CpuView v-show="$viewStore.showCpuView" />
     </div>
-    <div class="settings-wrapper" v-if="$viewStore.showSettings">
-        <Window title="Settings" class="settings-window" closeable :onClose="$viewStore.toggleSettings">
-            <Settings></Settings>
-        </Window>
-    </div>
-
-    <!-- Confrim Modal -->
-    <ConfirmModal />
 
 </template>
 
@@ -49,15 +41,7 @@ export default defineComponent({
     },
 
     methods: {
-        loadProgram() {
-            console.log('load program');
-            console.log(this.$dlxStore.program);
 
-            this.$dlxStore.loadProgram();
-        },
-        runCycle() {
-            this.$dlxStore.DLXCore.runCycle();
-        }
     }
 
 });
@@ -89,17 +73,6 @@ export default defineComponent({
             max-height: 100%
             max-width: 100vw
             overflow: auto
-.settings-wrapper
-    position: absolute
-    top: 0
-    left: 0
-    width: 100%
-    height: 100%
-    background-color: var(--color-overlay)
-    display: flex
-    justify-content: center
-    align-items: center
-    z-index: 100
 
 
 </style>
