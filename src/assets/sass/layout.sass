@@ -1,4 +1,4 @@
-@import './_variables'
+@use '_variables'
 
 .flex
     display: flex
@@ -118,7 +118,7 @@
 .flex-1
     flex: 1 1 calc(8.3333333333% - var(--gap))
 
-@each $size, $value in $sizes
+@each $size, $value in variables.$sizes
     .gap-#{$size}
         gap: $value
 

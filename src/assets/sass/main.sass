@@ -1,12 +1,12 @@
 
 @use 'sass:map'
-@import './_variables'
+@use '_variables'
 
-@import './componentes'
-@import './layout'
+@use 'componentes'
+@use 'layout'
 
-@import './lib/normalize'
-@import './lib/skeleton'
+@use 'lib/normalize'
+@use 'lib/skeleton'
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap')
 
@@ -41,23 +41,23 @@
 
     --color-overlay: #0000004f
 
-    --topbar-height: #{$topbar-height}
+    --topbar-height: #{variables.$topbar-height}
 
-    --size-0: #{map.get($sizes, 0)}
-    --size-1: #{map.get($sizes, 1)}
-    --size-2: #{map.get($sizes, 2)}
-    --size-3: #{map.get($sizes, 3)}
-    --size-4: #{map.get($sizes, 4)}
-    --size-5: #{map.get($sizes, 5)}
-    --size-6: #{map.get($sizes, 6)}
+    --size-0: #{map.get(variables.$sizes, 0)}
+    --size-1: #{map.get(variables.$sizes, 1)}
+    --size-2: #{map.get(variables.$sizes, 2)}
+    --size-3: #{map.get(variables.$sizes, 3)}
+    --size-4: #{map.get(variables.$sizes, 4)}
+    --size-5: #{map.get(variables.$sizes, 5)}
+    --size-6: #{map.get(variables.$sizes, 6)}
 
-    --size-screen-xs: #{$size-screen-xs}
-    --size-screen-sm: #{$size-screen-sm}
-    --size-screen-md: #{$size-screen-md}
-    --size-screen-lg: #{$size-screen-lg}
-    --size-screen-xl: #{$size-screen-xl}
+    --size-screen-xs: #{variables.$size-screen-xs}
+    --size-screen-sm: #{variables.$size-screen-sm}
+    --size-screen-md: #{variables.$size-screen-md}
+    --size-screen-lg: #{variables.$size-screen-lg}
+    --size-screen-xl: #{variables.$size-screen-xl}
 
-    --gap: #{$gap}
+    --gap: #{variables.$gap}
 
 *,
 *:after,
@@ -130,34 +130,34 @@ main
     background-color: var(--color-soft-black)
     color: var(--color-white)
 
-@media (max-width: $size-screen-xs)
+@media (max-width: variables.$size-screen-xs)
     .hidden-xs
         display: none
 
-@media (max-width: $size-screen-sm)
+@media (max-width: variables.$size-screen-sm)
     .hidden-sm
         display: none
 
-@media (max-width: $size-screen-md)
+@media (max-width: variables.$size-screen-md)
     .hidden-md
         display: none
 
-@media (max-width: $size-screen-lg)
+@media (max-width: variables.$size-screen-lg)
     .hidden-lg
         display: none
 
-@media (min-width: $size-screen-xs)
+@media (min-width: variables.$size-screen-xs)
     .visible-xs
         display: none
 
-@media (min-width: $size-screen-sm)
+@media (min-width: variables.$size-screen-sm)
     .visible-sm
         display: none
 
-@media (min-width: $size-screen-md)
+@media (min-width: variables.$size-screen-md)
     .visible-md
         display: none
 
-@media (min-width: $size-screen-lg)
+@media (min-width: variables.$size-screen-lg)
     .visible-lg
         display: none
