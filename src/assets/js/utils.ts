@@ -1,4 +1,4 @@
-import { InstructionR, InstructionI, InstructionJ, InstructionType } from "./interfaces/instruction";
+import { InstructionR, InstructionI, InstructionJ, InstructionType, InstructionDef, MemOp } from "./interfaces/instruction";
 // utils.ts
 
 /**
@@ -81,6 +81,19 @@ export function getInstructionType(instruction: InstructionR | InstructionI | In
         return InstructionType.J;
     } else {
         return InstructionType.INVALID;
+    }
+}
+
+export function getInstructionSyntax(instruction: InstructionDef) {
+    switch (instruction.type) {
+        case InstructionType.R:
+            return `${instruction.mnemonic} Rd, Rs1, Rs2`;
+        case InstructionType.I:
+            if (instruction.memOp == MemOp.LOAD || instruction.memOp == MemOp.STORE)
+                return `${instruction.mnemonic} Rd, imm(Rn)`;
+            return `${instruction.mnemonic} Rd, Rs, imm`;
+        case InstructionType.J:
+            return `${instruction.mnemonic} label`;
     }
 }
 
