@@ -16,7 +16,7 @@ export const useDlxStore = defineStore('dlx', {
     actions: {
         loadProgram() {
             this.status = 'paused';
-            const program = this.program.split('\n').filter(line => line.trim() !== '');
+            const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
             console.log(program);
 
             this.DLXCore.loadProgram(program);
