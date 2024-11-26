@@ -17,6 +17,9 @@ import { default as monaco, validate } from "../../config/monaco";
 export default defineComponent({
 	data() {
 		return {
+			decorations: [] as string[],
+			hoverDecorations: [] as string[],
+			breakpoints: [] as number[],
 		}
 	},
 	props: {
@@ -25,7 +28,7 @@ export default defineComponent({
 
 	mounted() {
 		const editorEl = this.$refs.editor as HTMLElement;
-		monaco.editor.create(editorEl, {
+		const editor = monaco.editor.create(editorEl, {
 			language: 'asm',
 			minimap: {
 				enabled: true
@@ -40,7 +43,8 @@ export default defineComponent({
 			parameterHints: {
 				enabled: true
 			},
-
+			glyphMargin: true,
+			lineNumbersMinChars: 2,
 			suggest: {
 				snippetsPreventQuickSuggestions: false,
 				showSnippets: true,
@@ -49,21 +53,83 @@ export default defineComponent({
 		});
 		const model = monaco.editor.getModels()[0];
 		validate(model);
+
+
+
 		// Listener for changes in the editor
 		this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
-			console.log('Content changed');
-			console.log(monaco.editor.getModels()[0].getValue());
 			const code = monaco.editor.getModels()[0].getValue();
 			this.$dlxStore.program = code;
 			this.$emit('update:modelValue', code);
 			validate(model);
 		});
 
+		editor.onMouseDown((e) => {
+			console.log('Mouse Down', e);
+
+			if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+				const lineNumber = e.target.position.lineNumber;
+				this.toggleBreakpoint(lineNumber);
+			}
+		});
+
+		editor.onMouseMove(this.handleMouseMove);
 	},
 
 	beforeUnmount() {
 		monaco.editor.getModels()[0].dispose();
+	},
+	methods: {
+		handleMouseMove(e: monaco.editor.IEditorMouseEvent) {
+			if (e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS || e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+				const lineNumber = e.target.position.lineNumber;
+				const model = monaco.editor.getModels()[0];
+				this.hoverDecorations = model.deltaDecorations(this.hoverDecorations, [
+					{
+						range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+						options: {
+							isWholeLine: true,
+							glyphMarginClassName: 'hover-breakpoint'
+						}
+					}
+				]);
+				return;
+			}
+			const model = monaco.editor.getModels()[0];
+			this.hoverDecorations = model.deltaDecorations(this.hoverDecorations, []);
+		},
+
+
+		updateBreakpoints() {
+			const model = monaco.editor.getModels()[0];
+			const decorations = model.deltaDecorations(this.decorations, this.breakpoints.map(line => ({
+				range: new monaco.Range(line, 1, line, 1),
+				options: {
+					isWholeLine: true,
+					glyphMarginClassName: 'breakpoint'
+				}
+			})));
+			this.decorations = decorations;
+		},
+
+		toggleBreakpoint(line: number) {
+			if (this.breakpoints.includes(line)) {
+				this.removeBreakpoint(line);
+			} else {
+				this.addBreakpoint(line);
+			}
+			console.log('Breakpoints:', this.breakpoints);
+
+		},
+		addBreakpoint(line: number) {
+			this.breakpoints.push(line);
+			this.updateBreakpoints();
+		},
+		removeBreakpoint(line: number) {
+			this.breakpoints = this.breakpoints.filter(b => b !== line);
+			this.updateBreakpoints();
+		}
 	}
 })
 </script>
@@ -75,5 +141,17 @@ export default defineComponent({
     height: 100%
     .monaco-editor
         border: 1px var(--color-light) solid
-        overflow: hidden
+        overflow-y: visible
+.monaco-editor
+    .hover-breakpoint::after, .breakpoint::after
+        content: ''
+        background-color: var(--color-system-error)
+        width: 10px
+        height: 10px
+        border-radius: 50%
+        display: inline-block
+        cursor: pointer
+        opacity: 0.2
+    .breakpoint::after
+        opacity: 1
 </style>
