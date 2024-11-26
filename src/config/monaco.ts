@@ -2,7 +2,9 @@ import * as monaco from 'monaco-editor';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
 import { InstructionDef, InstructionType, MemOp } from '../assets/js/interfaces/instruction';
-import completions from './monaco/completions';
+import completionsProvider from './monaco/completionsProvider';
+import hoverProvider from './monaco/hoverProvider';
+import definitionProvider from './monaco/definitionProvider';
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -44,13 +46,31 @@ monaco.languages.setLanguageConfiguration('asm', {
 
 
 // Completion Item Provider
-monaco.languages.registerCompletionItemProvider('asm', completions);
+monaco.languages.registerCompletionItemProvider('asm', completionsProvider);
+
+// Hover Provider
+monaco.languages.registerHoverProvider('asm', hoverProvider);
+
+// Definition Provider
+monaco.languages.registerDefinitionProvider('asm', definitionProvider);
+
 
 // Validator
 export function validate(model: monaco.editor.ITextModel) {
     const lines = model.getLinesContent();
     const errors: monaco.editor.IMarkerData[] = [];
     console.log('Validating', lines);
+
+
+    monaco.editor.setModelMarkers(model, 'breakpoints', [{
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: 1,
+        endColumn: 1,
+        message: 'Breakpoint',
+        severity: monaco.MarkerSeverity.Hint,
+    }]);
+
 
     lines.forEach((line: string, index: number) => {
         const mnemonic = line.trim().split(' ')[0];
@@ -143,6 +163,8 @@ monaco.editor.defineTheme('dlx', {
     rules: rules,
     colors: {}
 });
+
+
 
 // monaco.editor.
 
