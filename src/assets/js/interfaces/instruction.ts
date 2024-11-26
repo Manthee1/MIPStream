@@ -45,6 +45,7 @@ interface InstructionDef {
     ALUopcode: ALUopcode;
     memOp?: MemOp;
     operands?: Array<OperandType>;
+    description?: string;
 }
 
 export { InstructionType, OperandType, MemOp };

@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor';
-import * as themeData from 'monaco-themes/themes/Dawn.json';
+// import * as themeData from 'monaco-themes/themes/Dawn.json';
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
-import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
+import { InstructionDef, InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -40,16 +40,45 @@ monaco.languages.setLanguageConfiguration('asm', {
     },
 });
 
-// Completion Item Provider
-const registerSuggestions = registers.map((register) => ({
-    label: register,
-    kind: monaco.languages.CompletionItemKind.Variable,
-    insertText: register + ',',
-}));
 
+function getRegisterCompletions(addComma: boolean = false, includeZero: boolean = false, triggerSuggest: boolean = false): monaco.languages.CompletionList {
+
+    let list = registers.map((register) => ({
+        label: register,
+        kind: monaco.languages.CompletionItemKind.Variable,
+        insertText: register + (addComma ? ', ' : ''),
+        detail: 'Register',
+        documentation: {
+            value: `Register ${register}`,
+            isTrusted: true,
+        },
+        command: triggerSuggest ? { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' } : undefined,
+    })) as monaco.languages.CompletionItem[];
+    if (!includeZero)
+        list.shift();
+
+    return {
+        suggestions: list,
+    };
+}
+
+function getInstructionSyntax(instruction: InstructionDef) {
+    switch (instruction.type) {
+        case InstructionType.R:
+            return `${instruction.mnemonic} Rd, Rs1, Rs2`;
+        case InstructionType.I:
+            if (instruction.memOp == MemOp.LOAD || instruction.memOp == MemOp.STORE)
+                return `${instruction.mnemonic} Rd, imm(Rn)`;
+            return `${instruction.mnemonic} Rd, Rs, imm`;
+        case InstructionType.J:
+            return `${instruction.mnemonic} label`;
+    }
+}
+
+// Completion Item Provider
 monaco.languages.registerCompletionItemProvider('asm', {
     triggerCharacters: [' ', '\t'],
-    provideCompletionItems: (model, position, context, token) => {
+    provideCompletionItems: (model, position, context, token): monaco.languages.CompletionList => {
         const line = model.getLineContent(position.lineNumber);
         const lineUntilPosition = line.substring(0, position.column - 1);
 
@@ -60,46 +89,40 @@ monaco.languages.registerCompletionItemProvider('asm', {
                     kind: monaco.languages.CompletionItemKind.Method,
                     insertText: instruction.mnemonic + ' ',
                     command: { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
+                    detail: getInstructionSyntax(instruction),
+                    documentation: {
+                        value: instruction.description,
+                        isTrusted: true,
+                    }
+                })) as monaco.languages.CompletionItem[]
 
-                })),
             };
         }
 
+        // Find the instruction
         const mnemonic = line.trim().split(' ')[0];
         const instruction = INSTRUCTION_SET.find((instruction) => instruction.mnemonic === mnemonic);
 
         if (!instruction || instruction.mnemonic === 'NOP' || instruction.mnemonic === 'HALT') return { suggestions: [] };
 
         const registerCount = lineUntilPosition.match(registerRegex)?.length ?? 0;
+
+
+        // R-type instructions
         if (instruction.type === InstructionType.R) {
-            // If there are 3 registers already. use regex match find how many registers are there
+            // Only 3 registers are allowed for R-type instructions. 
             if (registerCount === 3) return { suggestions: [] };
 
-            const isLastRegister = registerCount === 2;
-            return {
-                suggestions: registers.map((register) => ({
-                    label: register,
-                    kind: monaco.languages.CompletionItemKind.Variable,
-                    insertText: register + (isLastRegister ? '' : ', '),
-                    command: isLastRegister ? undefined : { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
-
-                })),
-            };
+            const isLastRegister = (registerCount === 2);
+            return getRegisterCompletions(!isLastRegister, false, !isLastRegister);
         }
 
+
+        // I-type instructions
         if (instruction.type === InstructionType.I) {
 
             // If there is no register
-            if (lineUntilPosition.trim().split(',').length === 1) {
-                return {
-                    suggestions: registers.map((register) => ({
-                        label: register,
-                        kind: monaco.languages.CompletionItemKind.Variable,
-                        insertText: register + ', ',
-                        command: { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
-                    })),
-                };
-            }
+            if (registerCount == 0) return getRegisterCompletions(true, true, true);
 
             // If the instruction is a load or store instruction
             if (instruction.memOp == MemOp.LOAD || instruction.memOp == MemOp.STORE) {
@@ -113,22 +136,20 @@ monaco.languages.registerCompletionItemProvider('asm', {
                                 kind: monaco.languages.CompletionItemKind.Snippet,
                                 insertText: '${1:imm}(${2:Rn})',
                                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                detail: 'Memory Address',
+                                documentation: {
+                                    value: 'imm is the immediate value and Rn is the register number. The value of Rn is added to imm to get the memory address',
+                                    isTrusted: true
+                                },
                             },
-                        ],
+                        ] as monaco.languages.CompletionItem[]
                     };
                 }
             }
 
-            if (registerCount === 1) {
-                return {
-                    suggestions: registers.map((register) => ({
-                        label: register,
-                        kind: monaco.languages.CompletionItemKind.Variable,
-                        insertText: register + ', ',
-                        command: { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
-                    })),
-                };
-            }
+            if (registerCount === 1)
+                return getRegisterCompletions(true, false, true);
+
 
 
             return {
@@ -137,8 +158,8 @@ monaco.languages.registerCompletionItemProvider('asm', {
                         label: 'immediate',
                         kind: monaco.languages.CompletionItemKind.Constant,
                         insertText: '0',
-                    },
-                ],
+                    }
+                ] as monaco.languages.CompletionItem[]
             };
 
 
@@ -190,5 +211,7 @@ monaco.editor.defineTheme('dlx', {
     rules: rules,
     colors: {}
 });
+
+// monaco.editor.
 
 export default monaco;

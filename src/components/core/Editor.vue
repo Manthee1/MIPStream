@@ -12,46 +12,59 @@
 <script lang="ts">
 
 import { defineComponent } from 'vue';
-import {default as monaco, validate} from "../../config/monaco";
+import { default as monaco, validate } from "../../config/monaco";
 
 export default defineComponent({
-    data() {
-        return {
-        }
-    },
-    props: {
-        modelValue: String
-    },
+	data() {
+		return {
+		}
+	},
+	props: {
+		modelValue: String
+	},
 
-    mounted() {
-        const editorEl = this.$refs.editor as HTMLElement;
-        monaco.editor.create(editorEl, {
-            language: 'asm',
-            minimap: {
-                enabled: true
-            },
-            automaticLayout: true,
-            theme: 'dlx',
-            padding: {
-                top: 10,
-                bottom: 10
-            },
-            value: this.modelValue
-        });
-        const model = monaco.editor.getModels()[0];
-        validate(model);
-        // Listener for changes in the editor
-        this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
-        monaco.editor.getModels()[0].onDidChangeContent(() => {
-            console.log('Content changed');
-            console.log(monaco.editor.getModels()[0].getValue());
-            const code = monaco.editor.getModels()[0].getValue();
-            this.$dlxStore.program = code;
-            this.$emit('update:modelValue', code);
-            validate(model);
-        });
+	mounted() {
+		const editorEl = this.$refs.editor as HTMLElement;
+		monaco.editor.create(editorEl, {
+			language: 'asm',
+			minimap: {
+				enabled: true
+			},
+			automaticLayout: true,
+			theme: 'dlx',
+			padding: {
+				top: 10,
+				bottom: 10
+			},
+			value: this.modelValue,
+			parameterHints: {
+				enabled: true
+			},
 
-    }
+			suggest: {
+				snippetsPreventQuickSuggestions: false,
+				showSnippets: true,
+				preview: true,
+			}
+		});
+		const model = monaco.editor.getModels()[0];
+		validate(model);
+		// Listener for changes in the editor
+		this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
+		monaco.editor.getModels()[0].onDidChangeContent(() => {
+			console.log('Content changed');
+			console.log(monaco.editor.getModels()[0].getValue());
+			const code = monaco.editor.getModels()[0].getValue();
+			this.$dlxStore.program = code;
+			this.$emit('update:modelValue', code);
+			validate(model);
+		});
+
+	},
+
+	beforeUnmount() {
+		monaco.editor.getModels()[0].dispose();
+	}
 })
 </script>
 <style lang="sass">
