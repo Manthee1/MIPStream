@@ -1,3 +1,4 @@
+import { loadProjects } from "../storage/projectsStorage";
 import { useViewStore } from "../stores/viewStore";
 import { DropdownItem } from "../types";
 
@@ -19,8 +20,8 @@ export function createConfig() {
         openItem:
         {
             label: 'Open',
-            action: () => {
-                console.log('Open clicked');
+            action: (context) => {
+                
             }
         },
         openRecentItem:
@@ -30,26 +31,15 @@ export function createConfig() {
                 console.log('Open clicked');
             },
             type: 'submenu',
-            items: [
-                {
-                    label: 'File 1',
-                    action: () => {
-                        console.log('File 1 clicked');
-                    }
-                },
-                {
-                    label: 'File 2',
-                    action: () => {
-                        console.log('File 2 clicked');
-                    }
-                },
-                {
-                    label: 'File 3',
-                    action: () => {
-                        console.log('File 3 clicked');
+            items: loadProjects(true).map((project) => {
+                return {
+                    label: project.name,
+                    action: (context) => {
+                        console.log('Open Recent clicked');
+                        context.$router.push({ name: 'Workspace', params: { id: project.id } });
                     }
                 }
-            ]
+            })
         },
         saveItem:
         {
@@ -60,7 +50,7 @@ export function createConfig() {
         },
         saveAsItem:
         {
-            label: 'Save As',
+            label: 'Download',
             action: () => {
                 console.log('Save As clicked');
             }
@@ -96,7 +86,15 @@ export function createConfig() {
             label: 'Exit',
             action: async () => {
                 console.log('Exit clicked');
-                const confirmed = await viewStore.confirm('Are you sure you want to exit? 🥺', '', 'Exit', 'Stay');
+                const confirmed = await viewStore.confirm({
+                    title: 'Exit',
+                    message: 'Are you sure you want to exit?',
+                    confirmText: 'Exit',
+                    cancelText: 'Cancel'
+                });
+                if (confirmed) {
+                    window.close();
+                }
             }
         }
     }

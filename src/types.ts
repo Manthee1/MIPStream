@@ -1,6 +1,8 @@
+import { ComponentCustomProperties } from "vue";
+
 export interface DropdownItem {
     label?: string;
-    action?: () => void;
+    action?: (context: ComponentCustomProperties) => void;
     type?: 'item' | 'separator' | 'submenu';
     items?: DropdownItem[]; // Only for submenu
 }

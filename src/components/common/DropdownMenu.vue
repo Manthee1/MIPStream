@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { ComponentCustomProperties, defineComponent } from "vue";
 import { DropdownItem } from "../../types";
 
 
@@ -42,10 +42,13 @@ export default defineComponent({
 
   methods: {
     itemClicked(item: DropdownItem) {
-      item.action && item.action();
+      console.log(this.$context);
+      // item.action 
+      item.action && item.action(this.$context as unknown as ComponentCustomProperties);
     },
     handleMouseMove(event: MouseEvent) {
         console.log('mouse move');
+        
         
     //   If the mouse is moving, get the dropdown item that is being hovered and set it as the last hovered item
         const dropdownItems = document.querySelectorAll('.dropdown-item');

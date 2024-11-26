@@ -23,18 +23,20 @@ const settings = useSettingsStore();
 
 declare module '@vue/runtime-core' {
     interface ComponentCustomProperties {
+        $context: typeof app.config.globalProperties
         $dlxStore: ReturnType<typeof useDlxStore>
         $settings: ReturnType<typeof useSettingsStore>
         $viewStore: ReturnType<typeof useViewStore>
         $confirm: (data: ModalData) => Promise<boolean | string>
         $prompt: (data: ModalData) => Promise<boolean | string>
         $router: typeof router
-        $route: typeof router
+        $route: typeof router.currentRoute
     }
 }
 // @ts-ignore
 window.dlxStore = dlxStore;
 
+app.config.globalProperties.$context = app.config.globalProperties
 app.config.globalProperties.$dlxStore = dlxStore;
 app.config.globalProperties.$settings = settings;
 app.config.globalProperties.$viewStore = viewStore;
