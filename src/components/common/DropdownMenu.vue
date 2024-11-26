@@ -1,7 +1,7 @@
 <template>
   <ul class="dropdown-menu" @mousemove="handleMouseMove">
         <template v-for="(item, index) in items" :key="item.label" >
-            <li class="dropdown-item" @click="item.action" v-if="item.type == 'item'">
+            <li class="dropdown-item" @click="itemClicked(item)" v-if="item.type == 'item'">
                 {{ item.label }}
             </li>
             <li v-else-if="item.type === 'separator'" class="dropdown-separator"></li>

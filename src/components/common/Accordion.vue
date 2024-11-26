@@ -26,11 +26,15 @@ export default defineComponent({
         icon: {
             type: String,
             required: false
+        },
+        open: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
         return {
-            isOpen: false
+            isOpen: this.open
         };
     },
     methods: {

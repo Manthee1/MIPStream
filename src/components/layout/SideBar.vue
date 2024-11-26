@@ -1,12 +1,12 @@
 <template>
     <div class="sidebar">
-        <Accordion label="Stages" icon="layers">
+        <Accordion open label="Stages" icon="layers">
             <Stages />
         </Accordion>
-        <Accordion label="Registers" icon="hard-drive">
+        <Accordion open label="Registers" icon="hard-drive">
             <Registers />
         </Accordion>
-        <Accordion label="Memory" icon="database">
+        <Accordion open label="Memory" icon="database">
             <Memory />
         </Accordion>
     </div>
