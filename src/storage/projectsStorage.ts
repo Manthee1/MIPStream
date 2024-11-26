@@ -25,7 +25,15 @@ export const createProject = (name: string): Project => {
         size: 0
     };
 
-    saveProject(project);
+    console.log('Creating project', project);
+
+
+    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    if (projects.some((p: Project) => p.name === name))
+        throw new Error('Project with the same name already exists');
+
+    projects.push(project);
+    saveToStorage(PROJECTS_KEY, projects);
 
     return project;
 }
@@ -34,17 +42,17 @@ export const saveProject = (project: Project) => {
     const projects = loadFromStorage(PROJECTS_KEY) || [];
     const existingProjectIndex = projects.findIndex((p: Project) => p.id === project.id);
 
-    if (existingProjectIndex !== -1) {
-        projects[existingProjectIndex] = project;
-    } else {
-        projects.push(project);
-    }
+    if (existingProjectIndex === -1)
+        throw new Error('Project does not exist');
+    projects[existingProjectIndex] = project;
+
 
     saveToStorage(PROJECTS_KEY, projects);
 };
 
 export const loadProjects = (loadOnlyMetadata: boolean = false): Project[] => {
     const projects = loadFromStorage(PROJECTS_KEY) || [];
+    // Remove empty projects
     if (loadOnlyMetadata) {
         return projects.map((project: Project) => ({
             id: project.id,

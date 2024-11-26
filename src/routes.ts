@@ -21,9 +21,8 @@ const routes: RouteRecordRaw[] = [
 
             const id = to.params.id.toString();
             const project = existsProject(id);
-            if (!project) {
-                next({ name: 'Home' });
-            }
+            if (!project) next({ name: 'Home' });
+
             next();
         }
     },
