@@ -11,6 +11,9 @@
     
     <!-- Modal -->
     <Modal />
+    
+    <!-- Notifications -->
+    <notifications position="bottom left" :pauseOnHover='true' />
 </template>
 
 <script lang="ts">
@@ -18,7 +21,7 @@ import { defineComponent } from 'vue';
 import TopBar from '@/components/layout/TopBar.vue';
 import Settings from './components/windows/Settings.vue';
 import Window from './components/common/Window.vue';
-import Modal from './components/singleton/Modal.vue';
+import Modal from './components/singletons/Modal.vue';
 
 export default defineComponent({
 	name: 'App',

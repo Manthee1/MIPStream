@@ -6,7 +6,7 @@ import { useDlxStore } from './stores/dlxStore'
 import { useViewStore } from './stores/viewStore'
 import { useSettingsStore } from './stores/settingsStore'
 import VueFeather from 'vue-feather';
-import Notifications from 'vue-notification'
+import Notifications from '@kyvg/vue3-notification';
 
 import { initRouter } from './router'
 import { ModalData } from "./types";
