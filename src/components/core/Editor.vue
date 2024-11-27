@@ -3,15 +3,16 @@
 </script>
 
 <template>
-    <div ref="editor" class="editor-container">
-        <!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$dlxStore.program" </div> -->
-        <!-- <div id="editor" ref="editor"> </div> -->
-    </div>
+	<div ref="editor" class="editor-container">
+		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$dlxStore.program" </div> -->
+		<!-- <div id="editor" ref="editor"> </div> -->
+	</div>
 </template>
 
 <script lang="ts">
 
 import { defineComponent } from 'vue';
+import { getStageName } from '../../assets/js/utils';
 import { default as monaco, validate } from "../../config/monaco";
 
 export default defineComponent({
@@ -19,7 +20,7 @@ export default defineComponent({
 		return {
 			decorations: [] as string[],
 			hoverDecorations: [] as string[],
-			breakpoints: [] as number[],
+			stageDecorations: [] as string[]
 		}
 	},
 	props: {
@@ -80,6 +81,35 @@ export default defineComponent({
 	beforeUnmount() {
 		monaco.editor.getModels()[0].dispose();
 	},
+
+	computed: {
+		currentPC(): number {
+			return this.$dlxStore.DLXCore.cpu.PC;
+		}
+	},
+	watch: {
+		currentPC(newVal: number) {
+			const model = monaco.editor.getModels()[0];
+			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
+				const stageName = getStageName(index);
+				const stage = this.$dlxStore.DLXCore.cpu.stages[index];
+				const line = this.$dlxStore.getStageLine(index);
+				if (line == -1)
+					return [];
+				return [
+					{
+						range: new monaco.Range(+line, 1, +line, 1),
+						options: {
+							isWholeLine: true,
+							className: 'run-line-' + stageName + ' run-line'
+						}
+					}
+				]
+			}).flat());
+
+		}
+
+	},
 	methods: {
 		handleMouseMove(e: monaco.editor.IEditorMouseEvent) {
 			if (e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS || e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
@@ -103,7 +133,7 @@ export default defineComponent({
 
 		updateBreakpoints() {
 			const model = monaco.editor.getModels()[0];
-			const decorations = model.deltaDecorations(this.decorations, this.breakpoints.map(line => ({
+			const decorations = model.deltaDecorations(this.decorations, this.$dlxStore.breakpoints.map(line => ({
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
 					isWholeLine: true,
@@ -114,20 +144,20 @@ export default defineComponent({
 		},
 
 		toggleBreakpoint(line: number) {
-			if (this.breakpoints.includes(line)) {
+			if (this.$dlxStore.breakpoints.includes(line)) {
 				this.removeBreakpoint(line);
 			} else {
 				this.addBreakpoint(line);
 			}
-			console.log('Breakpoints:', this.breakpoints);
+			console.log('Breakpoints:', this.$dlxStore.breakpoints);
 
 		},
 		addBreakpoint(line: number) {
-			this.breakpoints.push(line);
+			this.$dlxStore.breakpoints.push(line);
 			this.updateBreakpoints();
 		},
 		removeBreakpoint(line: number) {
-			this.breakpoints = this.breakpoints.filter(b => b !== line);
+			this.$dlxStore.breakpoints = this.$dlxStore.breakpoints.filter(b => b !== line);
 			this.updateBreakpoints();
 		}
 	}
@@ -135,23 +165,62 @@ export default defineComponent({
 </script>
 <style lang="sass">
 .editor-container
-    min-width: 300px
-    flex: 1 1 auto
-    width: 100%
-    height: 100%
-    .monaco-editor
-        border: 1px var(--color-light) solid
-        overflow-y: visible
+	min-width: 300px
+	flex: 1 1 auto
+	width: 100%
+	height: 100%
+	.monaco-editor
+		border: 1px var(--color-light) solid
+		overflow-y: visible
 .monaco-editor
-    .hover-breakpoint::after, .breakpoint::after
-        content: ''
-        background-color: var(--color-system-error)
-        width: 10px
-        height: 10px
-        border-radius: 50%
-        display: inline-block
-        cursor: pointer
-        opacity: 0.2
-    .breakpoint::after
-        opacity: 1
+	.breakpoint, .hover-breakpoint
+		cursor: pointer
+	.hover-breakpoint::after, .breakpoint::after
+		content: ''
+		width: 10px
+		height: 10px
+		border: 1px solid var(--color-system-error)
+		background-color: color-mix(in srgb, var(--color-system-error), var(--color-white) 90%)
+		border-radius: 50%
+		display: inline-block
+		cursor: pointer
+		// opacity: 0.2
+	.breakpoint::after
+		background-color: var(--color-system-error)
+		opacity: 1
+	.run-line::after
+		content: ''
+		position: absolute
+		right: 2ch
+		font-size: 0.8em
+		// border-radius: 5px
+		padding: 2px 2px
+		line-height: 0.9em
+	.run-line
+		border: 2px solid
+	.run-line-IF
+		border-color: #FFD70030
+		&::after
+			background-color: #FFD70030
+			content: 'IF'
+	.run-line-ID
+		border-color: #00FF0030
+		&::after
+			background-color: #00FF0030
+			content: 'ID'
+	.run-line-EX
+		border-color: #fa807230
+		&::after
+			background-color: #fa807230
+			content: 'EX'
+	.run-line-MEM
+		border-color: #87ceeb30
+		&::after
+			background-color: #87ceeb30
+			content: 'MEM'
+	.run-line-WB
+		border-color: #ff69b430
+		&::after
+			background-color: #ff69b430
+			content: 'WB'
 </style>

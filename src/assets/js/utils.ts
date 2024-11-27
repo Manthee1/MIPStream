@@ -124,3 +124,8 @@ export function getStageName(stage: number): string {
             return "INVALID";
     }
 }
+
+
+export function wait(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

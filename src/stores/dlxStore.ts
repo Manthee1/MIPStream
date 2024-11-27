@@ -1,22 +1,47 @@
 import { defineStore } from 'pinia'
 import DLXCore from '../assets/js/core/DLXCore'
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
+import { wait } from '../assets/js/utils';
 
 
 export const useDlxStore = defineStore('dlx', {
     state: () => ({
         DLXCore: new DLXCore(),
         program: '' as string,
-        status: 'stopped' as | 'running' | 'stopped' | 'paused',
+        status: 'stopped' as ('running' | 'stopped' | 'paused'),
+        speed: 0 as number, // cycles per second
+        breakpoints: [] as number[],
+        PCToLineMap: [] as number[],
 
     }),
     getters: {
 
     },
     actions: {
+
+        getStageLine(stage: number): number {
+            return this.PCToLineMap[this.DLXCore.cpu.stages[stage].NPC - 3] ?? -1;
+        },
+
+        mapPCToLine() {
+            const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
+            const PCToLineMap: number[] = [];
+            let line = 1;
+            for (let i = 0; i < program.length; i++) {
+                PCToLineMap.push(line);
+                if (program[i].trim() !== '') line++;
+
+            }
+            this.PCToLineMap = PCToLineMap;
+        },
+
         loadProgram() {
             this.status = 'paused';
+            this.mapPCToLine();
+            console.log(this.PCToLineMap);
+
             const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
+
             console.log(program);
 
             this.DLXCore.loadProgram(program);
@@ -35,15 +60,28 @@ export const useDlxStore = defineStore('dlx', {
         },
         run() {
             this.loadProgram();
+            this.status = 'running';
+            this.resume();
+        },
+
+        async resume() {
             const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
             this.status = 'running';
             // Run until the program is finished
             while (this.status == 'running' && this.DLXCore.cpu.stages[4].IR?.opcode !== haltOpcode) {
                 this.DLXCore.runCycle();
+                console.log(this.breakpoints, this.PCToLineMap[this.DLXCore.cpu.PC]);
+                if (this.breakpoints.includes(this.PCToLineMap[this.DLXCore.cpu.PC])) {
+                    this.status = 'paused';
+                    return;
+                }
+                if (this.status as string === 'paused') return;
+                await wait(1000 / this.speed);
+
             }
 
             this.status = 'stopped';
-        },
+        }
 
     }
 })
