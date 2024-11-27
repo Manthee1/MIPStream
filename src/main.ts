@@ -6,12 +6,12 @@ import { useDlxStore } from './stores/dlxStore'
 import { useViewStore } from './stores/viewStore'
 import { useSettingsStore } from './stores/settingsStore'
 import VueFeather from 'vue-feather';
+import Notifications from 'vue-notification'
 
 import { initRouter } from './router'
 import { ModalData } from "./types";
 
 const pinia = createPinia()
-
 
 const app = createApp(App);
 
@@ -31,6 +31,7 @@ declare module '@vue/runtime-core' {
         $prompt: (data: ModalData) => Promise<boolean | string>
         $router: typeof router
         $route: typeof router.currentRoute
+        $notify: (options: NotificationOptions | string) => void
     }
 }
 // @ts-ignore
@@ -45,6 +46,7 @@ app.config.globalProperties.$prompt = viewStore.prompt;
 
 const router = initRouter();
 app.use(router);
+app.use(Notifications);
 
 app.component(VueFeather.name ?? '', VueFeather);
 
