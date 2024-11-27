@@ -20,7 +20,8 @@ export default defineComponent({
 		return {
 			decorations: [] as string[],
 			hoverDecorations: [] as string[],
-			stageDecorations: [] as string[]
+			stageDecorations: [] as string[],
+			editor: null as monaco.editor.IStandaloneCodeEditor | null
 		}
 	},
 	props: {
@@ -52,7 +53,9 @@ export default defineComponent({
 				preview: true,
 			}
 		});
-		const model = monaco.editor.getModels()[0];
+		this.editor = editor;
+		const model = editor.getModel();
+		if (!model) return;
 		validate(model);
 
 
@@ -89,7 +92,8 @@ export default defineComponent({
 	},
 	watch: {
 		currentPC(newVal: number) {
-			const model = monaco.editor.getModels()[0];
+			const model = this.editor?.getModel();
+			if (!model) return;
 			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
 				const stageName = getStageName(index);
 				const stage = this.$dlxStore.DLXCore.cpu.stages[index];
@@ -112,9 +116,10 @@ export default defineComponent({
 	},
 	methods: {
 		handleMouseMove(e: monaco.editor.IEditorMouseEvent) {
+			const model = this.editor?.getModel();
+			if (!model) return;
 			if (e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS || e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
 				const lineNumber = e.target.position.lineNumber;
-				const model = monaco.editor.getModels()[0];
 				this.hoverDecorations = model.deltaDecorations(this.hoverDecorations, [
 					{
 						range: new monaco.Range(lineNumber, 1, lineNumber, 1),
@@ -126,13 +131,13 @@ export default defineComponent({
 				]);
 				return;
 			}
-			const model = monaco.editor.getModels()[0];
 			this.hoverDecorations = model.deltaDecorations(this.hoverDecorations, []);
 		},
 
 
 		updateBreakpoints() {
-			const model = monaco.editor.getModels()[0];
+			const model = this.editor?.getModel();
+			if (!model) return;
 			const decorations = model.deltaDecorations(this.decorations, this.$dlxStore.breakpoints.map(line => ({
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
