@@ -11,7 +11,7 @@
                     <div v-if="type=='prompt'" class="input-wrapper">
                         <input v-model="$viewStore.modalData.input" :placeholder="inputPlaceholder" type="text" />
                         <span class="error" v-if="error?.trim()?.length > 0">{{ error }}</span>
-                    </div>                    
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <MButton outlined @click="cancelAction">{{ cancelText }}</MButton>
@@ -27,72 +27,72 @@ import { defineComponent } from 'vue';
 import MButton from '@/components/common/MButton.vue';
 
 export default defineComponent({
-    name: 'Modal',
-    components: {
-        MButton
-    },
-    data() {
-        return {
-            error: '',
-        };
-    },
-    computed: {
-        show() {
-            return this.$viewStore.modalData.show;
-        },
-        type() {
-            return this.$viewStore.modalData.type;
-        },
-        title() {
-            return this.$viewStore.modalData.title;
-        },
-        message() {
-            return this.$viewStore.modalData.message;
-        },
-        onConfirm() {
-            return this.$viewStore.modalData?.onConfirm ?? (() => {});
-        },
-        confirmText() {
-            return this.$viewStore.modalData.confirmText;
-        },
-        onCancel() {
-            return this.$viewStore.modalData?.onCancel ?? (() => {});
-        },
-        cancelText() {
-            return this.$viewStore.modalData.cancelText;
-        },
-        input() {
-            return this.$viewStore.modalData.input;
-        },
-        inputPlaceholder() {
-            return this.$viewStore.modalData.inputPlaceholder;
-        },
-        verifyInput() {
-            return this.$viewStore.modalData?.verifyInput ?? ((input) => true);
-        }
-    },
-    methods: {
-        confirmAction() {
+	name: 'Modal',
+	components: {
+		MButton
+	},
+	data() {
+		return {
+			error: '',
+		};
+	},
+	computed: {
+		show() {
+			return this.$viewStore.modalData.show;
+		},
+		type() {
+			return this.$viewStore.modalData.type;
+		},
+		title() {
+			return this.$viewStore.modalData.title;
+		},
+		message() {
+			return this.$viewStore.modalData.message;
+		},
+		onConfirm() {
+			return this.$viewStore.modalData?.onConfirm ?? (() => { });
+		},
+		confirmText() {
+			return this.$viewStore.modalData.confirmText;
+		},
+		onCancel() {
+			return this.$viewStore.modalData?.onCancel ?? (() => { });
+		},
+		cancelText() {
+			return this.$viewStore.modalData.cancelText;
+		},
+		input() {
+			return this.$viewStore.modalData.input;
+		},
+		inputPlaceholder() {
+			return this.$viewStore.modalData.inputPlaceholder;
+		},
+		verifyInput() {
+			return this.$viewStore.modalData?.verifyInput ?? ((input) => true);
+		}
+	},
+	methods: {
+		confirmAction() {
 
-            console.log('confirmAction', this.$viewStore.modalData);
-            
-            if (this.type == 'prompt') {
-                try {
-                    this.verifyInput(this.input);
-                } catch (error: any) {
-                    this.error = error;
-                    return;
-                }
-                this.error = '';
-                
-            }
+			console.log('confirmAction', this.$viewStore.modalData);
 
-            this.onConfirm();
-        },
-        cancelAction() {
-            this.onCancel();
-        }
-    }
+			if (this.type == 'prompt') {
+				try {
+					this.verifyInput(this.input);
+				} catch (error: any) {
+					this.error = error;
+					return;
+				}
+				this.error = '';
+
+			}
+
+			this.onConfirm();
+		},
+		cancelAction() {
+			this.onCancel();
+		}
+	}
 });
 </script>
 
@@ -112,7 +112,6 @@ export default defineComponent({
     opacity: 1
     transition: opacity 0.1s
 
-
     .modal-content
         position: relative
         background-color: var(--color-background)
@@ -123,7 +122,7 @@ export default defineComponent({
         min-width: 500px
         max-width: 800px
         scale: 1
-        transition: scale 0.1s 
+        transition: scale 0.1s
         .close-button
             position: absolute
             top: 1rem
@@ -133,8 +132,6 @@ export default defineComponent({
         justify-content: space-between
         align-items: center
         margin-bottom: 0rem
-    
-            
 
     .modal-body
         margin-bottom: 1rem
@@ -143,7 +140,7 @@ export default defineComponent({
             flex-flow: column nowrap
             gap: 0.8rem
             margin-top: 1rem
-         
+
             .error
                 color: var(--color-system-error)
 

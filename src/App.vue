@@ -1,14 +1,14 @@
 <template>
-    <TopBar fileName="Test"/>
+    <TopBar fileName="Test" />
     <main>
         <router-view />
     </main>
-        <div class="settings-wrapper" v-if="$viewStore.showSettings">
+    <div class="settings-wrapper" v-if="$viewStore.showSettings">
         <Window title="Settings" class="settings-window" closeable :onClose="$viewStore.toggleSettings">
             <Settings />
         </Window>
     </div>
-
+    
     <!-- Modal -->
     <Modal />
 </template>
@@ -18,16 +18,16 @@ import { defineComponent } from 'vue';
 import TopBar from '@/components/layout/TopBar.vue';
 import Settings from './components/windows/Settings.vue';
 import Window from './components/common/Window.vue';
-import Modal from './components/common/Modal.vue';
+import Modal from './components/singleton/Modal.vue';
 
 export default defineComponent({
-    name: 'App',
-    components: {
-        TopBar,
-        Settings,
-        Window,
-        Modal,
-    },
+	name: 'App',
+	components: {
+		TopBar,
+		Settings,
+		Window,
+		Modal,
+	},
 });
 </script>
 
@@ -46,6 +46,4 @@ export default defineComponent({
     justify-content: center
     align-items: center
     z-index: 100
-
-
 </style>
