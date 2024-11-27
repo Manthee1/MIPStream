@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import DLXCore from '../assets/js/core/DLXCore'
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
-import { wait } from '../assets/js/utils';
+import { wait } from '../assets/js/utils'
+import { notify } from "@kyvg/vue3-notification";
 
 
 export const useDlxStore = defineStore('dlx', {
@@ -12,6 +13,7 @@ export const useDlxStore = defineStore('dlx', {
         speed: 0 as number, // cycles per second
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
+        errors: [] as string[],
 
     }),
     getters: {
@@ -41,8 +43,19 @@ export const useDlxStore = defineStore('dlx', {
             const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
 
             console.log(program);
-
-            this.DLXCore.loadProgram(program);
+            try {
+                this.errors = [];
+                this.DLXCore.loadProgram(program);
+            } catch (errors: any) {
+                const errorMessage = 'Error/s occurred while loading the program';
+                this.errors = errors;
+                notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: errorMessage,
+                });
+                this.status = 'stopped';
+            }
         },
         step() {
             if (this.status != 'paused') return;
@@ -58,7 +71,7 @@ export const useDlxStore = defineStore('dlx', {
         },
         run() {
             this.loadProgram();
-            this.status = 'running';
+            if (this.status === 'stopped') return;
             this.resume();
         },
 

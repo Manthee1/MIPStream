@@ -37,7 +37,7 @@ export default class DLXCore {
 
         const instructionOpcode = INSTRUCTION_SET.findIndex((instructionDef) => instructionDef.mnemonic === mnemonic);
 
-        if (instructionOpcode == -1) throw new Error(`Invalid instruction: ${mnemonic}`);
+        if (instructionOpcode == -1) throw new Error(`Invalid instruction: ${mnemonic}.`);
 
         const instructionDef = INSTRUCTION_SET[instructionOpcode];
 
@@ -47,17 +47,17 @@ export default class DLXCore {
         switch (instructionDef.type) {
             case InstructionType.R:
 
-                if (operands.length !== 3) throw new Error(`Invalid number of operands for instruction ${mnemonic}`);
+                if (operands.length !== 3) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
                 // Check if operands are registers
-                if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}`);
-                if (!isRegister(operands[1])) throw new Error(`Invalid register: ${operands[1]}`);
-                if (!isRegister(operands[2])) throw new Error(`Invalid register: ${operands[2]}`);
+                if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
+                if (!isRegister(operands[1])) throw new Error(`Invalid register: ${operands[1]}.`);
+                if (!isRegister(operands[2])) throw new Error(`Invalid register: ${operands[2]}.`);
                 const [rs1, rs2, rd] = [getRegisterNumber(operands[1]), getRegisterNumber(operands[2]), getRegisterNumber(operands[0])];
                 // Check if registers are valid
-                if (!isValidRegister(rs1)) throw new Error(`Invalid register: ${operands[1]}`);
-                if (!isValidRegister(rs2)) throw new Error(`Invalid register: ${operands[2]}`);
-                if (!isValidRegister(rd)) throw new Error(`Invalid register: ${operands[0]}`);
+                if (!isValidRegister(rs1)) throw new Error(`Invalid register: ${operands[1]}.`);
+                if (!isValidRegister(rs2)) throw new Error(`Invalid register: ${operands[2]}.`);
+                if (!isValidRegister(rd)) throw new Error(`Invalid register: ${operands[0]}.`);
 
 
                 encodedInstruction = {
@@ -71,30 +71,31 @@ export default class DLXCore {
             case InstructionType.I: {
                 let rd: number, rs: number, imm: number;
                 if (instructionDef.memOp == MemOp.STORE || instructionDef.memOp == MemOp.LOAD) {
-                    if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}`);
+                    if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
                     // Check if operands are valid
-                    if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}`);
-                    if (!isEffectiveAddress(operands[1])) throw new Error(`Invalid effective address: ${operands[1]}`);
+                    if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
+                    if (!isEffectiveAddress(operands[1])) throw new Error(`Invalid effective address: ${operands[1]}.`);
                     [rd, rs, imm] = [getRegisterNumber(operands[0]), getEffectiveAddressRegister(operands[1]), getEffectiveAddressImm(operands[1])];
                 } else {
 
-                    if (operands.length !== 3) throw new Error(`Invalid number of operands for instruction ${mnemonic}`);
+                    if (operands.length !== 3) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
 
                     // Check if operands are valid
-                    if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}`);
-                    if (!isRegister(operands[1])) throw new Error(`Invalid register: ${operands[1]}`);
-                    if (!isValue(operands[2])) throw new Error(`Invalid immediate value: ${operands[2]}`);
+                    if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
+                    if (!isRegister(operands[1])) throw new Error(`Invalid register: ${operands[1]}.`);
+                    if (operands[2].trim() == '') throw new Error(`Immediate value is empty.`);
+                    if (!isValue(operands[2])) throw new Error(`Invalid immediate value: ${operands[2]}.`);
                     imm = parseInt(operands[2]);
-                    if (isXBit(imm, 16)) throw new Error(`Immediate value out of range: ${operands[2]}`);
+                    if (isXBit(imm, 16)) throw new Error(`Immediate value out of range: ${operands[2]}.`);
                     [rd, rs] = [getRegisterNumber(operands[0]), getRegisterNumber(operands[1])];
                 }
 
                 // Check if registers are valid
-                if (!isValidRegister(rd)) throw new Error(`Invalid register: ${operands[0]}`);
-                if (!isValidRegister(rs)) throw new Error(`Invalid register: ${operands[1]}`);
-                if (isXBit(imm, 16)) throw new Error(`Immediate value out of range: ${operands[1]}`);
+                if (!isValidRegister(rd)) throw new Error(`Invalid register: ${operands[0]}.`);
+                if (!isValidRegister(rs)) throw new Error(`Invalid register: ${operands[1]}.`);
+                if (isXBit(imm, 16)) throw new Error(`Immediate value out of range: ${operands[1]}.`);
 
                 encodedInstruction = {
                     opcode: instructionOpcode,
@@ -109,12 +110,12 @@ export default class DLXCore {
 
                 if (mnemonic === "HALT") return { opcode: instructionOpcode, offset: 0 } as InstructionJ;
 
-                if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}`);
+                if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
                 // Check if operands are valid
-                if (!isValue(operands[1])) throw new Error(`Invalid offset value: ${operands[1]}`);
+                if (!isValue(operands[1])) throw new Error(`Invalid offset value: ${operands[1]}.`);
                 const offset = parseInt(operands[1]);
-                if (isXBit(offset, 26)) throw new Error(`Offset value out of range: ${operands[1]}`);
+                if (isXBit(offset, 26)) throw new Error(`Offset value out of range: ${operands[1]}.`);
 
                 encodedInstruction = {
                     opcode: instructionOpcode,
@@ -124,7 +125,7 @@ export default class DLXCore {
                 break;
 
             default:
-                throw new Error(`Invalid instruction type: ${instructionDef.type}`);
+                throw new Error(`Invalid instruction type: ${instructionDef.type}.`);
         }
         return encodedInstruction;
     }
@@ -173,13 +174,26 @@ export default class DLXCore {
     }
 
 
-    loadProgram(program: Array<string>) {
+    loadProgram(program: Array<string>): never[] | void {
         this.reset();
+        let errors: string[] = []
+        let line = 0;
         program.forEach((instruction) => {
-            const encodedInstruction = this.encodeInstruction(instruction);
+            line++;
+            let encodedInstruction;
+            try {
+                encodedInstruction = this.encodeInstruction(instruction);
+                this.memory.instructions.push(encodedInstruction);
+            } catch (error: any) {
+                errors.push("Syntax Error on line " + line + ": " + error.message);
+            }
 
-            this.memory.instructions.push(encodedInstruction);
+
         });
+        if (errors.length) {
+            console.log('Errors', errors);
+            throw errors;
+        }
         // Add A HALT and 4 NOP instructions to the end of the program
         this.memory.instructions.push(this.encodeInstruction("HALT"));
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
