@@ -3,6 +3,8 @@ import { InstructionR, InstructionI, InstructionJ } from "./instruction";
 
 interface StageData {
     IR: InstructionR | InstructionI | InstructionJ; // The current instruction to decode 
+
+    OPC: number; // The PC of the current instruction
     NPC: number; // Next PC that overwrties pc once an instrution reaches it's final stage
 
     A: number; // A param for ALU
@@ -12,6 +14,9 @@ interface StageData {
     ALUOutput: number;
 
     LMD: number; // Load Memory Data
+
+    cond: boolean; // Conditional flag
+
 }
 
 
@@ -57,5 +62,5 @@ enum ALUopcode {
 
 
 export { ALUopcode };
-export type { CPU, Memory };
+export type { CPU, Memory, StageData };
 

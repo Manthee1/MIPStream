@@ -1,3 +1,4 @@
+import { StageData } from "./interfaces/core";
 import { InstructionR, InstructionI, InstructionJ, InstructionType, InstructionDef, MemOp } from "./interfaces/instruction";
 // utils.ts
 
@@ -19,6 +20,31 @@ export function getRegisterNumber(register: string): number {
 // Check if the register numbeer is valid
 export function isValidRegister(register: number): boolean {
     return register >= 0 && register < 32;
+}
+
+export function isLabel(str: string): boolean {
+    const labelPattern = /^[a-zA-Z_]\w*$/;
+    return labelPattern.test(str);
+}
+
+
+export function createBlankStageData(): StageData {
+    return {
+        IR: {
+            opcode: 0,
+            rs1: 0,
+            rs2: 0,
+            rd: 0,
+        },
+        OPC: -1,
+        NPC: 0,
+        A: 0,
+        B: 0,
+        I: 0,
+        ALUOutput: 0,
+        LMD: 0,
+        cond: false,
+    };
 }
 
 
@@ -70,7 +96,7 @@ export function isIType(instruction: InstructionR | InstructionI | InstructionJ)
 }
 
 export function isJType(instruction: InstructionR | InstructionI | InstructionJ): instruction is InstructionJ {
-    return (instruction as InstructionJ).offset !== undefined;
+    return (instruction as InstructionJ).address !== undefined;
 }
 
 export function getInstructionType(instruction: InstructionR | InstructionI | InstructionJ): InstructionType {

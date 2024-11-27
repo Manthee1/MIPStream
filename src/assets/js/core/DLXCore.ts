@@ -1,22 +1,14 @@
 import { ALUopcode, CPU, Memory } from "../interfaces/core"
 import { InstructionR, InstructionI, InstructionJ, InstructionType, MemOp } from "../interfaces/instruction"
 import INSTRUCTION_SET from "../config/instructionSet"
-import { getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isIType, isJType, isRegister, isRType, isValidRegister, isValue, isXBit, } from "../utils"
+import { createBlankStageData, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isIType, isJType, isLabel, isRegister, isRType, isValidRegister, isValue, isXBit, } from "../utils"
 
 export default class DLXCore {
     cpu: CPU = {
         intRegisters: Array.from({ length: 32 }, () => 0),
         FPRegisters: Array.from({ length: 32 }, () => 0),
         PC: 0,
-        stages: Array.from({ length: 5 }, () => ({
-            IR: { opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI,
-            NPC: 0,
-            A: 0,
-            B: 0,
-            I: 0,
-            ALUOutput: 0,
-            LMD: 0
-        }))
+        stages: Array.from({ length: 5 }, createBlankStageData)
     }
 
     memory: Memory = {
@@ -28,7 +20,39 @@ export default class DLXCore {
         this.reset();
     }
 
-    encodeInstruction(instruction: string): InstructionR | InstructionI | InstructionJ {
+
+    collectLabels(program: string[]): never[] | Map<string, number> {
+        let labels = new Map<string, number>();
+        let pc = 0;
+        let errors: string[] = [];
+        program.forEach((instruction) => {
+            const lineContent = instruction.trim();
+            if (!lineContent.endsWith(':')) {
+                pc++
+                return;
+            }
+            const label = lineContent.slice(0, -1);
+            // Check if the label is valid
+            if (!isLabel(label)) {
+                errors.push(`Invalid label format: ${lineContent}.`)
+                return;
+            }
+
+            // if it is a duplicate label add to errors
+            if (labels.has(label)) {
+                errors.push(`Duplicate label: ${label}.`)
+                return;
+            }
+
+            labels.set(label, pc);
+        });
+
+        if (errors.length) throw errors;
+
+        return labels;
+    }
+
+    encodeInstruction(instruction: string, labels: Map<string, number>): InstructionR | InstructionI | InstructionJ {
         const mnemonic = instruction.split(" ")[0];
         const operands = instruction.split(" ").slice(1).join('').split(",").map((operand) => operand.trim());
         // If the instruction NOP, return a NOP instruction
@@ -42,6 +66,8 @@ export default class DLXCore {
         const instructionDef = INSTRUCTION_SET[instructionOpcode];
 
         let encodedInstruction: InstructionR | InstructionI | InstructionJ;
+
+
 
 
         switch (instructionDef.type) {
@@ -108,20 +134,27 @@ export default class DLXCore {
                 break;
             case InstructionType.J:
 
-                if (mnemonic === "HALT") return { opcode: instructionOpcode, offset: 0 } as InstructionJ;
+                if (mnemonic === "HALT") return { opcode: instructionOpcode, address: 0 } as InstructionJ;
 
-                if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
+                if (operands.length !== 1) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
-                // Check if operands are valid
-                if (!isValue(operands[1])) throw new Error(`Invalid offset value: ${operands[1]}.`);
-                const offset = parseInt(operands[1]);
-                if (isXBit(offset, 26)) throw new Error(`Offset value out of range: ${operands[1]}.`);
+                // Check if operand is a value or a label
+                let address: number;
+                if (isLabel(operands[0])) {
+                    if (!labels.has(operands[0])) throw new Error(`Invalid label: ${operands[0]}.`);
+                    address = labels.get(operands[0]) as number;
+                    console.log('Address', address);
+
+                } else {
+                    if (!isValue(operands[0])) throw new Error(`Invalid address: ${operands[1]}.`);
+                    address = parseInt(operands[1]);
+                }
+                if (isXBit(address, 26)) throw new Error(`Address out of range: ${operands[1]}.`);
 
                 encodedInstruction = {
                     opcode: instructionOpcode,
-                    offset: offset
+                    address: address
                 }
-
                 break;
 
             default:
@@ -141,16 +174,8 @@ export default class DLXCore {
         this.cpu = {
             intRegisters: Array.from({ length: 32 }, () => 0),
             FPRegisters: Array.from({ length: 32 }, () => 0),
-            PC: 0,
-            stages: Array.from({ length: 5 }, () => ({
-                IR: { opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI,
-                NPC: 0,
-                A: 0,
-                B: 0,
-                I: 0,
-                ALUOutput: 0,
-                LMD: 0
-            }))
+            PC: -1,
+            stages: Array.from({ length: 5 }, createBlankStageData)
         }
     }
 
@@ -164,13 +189,18 @@ export default class DLXCore {
         this.cpu.intRegisters[30] = 256; // Frame pointer
         this.cpu.intRegisters[31] = 256; // Return addres
 
+        this.cpu.stages[0].OPC = -1;
+        this.cpu.stages[1].OPC = -1;
+        this.cpu.stages[2].OPC = -1;
+        this.cpu.stages[3].OPC = -1;
+        this.cpu.stages[4].OPC = -1;
         this.cpu.stages[0].NPC = 3;
         this.cpu.stages[1].NPC = 2;
         this.cpu.stages[2].NPC = 1;
         this.cpu.stages[3].NPC = 0;
         this.cpu.stages[4].NPC = 0;
 
-        this.cpu.PC = 0;
+
     }
 
 
@@ -178,11 +208,25 @@ export default class DLXCore {
         this.reset();
         let errors: string[] = []
         let line = 0;
+        program = program.filter((line) => line.trim() !== '');
+
+        // Collect labels
+        let labels: Map<string, number> = new Map();
+        try {
+            labels = this.collectLabels(program) as Map<string, number>;
+        } catch (error) {
+            errors.push(error as string);
+        }
+        console.log('Labels', labels);
+
+
+
         program.forEach((instruction) => {
             line++;
+            if (instruction.trim().endsWith(':')) return;
             let encodedInstruction;
             try {
-                encodedInstruction = this.encodeInstruction(instruction);
+                encodedInstruction = this.encodeInstruction(instruction, labels);
                 this.memory.instructions.push(encodedInstruction);
             } catch (error: any) {
                 errors.push("Syntax Error on line " + line + ": " + error.message);
@@ -195,12 +239,17 @@ export default class DLXCore {
             throw errors;
         }
         // Add A HALT and 4 NOP instructions to the end of the program
-        this.memory.instructions.push(this.encodeInstruction("HALT"));
+        this.memory.instructions.push(this.encodeInstruction("HALT", labels) as InstructionJ);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
+
+        this.cpu.PC = 0;
+        this.cpu.stages[0].IR = this.memory.instructions[0];
+        this.cpu.stages[0].OPC = 0;
+
 
         console.log('program', this.memory.instructions);
 
@@ -266,15 +315,7 @@ export default class DLXCore {
         this.cpu.stages.pop();
 
 
-        this.cpu.stages.unshift({
-            IR: { opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI,
-            NPC: 0,
-            A: 0,
-            B: 0,
-            I: 0,
-            ALUOutput: 0,
-            LMD: 0
-        });
+        this.cpu.stages.unshift(createBlankStageData());
         this.handleForwarding()
 
         this.writeBack();
@@ -339,9 +380,7 @@ export default class DLXCore {
             MEMStage.LMD = MEMStage.ALUOutput;
         }
 
-
-        this.cpu.PC = MEMStage.NPC;
-        if (MEMStage.IR.opcode === 0) return; // Skip if NOP
+        this.cpu.PC = MEMStage.cond ? MEMStage.ALUOutput : MEMStage.NPC;
 
     }
 
@@ -378,8 +417,14 @@ export default class DLXCore {
             IDStage.B = this.cpu.intRegisters[IDStage.IR.rd];
             IDStage.I = IDStage.IR.imm;
         } else if (isJType(IDStage.IR)) {
-            IDStage.A = this.cpu.intRegisters[31];
-            IDStage.I = IDStage.IR.offset;
+            // FLush the ID, EX and MEM stages and set the PC to the address of the jump instruction
+            // this.cpu.stages[1] = createBlankStageData();
+            this.cpu.stages[1].NPC = IDStage.IR.address + 2;
+            // this.cpu.stages[2] = createBlankStageData();
+            this.cpu.stages[2].NPC = IDStage.IR.address + 1;
+            // this.cpu.stages[3] = createBlankStageData();
+
+            this.cpu.PC = IDStage.IR.address;
         }
     }
 
@@ -388,6 +433,7 @@ export default class DLXCore {
         IFStage.IR = this.memory.instructions[this.cpu.PC];
         console.log('IF', IFStage, INSTRUCTION_SET[IFStage.IR.opcode].mnemonic);
         IFStage.NPC = this.cpu.PC + 3;
+        IFStage.OPC = this.cpu.PC;
         if (IFStage.IR.opcode === 0) return; // Skip if NOP
     }
 }

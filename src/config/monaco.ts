@@ -5,6 +5,7 @@ import { InstructionDef, InstructionType, MemOp } from '../assets/js/interfaces/
 import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
+import { isLabel } from '../assets/js/utils';
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -59,10 +60,36 @@ monaco.languages.registerDefinitionProvider('asm', definitionProvider);
 export function validate(model: monaco.editor.ITextModel) {
     const lines = model.getLinesContent();
     const errors: monaco.editor.IMarkerData[] = [];
+    let labels = new Set<string>();
     console.log('Validating', lines);
 
     lines.forEach((line: string, index: number) => {
-        const mnemonic = line.trim().split(' ')[0];
+        const firstWord = line.trim().split(' ')[0].trim();
+        if (firstWord.endsWith(':')) {
+            const label = firstWord.slice(0, -1).trim();
+            let labelErrorMessage = '';
+            if (labels.has(label)) labelErrorMessage = `Duplicate label: ${label}`;
+            if (label === '') labelErrorMessage = 'Empty label';
+            if (label.includes(' ')) labelErrorMessage = 'Label cannot contain spaces';
+            if (label.includes(':')) labelErrorMessage = 'Label cannot contain colon';
+            if (!isLabel(label)) labelErrorMessage = 'Invalid label';
+            if (labelErrorMessage !== '')
+                errors.push({
+                    startLineNumber: index + 1,
+                    startColumn: 1,
+                    endLineNumber: index + 1,
+                    endColumn: line.length,
+                    message: labelErrorMessage,
+                    severity: monaco.MarkerSeverity.Error,
+                });
+            return;
+
+            labels.add(label);
+
+        }
+
+
+        const mnemonic = firstWord;
         if (mnemonic !== '' && mnemonic !== ';') {
             const instruction = INSTRUCTION_SET.find((instruction) => instruction.mnemonic === mnemonic);
             if (!instruction) {
@@ -142,7 +169,7 @@ const rules = [
     { token: 'mnemonic', foreground: '569CD6' },
     { token: 'register', foreground: 'D16969' },
     { token: 'immediate', foreground: '3f3f3f' },
-    { token: 'label', foreground: 'DCDCAA' },
+    { token: 'label', foreground: '469446' },
     { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
 ] as monaco.editor.ITokenThemeRule[];
 

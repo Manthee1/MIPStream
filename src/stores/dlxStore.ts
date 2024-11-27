@@ -22,17 +22,22 @@ export const useDlxStore = defineStore('dlx', {
     actions: {
 
         getStageLine(stage: number): number {
-            return this.PCToLineMap[this.DLXCore.cpu.stages[stage].NPC - 3] ?? -1;
+            return this.PCToLineMap[this.DLXCore.cpu.stages[stage].OPC] ?? -1;
         },
 
         mapPCToLine() {
             const program = this.program.replace(/\r/g, '\n').split('\n');
             const PCToLineMap: number[] = [];
             for (let line = 0; line < program.length; line++) {
-                if (program[line].trim() !== '')
-                    PCToLineMap.push(line + 1);
+                if (program[line].trim() == '') continue;
+                if (program[line].trim().endsWith(':')) continue;
+                if (program[line].trim().startsWith(';')) continue;
+
+                PCToLineMap.push(line + 1);
             }
             this.PCToLineMap = PCToLineMap;
+            console.log(this.PCToLineMap);
+
         },
 
         loadProgram() {
@@ -67,7 +72,7 @@ export const useDlxStore = defineStore('dlx', {
         },
         stop() {
             this.status = 'stopped';
-
+            this.DLXCore.reset();
         },
         run() {
             this.loadProgram();

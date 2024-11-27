@@ -61,6 +61,12 @@ const INSTRUCTION_SET: Array<InstructionDef> = [
         description: "Loads a word from memory into `Rd`"
     },
     {
+        mnemonic: "J",
+        type: InstructionType.J,
+        ALUopcode: ALUopcode.PASSTHROUGH,
+        description: "Jumps to a label"
+    },
+    {
         mnemonic: "HALT",
         type: InstructionType.J,
         ALUopcode: ALUopcode.PASSTHROUGH,
