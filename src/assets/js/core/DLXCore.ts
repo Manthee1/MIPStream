@@ -168,6 +168,8 @@ export default class DLXCore {
         this.cpu.stages[2].NPC = 1;
         this.cpu.stages[3].NPC = 0;
         this.cpu.stages[4].NPC = 0;
+
+        this.cpu.PC = 0;
     }
 
 
@@ -246,11 +248,9 @@ export default class DLXCore {
         console.log('PC', this.cpu.PC);
         console.log('Registers', this.cpu.intRegisters.join(', '));
 
-        this.writeBack();
-        this.memoryAccess();
-        this.execute();
-        this.decode();
-        this.fetch();
+
+        this.cpu.stages.pop();
+
 
         this.cpu.stages.unshift({
             IR: { opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI,
@@ -261,9 +261,16 @@ export default class DLXCore {
             ALUOutput: 0,
             LMD: 0
         });
-
-        this.cpu.stages.pop();
         this.handleForwarding()
+
+        this.writeBack();
+        this.memoryAccess();
+        this.execute();
+        this.decode();
+
+
+        this.fetch();
+
     }
 
     handleForwarding() {
