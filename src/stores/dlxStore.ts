@@ -24,13 +24,11 @@ export const useDlxStore = defineStore('dlx', {
         },
 
         mapPCToLine() {
-            const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
+            const program = this.program.replace(/\r/g, '\n').split('\n');
             const PCToLineMap: number[] = [];
-            let line = 1;
-            for (let i = 0; i < program.length; i++) {
-                PCToLineMap.push(line);
-                if (program[i].trim() !== '') line++;
-
+            for (let line = 0; line < program.length; line++) {
+                if (program[line].trim() !== '')
+                    PCToLineMap.push(line + 1);
             }
             this.PCToLineMap = PCToLineMap;
         },
