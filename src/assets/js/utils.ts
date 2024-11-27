@@ -39,6 +39,7 @@ export function isMemory(str: string): boolean {
  * @returns True if the string is a numeric value, false otherwise.
  */
 export function isValue(str: string): boolean {
+    if (str.trim() === '') return false;
     return !isNaN(Number(str));
 }
 
