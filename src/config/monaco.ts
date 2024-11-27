@@ -61,17 +61,6 @@ export function validate(model: monaco.editor.ITextModel) {
     const errors: monaco.editor.IMarkerData[] = [];
     console.log('Validating', lines);
 
-
-    monaco.editor.setModelMarkers(model, 'breakpoints', [{
-        startLineNumber: 1,
-        startColumn: 1,
-        endLineNumber: 1,
-        endColumn: 1,
-        message: 'Breakpoint',
-        severity: monaco.MarkerSeverity.Hint,
-    }]);
-
-
     lines.forEach((line: string, index: number) => {
         const mnemonic = line.trim().split(' ')[0];
         if (mnemonic !== '' && mnemonic !== ';') {
