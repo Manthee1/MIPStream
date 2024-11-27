@@ -38,9 +38,10 @@ export const useDlxStore = defineStore('dlx', {
             const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
             this.status = 'running';
             // Run until the program is finished
-            while (this.status == 'running' && this.DLXCore.cpu.stages[3].IR?.opcode !== haltOpcode) {
+            while (this.status == 'running' && this.DLXCore.cpu.stages[4].IR?.opcode !== haltOpcode) {
                 this.DLXCore.runCycle();
             }
+
             this.status = 'stopped';
         },
 

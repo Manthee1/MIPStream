@@ -184,6 +184,7 @@ export default class DLXCore {
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
         this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
+        this.memory.instructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
 
         console.log('program', this.memory.instructions);
 
@@ -234,8 +235,8 @@ export default class DLXCore {
 
     halt() {
         console.log('HALTING');
-        this.cpu.PC = 0;
-        this.clearRegisters();
+        // this.cpu.PC = 0;
+        // this.clearRegisters();
     }
 
     runCycle() {
