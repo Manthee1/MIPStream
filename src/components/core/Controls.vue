@@ -3,17 +3,17 @@
 </script>
 
 <template>
-    <div class="controls">
-        <MButton v-if="$dlxStore.status == 'stopped'" outlined small icon="play" @click="run" title="Run"></MButton>
-        <MButton v-else-if="$dlxStore.status == 'running'" outlined small icon="pause" @click="pause" title="Pause">
-        </MButton>
-        <MButton v-else-if="$dlxStore.status == 'paused'" outlined small icon="play-circle" @click="run" title="Resume">
-        </MButton>
-        <MButton outlined small icon="square" @click="stop" title="Stop"></MButton>
-        <MButton outlined small icon="skip-forward" @click="step" title="Step"></MButton>
-        <MButton outlined small icon="refresh-cw" @click="reloadProgram" title="Reload Program"></MButton>
-        <span class="my-auto">Status: {{ $dlxStore.status }}</span>
-    </div>
+	<div class="controls">
+		<MButton v-if="$dlxStore.status == 'stopped'" outlined small icon="play" @click="run" title="Run"></MButton>
+		<MButton v-else-if="$dlxStore.status == 'running'" outlined small icon="pause" @click="pause" title="Pause">
+		</MButton>
+		<MButton v-else-if="$dlxStore.status == 'paused'" outlined small icon="play-circle" @click="run" title="Resume">
+		</MButton>
+		<MButton outlined small icon="square" @click="stop" title="Stop"></MButton>
+		<MButton outlined small icon="skip-forward" @click="step" title="Step"></MButton>
+		<MButton outlined small icon="refresh-cw" @click="reloadProgram" title="Reload Program"></MButton>
+		<span class="my-auto">Status: {{ $dlxStore.status }}</span>
+	</div>
 </template>
 
 <script>
@@ -61,14 +61,14 @@ export default defineComponent({
 
 <style scoped>
 .controls {
-    display: flex;
-    gap: 10px;
-    flex: 1 1 auto;
-    padding: 10px;
+	display: flex;
+	gap: 10px;
+	padding: 10px;
+	flex: 0;
 }
 
 button {
-    padding: 10px 20px;
-    cursor: pointer;
+	padding: 10px 20px;
+	cursor: pointer;
 }
 </style>

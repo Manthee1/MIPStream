@@ -15,6 +15,9 @@ import Window from "@/components/common/Window.vue";
 		<div class="editor-wrapper">
 			<Controls />
 			<Editor :key="project.id" v-model="project.code" @update:modelValue="codeUpdate()" />
+			<Accordion style="flex:1 1 auto" open :label="`Problems (${ $dlxStore.errors.length })`">
+				<Problems />
+			</Accordion>
 		</div>
 		<CpuView v-show="$viewStore.showCpuView" />
 	</div>
@@ -23,6 +26,8 @@ import Window from "@/components/common/Window.vue";
 <script lang="ts">
 import { defineComponent } from "vue";
 import { downloadProject, loadProject, Project, saveProject } from "../storage/projectsStorage";
+import Problems from "../components/core/Problems.vue";
+import Accordion from "../components/common/Accordion.vue";
 
 let confirmSaveBeforeLeave = async () => true;
 
@@ -33,6 +38,8 @@ export default defineComponent({
 		SideBar,
 		CpuView,
 		Window,
+		Problems,
+		Accordion,
 	},
 	name: "Main",
 
@@ -151,18 +158,10 @@ export default defineComponent({
 	max-width: 100vw
 	> *
 		flex: 1 1 auto
-		.editor-wrapper
-			display: flex
-			flex-flow: column nowrap
-			gap: 0rem
-			width: auto
-			max-width: 100vw
-			height: 100%
-			overflow: auto
-			.editor
-				width: 100%
-				height: 100%
-				max-height: 100%
-				max-width: 100vw
-				overflow: auto
+	.editor-wrapper
+		display: flex
+		flex-flow: column nowrap
+		height: 100%
+		width: 100%
+		overflow: hidden
 </style>

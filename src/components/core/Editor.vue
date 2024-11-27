@@ -15,13 +15,13 @@ import { defineComponent } from 'vue';
 import { getStageName } from '../../assets/js/utils';
 import { default as monaco, validate } from "../../config/monaco";
 
+let editor: monaco.editor.IStandaloneCodeEditor;
 export default defineComponent({
 	data() {
 		return {
 			decorations: [] as string[],
 			hoverDecorations: [] as string[],
 			stageDecorations: [] as string[],
-			editor: null as monaco.editor.IStandaloneCodeEditor | null
 		}
 	},
 	props: {
@@ -30,7 +30,7 @@ export default defineComponent({
 
 	mounted() {
 		const editorEl = this.$refs.editor as HTMLElement;
-		const editor = monaco.editor.create(editorEl, {
+		editor = monaco.editor.create(editorEl, {
 			language: 'asm',
 			minimap: {
 				enabled: true
@@ -53,7 +53,6 @@ export default defineComponent({
 				preview: true,
 			}
 		});
-		this.editor = editor;
 		const model = editor.getModel();
 		if (!model) return;
 		validate(model);
@@ -92,7 +91,7 @@ export default defineComponent({
 	},
 	watch: {
 		currentPC(newVal: number) {
-			const model = this.editor?.getModel();
+			const model = editor.getModel();
 			if (!model) return;
 			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
 				const stageName = getStageName(index);
@@ -116,7 +115,7 @@ export default defineComponent({
 	},
 	methods: {
 		handleMouseMove(e: monaco.editor.IEditorMouseEvent) {
-			const model = this.editor?.getModel();
+			const model = editor.getModel();
 			if (!model) return;
 			if (e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS || e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
 				const lineNumber = e.target.position.lineNumber;
@@ -136,7 +135,7 @@ export default defineComponent({
 
 
 		updateBreakpoints() {
-			const model = this.editor?.getModel();
+			const model = editor.getModel();
 			if (!model) return;
 			const decorations = model.deltaDecorations(this.decorations, this.$dlxStore.breakpoints.map(line => ({
 				range: new monaco.Range(line, 1, line, 1),
@@ -171,12 +170,13 @@ export default defineComponent({
 <style lang="sass">
 .editor-container
 	min-width: 300px
-	flex: 1 1 auto
-	width: 100%
 	height: 100%
+	overflow: auto
 	.monaco-editor
 		border: 1px var(--color-light) solid
-		overflow-y: visible
+		.overflow-guard
+			overflow-y: visible
+
 .monaco-editor
 	.breakpoint, .hover-breakpoint
 		cursor: pointer
