@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { DropdownItem, ModalData } from '../types';
 import { settings } from '../storage/settingsStorage';
+import { createProject } from '../storage/projectsStorage';
+import { useRouter } from 'vue-router';
 
 
 const theme = settings.theme;
@@ -96,6 +98,30 @@ export const useViewStore = defineStore('view', {
                     resolve(false);
                 };
             });
+
+        },
+
+        async createProject(){
+            const name = await this.prompt({
+				title: 'Create Project',
+				message: 'Enter the name of the project',
+				inputPlaceholder: 'Project Name',
+				verifyInput: (input?: string) => {
+					if (!input) throw 'Project name is required';
+					if (input.length < 3)
+						throw 'Project name must be at least 3 characters long';
+
+					return true;
+				},
+				confirmText: 'Create Project',
+			});
+
+			if (!name || typeof name !== 'string') return;
+			console.log('Create Project', name);
+
+
+			const project = createProject(name);
+			useRouter().push({ name: 'Workspace', params: { id: project.id } });
 
         },
 

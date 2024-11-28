@@ -2,7 +2,7 @@
   <div class="content-wrapper">
     <div class="content-container">
       <h1>Projects</h1>
-      <MButton filled icon="plus" @click="createProject">Create Project</MButton>
+      <MButton filled icon="plus" @click="$viewStore.createProject()">Create Project</MButton>
       <table class="projects-table">
         <thead>
           <tr>
@@ -34,7 +34,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import MButton from '../components/common/MButton.vue';
-import { Project, loadProjects, createProject } from '../storage/projectsStorage';
+import { Project, loadProjects } from '../storage/projectsStorage';
 
 
 export default defineComponent({
@@ -52,32 +52,6 @@ export default defineComponent({
 
 	},
 	methods: {
-		async createProject() {
-			const name = await this.$prompt({
-				title: 'Create Project',
-				message: 'Enter the name of the project',
-				inputPlaceholder: 'Project Name',
-				verifyInput: (input?: string) => {
-					if (!input) throw 'Project name is required';
-					if (input.length < 3)
-						throw 'Project name must be at least 3 characters long';
-
-					return true;
-				},
-				confirmText: 'Create Project',
-			});
-
-			if (!name || typeof name !== 'string') return;
-			console.log('Create Project', name);
-
-
-			const project = createProject(name);
-			this.$router.push({ name: 'Workspace', params: { id: project.id } });
-
-		},
-		editProject(id: number) {
-			console.log('Edit Project', id);
-		},
 		deleteProject(id: number) {
 			console.log('Delete Project', id);
 		},
