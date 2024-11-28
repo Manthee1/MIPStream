@@ -1,6 +1,6 @@
 <template>
     <button class="m-button"
-        :class="{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly }">
+        :class="{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly, 'accent':accent }">
         <vue-feather :type="icon" class="icon" v-if="icon" />
         <span>
             <slot></slot>
@@ -39,6 +39,10 @@ export default defineComponent({
             type: Boolean,
             default: false,
         },
+        accent:{
+            type: Boolean,
+            default: false,
+        }
     },
     computed: {
         isOutlined() {
@@ -70,8 +74,11 @@ export default defineComponent({
     cursor: pointer
     gap: 0.5em
     transition: background-color 0.3s, color 0.3s, filter 0.3s, scale 0.1s
-
-
+    &.accent
+        --color-text: var(--color-accent)
+        --color-background: var(--color-accent)
+        --color-black: var(--color-accent-dark)
+        --color-regular: var(--color-accent)
     &:active
         scale: 0.95
 
@@ -80,17 +87,19 @@ export default defineComponent({
         background-color: transparent
 
         &:hover
-            background-color: var(--color-regular)
-            color: var(--color-background)
+            background-color: var(--color-medium)
+            color: var(--color-text)
 
 
     &.filled
         background-color: var(--color-regular)
-        color: var(--color-background)
+        color: var(--color-light)
 
         &:hover
-            background-color: var(--color-thick-black)
+            background-color: var(--color-black)
             color: var(--color-light)
+
+
 
     &.small
         padding: 0.3em 0.5em

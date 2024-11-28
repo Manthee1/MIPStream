@@ -125,7 +125,7 @@ export default defineComponent({
                 background-color: var(--color-light)
             &.active
                 background-color: var(--color-light)
-                color: var(--color-regular)
+                color: var(--color-text)
             
 
     .tab-content
@@ -158,7 +158,7 @@ export default defineComponent({
                 width: 100%
                 flex: 1 1 auto
                 .setting-name
-                    color: var(--color-regular)
+                    color: var(--color-text)
                     font-weight: bold
                     margin: 0
                 .setting-description

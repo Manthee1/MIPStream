@@ -166,7 +166,7 @@ export function validate(model: monaco.editor.ITextModel) {
 
 // Theme Definition
 const rules = [
-    { token: 'mnemonic', foreground: '569CD6' },
+    { token: 'mnemonic', foreground: '5a82d8' },
     { token: 'register', foreground: 'D16969' },
     { token: 'immediate', foreground: '3f3f3f' },
     { token: 'label', foreground: '469446' },

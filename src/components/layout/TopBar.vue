@@ -42,8 +42,8 @@ export default defineComponent({
         },
         togleTheme() {
             const newTheme = this.$viewStore.theme === 'light' ? 'dark' : 'light';
-            $settings.setSetting('theme',newTheme);
-            $viewStore.setTheme(newTheme);
+            this.$settings.setSetting('theme',newTheme);
+            this.$viewStore.setTheme(newTheme);
         }
     }
 })
@@ -55,7 +55,7 @@ export default defineComponent({
     justify-content: space-between
     align-items: center
     background-color: var(--color-background)
-    color: var(--color-regular)
+    color: var(--color-text)
     padding: 0em 0.4em
     height: var(--topbar-height)
     border-bottom: 2px solid var(--color-regular)
@@ -64,13 +64,18 @@ export default defineComponent({
     .toggle-view 
         background: none
         border: none
-        color: var(--color-regular)
+        color: var(--color-text)
         font-size: 20px
         cursor: pointer
-        border-radius: 1em
+        border-radius: 0em
+        border-bottom: solid 2px transparent
+        transition: all 0.1s linear
         &.active
-            background-color: var(--color-regular)
-            color: var(--color-background)
+            border-color: var(--color-accent)
+            color: var(--color-accent)
+        &:hover
+            color: var(--color-accent)
+    
 
     .file-name 
         font-size: 16px

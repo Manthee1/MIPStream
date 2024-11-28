@@ -14,8 +14,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <MButton outlined @click="cancelAction">{{ cancelText }}</MButton>
-                    <MButton filled @click="confirmAction">{{ confirmText }}</MButton>
+                    <MButton  outlined @click="cancelAction">{{ cancelText }}</MButton>
+                    <MButton accent filled @click="confirmAction">{{ confirmText }}</MButton>
                 </div>
             </div>
         </div>
