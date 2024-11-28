@@ -9,7 +9,7 @@
                 <div class="modal-body">
                     <p>{{ message }}</p>
                     <div v-if="type=='prompt'" class="input-wrapper">
-                        <input v-model="$viewStore.modalData.input" :placeholder="inputPlaceholder" type="text" />
+                        <input v-model="$viewStore.modalData.input" :placeholder="inputPlaceholder" type="text" @keydown.enter="confirmAction" />
                         <span class="error" v-if="error?.trim()?.length > 0">{{ error }}</span>
                     </div>
                 </div>
