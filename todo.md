@@ -8,6 +8,6 @@
 - [ ] Add settings
 - [ ] Add insruction documentation
 - [ ] Fix dark theme
-- [ ] Trim lines before sending to asembler
+- [x] Trim lines before sending to asembler
 - monaco
   - [ ] Add jump label completion

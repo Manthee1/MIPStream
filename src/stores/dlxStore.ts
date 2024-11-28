@@ -26,7 +26,7 @@ export const useDlxStore = defineStore('dlx', {
         },
 
         mapPCToLine() {
-            const program = this.program.replace(/\r/g, '\n').split('\n');
+            const program = this.program.replace(/\r/g, '\n').split('\n').map(line => line.trim());
             const PCToLineMap: number[] = [];
             for (let line = 0; line < program.length; line++) {
                 if (program[line].trim() == '') continue;
@@ -45,7 +45,7 @@ export const useDlxStore = defineStore('dlx', {
             this.mapPCToLine();
             console.log(this.PCToLineMap);
 
-            const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '');
+            const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '').map(line => line.trim());
 
             console.log(program);
             try {
