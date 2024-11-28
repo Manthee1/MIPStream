@@ -1,0 +1,13 @@
+- [ ] Add Jump register instruction
+- [ ] Add Jump and link register instruction
+- [ ] Add Jump and link label instruction
+- [ ] Add conditional jumps
+- [ ] Add conditional jumps with link
+- [ ] Make imm jumps work
+- [ ] Make editor resizable
+- [ ] Add settings
+- [ ] Add insruction documentation
+- [ ] Fix dark theme
+- [ ] Trim lines before sending to asembler
+- monaco
+  - [ ] Add jump label completion

@@ -5,33 +5,33 @@
     - [ ] Desktop
       - [ ] Load
       - [ ] Save
-    - [ ] Web
-      - [ ] Load
-      - [ ] Save
+    - [x] Web
+      - [x] Load
+      - [x] Save
 - [ ] Execution control
-  - [ ] Run
-  - [ ] Pause
-  - [ ] Stop
-  - [ ] Step
-  - [ ] Reset
-  - [ ] Debugging
-    - [ ] Set breakpoints
-    - [ ] Clear breakpoints
+  - [x] Run
+  - [x] Pause
+  - [x] Stop
+  - [x] Step
+  - [x] Reset
+  - [x] Debugging
+    - [x] Set breakpoints
+    - [x] Clear breakpoints
 - [ ] Display
   - [ ] Settings
   - [ ] Visualize DLX CPU circuit
-  - [ ] Registers (view)
-  - [ ] Memory (view)
+  - [x] Registers (view)
+  - [x] Memory (view)
   - [ ] Editor
     - [ ] Syntax highlighting
-    - [ ] Line numbers
-    - [ ] Breakpoints
+    - [x] Line numbers
+    - [x] Breakpoints
     - [ ] Error highlighting
 - [ ] Assembler
   - [ ] Basic Functionality
     - [ ] Instructions
-    - [ ] Comments
-    - [ ] Labels
+    - [x] Comments
+    - [x] Labels
     - [ ] Functions/Procedures
     - [ ] Directives
 
@@ -49,8 +49,8 @@
   - [ ] Edit custom instructions
 
 ## Views
-- [ ] Bootstrap(New Project, Open Project, Recent projects list)
-- [ ] Main (Editor, Visualizer, Registers, Memory)
+- [x] Bootstrap(New Project, Open Project, Recent projects list)
+- [x] Main (Editor, Visualizer, Registers, Memory)
 - [ ] Settings
 - [ ] Help
 
@@ -58,8 +58,8 @@
 ## Technologies
 - [x] Tauri
 - [x] Vue
-- [ ] Monaco Editor
-- [ ] File Storage API
+- [x] Monaco Editor
+- [x] File Storage API - changed to simple localStorage
 
 ## Resources
 Tauri: https://tauri.app/v1/guides/features/command
