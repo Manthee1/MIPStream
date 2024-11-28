@@ -33,18 +33,27 @@ function getRegisterCompletions(addComma: boolean = false, includeZero: boolean 
     };
 }
 
+function getlabels(code: string) {
+    const labels = code.match(/(?<=\n|^)([a-zA-Z_]\w*):/g);
+    if (!labels) return [];
+    return labels.map((label) => label.slice(0, -1));
+    
+}
+
+
 export default {
     triggerCharacters: [' ', '\t'],
     provideCompletionItems: (model, position, context, token): monaco.languages.CompletionList => {
+        
         const line = model.getLineContent(position.lineNumber);
         const lineUntilPosition = line.substring(0, position.column - 1);
 
         if (position.column <= line.search(/\S|$/) + 2) {
-            return {
-                suggestions: INSTRUCTION_SET.map((instruction) => ({
+               const instructionSuggestions: monaco.languages.CompletionItem[] = INSTRUCTION_SET.map((instruction) => ({
                     label: instruction.mnemonic,
                     kind: monaco.languages.CompletionItemKind.Method,
                     insertText: instruction.mnemonic + ' ',
+                    
                     command: (instruction.mnemonic === 'NOP' || instruction.mnemonic === 'HALT') ? undefined : { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
                     detail: getInstructionSyntax(instruction),
                     documentation: {
@@ -52,8 +61,22 @@ export default {
                         isTrusted: true,
                     }
                 })) as monaco.languages.CompletionItem[]
-
-            };
+                const newLabelSuggestion: monaco.languages.CompletionItem = {
+                    label: 'label',
+                    kind: monaco.languages.CompletionItemKind.Reference,
+                    insertText: '${1:label}:',
+                    range: new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column),
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    detail: 'Label',
+                    documentation: {
+                        value: 'The label to jump to',
+                        isTrusted: true
+                    },
+                }
+                
+                return {
+                    suggestions: [...instructionSuggestions,newLabelSuggestion],
+                };
         }
 
         // Find the instruction
@@ -120,6 +143,21 @@ export default {
             };
 
 
+        }
+
+        if (instruction.type === InstructionType.J) {
+            return {
+                suggestions: getlabels(model.getValue()).map((label) => ({
+                    label: label,
+                    kind: monaco.languages.CompletionItemKind.Reference,
+                    insertText: label,
+                    detail: 'Label',
+                    documentation: {
+                        value: `The label to jump to`,
+                        isTrusted: true,
+                    },
+                })) as monaco.languages.CompletionItem[]
+            };
         }
 
         return { suggestions: [] };

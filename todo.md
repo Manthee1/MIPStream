@@ -10,4 +10,4 @@
 - [ ] Fix dark theme
 - [x] Trim lines before sending to asembler
 - monaco
-  - [ ] Add jump label completion
+  - [x] Add jump label completion
