@@ -91,7 +91,7 @@ export const useDlxStore = defineStore('dlx', {
                     this.status = 'paused';
                     return;
                 }
-                if (this.status as string === 'paused') return;
+                if (this.status === 'paused') return;
                 await wait(1000 / this.speed);
 
             }

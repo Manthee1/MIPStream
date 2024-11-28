@@ -10,6 +10,14 @@ export function createConfig() {
 
     dropdownItemsConfig =
     {
+
+        backHomeItem:{
+            label: 'Back to Home',
+            action: (context) => {
+                context.$router.push({ name: 'Home' });
+            }
+        },
+
         newItem:
         {
             label: 'New',
@@ -124,6 +132,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
             ]
         case 'Workspace':
             return [
+                dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.newItem,
                 dropdownItemsConfig.openItem,
                 dropdownItemsConfig.openRecentItem,
