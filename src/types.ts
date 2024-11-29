@@ -14,9 +14,11 @@ export type ModalData = {
     type?: string,
     onConfirm?: () => void,
     confirmText?: string,
+    confirmButtonType?: string,
     onCancel?: () => void,
     cancelText?: string,
+    cancelButtonType?: string,
     input?: string,
     inputPlaceholder?: string,
-    verifyInput?: (input?: string) => boolean | void
+    verifyInput?: (input: string) => boolean | void
 }

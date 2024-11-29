@@ -54,35 +54,37 @@ export const useViewStore = defineStore('view', {
         },
 
         async confirm(data: ModalData): Promise<string | boolean> {
-
-            return await this.modal(data.title ?? '', data.message, 'confirm', data.confirmText, data.cancelText) as boolean;
+            Object.assign(data, { type: 'confirm' });
+            return await this.modal(data) as boolean;
         },
 
         async prompt(data: ModalData): Promise<string | boolean> {
             console.log(data);
-
-            return await this.modal(data.title ?? '', data.message, 'prompt', data.confirmText, data.cancelText, data.input, data.inputPlaceholder, data.verifyInput) as string;
+            Object.assign(data, { type: 'prompt' });
+            return await this.modal(data) as string;
         },
 
-        async modal(title: string, message?: string, type: 'confirm' | 'prompt' = 'confirm', confirmText?: string, cancelText?: string, input?: string, inputPlaceholder?: string, verifyInput?: (input: string) => boolean | void): Promise<string | boolean> {
-            console.log('modal', title, message, type, confirmText, cancelText, input, inputPlaceholder, verifyInput);
+        async modal(data: ModalData): Promise<string | boolean> {
+            console.log('modal', data);
 
             // If no message is provided, use the title as the message
-            if (!message) {
-                message = title;
-                title = '';
+            if (!data.message) {
+                data.message = data.title;
+                data.title = '';
             }
-            this.modalData = Object.assign(this.modalData, {
+            this.modalData = Object.assign( {
                 show: true,
-                title,
-                message,
-                type,
-                confirmText: confirmText || 'Confirm',
-                cancelText: cancelText || 'Cancel',
-                input: input || '',
-                inputPlaceholder: inputPlaceholder || '',
-                verifyInput: verifyInput || (() => true),
-            });
+                title: data.title,
+                message: data.message,
+                type: data.type,
+                confirmText: data.confirmText || 'Confirm',
+                confirmButtonType: data.confirmButtonType || 'accent',
+                cancelText: data.cancelText || 'Cancel',
+                cancelButtonType: data.cancelButtonType || 'default',
+                input: data.input || '',
+                inputPlaceholder: data.inputPlaceholder || '',
+                verifyInput: data.verifyInput || (() => true),
+            }, data);
 
             console.log(this.modalData);
 

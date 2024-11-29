@@ -1,21 +1,21 @@
 <template>
     <transition name="fade-scale">
-        <div v-show="show" class="modal">
+        <div v-show="modalData.show" class="modal">
             <div class="modal-content">
                 <MButton @click="cancelAction" class="close-button" icon='x' />
                 <div class="modal-header">
-                    <h3>{{ title }}</h3>
+                    <h3>{{ modalData.title }}</h3>
                 </div>
                 <div class="modal-body">
-                    <p>{{ message }}</p>
-                    <div v-if="type=='prompt'" class="input-wrapper">
-                        <input v-model="$viewStore.modalData.input" :placeholder="inputPlaceholder" type="text" @keydown.enter="confirmAction" />
+                    <p>{{ modalData.message }}</p>
+                    <div v-if="modalData.type=='prompt'" class="input-wrapper">
+                        <input v-model="$viewStore.modalData.input" :placeholder="modalData.inputPlaceholder" type="text" @keydown.enter="confirmAction" />
                         <span class="error" v-if="error?.trim()?.length > 0">{{ error }}</span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <MButton  outlined @click="cancelAction">{{ cancelText }}</MButton>
-                    <MButton accent filled @click="confirmAction">{{ confirmText }}</MButton>
+                    <MButton outlined @click="cancelAction">{{ modalData.cancelText }}</MButton>
+                    <MButton :key='modalData.confirmButtonType' :type='modalData.confirmButtonType' filled @click="confirmAction">{{ modalData.confirmText }}</MButton>
                 </div>
             </div>
         </div>
@@ -37,48 +37,19 @@ export default defineComponent({
 		};
 	},
 	computed: {
-		show() {
-			return this.$viewStore.modalData.show;
-		},
-		type() {
-			return this.$viewStore.modalData.type;
-		},
-		title() {
-			return this.$viewStore.modalData.title;
-		},
-		message() {
-			return this.$viewStore.modalData.message;
-		},
-		onConfirm() {
-			return this.$viewStore.modalData?.onConfirm ?? (() => { });
-		},
-		confirmText() {
-			return this.$viewStore.modalData.confirmText;
-		},
-		onCancel() {
-			return this.$viewStore.modalData?.onCancel ?? (() => { });
-		},
-		cancelText() {
-			return this.$viewStore.modalData.cancelText;
-		},
-		input() {
-			return this.$viewStore.modalData.input;
-		},
-		inputPlaceholder() {
-			return this.$viewStore.modalData.inputPlaceholder;
-		},
-		verifyInput() {
-			return this.$viewStore.modalData?.verifyInput ?? ((input) => true);
-		}
+		modalData() {
+            return this.$viewStore.modalData;
+        },
 	},
 	methods: {
 		confirmAction() {
 
 			console.log('confirmAction', this.$viewStore.modalData);
 
-			if (this.type == 'prompt') {
+			if (this.modalData.type == 'prompt') {
 				try {
-					this.verifyInput(this.input);
+                    if(this.modalData.verifyInput)
+					    this.modalData.verifyInput(this.modalData.input ?? '');
 				} catch (error: any) {
 					this.error = error;
 					return;
@@ -86,11 +57,12 @@ export default defineComponent({
 				this.error = '';
 
 			}
-
-			this.onConfirm();
+            if(this.modalData.onConfirm)
+			    this.modalData.onConfirm();
 		},
 		cancelAction() {
-			this.onCancel();
+            if(this.modalData.onCancel)
+			    this.modalData.onCancel();
 		}
 	}
 });
