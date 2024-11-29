@@ -3,6 +3,8 @@ import DLXCore from '../assets/js/core/DLXCore'
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
 import { wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
+import { assemble } from '../assets/js/assembler';
+import { Memory } from '../assets/js/interfaces/core';
 
 
 export const useDlxStore = defineStore('dlx', {
@@ -44,13 +46,16 @@ export const useDlxStore = defineStore('dlx', {
             this.status = 'paused';
             this.mapPCToLine();
             console.log(this.PCToLineMap);
+            let memory: Memory;
 
-            const program = this.program.replace(/\r/g, '\n').split('\n').filter(line => line.trim() !== '').map(line => line.trim());
-
-            console.log(program);
             try {
                 this.errors = [];
-                this.DLXCore.loadProgram(program);
+                const data = assemble(this.program);
+                if(data instanceof Array) {
+                    this.errors = data;
+                    return;
+                }
+                memory = data.memory;
             } catch (errors: any) {
                 const errorMessage = 'Error/s occurred while loading the program';
                 this.errors = errors;
@@ -61,6 +66,8 @@ export const useDlxStore = defineStore('dlx', {
                 });
                 this.status = 'stopped';
             }
+
+            this.DLXCore.loadProgram(memory.instructions, memory.data);
         },
         step() {
             if (this.status != 'paused') return;

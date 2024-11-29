@@ -1,5 +1,10 @@
+import INSTRUCTION_SET from "./config/instructionSet";
 import { StageData } from "./interfaces/core";
 import { InstructionR, InstructionI, InstructionJ, InstructionType, InstructionDef, MemOp } from "./interfaces/instruction";
+
+const mnemonics: Set<string> = new Set();
+INSTRUCTION_SET.forEach((instruction) => mnemonics.add(instruction.mnemonic));
+
 // utils.ts
 
 /**
@@ -97,6 +102,10 @@ export function isIType(instruction: InstructionR | InstructionI | InstructionJ)
 
 export function isJType(instruction: InstructionR | InstructionI | InstructionJ): instruction is InstructionJ {
     return (instruction as InstructionJ).address !== undefined;
+}
+
+export function isMnemonic(mnemonic: string): boolean {
+    return mnemonics.has(mnemonic.trim());
 }
 
 export function getInstructionType(instruction: InstructionR | InstructionI | InstructionJ): InstructionType {
