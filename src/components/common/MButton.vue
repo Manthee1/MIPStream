@@ -1,8 +1,7 @@
 <template>
-    <button class="m-button"
-        :class="{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly, 'accent':accent }">
+    <button  class="m-button" :class="[{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly },buttonType]">
         <vue-feather :type="icon" class="icon" v-if="icon" />
-        <span>
+        <span v-if="!iconOnly">
             <slot></slot>
         </span>
     </button>
@@ -19,6 +18,7 @@ export default defineComponent({
     data() {
         return {
             iconOnly: false,
+            buttonType: this.type,
         }
     },
     props: {
@@ -42,8 +42,13 @@ export default defineComponent({
         accent:{
             type: Boolean,
             default: false,
-        }
+        },
+        type: {
+            type: String,
+            default: 'default' as 'default' |'accent' | 'error' | 'success' | 'warning',
+        },
     },
+
     computed: {
         isOutlined() {
             return this.outlined;
@@ -55,9 +60,11 @@ export default defineComponent({
     },
     mounted() {
         // Check if there is text or jsut icon
-        if (!this.$slots.default) {
+        if (!this.$slots.default || this.$slots.default.length === 0) {
             this.iconOnly = true;
         }
+        this.buttonType = this.accent ? 'type-accent': ('type-'+this.type);
+        
     },
 });
 </script>
@@ -74,11 +81,17 @@ export default defineComponent({
     cursor: pointer
     gap: 0.5em
     transition: background-color 0.3s, color 0.3s, filter 0.3s, scale 0.1s
-    &.accent
+    &.type-accent
         --color-text: var(--color-accent)
         --color-background: var(--color-accent)
         --color-black: var(--color-accent-dark)
         --color-regular: var(--color-accent)
+    &.type-error
+        --color-text: var(--color-system-error)
+        --color-background: var(--color-system-error)
+        --color-black: var(--color-system-error-dark)
+        --color-regular: var(--color-system-error)
+
     &:active
         scale: 0.95
 

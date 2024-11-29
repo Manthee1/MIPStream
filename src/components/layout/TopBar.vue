@@ -58,7 +58,7 @@ export default defineComponent({
     color: var(--color-text)
     padding: 0em 0.4em
     height: var(--topbar-height)
-    border-bottom: 2px solid var(--color-regular)
+    border-bottom: 2px solid var(--color-accent)
 
     .hamburger-menu,
     .toggle-view 
@@ -67,14 +67,11 @@ export default defineComponent({
         color: var(--color-text)
         font-size: 20px
         cursor: pointer
-        border-radius: 0em
-        border-bottom: solid 2px transparent
         transition: all 0.1s linear
         &.active
-            border-color: var(--color-accent)
             color: var(--color-accent)
         &:hover
-            color: var(--color-accent)
+            background-color: var(--color-light)
     
 
     .file-name 
