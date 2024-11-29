@@ -127,6 +127,20 @@ export const useViewStore = defineStore('view', {
 
         },
 
+        async deleteProject(projectId: string) {
+            const confirm = await this.confirm({
+                title: 'Delete Project',
+                message: 'Are you sure you want to delete this project?',
+                confirmText: 'Delete',
+                confirmButtonType: 'error',
+            });
+
+            if (confirm) {
+                console.log('Delete Project', projectId);
+            }   
+            
+        },    
+
         setTopBar(title: string, dropdownItems: DropdownItem[]) {
 
             this.topBar = {

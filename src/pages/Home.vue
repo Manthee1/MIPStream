@@ -2,7 +2,7 @@
   <div class="content-wrapper">
     <div class="content-container">
       <h1>Projects</h1>
-      <MButton filled icon="plus" @click="$viewStore.createProject()">Create Project</MButton>
+      <MButton accent filled icon="plus" @click="$viewStore.createProject()">Create Project</MButton>
       <table class="projects-table">
         <thead>
           <tr>
@@ -18,11 +18,11 @@
             <td>
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name }}</router-link>
             </td>
-            <td>{{ project.createdAt }}</td>
-            <td>{{ project.createdAt }}</td>
-            <td>{{ project.size }}</td>
+            <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td>
+            <td>{{ formatDateRecent(new Date(project.updatedAt)) }}</td>
+            <td>{{ formatSize(project.size) }}</td>
             <td class="flex">
-              <MButton filled class="delete-button" @click="deleteProject(project.id)" icon="trash" />
+              <MButton type="error" filled class="delete-button" @click="$viewStore.deleteProject(project.id)" icon="trash" />
             </td>
           </tr>
         </tbody>
@@ -33,8 +33,10 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { formatDateRecent, formatSize } from '../assets/js/utils';
 import MButton from '../components/common/MButton.vue';
 import { Project, loadProjects } from '../storage/projectsStorage';
+
 
 
 export default defineComponent({
@@ -55,6 +57,9 @@ export default defineComponent({
 		deleteProject(id: number) {
 			console.log('Delete Project', id);
 		},
+    formatDateRecent,
+    formatSize
+    
 	},
 });
 

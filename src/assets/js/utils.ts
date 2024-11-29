@@ -156,3 +156,51 @@ export function getStageName(stage: number): string {
 export function wait(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+export function formatDate(date: Date, format: string): string {
+    const map: { [key: string]: number } = {
+        'Y': date.getFullYear(),
+        'M': date.getMonth() + 1,
+        'D': date.getDate(),
+        'h': date.getHours(),
+        'm': date.getMinutes(),
+        's': date.getSeconds(),
+    };
+
+    return format.replace(/Y+|M+|D+|h+|m+|s+/g, (match) => {
+        return map[match[0]]?.toString().padStart(match.length, '0') || '';
+    });
+}
+
+export function formatDateRecent(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) {
+        return 'Just now';
+    } else if (minutes < 60) {
+        return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (hours < 24) {
+        return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (days < 7) {
+        return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else {
+        return formatDate(date, 'YYYY/MM/DD');
+    }
+}
+
+export function formatSize(size: number): string {
+    if (size < 1024) {
+        return size + ' B';
+    } else if (size < 1024 * 1024) {
+        return (size / 1024).toFixed(2) + ' KB';
+    } else if (size < 1024 * 1024 * 1024) {
+        return (size / 1024 / 1024).toFixed(2) + ' MB';
+    } else {
+        return (size / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+    }
+}
