@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-// import * as themeData from 'monaco-themes/themes/Dawn.json';
+import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
 import { InstructionDef, InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 import completionsProvider from './monaco/completionsProvider';
@@ -12,18 +12,33 @@ const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
 const registers = Array.from({ length: 32 }, (_, i) => `R${i}`);
 const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
 const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
+const JTypeMnemonics = INSTRUCTION_SET.filter((instruction) => instruction.type === InstructionType.J).map(
+    (instruction) => instruction.mnemonic
+);
+
+console.log('JTypeMnemonics', JTypeMnemonics);
+
 
 // Monaco Language Registration
 monaco.languages.register({ id: 'asm', extensions: ['.asm'] });
 monaco.languages.setMonarchTokensProvider('asm', {
     tokenizer: {
         root: [
+            // Match J-type instructions and their labels
+            [new RegExp(`\\b(${JTypeMnemonics.join('|')})\\b`), 'mnemonic'],
+            [new RegExp(`\\b(${JTypeMnemonics.join('|')})\\s+(\\w+)\\b`), [
+                { token: 'mnemonic', next: '@label' },
+                { token: 'label' }
+            ]],
             [mnemonicRegex, 'mnemonic'],
             [registerRegex, 'register'],
             [/\b\d+\b/, 'immediate'],
             [/\b\w+:/, 'label'],
             [/;.*/, 'comment'],
         ],
+        label: [
+            [/\w+/, 'label', '@pop']
+        ]
     },
     ignoreCase: true,
     defaultToken: 'invalid',
@@ -165,18 +180,34 @@ export function validate(model: monaco.editor.ITextModel) {
 }
 
 // Theme Definition
-const rules = [
+const rulesDark = [
+    { token: 'mnemonic', foreground: '9CDCFE' },
+    { token: 'register', foreground: 'D16969' },
+    { token: 'immediate', foreground: 'CE9178' },
+    { token: 'label', foreground: 'DCDCAA' },
+    { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+    ...githubDarkTheme.rules,
+] as monaco.editor.ITokenThemeRule[];
+
+monaco.editor.defineTheme('dark', {
+    base: 'vs-dark',
+    inherit: false,
+    rules: rulesDark,
+    colors: {}
+});
+
+const rulesWhite = [
     { token: 'mnemonic', foreground: '5a82d8' },
     { token: 'register', foreground: 'D16969' },
     { token: 'immediate', foreground: '3f3f3f' },
-    { token: 'label', foreground: '469446' },
+    { token: 'label', foreground: 'ab4264' },
     { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
 ] as monaco.editor.ITokenThemeRule[];
 
-monaco.editor.defineTheme('dlx', {
+monaco.editor.defineTheme('light', {
     base: 'vs',
     inherit: false,
-    rules: rules,
+    rules: rulesWhite,
     colors: {}
 });
 

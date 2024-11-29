@@ -36,7 +36,7 @@ export default defineComponent({
 				enabled: true
 			},
 			automaticLayout: true,
-			theme: 'dlx',
+			theme: this.$viewStore.theme,
 			padding: {
 				top: 10,
 				bottom: 10
@@ -51,7 +51,8 @@ export default defineComponent({
 				snippetsPreventQuickSuggestions: false,
 				showSnippets: true,
 				preview: true,
-			}
+			},
+			cursorSmoothCaretAnimation: this.$settings.smoothCursor,
 		});
 		const model = editor.getModel();
 		if (!model) return;
@@ -110,6 +111,15 @@ export default defineComponent({
 				]
 			}).flat());
 
+		},
+		'$viewStore.theme': {
+			handler() {
+				if(!editor) return;
+				editor.updateOptions({
+					theme: this.$viewStore.theme
+				});
+			},
+			immediate: true
 		}
 
 	},
