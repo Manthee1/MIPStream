@@ -44,6 +44,8 @@ export const saveProject = (project: Project) => {
 
     if (existingProjectIndex === -1)
         throw new Error('Project does not exist');
+    project.updatedAt = new Date();
+    project.size = JSON.stringify(project).length;
     projects[existingProjectIndex] = project;
 
 
