@@ -3,9 +3,9 @@
         <Dropdown compact :items="dropdownItems" label="" icon="menu" />
         <span class="file-name">{{ title }}</span>
         <!-- Theme -->
-        <div class="flex">
+        <div class="flex gap-2">
             <MButton :icon="$viewStore.theme === 'light' ? 'sun' : 'moon'" @click="togleTheme()" />
-            <MButton v-if="$route?.name && $route.name == 'Workspace'" icon="cpu" @click="toggleView" class="toggle-view" :class="{ active: showCpuView }" />
+            <MButton small v-if="$route?.name && $route.name == 'Workspace'" icon="cpu" @click="toggleView" class="toggle-view" :class="{ active: showCpuView }" />
         </div>
     </div>
 </template>
