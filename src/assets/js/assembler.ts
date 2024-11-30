@@ -2,44 +2,7 @@ import { ALUopcode, CPU, Memory } from "./interfaces/core"
 import { InstructionR, InstructionI, InstructionJ, InstructionType, MemOp } from "./interfaces/instruction"
 import INSTRUCTION_SET from "./config/instructionSet"
 import { createBlankStageData, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isIType, isJType, isLabel, isMnemonic, isRegister, isRType, isValidRegister, isValue, isXBit, } from "./utils"
-
-
-
-/**
- * Maps a label to a instruction memory address. Essentially which PC the instruction after the label is at.
- * @param programLines 
- * @returns 
- */
-function collectLabels(programLines: string[]): never[] | Map<string, number> {
-    let labels = new Map<string, number>();
-    let pc = 0;
-    let errors: string[] = [];
-    programLines.forEach((lineContent,line) => {
-        if (isMnemonic(lineContent.split(" ")[0])) {
-            pc++
-            return;
-        }
-        if (!lineContent.trim().endsWith(':')) return;
-        const label = lineContent.slice(0, -1);
-        // Check if the label is valid
-        if (!isLabel(label)) {
-            errors.push(`Invalid label format: ${lineContent} on line ${line + 1}.`);
-            return;
-        }
-
-        // if it is a duplicate label add to errors
-        if (labels.has(label)) {
-            errors.push(`Duplicate label: ${label} on line ${line + 1}.`);
-            return;
-        }
-
-        labels.set(label, pc);
-    });
-
-    if (errors.length) throw errors;
-
-    return labels;
-}
+import { AssemblerError, AssemblerErrorList, ErrorType } from "./errors";
 
 
 export function encodeInstruction(instruction: string, labels: Map<string, number>): InstructionR | InstructionI | InstructionJ {
@@ -152,30 +115,52 @@ export function encodeInstruction(instruction: string, labels: Map<string, numbe
 }
 
 
-export function assemble(program: string): { memory: Memory, labels: Map<string, number> } | never[] {
-    let errors: string[] = []
-    let line = 0;
+export function assemble(program: string): { memory: Memory, labels: Map<string, number> } | never {
+    let errors: AssemblerErrorList = new AssemblerErrorList([]);
 
-    const programLines = program.replace(/\r/g, '\n').split('\n').map(line => line.trim());
+    const programLines = program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.trim());
     let encodedInstructions: (InstructionR | InstructionI | InstructionJ)[] = [];
 
-    // Collect labels
-    let labels: Map<string, number> = new Map();
-    try {
-        labels = collectLabels(programLines) as Map<string, number>;
-    } catch (error) {
-        errors.push(error as string);
-    }
+    
+    // Handle labels first because they are used in the encoding of instructions
+    let labels = new Map<string, number>();
+    let pc = 0;
+    programLines.forEach((lineContent,line) => {
+        if (isMnemonic(lineContent.split(" ")[0])) {
+            pc++
+            return;
+        }
+        if (!lineContent.trim().endsWith(':')) return;
+        const label = lineContent.slice(0, -1);
+        // Check if the label is valid
+        if (!isLabel(label)) {
+            errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Invalid label format: ${lineContent} on line ${line + 1}.`));
+            return;
+        }
 
+        // if it is a duplicate label add to errors
+        if (labels.has(label)) {
+            errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Duplicate label: ${label} on line ${line + 1}.`));
+            return;
+        }
+
+        labels.set(label, pc);
+    });
+
+
+    // Encode instructions
+    let line = 0;
     programLines.forEach((instruction) => {
         line++;
+        if (instruction.trim() === '') return;   
+        if (instruction.trim().startsWith(';')) return;
         if (instruction.trim().endsWith(':')) return;
         let encodedInstruction;
         try {
             encodedInstruction = encodeInstruction(instruction, labels);
             encodedInstructions.push(encodedInstruction);
         } catch (error: any) {
-            errors.push("Syntax Error on line " + line + ": " + error.message);
+            errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, error.message));
         }
 
 

@@ -21,18 +21,6 @@ const settingTabs: SettingTab[] = [
         icon: 'settings',
         settings: [
             {
-                key: 'language',
-                label: 'Language',
-                type: 'select',
-                default: 'en',
-                options: [
-                    { value: 'en', label: 'English' },
-                    { value: 'es', label: 'Spanish' },
-                    { value: 'fr', label: 'French' }
-                ],
-                description: 'Select the language for the application.',
-            },
-            {
                 key: 'autoSave',
                 label: 'Auto Save',
                 type: 'checkbox',
@@ -57,14 +45,6 @@ const settingTabs: SettingTab[] = [
                 ],
                 description: 'Choose the theme for the application.',
                 icon: 'moon'
-            },
-            {
-                key: 'fontSize',
-                label: 'Font Size',
-                type: 'number',
-                default: 14,
-                description: 'Set the font size for the application.',
-                icon: 'type'
             }
         ]
     },
@@ -80,14 +60,46 @@ const settingTabs: SettingTab[] = [
                 description: 'If enabled, the emulator will forward the value from the output of the previous instruction to the input of the next instruction if that instruction is dependent on it. Otherwise, the emulator will stall the pipeline until the value is available.',
                 icon: 'corner-down-right'
             },
+        ]
+    },
+    {
+        name: 'Editor',
+        icon: 'edit',
+        settings: [
             {
-                key: 'pipelineDepth',
-                label: 'Pipeline Depth',
+                key: 'fontSize',
+                label: 'Font Size',
                 type: 'number',
-                default: 5,
-                description: 'Set the depth of the pipeline for the emulator.',
-                icon: 'layers'
-            }
+                default: 14,
+                description: 'The size of the font in the editor.',
+                icon: 'type'
+            },
+            {
+                key: 'tabSize',
+                label: 'Tab Size',
+                type: 'number',
+                default: 4,
+                description: 'The number of spaces to insert when pressing the tab key.',
+                icon: 'corner-up-right'
+            },
+            {
+                key: 'smoothCursor',
+                label: 'Smooth Cursor',
+                type: 'checkbox',
+                default: true,
+                description: 'Make the cursor animation silky smooth.',
+                icon: 'hash'
+            },
+            // Instant problem list update
+            {
+                key: 'instantProblemListUpdate',
+                label: 'Instant Problem List Update',
+                type: 'checkbox',
+                default: true,
+                description: 'Update the problem list as you type without delay.',
+                icon: 'check-square'
+            },
+          
         ]
     }
 ];

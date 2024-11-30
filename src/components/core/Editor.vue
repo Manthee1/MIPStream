@@ -11,7 +11,10 @@
 
 <script lang="ts">
 
+import { error } from 'console';
 import { defineComponent } from 'vue';
+import { assemble } from '../../assets/js/assembler';
+import { AssemblerError } from '../../assets/js/errors';
 import { getStageName } from '../../assets/js/utils';
 import { default as monaco, validate } from "../../config/monaco";
 
@@ -58,8 +61,6 @@ export default defineComponent({
 		if (!model) return;
 		validate(model);
 
-
-
 		// Listener for changes in the editor
 		this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
@@ -67,6 +68,8 @@ export default defineComponent({
 			this.$dlxStore.program = code;
 			this.$emit('update:modelValue', code);
 			validate(model);
+			this.$dlxStore.updateErrors();
+
 		});
 
 		editor.onMouseDown((e) => {

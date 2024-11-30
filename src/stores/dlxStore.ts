@@ -5,6 +5,8 @@ import { wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
 import { assemble } from '../assets/js/assembler';
 import { Memory } from '../assets/js/interfaces/core';
+import { AssemblerError } from '../assets/js/errors';
+import { useSettingsStore } from './settingsStore';
 
 
 export const useDlxStore = defineStore('dlx', {
@@ -16,7 +18,7 @@ export const useDlxStore = defineStore('dlx', {
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
         errors: [] as string[],
-
+        errorsUpdateTimeout: null as any,
     }),
     getters: {
 
@@ -42,6 +44,28 @@ export const useDlxStore = defineStore('dlx', {
 
         },
 
+        
+        updateErrors() {
+            let timeOut = 500;
+            if(useSettingsStore().instantProblemListUpdate) {
+                timeOut = 0;
+            }
+            if (this.errorsUpdateTimeout) {
+                clearTimeout(this.errorsUpdateTimeout);
+            }
+            this.errorsUpdateTimeout =
+			setTimeout(() => {
+                this.errors = [];
+				try {
+					assemble(this.program);
+				} catch (errorList: any) {
+					// errorList = errorList as AssemblerErrorList
+					this.errors = errorList.errors.map((error: AssemblerError) => error.toString());
+				}
+			}, timeOut);
+
+        },
+
         loadProgram() {
             this.status = 'paused';
             this.mapPCToLine();
@@ -51,10 +75,6 @@ export const useDlxStore = defineStore('dlx', {
             try {
                 this.errors = [];
                 const data = assemble(this.program);
-                if(data instanceof Array) {
-                    this.errors = data;
-                    return;
-                }
                 memory = data.memory;
             } catch (errors: any) {
                 const errorMessage = 'Error/s occurred while loading the program';
@@ -65,6 +85,7 @@ export const useDlxStore = defineStore('dlx', {
                     text: errorMessage,
                 });
                 this.status = 'stopped';
+                return;
             }
 
             this.DLXCore.loadProgram(memory.instructions, memory.data);

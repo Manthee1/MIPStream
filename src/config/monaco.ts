@@ -6,6 +6,10 @@ import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
 import { isLabel } from '../assets/js/utils';
+import { notify } from '@kyvg/vue3-notification';
+import { useDlxStore } from '../stores/dlxStore';
+import { assemble } from '../assets/js/assembler';
+import { AssemblerErrorList } from '../assets/js/errors';
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
