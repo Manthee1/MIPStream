@@ -53,12 +53,27 @@ const settingTabs: SettingTab[] = [
         icon: 'cpu',
         settings: [
             {
+                key: 'useHazards',
+                label: 'Use hazards',
+                type: 'checkbox',
+                default: false,
+                description: 'If enabled the emulator will detect and resolve hazards.',
+            },
+            {
                 key: 'useForwarding',
                 label: 'Use forwarding',
                 type: 'checkbox',
                 default: false,
                 description: 'If enabled, the emulator will forward the value from the output of the previous instruction to the input of the next instruction if that instruction is dependent on it. Otherwise, the emulator will stall the pipeline until the value is available.',
                 icon: 'corner-down-right'
+            },
+            {
+                key: 'warnOnOverUnderflow',
+                label: 'Warn On Over/Underflow',
+                type: 'checkbox',
+                default: true,
+                description: 'Warn the user if a register overflows or underflows.',
+                icon: 'alert-triangle'
             },
         ]
     },
@@ -99,7 +114,7 @@ const settingTabs: SettingTab[] = [
                 description: 'Update the problem list as you type without delay.',
                 icon: 'check-square'
             },
-          
+
         ]
     }
 ];

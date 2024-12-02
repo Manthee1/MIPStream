@@ -2,6 +2,8 @@ import { ALUopcode, CPU, Memory } from "../interfaces/core"
 import { InstructionR, InstructionI, InstructionJ, InstructionType, MemOp } from "../interfaces/instruction"
 import INSTRUCTION_SET from "../config/instructionSet"
 import { createBlankStageData, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isIType, isJType, isLabel, isRegister, isRType, isValidRegister, isValue, isXBit, } from "../utils"
+import { notify } from "@kyvg/vue3-notification"
+import { useSettingsStore } from "../../../stores/settingsStore"
 
 export default class DLXCore {
     cpu: CPU = {
@@ -68,10 +70,10 @@ export default class DLXCore {
 
         this.memory.instructions = instructions;
         this.memory.data = data;
-        
+
         this.cpu.PC = 0;
         this.cpu.stages[0].IR = this.memory.instructions[0];
-        this.cpu.stages[0].OPC = 0;   
+        this.cpu.stages[0].OPC = 0;
 
     }
 
@@ -178,7 +180,24 @@ export default class DLXCore {
         if (WBStage.IR.opcode === 0) return; // Skip if NOP
         if (INSTRUCTION_SET[WBStage.IR.opcode].memOp === MemOp.STORE) return
         if (isRType(WBStage.IR) || isIType(WBStage.IR)) {
-            this.cpu.intRegisters[WBStage.IR.rd] = WBStage.LMD;
+            // if LMD is either overflowed or underflowed, notify the user
+            if (useSettingsStore().warnOnOverUnderflow) {
+                if (WBStage.LMD > 127) {
+                    notify({
+                        type: 'warn',
+                        title: 'Register Overflow',
+                        text: `R${WBStage.IR.rd} overflowed. The value has been truncated to 7 bits.`
+                    });
+                } else if (WBStage.LMD < -128) {
+                    notify({
+                        type: 'warn',
+                        title: 'Register Underflow',
+                        text: `R${WBStage.IR.rd} underflowed. The value has been truncated to 7 bits.`
+                    });
+                }
+            }
+            this.cpu.intRegisters[WBStage.IR.rd] = WBStage.LMD % 128;
+
         }
     }
 
