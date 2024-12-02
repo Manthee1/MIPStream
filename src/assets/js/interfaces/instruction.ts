@@ -7,10 +7,16 @@ enum InstructionType {
     INVALID,
 }
 enum OperandType {
+    UNUSED,
     REGISTER,
     IMMEDIATE,
-    MEMORY,
-    OFFSET,
+    LABEL
+}
+
+enum OperandRole {
+    DESTINATION,
+    SOURCE,
+    IMMEDIATE
 }
 
 
@@ -48,5 +54,5 @@ interface InstructionDef {
     description?: string;
 }
 
-export { InstructionType, OperandType, MemOp };
+export { InstructionType, OperandType, OperandRole, MemOp };
 export type { InstructionR, InstructionI, InstructionJ, InstructionDef };

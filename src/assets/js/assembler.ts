@@ -1,5 +1,5 @@
 import { ALUopcode, CPU, Memory } from "./interfaces/core"
-import { InstructionR, InstructionI, InstructionJ, InstructionType, MemOp } from "./interfaces/instruction"
+import { InstructionR, InstructionI, InstructionJ, InstructionType, MemOp, OperandType, OperandRole } from "./interfaces/instruction"
 import INSTRUCTION_SET from "./config/instructionSet"
 import { createBlankStageData, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isIType, isJType, isLabel, isMnemonic, isRegister, isRType, isValidRegister, isValue, isXBit, } from "./utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "./errors";
@@ -19,98 +19,89 @@ export function encodeInstruction(instruction: string, labels: Map<string, numbe
     const instructionDef = INSTRUCTION_SET[instructionOpcode];
 
     let encodedInstruction: InstructionR | InstructionI | InstructionJ;
+    if (!INSTRUCTION_SET[instructionOpcode].operands) throw new Error(`Instruction ${mnemonic} is not configured correctly.`);
+
+
+    // IF the instruction is a LOAD or STORE instruction, the operands are different so convert them to the standard operands
+    if (instructionDef.memOp == MemOp.STORE || instructionDef.memOp == MemOp.LOAD) {
+        if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
+
+        // Check if operands are valid
+        if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
+        if (!isEffectiveAddress(operands[1])) throw new Error(`Invalid effective address: ${operands[1]}.`);
+        const [rs, imm] = [getEffectiveAddressRegister(operands[1]), getEffectiveAddressImm(operands[1])];
+
+        operands[1] = rs.toString();
+        operands.push(imm.toString());
+    }
+
+
+    let decodedValues = [0, 0, 0]
+    let isFirstSourceOperand = true;
+
+    INSTRUCTION_SET[instructionOpcode].operands.forEach((operand, index) => {
+        if (operand.type === OperandType.UNUSED) return;
+
+        let value = 0;
+        if (operand.type === OperandType.REGISTER) {
+            if (!isRegister(operands[index])) throw new Error(`Invalid register: ${operands[index]}.`);
+            if (!isValidRegister(getRegisterNumber(operands[index]))) throw new Error(`Invalid register: ${operands[index]}.`);
+            value = getRegisterNumber(operands[index]);
+        }
+        else if (operand.type === OperandType.IMMEDIATE) {
+            if (!isValue(operands[index])) throw new Error(`Invalid immediate value: ${operands[index]}.`);
+            if (isXBit(parseInt(operands[index]), 16)) throw new Error(`Immediate value out of range: ${operands[index]}.`);
+            value = parseInt(operands[index]);
+        } else if (operand.type === OperandType.LABEL) {
+            if (!isLabel(operands[index])) throw new Error(`Invalid label: ${operands[index]}.`);
+            if (!labels.has(operands[index])) throw new Error(`Invalid label: ${operands[index]}.`);
+            value = labels.get(operands[index]) as number;
+        } else throw new Error(`Invalid operand type: ${operand.type}.`);
+
+        if (operand.role === OperandRole.DESTINATION) {
+            decodedValues[0] = value;
+            return;
+        }
+        if (operand.role === OperandRole.SOURCE) {
+            if (isFirstSourceOperand == true) {
+                isFirstSourceOperand = false;
+                decodedValues[1] = value;
+                return;
+            }
+            decodedValues[2] = value;
+            return;
+        }
+        if (operand.role === OperandRole.IMMEDIATE) {
+            decodedValues[3] = value;
+        }
+    });
 
 
     switch (instructionDef.type) {
         case InstructionType.R:
-
-            if (operands.length !== 3) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
-
-            // Check if operands are registers
-            if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
-            if (!isRegister(operands[1])) throw new Error(`Invalid register: ${operands[1]}.`);
-            if (!isRegister(operands[2])) throw new Error(`Invalid register: ${operands[2]}.`);
-            const [rs1, rs2, rd] = [getRegisterNumber(operands[1]), getRegisterNumber(operands[2]), getRegisterNumber(operands[0])];
-            // Check if registers are valid
-            if (!isValidRegister(rs1)) throw new Error(`Invalid register: ${operands[1]}.`);
-            if (!isValidRegister(rs2)) throw new Error(`Invalid register: ${operands[2]}.`);
-            if (!isValidRegister(rd)) throw new Error(`Invalid register: ${operands[0]}.`);
-
-
             encodedInstruction = {
                 opcode: instructionOpcode,
-                rs1: rs1,
-                rs2: rs2,
-                rd: rd
-            }
-
+                rd: decodedValues[0],
+                rs1: decodedValues[1],
+                rs2: decodedValues[2],
+            } as InstructionR;
             break;
-        case InstructionType.I: {
-            let rd: number, rs: number, imm: number;
-            if (instructionDef.memOp == MemOp.STORE || instructionDef.memOp == MemOp.LOAD) {
-                if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
-
-                // Check if operands are valid
-                if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
-                if (!isEffectiveAddress(operands[1])) throw new Error(`Invalid effective address: ${operands[1]}.`);
-                [rd, rs, imm] = [getRegisterNumber(operands[0]), getEffectiveAddressRegister(operands[1]), getEffectiveAddressImm(operands[1])];
-            } else {
-
-                if (operands.length !== 3) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
-
-
-                // Check if operands are valid
-                if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
-                if (!isRegister(operands[1])) throw new Error(`Invalid register: ${operands[1]}.`);
-                if (operands[2].trim() == '') throw new Error(`Immediate value is empty.`);
-                if (!isValue(operands[2])) throw new Error(`Invalid immediate value: ${operands[2]}.`);
-                imm = parseInt(operands[2]);
-                if (isXBit(imm, 16)) throw new Error(`Immediate value out of range: ${operands[2]}.`);
-                [rd, rs] = [getRegisterNumber(operands[0]), getRegisterNumber(operands[1])];
-            }
-
-            // Check if registers are valid
-            if (!isValidRegister(rd)) throw new Error(`Invalid register: ${operands[0]}.`);
-            if (!isValidRegister(rs)) throw new Error(`Invalid register: ${operands[1]}.`);
-            if (isXBit(imm, 16)) throw new Error(`Immediate value out of range: ${operands[1]}.`);
-
+        case InstructionType.I:
             encodedInstruction = {
                 opcode: instructionOpcode,
-                rs: rs,
-                rd: rd,
-                imm: imm
-            }
-        }
-
+                rd: decodedValues[0],
+                rs: decodedValues[1],
+                imm: decodedValues[2],
+            } as InstructionI;
             break;
         case InstructionType.J:
-
-            if (mnemonic === "HALT") return { opcode: instructionOpcode, address: 0 } as InstructionJ;
-
-            if (operands.length !== 1) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
-
-            // Check if operand is a value or a label
-            let address: number;
-            if (isLabel(operands[0])) {
-                if (!labels.has(operands[0])) throw new Error(`Invalid label: ${operands[0]}.`);
-                address = labels.get(operands[0]) as number;
-                console.log('Address', address);
-
-            } else {
-                if (!isValue(operands[0])) throw new Error(`Invalid address: ${operands[1]}.`);
-                address = parseInt(operands[1]);
-            }
-            if (isXBit(address, 26)) throw new Error(`Address out of range: ${operands[1]}.`);
-
             encodedInstruction = {
                 opcode: instructionOpcode,
-                address: address
-            }
+                address: decodedValues[2],
+            } as InstructionJ;
             break;
-
-        default:
-            throw new Error(`Invalid instruction type: ${instructionDef.type}.`);
     }
+
     return encodedInstruction;
 }
 
@@ -121,11 +112,11 @@ export function assemble(program: string): { memory: Memory, labels: Map<string,
     const programLines = program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.trim());
     let encodedInstructions: (InstructionR | InstructionI | InstructionJ)[] = [];
 
-    
+
     // Handle labels first because they are used in the encoding of instructions
     let labels = new Map<string, number>();
     let pc = 0;
-    programLines.forEach((lineContent,line) => {
+    programLines.forEach((lineContent, line) => {
         if (isMnemonic(lineContent.split(" ")[0])) {
             pc++
             return;
@@ -152,7 +143,7 @@ export function assemble(program: string): { memory: Memory, labels: Map<string,
     let line = 0;
     programLines.forEach((instruction) => {
         line++;
-        if (instruction.trim() === '') return;   
+        if (instruction.trim() === '') return;
         if (instruction.trim().startsWith(';')) return;
         if (instruction.trim().endsWith(':')) return;
         let encodedInstruction;
