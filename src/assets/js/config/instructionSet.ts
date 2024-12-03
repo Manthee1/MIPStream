@@ -6,28 +6,47 @@ interface OperandConfig {
     role: OperandRole;
 }
 
-enum ALUInputSource1 {
+export enum ALUInputSource1 {
     NPC,
     A,
 }
-enum ALUInputSource2 {
+export enum ALUInputSource2 {
     B,
     I,
 }
 
-interface BaseInstructionConfig {
+export enum CondRegZCompareConfig {
+    NONE,
+    EQUAL,
+    NOT_EQUAL,
+}
+
+
+export interface BaseInstructionConfig {
     mnemonic: string;
     memOp?: MemOp;
     ALUopcode?: ALUopcode;
     ALUinputSource1?: ALUInputSource1;
     ALUinputSource2?: ALUInputSource2;
     description: string;
+    condRegZCompareConfig?: CondRegZCompareConfig;
     operands?: OperandConfig[];
+}
+
+export interface BaseInstructionConfigAllRequired extends BaseInstructionConfig {
+    type: InstructionType;
+    mnemonic: string;
+    memOp: MemOp;
+    ALUopcode: ALUopcode;
+    ALUinputSource1: ALUInputSource1;
+    ALUinputSource2: ALUInputSource2;
+    description: string;
+    condRegZCompareConfig: CondRegZCompareConfig;
+    operands: OperandConfig[];
 }
 
 interface ITypeInstructionConfig extends BaseInstructionConfig {
     type: InstructionType.I;
-    memOp?: MemOp;
     operands?: [
         { role: OperandRole.DESTINATION, type: OperandType.REGISTER | OperandType.UNUSED },
         { role: OperandRole.SOURCE, type: OperandType.REGISTER | OperandType.UNUSED },
@@ -53,7 +72,7 @@ interface JTypeInstructionConfig extends BaseInstructionConfig {
 
 type InstructionConfig = ITypeInstructionConfig | RTypeInstructionConfig | JTypeInstructionConfig;
 
-let INSTRUCTION_SET: InstructionConfig[] = [
+let INSTRUCTION_CONFIG: InstructionConfig[] = [
 
     {
         mnemonic: "ADDI",
@@ -66,6 +85,18 @@ let INSTRUCTION_SET: InstructionConfig[] = [
         type: InstructionType.R,
         ALUopcode: ALUopcode.ADD,
         description: "Adds `Rs1` and `Rs2` and stores the result in `Rd`",
+    },
+    {
+        mnemonic: "SUB",
+        type: InstructionType.R,
+        ALUopcode: ALUopcode.SUB,
+        description: "Subtracts `Rs2` from `Rs1` and stores the result in `Rd`",
+    },
+    {
+        mnemonic: "SUBI",
+        type: InstructionType.I,
+        ALUopcode: ALUopcode.SUB,
+        description: "Subtracts an immediate value from `Rs` and stores the result in `Rd`",
     },
     {
         mnemonic: "LW",
@@ -81,14 +112,47 @@ let INSTRUCTION_SET: InstructionConfig[] = [
         description: "Jumps to a label",
     },
     {
-        mnemonic: "BEQ",
+        mnemonic: "JR",
+        type: InstructionType.J,
+        ALUopcode: ALUopcode.PASSTHROUGH,
+        description: "Jumps to a label",
+        operands: [
+            { role: OperandRole.DESTINATION, type: OperandType.REGISTER },
+        ]
+    },
+    {
+        mnemonic: "JAL",
+        type: InstructionType.J,
+        ALUopcode: ALUopcode.PASSTHROUGH,
+        description: "Jumps to a label and stores the return address in `Rd`",
+        operands: [
+            { role: OperandRole.DESTINATION, type: OperandType.REGISTER },
+        ]
+    },
+    {
+        mnemonic: "BEQZ",
         type: InstructionType.I,
         ALUopcode: ALUopcode.ADD,
         ALUinputSource1: ALUInputSource1.NPC,
-        description: "Branches to a label if Rs and Rt are equal",
+        description: "Branches to a label if `Rs` is zero",
+        condRegZCompareConfig: CondRegZCompareConfig.EQUAL,
         operands: [
-            { role: OperandRole.DESTINATION, type: OperandType.REGISTER },
-            { role: OperandRole.SOURCE, type: OperandType.UNUSED },
+            { role: OperandRole.DESTINATION, type: OperandType.UNUSED },
+            { role: OperandRole.SOURCE, type: OperandType.REGISTER },
+            { role: OperandRole.IMMEDIATE, type: OperandType.LABEL },
+        ],
+
+    },
+    {
+        mnemonic: "BNEZ",
+        type: InstructionType.I,
+        ALUopcode: ALUopcode.ADD,
+        ALUinputSource1: ALUInputSource1.NPC,
+        description: "Branches to a label if `Rs` is not zero",
+        condRegZCompareConfig: CondRegZCompareConfig.NOT_EQUAL,
+        operands: [
+            { role: OperandRole.DESTINATION, type: OperandType.UNUSED },
+            { role: OperandRole.SOURCE, type: OperandType.REGISTER },
             { role: OperandRole.IMMEDIATE, type: OperandType.LABEL },
         ],
 
@@ -106,7 +170,7 @@ let INSTRUCTION_SET: InstructionConfig[] = [
 
 
 
-const defaultInstructionI: ITypeInstructionConfig = {
+const defaultInstructionI: BaseInstructionConfigAllRequired = {
     type: InstructionType.I,
     mnemonic: "",
     description: "",
@@ -114,6 +178,7 @@ const defaultInstructionI: ITypeInstructionConfig = {
     ALUinputSource1: ALUInputSource1.A,
     ALUinputSource2: ALUInputSource2.I,
     memOp: MemOp.NONE,
+    condRegZCompareConfig: CondRegZCompareConfig.NONE,
     operands: [
         { role: OperandRole.DESTINATION, type: OperandType.REGISTER },
         { role: OperandRole.SOURCE, type: OperandType.REGISTER },
@@ -121,7 +186,7 @@ const defaultInstructionI: ITypeInstructionConfig = {
     ],
 };
 
-const defaultInstructionR: RTypeInstructionConfig = {
+const defaultInstructionR: BaseInstructionConfigAllRequired = {
     type: InstructionType.R,
     mnemonic: "",
     description: "",
@@ -129,7 +194,7 @@ const defaultInstructionR: RTypeInstructionConfig = {
     ALUinputSource1: ALUInputSource1.A,
     ALUinputSource2: ALUInputSource2.B,
     memOp: MemOp.NONE,
-
+    condRegZCompareConfig: CondRegZCompareConfig.NONE,
     operands: [
         { role: OperandRole.DESTINATION, type: OperandType.REGISTER },
         { role: OperandRole.SOURCE, type: OperandType.REGISTER },
@@ -137,23 +202,25 @@ const defaultInstructionR: RTypeInstructionConfig = {
     ],
 };
 
-const defaultInstructionJ: JTypeInstructionConfig = {
+const defaultInstructionJ: BaseInstructionConfigAllRequired = {
     type: InstructionType.J,
     mnemonic: "",
     description: "",
+    ALUopcode: ALUopcode.PASSTHROUGH,
     ALUinputSource1: ALUInputSource1.NPC,
     ALUinputSource2: ALUInputSource2.B,
     memOp: MemOp.NONE,
+    condRegZCompareConfig: CondRegZCompareConfig.NONE,
     operands: [
         { role: OperandRole.DESTINATION, type: OperandType.LABEL },
     ],
 };
 
 // Merge the instruction set with the default values
-INSTRUCTION_SET = INSTRUCTION_SET.map((instruction) => {
+let INSTRUCTION_SET: BaseInstructionConfigAllRequired[] = INSTRUCTION_CONFIG.map((instruction) => {
     console.log('config inst', instruction);
 
-    let defaultInstruction: InstructionConfig;
+    let defaultInstruction: BaseInstructionConfigAllRequired;
     switch (instruction.type) {
         case InstructionType.I:
             defaultInstruction = defaultInstructionI;
@@ -173,13 +240,17 @@ INSTRUCTION_SET = INSTRUCTION_SET.map((instruction) => {
 // Insert NOP instruction
 INSTRUCTION_SET.unshift({
     mnemonic: "NOP",
-    type: InstructionType.R,
+    type: InstructionType.I,
+    memOp: MemOp.NONE,
     ALUopcode: ALUopcode.PASSTHROUGH,
+    ALUinputSource1: ALUInputSource1.A,
+    ALUinputSource2: ALUInputSource2.B,
     description: "No operation",
+    condRegZCompareConfig: CondRegZCompareConfig.NONE,
     operands: [
         { role: OperandRole.DESTINATION, type: OperandType.UNUSED },
         { role: OperandRole.SOURCE, type: OperandType.UNUSED },
-        { role: OperandRole.SOURCE, type: OperandType.UNUSED },
+        { role: OperandRole.IMMEDIATE, type: OperandType.UNUSED },
     ],
 });
 
