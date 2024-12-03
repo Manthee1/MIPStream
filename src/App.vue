@@ -1,7 +1,11 @@
 <template>
     <TopBar fileName="Test" />
     <main>
-        <router-view />
+        <router-view v-slot="{ Component }">
+            <transition name="fade">
+                <component :is="Component" />
+            </transition>
+        </router-view>
     </main>
     <div class="settings-wrapper" v-if="$viewStore.showSettings">
         <Window title="Settings" class="settings-window" closeable :onClose="$viewStore.toggleSettings">
@@ -49,4 +53,11 @@ export default defineComponent({
     justify-content: center
     align-items: center
     z-index: 100
+
+
+// Transition
+.fade-enter-active, .fade-leave-active
+    transition: opacity 0.2s
+.fade-enter, .fade-leave-to
+    opacity: 0
 </style>
