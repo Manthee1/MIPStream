@@ -36,7 +36,7 @@ interface InstructionI {
 
 interface InstructionJ {
     opcode: number; //Control/Opcode/Instruction
-    address: number; //Immediate Value
+    offset: number; //Immediate Value
 }
 
 enum MemOp {

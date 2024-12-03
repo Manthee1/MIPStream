@@ -1,7 +1,7 @@
 import { ALUopcode, CPU, Memory } from "../interfaces/core"
 import { InstructionR, InstructionI, InstructionJ, InstructionType, MemOp } from "../interfaces/instruction"
-import INSTRUCTION_SET from "../config/instructionSet"
-import { createBlankStageData, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isIType, isJType, isLabel, isRegister, isRType, isValidRegister, isValue, isXBit, } from "../utils"
+import INSTRUCTION_SET, { ALUInputSource1, ALUInputSource2, CondRegZCompareConfig } from "../config/instructionSet"
+import { createBlankStageData, isIType, isJType, isRType, } from "../utils"
 import { notify } from "@kyvg/vue3-notification"
 import { useSettingsStore } from "../../../stores/settingsStore"
 
@@ -219,7 +219,20 @@ export default class DLXCore {
             MEMStage.LMD = MEMStage.ALUOutput;
         }
 
-        this.cpu.PC = MEMStage.cond ? MEMStage.ALUOutput : MEMStage.NPC;
+        if (MEMStage.cond) {
+            this.cpu.PC = MEMStage.ALUOutput;
+            // Flush the ID, EX and MEM stages
+            // this.cpu.stages[0] = createBlankStageData();
+            this.cpu.stages[0].NPC = this.cpu.PC + 3;
+            // this.cpu.stages[1] = createBlankStageData();
+            this.cpu.stages[1].NPC = this.cpu.PC + 2;
+            // this.cpu.stages[2] = createBlankStageData();
+            this.cpu.stages[2].NPC = this.cpu.PC + 1;
+            // this.cpu.stages[3] = createBlankStageData();
+            return;
+        }
+
+        this.cpu.PC = MEMStage.NPC;
 
     }
 
@@ -229,17 +242,18 @@ export default class DLXCore {
         if (EXStage.IR.opcode === 0) return; // Skip if NOP
         const EXInstructionDef = INSTRUCTION_SET[EXStage.IR.opcode];
 
+        let in1: number = EXInstructionDef.ALUinputSource1 == ALUInputSource1.NPC ? EXStage.NPC : EXStage.A;
+        let in2: number = EXInstructionDef.ALUinputSource2 == ALUInputSource2.I ? EXStage.I : EXStage.B;
 
-
-        let in1: number = EXStage.A;
-        let in2: number = EXStage.B;
-        if (isIType(EXStage.IR)) {
-            in2 = EXStage.I;
+        if (EXInstructionDef.condRegZCompareConfig !== CondRegZCompareConfig.NONE) {
+            if (EXInstructionDef.condRegZCompareConfig === CondRegZCompareConfig.EQUAL) {
+                EXStage.cond = (EXStage.A === 0);
+            } else {
+                EXStage.cond = (EXStage.A !== 0);
+            }
         }
 
         EXStage.ALUOutput = this.execAlu(EXInstructionDef.ALUopcode, in1, in2);
-
-
 
     }
 
@@ -256,14 +270,12 @@ export default class DLXCore {
             IDStage.B = this.cpu.intRegisters[IDStage.IR.rd];
             IDStage.I = IDStage.IR.imm;
         } else if (isJType(IDStage.IR)) {
+            this.cpu.PC += IDStage.IR.offset;
             // FLush the ID, EX and MEM stages and set the PC to the address of the jump instruction
-            // this.cpu.stages[1] = createBlankStageData();
-            this.cpu.stages[1].NPC = IDStage.IR.address + 2;
-            // this.cpu.stages[2] = createBlankStageData();
-            this.cpu.stages[2].NPC = IDStage.IR.address + 1;
-            // this.cpu.stages[3] = createBlankStageData();
+            this.cpu.stages[1].NPC = this.cpu.PC + 2;
+            this.cpu.stages[2].NPC = this.cpu.PC + 1;
 
-            this.cpu.PC = IDStage.IR.address;
+
         }
     }
 

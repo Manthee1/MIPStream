@@ -101,7 +101,7 @@ export function isIType(instruction: InstructionR | InstructionI | InstructionJ)
 }
 
 export function isJType(instruction: InstructionR | InstructionI | InstructionJ): instruction is InstructionJ {
-    return (instruction as InstructionJ).address !== undefined;
+    return (instruction as InstructionJ).offset !== undefined;
 }
 
 export function isMnemonic(mnemonic: string): boolean {
