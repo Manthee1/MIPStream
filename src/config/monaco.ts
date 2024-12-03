@@ -1,15 +1,11 @@
 import * as monaco from 'monaco-editor';
 import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
-import { InstructionDef, InstructionType, MemOp } from '../assets/js/interfaces/instruction';
+import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
 import { isLabel } from '../assets/js/utils';
-import { notify } from '@kyvg/vue3-notification';
-import { useDlxStore } from '../stores/dlxStore';
-import { assemble } from '../assets/js/assembler';
-import { AssemblerErrorList } from '../assets/js/errors';
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -197,7 +193,9 @@ monaco.editor.defineTheme('dark', {
     base: 'vs-dark',
     inherit: false,
     rules: rulesDark,
-    colors: {}
+    colors: {
+        "editor.foreground": "#cfcfcf",
+    }
 });
 
 const rulesWhite = [
@@ -212,7 +210,9 @@ monaco.editor.defineTheme('light', {
     base: 'vs',
     inherit: false,
     rules: rulesWhite,
-    colors: {}
+    colors: {
+        
+    }
 });
 
 
