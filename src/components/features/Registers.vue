@@ -10,7 +10,7 @@ import Window from '../Window.vue';
             <li class="register-item" v-for="(value, index) in registers.slice(0, 16)" :key="index">
                 <span>R{{ index }}</span>
                 <!-- Binary value -->
-                <span>{{ decToHex(value, 32) }}</span>
+                <span>0x{{ decToHex(value, 8) }}</span>
                 <span>{{ value }}</span>
             </li>
         </ul>
@@ -18,7 +18,7 @@ import Window from '../Window.vue';
             <li class="register-item" v-for="(value, index) in registers.slice(16)" :key="index">
                 <span>R{{ index + 16 }}</span>
                 <!-- Binary value -->
-                <span>0x{{ decToHex(value, 32) }}</span>
+                <span>0x{{ decToHex(value, 8) }}</span>
                 <span>{{ value }}</span>
             </li>
         </ul>
@@ -32,14 +32,14 @@ import Window from '../Window.vue';
 
 
 export default defineComponent({
-    name: 'Registers',
+	name: 'Registers',
 
-    computed: {
-        registers(): number[] {
-            // @ts-ignore
-            return this.$dlxStore.DLXCore.cpu.intRegisters as number[]
-        }
-    }
+	computed: {
+		registers(): number[] {
+			// @ts-ignore
+			return this.$dlxStore.DLXCore.cpu.intRegisters as number[]
+		}
+	}
 });
 </script>
 
@@ -51,10 +51,9 @@ export default defineComponent({
     flex-flow: row nowrap
     flex: 1 1 auto
     gap: 2rem
-    font-size: 1rem
+    font-size: 1.5rem
     padding: 0.5rem 1rem
-    
-    
+
     .register-list
         list-style-type: none
         padding: 0
