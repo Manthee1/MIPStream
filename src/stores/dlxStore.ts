@@ -85,6 +85,8 @@ export const useDlxStore = defineStore('dlx', {
                     text: errorMessage,
                 });
                 this.status = 'stopped';
+                console.error(errors);
+                
                 return;
             }
 
@@ -93,6 +95,8 @@ export const useDlxStore = defineStore('dlx', {
         step() {
             if (this.status != 'paused') return;
             this.DLXCore.runCycle();
+            const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
+            if(this.DLXCore.cpu.stages[4].IR?.opcode == haltOpcode) this.status = 'stopped'
 
         },
         pause() {
