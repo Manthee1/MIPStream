@@ -4,13 +4,13 @@
 
 <template>
 	<div class="controls">
-		<MButton v-if="$dlxStore.status == 'stopped'" outlined small icon="play" @click="run" title="Run"></MButton>
-		<MButton v-else-if="$dlxStore.status == 'running'" outlined small icon="pause" @click="pause" title="Pause" />
-		<MButton v-else-if="$dlxStore.status == 'paused'" outlined small icon="play-circle" @click="resume" title="Resume" />
+		<MButton v-if="$cpuStore.status == 'stopped'" outlined small icon="play" @click="run" title="Run"></MButton>
+		<MButton v-else-if="$cpuStore.status == 'running'" outlined small icon="pause" @click="pause" title="Pause" />
+		<MButton v-else-if="$cpuStore.status == 'paused'" outlined small icon="play-circle" @click="resume" title="Resume" />
 		<MButton outlined small icon="square" @click="stop" title="Stop"></MButton>
 		<MButton outlined small icon="skip-forward" @click="step" title="Step"></MButton>
 		<MButton outlined small icon="refresh-cw" @click="reloadProgram" title="Reload Program"></MButton>
-		<span class="my-auto">Status: {{ $dlxStore.status }}</span>
+		<span class="my-auto">Status: {{ $cpuStore.status }}</span>
 	</div>
 </template>
 
@@ -27,22 +27,22 @@ export default defineComponent({
 	},
 	methods: {
 		resume() {
-			this.$dlxStore.resume();
+			this.$cpuStore.resume();
 		},
 		run() {
-			this.$dlxStore.run();
+			this.$cpuStore.run();
 		},
 		pause() {
-			this.$dlxStore.pause();
+			this.$cpuStore.pause();
 		},
 		stop() {
-			this.$dlxStore.stop();
+			this.$cpuStore.stop();
 		},
 		step() {
-			this.$dlxStore.step();
+			this.$cpuStore.step();
 		},
 		reloadProgram() {
-			this.$dlxStore.loadProgram();
+			this.$cpuStore.loadProgram();
 		}
 	}
 });

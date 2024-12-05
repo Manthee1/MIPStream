@@ -8,28 +8,42 @@
             </div>
         </div>
         <div class="tab-content">
-            <div class="setting-item" v-for="setting in currentTab.settings" :key="setting.key">
-                <div class='setting-icon-wrapper'>
-                    <vue-feather v-if="setting?.icon" class="setting-icon" :type="setting.icon" />
-                </div>
+            <div class="setting-item" :class="{'wrap':setting.type === 'radio'}" v-for="setting in currentTab.settings"
+                :key="setting.key">
                 <div class="setting-info">
-                    <label class='setting-name'>{{ setting.label }}</label>
-                    <p class="setting-description">{{ setting.description }}</p>
+                    <div class='setting-icon-wrapper'>
+                        <vue-feather v-if="setting?.icon" class="setting-icon" :type="setting.icon" />
+                    </div>
+                    <div class="setting-text">
+                        <label class='setting-name'>{{ setting.label }}</label>
+                        <p class=" setting-description">{{ setting.description }}</p>
+                    </div>
                 </div>
                 <div class="setting-input">
-                        <input v-if="setting.type === 'text'" type="text" :value="$settings[setting.key]"
-                            @input="setSetting(setting.key, $event)" />
-                        <input v-else-if="setting.type === 'number'" type="number" :value="$settings[setting.key]"
-                            @input="setSetting(setting.key, $event)" />
-                        <Switch v-else-if="setting.type === 'checkbox'" :id="setting.key" :model-value="$settings[setting.key]"
-                            @update:model-value="setSetting(setting.key, $event)" />
-                        <Select v-else-if="setting.type === 'select'" :id="setting.key" :model-value="$settings[setting.key]" :options="setting.options"
-                            @update:model-value="setSetting(setting.key, $event)" />
+                    <input v-if="setting.type === 'text'" type="text" :value="$settings[setting.key]"
+                        @input="setSetting(setting.key, $event)" />
+                    <input v-else-if="setting.type === 'number'" type="number" :value="$settings[setting.key]"
+                        @input="setSetting(setting.key, $event)" />
+                    <Switch v-else-if="setting.type === 'checkbox'" :id="setting.key" :model-value="$settings[setting.key]"
+                        @update:model-value="setSetting(setting.key, $event)" />
+                    <Select v-else-if="setting.type === 'select'" :id="setting.key" :model-value="$settings[setting.key]"
+                        :options="setting.options" @update:model-value="setSetting(setting.key, $event)" />
+                    <div v-else-if="setting.type === 'radio'">
+                        <div class="radio-group flex flex-row flex-left gap-2" v-for="option in setting.options"
+                            :key="setting.key+'-'+option.value">
+                            <input type='radio' :checked="$settings[setting.key] == option.value" :name="setting.key"
+                                :value="option.value" />
+                            <div class="flex flex-column my-auto">
+                                <label>{{option.label}}</label>
+                                <p v-if="option.description">{{option.description}}</p>
+    
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
 </template>
 
 <script lang="ts">
@@ -38,54 +52,51 @@ import { settingTabs } from '../../config/settings';
 import Window from '@/components/common/Window.vue';
 import Switch from '../common/Switch.vue';
 import Select from '../common/MSelect.vue';
-import { saveSetting } from '../../storage/settingsStorage';
 
 export default defineComponent({
-    name: 'Settings',
-    components: {
-        Window,
-        Switch,
-        Select,
-    },
-    data() {
-        return {
-            currentTabIndex: 0,
-        };
-    },
-    computed: {
-        settingsTabs() {
-            return settingTabs;
-        },
-        currentTab() {
-            return settingTabs[this.currentTabIndex];
-        },
-    },
-    methods: {
-        close() {
-            this.$viewStore.toggleSettings();
-        },
-        setActiveTab(index: number) {
-            this.currentTabIndex = index;
-        },
-        setSetting(key: string, value: any) {
-            console.log(key, value);
-            if (key === 'theme') this.$viewStore.setTheme(value);
-            
-            this.$settings.setSetting(key, value);
-        },
-    },
-    watch: {
-        $settings() {
-            console.log('Settings changed');
-            // saveSetting();
-        },
-    },
+	name: 'Settings',
+	components: {
+		Window,
+		Switch,
+		Select,
+	},
+	data() {
+		return {
+			currentTabIndex: 0,
+		};
+	},
+	computed: {
+		settingsTabs() {
+			return settingTabs;
+		},
+		currentTab() {
+			return settingTabs[this.currentTabIndex];
+		},
+	},
+	methods: {
+		close() {
+			this.$viewStore.toggleSettings();
+		},
+		setActiveTab(index: number) {
+			this.currentTabIndex = index;
+		},
+		setSetting(key: string, value: any) {
+			console.log(key, value);
+			if (key === 'theme') this.$viewStore.setTheme(value);
+
+			this.$settings.setSetting(key, value);
+		},
+	},
+	watch: {
+		$settings() {
+			console.log('Settings changed');
+			// saveSetting();
+		},
+	},
 });
 </script>
 
 <style scoped lang="sass">
-
-
 .settings-content
     display: flex
     flex-flow: row nowrap
@@ -96,7 +107,7 @@ export default defineComponent({
     height: 80vh
     width: 50vw
     max-width: 90vw
-    
+
     .tabs
         display: flex
         flex-direction: column
@@ -126,7 +137,6 @@ export default defineComponent({
             &.active
                 background-color: var(--color-light)
                 color: var(--color-text)
-            
 
     .tab-content
         display: flex
@@ -149,22 +159,35 @@ export default defineComponent({
             transition: background-color 0.2s
             &:hover
                 background-color: var(--color-background-dark)
-            .setting-icon-wrapper .setting-icon
-                font-size: 1.5rem
+            &.wrap
+                flex-flow: column
+                justify-content: flex-start
+                align-content: flex-start
+                .setting-input
+                    max-width: 100%
+                    margin-left: 3.5rem
             .setting-info
                 display: flex
-                flex-flow: column nowrap
-                gap: 0rem
+                flex-flow: row nowrap
+                gap: 1rem
                 width: 100%
                 flex: 1 1 auto
-                .setting-name
-                    color: var(--color-text)
-                    font-weight: bold
-                    margin: 0
-                .setting-description
-                    color: var(--color-subtext)
-                    margin: 0.2rem 0
-                    max-width: 50rem
+                .setting-icon-wrapper
+                    display: flex
+                    justify-content: center
+                    align-content: center
+                    font-size: 1.5rem
+                    .setting-icon
+                        margin: auto
+                .setting-text
+                    .setting-name
+                        color: var(--color-text)
+                        font-weight: bold
+                        margin: 0
+                    .setting-description
+                        color: var(--color-subtext)
+                        margin: 0.2rem 0
+                        max-width: 50rem
 
             .setting-input
                 display: flex
@@ -173,9 +196,4 @@ export default defineComponent({
                 gap: 0.5rem
                 // flex: 0 0 0
                 max-width: 20rem
-            
-            
-
-            
-
 </style>

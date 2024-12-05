@@ -21,7 +21,7 @@ interface StageData {
 
 
 interface CPU {
-    intRegisters: Array<number>; // Integer registers (32x 32-bit wide)
+    GPRegisters: Array<number>; // Integer registers (32x 32-bit wide)
     FPRegisters: Array<number>;// Sinfle persision floating point registers (32x 32-bit wide) or double precision (16x 32-bit wide) IEEE754 
     PC: number; // The current instruction index
     stages: Array<StageData>; // The current stage data

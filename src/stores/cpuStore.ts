@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import DLXCore from '../assets/js/core/DLXCore'
+import MIPSCore from '../assets/js/core/MIPSCore'
 import INSTRUCTION_SET from '../assets/js/config/instructionSet';
 import { wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
@@ -9,9 +9,9 @@ import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
 
 
-export const useDlxStore = defineStore('dlx', {
+export const useCPUStore = defineStore('mipstream', {
     state: () => ({
-        DLXCore: new DLXCore(),
+        MIPSCore: new MIPSCore(),
         program: '' as string,
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
         speed: 0 as number, // cycles per second
@@ -26,7 +26,7 @@ export const useDlxStore = defineStore('dlx', {
     actions: {
 
         getStageLine(stage: number): number {
-            return this.PCToLineMap[this.DLXCore.cpu.stages[stage].OPC] ?? -1;
+            return this.PCToLineMap[this.MIPSCore.cpu.stages[stage].OPC] ?? -1;
         },
 
         mapPCToLine() {
@@ -90,13 +90,13 @@ export const useDlxStore = defineStore('dlx', {
                 return;
             }
 
-            this.DLXCore.loadProgram(memory.instructions, memory.data);
+            this.MIPSCore.loadProgram(memory.instructions, memory.data);
         },
         step() {
             if (this.status != 'paused') return;
-            this.DLXCore.runCycle();
+            this.MIPSCore.runCycle();
             const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
-            if(this.DLXCore.cpu.stages[4].IR?.opcode == haltOpcode) this.status = 'stopped'
+            if(this.MIPSCore.cpu.stages[4].IR?.opcode == haltOpcode) this.status = 'stopped'
 
         },
         pause() {
@@ -104,7 +104,7 @@ export const useDlxStore = defineStore('dlx', {
         },
         stop() {
             this.status = 'stopped';
-            this.DLXCore.reset();
+            this.MIPSCore.reset();
         },
         run() {
             this.loadProgram();
@@ -116,10 +116,10 @@ export const useDlxStore = defineStore('dlx', {
             const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
             this.status = 'running';
             // Run until the program is finished
-            while (this.status == 'running' && this.DLXCore.cpu.stages[4].IR?.opcode !== haltOpcode) {
-                this.DLXCore.runCycle();
-                console.log(this.breakpoints, this.PCToLineMap[this.DLXCore.cpu.PC]);
-                if (this.breakpoints.includes(this.PCToLineMap[this.DLXCore.cpu.PC])) {
+            while (this.status == 'running' && this.MIPSCore.cpu.stages[4].IR?.opcode !== haltOpcode) {
+                this.MIPSCore.runCycle();
+                console.log(this.breakpoints, this.PCToLineMap[this.MIPSCore.cpu.PC]);
+                if (this.breakpoints.includes(this.PCToLineMap[this.MIPSCore.cpu.PC])) {
                     this.status = 'paused';
                     return;
                 }

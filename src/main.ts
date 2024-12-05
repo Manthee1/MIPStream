@@ -2,7 +2,7 @@ import App from "./App.vue";
 import { createApp } from "vue";
 
 import { createPinia } from 'pinia'
-import { useDlxStore } from './stores/dlxStore'
+import { useCPUStore } from './stores/cpuStore'
 import { useViewStore } from './stores/viewStore'
 import { useSettingsStore } from './stores/settingsStore'
 import VueFeather from 'vue-feather';
@@ -17,14 +17,14 @@ const app = createApp(App);
 
 app.use(pinia);
 // Stores
-const dlxStore = useDlxStore();
+const cpuStore = useCPUStore();
 const viewStore = useViewStore();
 const settings = useSettingsStore();
 
 declare module '@vue/runtime-core' {
     interface ComponentCustomProperties {
         $context: typeof app.config.globalProperties
-        $dlxStore: ReturnType<typeof useDlxStore>
+        $cpuStore: ReturnType<typeof useCPUStore>
         $settings: ReturnType<typeof useSettingsStore>
         $viewStore: ReturnType<typeof useViewStore>
         $confirm: (data: ModalData) => Promise<boolean | string>
@@ -35,10 +35,10 @@ declare module '@vue/runtime-core' {
     }
 }
 // @ts-ignore
-window.dlxStore = dlxStore;
+window.cpuStore = cpuStore;
 
 app.config.globalProperties.$context = app.config.globalProperties
-app.config.globalProperties.$dlxStore = dlxStore;
+app.config.globalProperties.$cpuStore = cpuStore;
 app.config.globalProperties.$settings = settings;
 app.config.globalProperties.$viewStore = viewStore;
 app.config.globalProperties.$confirm = viewStore.confirm;

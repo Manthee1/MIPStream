@@ -59,7 +59,7 @@ export default defineComponent({
         },
     },
     mounted() {
-        // Check if there is text or jsut icon
+        // Check if there is text or just icon
         if (!this.$slots.default || this.$slots.default.length === 0) {
             this.iconOnly = true;
         }

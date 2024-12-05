@@ -1,4 +1,4 @@
-# DLX CPU architecture web based simulator
+# MIPS CPU architecture web based simulator
 
 ## Requirements
 - [ ] Load/Save program from/to file
@@ -19,7 +19,7 @@
     - [x] Clear breakpoints
 - [ ] Display
   - [ ] Settings
-  - [ ] Visualize DLX CPU circuit
+  - [ ] Visualize MIPS CPU circuit
   - [x] Registers (view)
   - [x] Memory (view)
   - [ ] Editor

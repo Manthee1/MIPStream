@@ -4,7 +4,7 @@
 
 <template>
 	<div ref="editor" class="editor-container">
-		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$dlxStore.program" </div> -->
+		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$cpuStore.program" </div> -->
 		<!-- <div id="editor" ref="editor"> </div> -->
 	</div>
 </template>
@@ -62,13 +62,13 @@ export default defineComponent({
 		validate(model);
 
 		// Listener for changes in the editor
-		this.$dlxStore.program = monaco.editor.getModels()[0].getValue();
+		this.$cpuStore.program = monaco.editor.getModels()[0].getValue();
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
 			const code = monaco.editor.getModels()[0].getValue();
-			this.$dlxStore.program = code;
+			this.$cpuStore.program = code;
 			this.$emit('update:modelValue', code);
 			validate(model);
-			this.$dlxStore.updateErrors();
+			this.$cpuStore.updateErrors();
 
 		});
 
@@ -90,7 +90,7 @@ export default defineComponent({
 
 	computed: {
 		currentPC(): number {
-			return this.$dlxStore.DLXCore.cpu.PC;
+			return this.$cpuStore.MIPSCore.cpu.PC;
 		}
 	},
 	watch: {
@@ -99,8 +99,8 @@ export default defineComponent({
 			if (!model) return;
 			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
 				const stageName = getStageName(index);
-				const stage = this.$dlxStore.DLXCore.cpu.stages[index];
-				const line = this.$dlxStore.getStageLine(index);
+				const stage = this.$cpuStore.MIPSCore.cpu.stages[index];
+				const line = this.$cpuStore.getStageLine(index);
 				if (line == -1)
 					return [];
 				return [
@@ -150,7 +150,7 @@ export default defineComponent({
 		updateBreakpoints() {
 			const model = editor.getModel();
 			if (!model) return;
-			const decorations = model.deltaDecorations(this.decorations, this.$dlxStore.breakpoints.map(line => ({
+			const decorations = model.deltaDecorations(this.decorations, this.$cpuStore.breakpoints.map(line => ({
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
 					isWholeLine: true,
@@ -161,20 +161,20 @@ export default defineComponent({
 		},
 
 		toggleBreakpoint(line: number) {
-			if (this.$dlxStore.breakpoints.includes(line)) {
+			if (this.$cpuStore.breakpoints.includes(line)) {
 				this.removeBreakpoint(line);
 			} else {
 				this.addBreakpoint(line);
 			}
-			console.log('Breakpoints:', this.$dlxStore.breakpoints);
+			console.log('Breakpoints:', this.$cpuStore.breakpoints);
 
 		},
 		addBreakpoint(line: number) {
-			this.$dlxStore.breakpoints.push(line);
+			this.$cpuStore.breakpoints.push(line);
 			this.updateBreakpoints();
 		},
 		removeBreakpoint(line: number) {
-			this.$dlxStore.breakpoints = this.$dlxStore.breakpoints.filter(b => b !== line);
+			this.$cpuStore.breakpoints = this.$cpuStore.breakpoints.filter(b => b !== line);
 			this.updateBreakpoints();
 		}
 	}

@@ -92,7 +92,7 @@ export const downloadProject = (project: Project) => {
     const element = document.createElement('a');
     const file = new Blob([JSON.stringify(project)], { type: 'application/json' });
     element.href = URL.createObjectURL(file);
-    element.download = `${project.name}.dlxs`;
+    element.download = `${project.name}.mipstream`;
     document.body.appendChild(element); // Required for this to work in FireFox
     element.click();
     document.body.removeChild(element);

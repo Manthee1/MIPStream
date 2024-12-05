@@ -15,7 +15,7 @@ import Window from "@/components/common/Window.vue";
 		<div class="editor-wrapper">
 			<Controls />
 			<Editor :key="project.id" v-model="project.code" @update:modelValue="codeUpdate()" />
-			<Accordion style="flex:1 1 auto" open :label="`Problems (${ $dlxStore.errors.length })`">
+			<Accordion style="flex:1 1 auto" open :label="`Problems (${ $cpuStore.errors.length })`">
 				<Problems />
 			</Accordion>
 		</div>

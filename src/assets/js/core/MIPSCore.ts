@@ -5,10 +5,11 @@ import { createBlankStageData, isIType, isJType, isRType, } from "../utils"
 import { notify } from "@kyvg/vue3-notification"
 import { useSettingsStore } from "../../../stores/settingsStore"
 
-export default class DLXCore {
+export default class MIPSCore {
     cpu: CPU = {
         GPRegisters: Array.from({ length: 32 }, () => 0),
         FPRegisters: Array.from({ length: 32 }, () => 0),
+
         PC: 0,
         stages: Array.from({ length: 5 }, createBlankStageData)
     }

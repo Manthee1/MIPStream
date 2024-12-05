@@ -1,5 +1,5 @@
 <template>
-    <Window title="DLX CPU">
+    <Window title="CPU">
         <div class="cpu-view">
             <svg width="500" height="600">
                 <!-- Example data paths -->

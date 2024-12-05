@@ -24,7 +24,7 @@ export default defineComponent({
     },
     computed: {
         stages(): any {
-            return this.$dlxStore.DLXCore.cpu.stages;
+            return this.$cpuStore.MIPSCore.cpu.stages;
         },
     },
 });

@@ -1,9 +1,9 @@
 interface Setting {
     label: string;
     key: string;
-    type: 'checkbox' | 'text' | 'number' | 'select';
+    type: 'checkbox' | 'text' | 'number' | 'select' | 'radio';
     default: any;
-    options?: { value: string, label: string }[];
+    options?: { value: string, label: string, description?: string }[];
     description: string;
     icon?: string; // Added icon property
 }
@@ -53,19 +53,23 @@ const settingTabs: SettingTab[] = [
         icon: 'cpu',
         settings: [
             {
-                key: 'useHazards',
-                label: 'Use hazards',
-                type: 'checkbox',
-                default: false,
-                description: 'If enabled the emulator will detect and resolve hazards.',
-            },
-            {
-                key: 'useForwarding',
-                label: 'Use forwarding',
-                type: 'checkbox',
-                default: false,
-                description: 'If enabled, the emulator will forward the value from the output of the previous instruction to the input of the next instruction if that instruction is dependent on it. Otherwise, the emulator will stall the pipeline until the value is available.',
-                icon: 'corner-down-right'
+                key: 'dataHazardResolution',
+                label: 'Data Hazard Resolution ',
+                type: 'radio',
+                default: 'none',
+                icon: 'corner-down-right',
+                description: "Detirmen how data hazards will be handeled",
+                options: [
+                    {
+                        label: "Don't handle data hazards",
+                        value: "none",
+                    },
+                    {
+                        label: "Use Forwarding",
+                        value: "forwarding",
+                        description: 'If enabled, the emulator will forward the value from the output of the previous instruction to the input of the next instruction if that instruction is dependent on it. Otherwise, the emulator will stall the pipeline until the value is available.',
+                    }]
+
             },
             {
                 key: 'warnOnOverUnderflow',
