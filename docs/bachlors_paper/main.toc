@@ -1,21 +1,59 @@
 \babel@toc {english}{}\relax 
-\contentsline {chapter}{\numberline {1}Introduction}{1}{}%
-\contentsline {chapter}{\numberline {2}Analysis}{5}{}%
-\contentsline {section}{\numberline {2.1}Instruction Pipelining}{5}{}%
-\contentsline {subsection}{\numberline {2.1.1}Introduction}{5}{}%
-\contentsline {subsection}{\numberline {2.1.2}Instruction Pipeline Stages}{6}{}%
-\contentsline {subsection}{\numberline {2.1.3}Pipeline Hazards}{6}{}%
-\contentsline {subsubsection}{\numberline {2.1.3.1}Structural Hazards}{7}{}%
-\contentsline {subsubsection}{\numberline {2.1.3.2}Data Hazards}{7}{}%
-\contentsline {subsubsection}{\numberline {2.1.3.3}Control Hazards}{8}{}%
-\contentsline {subsection}{\numberline {2.1.4}Pipeline Stalls}{8}{}%
-\contentsline {subsection}{\numberline {2.1.5}Pipeline Performance Metrics}{8}{}%
-\contentsline {section}{\numberline {2.2}Existing Solutions}{9}{}%
-\contentsline {chapter}{\numberline {3}Solution Proposal}{1}{}%
-\contentsline {chapter}{\numberline {4}Implementation}{5}{}%
-\contentsline {chapter}{\numberline {5}Solution Verification}{7}{}%
-\contentsline {chapter}{\numberline {6}Conclusion}{11}{}%
-\contentsline {section}{\numberline {6.1}Summary}{11}{}%
-\contentsline {section}{\numberline {6.2}Future Work}{13}{}%
-\contentsline {chapter}{\numberline {A}First Appendix }{27}{}%
-\contentsline {chapter}{\numberline {B}Contents of Included CD–ROM }{29}{}%
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Analysis}{3}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Background}{3}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Historical Context}{3}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}RISC vs CISC}{4}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Instruction Pipelining}{5}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Introduction}{5}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Instruction Pipeline Stages}{6}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Pipeline Hazards}{6}{subsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.3.1}Structural Hazards}{6}{subsubsection.2.2.3.1}%
+\contentsline {subsubsection}{\numberline {2.2.3.2}Data Hazards}{7}{subsubsection.2.2.3.2}%
+\contentsline {subsubsection}{\numberline {2.2.3.3}Control Hazards}{8}{subsubsection.2.2.3.3}%
+\contentsline {subsection}{\numberline {2.2.4}Pipeline Stalls}{8}{subsection.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.5}Pipeline Bubbles}{9}{subsection.2.2.5}%
+\contentsline {section}{\numberline {2.3}MIPS}{9}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Overview}{9}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Registers}{10}{subsection.2.3.2}%
+\contentsline {subsubsection}{\numberline {2.3.2.1}General-Purpose Registers}{10}{subsubsection.2.3.2.1}%
+\contentsline {subsubsection}{\numberline {2.3.2.2}\$at Register}{11}{subsubsection.2.3.2.2}%
+\contentsline {subsubsection}{\numberline {2.3.2.3}Floating Point Registers}{12}{subsubsection.2.3.2.3}%
+\contentsline {subsubsection}{\numberline {2.3.2.4}HI and LO Registers}{12}{subsubsection.2.3.2.4}%
+\contentsline {subsection}{\numberline {2.3.3}Instruction Formats}{12}{subsection.2.3.3}%
+\contentsline {subsubsection}{\numberline {2.3.3.1}R-type Format}{13}{subsubsection.2.3.3.1}%
+\contentsline {subsubsection}{\numberline {2.3.3.2}I-type Format}{14}{subsubsection.2.3.3.2}%
+\contentsline {subsubsection}{\numberline {2.3.3.3}J-type Format}{15}{subsubsection.2.3.3.3}%
+\contentsline {subsection}{\numberline {2.3.4}Assembly Language}{15}{subsection.2.3.4}%
+\contentsline {subsection}{\numberline {2.3.5}MIPS Pipeline}{17}{subsection.2.3.5}%
+\contentsline {subsubsection}{\numberline {2.3.5.1}Explanation of General Symbols}{18}{subsubsection.2.3.5.1}%
+\contentsline {subsubsection}{\numberline {2.3.5.2}Instruction Fetch (IF) Stage}{19}{subsubsection.2.3.5.2}%
+\contentsline {subsubsection}{\numberline {2.3.5.3}Instruction Decode (ID) Stage}{19}{subsubsection.2.3.5.3}%
+\contentsline {subsubsection}{\numberline {2.3.5.4}Execute (EX) Stage}{20}{subsubsection.2.3.5.4}%
+\contentsline {subsubsection}{\numberline {2.3.5.5}Memory Access (MEM) Stage}{21}{subsubsection.2.3.5.5}%
+\contentsline {subsubsection}{\numberline {2.3.5.6}Write-Back (WB) Stage}{21}{subsubsection.2.3.5.6}%
+\contentsline {subsubsection}{\numberline {2.3.5.7}Pipeline Hazards}{22}{subsubsection.2.3.5.7}%
+\contentsline {subsection}{\numberline {2.3.6}Expanding the design with more jump capabilities}{23}{subsection.2.3.6}%
+\contentsline {subsection}{\numberline {2.3.7}Example execution of each instruction type}{24}{subsection.2.3.7}%
+\contentsline {subsubsection}{\numberline {2.3.7.1}R-type Instruction Execution}{25}{subsubsection.2.3.7.1}%
+\contentsline {subsubsection}{\numberline {2.3.7.2}J-type Instruction Execution}{29}{subsubsection.2.3.7.2}%
+\contentsline {section}{\numberline {2.4}Existing Solutions Analysis}{30}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Overview}{30}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}What a MIPS Pipeline Simulator Should Have}{31}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}MIPSim Case Study}{31}{subsection.2.4.3}%
+\contentsline {subsection}{\numberline {2.4.4}Other Solutions Analysis}{33}{subsection.2.4.4}%
+\contentsline {section}{\numberline {2.5}Feature Analysis}{35}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Instruction Input}{35}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Instruction Execution}{36}{subsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.5.3}Visualization}{36}{subsection.2.5.3}%
+\contentsline {subsection}{\numberline {2.5.4}Interactability}{37}{subsection.2.5.4}%
+\contentsline {subsection}{\numberline {2.5.5}User Interface}{37}{subsection.2.5.5}%
+\contentsline {subsection}{\numberline {2.5.6}Accessibility}{38}{subsection.2.5.6}%
+\contentsline {chapter}{\numberline {3}Solution Proposal}{1}{chapter.3}%
+\contentsline {chapter}{\numberline {4}Implementation}{3}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Solution Verification}{5}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{7}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Summary}{7}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Future Work}{7}{section.6.2}%
+\contentsline {chapter}{\numberline {A}First Appendix }{15}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Contents of Included CD–ROM }{17}{appendix.B}%

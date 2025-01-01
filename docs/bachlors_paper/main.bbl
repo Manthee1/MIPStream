@@ -38,6 +38,118 @@
     \field{year}{1992}
   \endentry
 
+  \entry{cocke1990evolution}{article}{}
+    \name{author}{2}{}{%
+      {{hash=CJ}{%
+         family={Cocke},
+         familyi={C\bibinitperiod},
+         given={John},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=MV}{%
+         family={Markstein},
+         familyi={M\bibinitperiod},
+         given={V.},
+         giveni={V\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{CJMV1}
+    \strng{fullhash}{CJMV1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{C}
+    \field{sortinithash}{C}
+    \verb{doi}
+    \verb 10.1147/rd.341.0004
+    \endverb
+    \field{number}{1}
+    \field{pages}{4\bibrangedash 11}
+    \field{title}{The evolution of RISC technology at IBM}
+    \field{volume}{34}
+    \field{journaltitle}{IBM Journal of Research and Development}
+    \field{year}{1990}
+  \endentry
+
+  \entry{flynn1995computer}{book}{}
+    \name{author}{1}{}{%
+      {{hash=FM}{%
+         family={Flynn},
+         familyi={F\bibinitperiod},
+         given={M.J.},
+         giveni={M\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{2}{%
+      {Jones}%
+      {Bartlett}%
+    }
+    \strng{namehash}{FM1}
+    \strng{fullhash}{FM1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{F}
+    \field{sortinithash}{F}
+    \field{isbn}{9780867202045}
+    \field{series}{Computer Science Series}
+    \field{title}{Computer Architecture: Pipelined and Parallel Processor Design}
+    \verb{url}
+    \verb https://books.google.sk/books?id=JS-01OTl9dsC
+    \endverb
+    \field{year}{1995}
+  \endentry
+
+  \entry{grunbacher1996windlx}{inproceedings}{}
+    \name{author}{2}{}{%
+      {{hash=GH}{%
+         family={Grunbacher},
+         familyi={G\bibinitperiod},
+         given={H.},
+         giveni={H\bibinitperiod},
+      }}%
+      {{hash=KH}{%
+         family={Khosravipour},
+         familyi={K\bibinitperiod},
+         given={H.},
+         giveni={H\bibinitperiod},
+      }}%
+    }
+    \keyw{Pipelines;Computational modeling;Computer simulation;Education;Computer architecture;Statistics;Registers;Clocks;Computer displays;Assembly}
+    \strng{namehash}{GHKH1}
+    \strng{fullhash}{GHKH1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{G}
+    \field{sortinithash}{G}
+    \field{booktitle}{Proceedings IEEE Symposium and Workshop on Engineering of Computer-Based Systems}
+    \verb{doi}
+    \verb 10.1109/ECBS.1996.494568
+    \endverb
+    \field{pages}{412\bibrangedash 417}
+    \field{title}{WinDLX and MIPSim pipeline simulators for teaching computer architecture}
+    \field{year}{1996}
+  \endentry
+
+  \entry{pipelinesimulator}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=HDPSN}{%
+         family={Harrison\bibnamedelima Davis},
+         familyi={H\bibinitperiod\bibinitdelim D\bibinitperiod},
+         given={Prof. Satish\bibnamedelima Narayanasamy},
+         giveni={P\bibinitperiod\bibinitdelim S\bibinitperiod\bibinitdelim N\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{HDPSN1}
+    \strng{fullhash}{HDPSN1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{H}
+    \field{sortinithash}{H}
+    \field{howpublished}{\url{https://vhosts.eecs.umich.edu/370simulators/pipeline/simulator.html}}
+    \field{note}{[Online; accessed 4-December-2024]}
+    \field{title}{Pipeline Simulator}
+    \field{year}{2024}
+  \endentry
+
   \entry{he2023survey}{inproceedings}{}
     \name{author}{2}{}{%
       {{hash=HY}{%
@@ -66,6 +178,134 @@
     \field{pages}{785\bibrangedash 790}
     \field{title}{Survey and Comparison of Pipeline of Some RISC and CISC System Architectures}
     \field{year}{2023}
+  \endentry
+
+  \entry{hennessy1982mips}{article}{}
+    \name{author}{7}{}{%
+      {{hash=HJ}{%
+         family={Hennessy},
+         familyi={H\bibinitperiod},
+         given={John},
+         giveni={J\bibinitperiod},
+      }}%
+      {{hash=JN}{%
+         family={Jouppi},
+         familyi={J\bibinitperiod},
+         given={Norman},
+         giveni={N\bibinitperiod},
+      }}%
+      {{hash=PS}{%
+         family={Przybylski},
+         familyi={P\bibinitperiod},
+         given={Steven},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=RC}{%
+         family={Rowen},
+         familyi={R\bibinitperiod},
+         given={Christopher},
+         giveni={C\bibinitperiod},
+      }}%
+      {{hash=GT}{%
+         family={Gross},
+         familyi={G\bibinitperiod},
+         given={Thomas},
+         giveni={T\bibinitperiod},
+      }}%
+      {{hash=BF}{%
+         family={Baskett},
+         familyi={B\bibinitperiod},
+         given={Forest},
+         giveni={F\bibinitperiod},
+      }}%
+      {{hash=GJ}{%
+         family={Gill},
+         familyi={G\bibinitperiod},
+         given={John},
+         giveni={J\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {ACM New York, NY, USA}%
+    }
+    \strng{namehash}{HJ+1}
+    \strng{fullhash}{HJJNPSRCGTBFGJ1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{H}
+    \field{sortinithash}{H}
+    \field{number}{4}
+    \field{pages}{17\bibrangedash 22}
+    \field{title}{MIPS: A microprocessor architecture}
+    \field{volume}{13}
+    \field{journaltitle}{ACM SIGMICRO Newsletter}
+    \field{year}{1982}
+  \endentry
+
+  \entry{jamil1995risc}{article}{}
+    \name{author}{1}{}{%
+      {{hash=JT}{%
+         family={Jamil},
+         familyi={J\bibinitperiod},
+         given={T.},
+         giveni={T\bibinitperiod},
+      }}%
+    }
+    \keyw{Reduced instruction set computing;Computer aided instruction;Clocks;Very large scale integration;Registers;Costs;Computer architecture;Pipelines;Hardware;Decoding}
+    \strng{namehash}{JT1}
+    \strng{fullhash}{JT1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{J}
+    \field{sortinithash}{J}
+    \verb{doi}
+    \verb 10.1109/45.464688
+    \endverb
+    \field{number}{3}
+    \field{pages}{13\bibrangedash 16}
+    \field{title}{RISC versus CISC}
+    \field{volume}{14}
+    \field{journaltitle}{IEEE Potentials}
+    \field{year}{1995}
+  \endentry
+
+  \entry{Mariotti22-softwarex}{article}{}
+    \name{author}{2}{}{%
+      {{hash=MG}{%
+         family={Mariotti},
+         familyi={M\bibinitperiod},
+         given={Gianfranco},
+         giveni={G\bibinitperiod},
+      }}%
+      {{hash=GR}{%
+         family={Giorgi},
+         familyi={G\bibinitperiod},
+         given={Roberto},
+         giveni={R\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Elsevier}%
+    }
+    \strng{namehash}{MGGR1}
+    \strng{fullhash}{MGGR1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{M}
+    \field{sortinithash}{M}
+    \verb{doi}
+    \verb 10.1016/j.softx.2022.101105
+    \endverb
+    \field{issn}{2352-7110}
+    \field{pages}{1\bibrangedash 7}
+    \field{title}{{WebRISC-V}: A 32/64-bit RISC-V pipeline simulation tool}
+    \verb{url}
+    \verb https://doi.org/10.1016/j.softx.2022.101105
+    \endverb
+    \field{volume}{18}
+    \field{journaltitle}{SoftwareX}
+    \field{year}{2022}
+    \warn{\item Invalid format of field 'month'}
   \endentry
 
   \entry{olanrewaju2017design}{article}{}
@@ -146,6 +386,80 @@
     \field{year}{2016}
   \endentry
 
+  \entry{pantazi2013history}{inproceedings}{}
+    \name{author}{1}{}{%
+      {{hash=PMI}{%
+         family={Pantazi-Mytarelli},
+         familyi={P\bibinithyphendelim M\bibinitperiod},
+         given={Iro},
+         giveni={I\bibinitperiod},
+      }}%
+    }
+    \keyw{Pipeline processing;Hazards;Registers;Computer architecture;Reduced instruction set computing;Hardware;Delays}
+    \strng{namehash}{PMI1}
+    \strng{fullhash}{PMI1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{P}
+    \field{sortinithash}{P}
+    \field{booktitle}{2013 IEEE Long Island Systems, Applications and Technology Conference (LISAT)}
+    \verb{doi}
+    \verb 10.1109/LISAT.2013.6578243
+    \endverb
+    \field{pages}{1\bibrangedash 7}
+    \field{title}{The history and use of pipelining computer architecture: MIPS pipelining implementation}
+    \field{year}{2013}
+  \endentry
+
+  \entry{patterson1994computer}{book}{}
+    \name{author}{2}{}{%
+      {{hash=PDA}{%
+         family={Patterson},
+         familyi={P\bibinitperiod},
+         given={David\bibnamedelima A},
+         giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod},
+      }}%
+      {{hash=HJL}{%
+         family={Hennessy},
+         familyi={H\bibinitperiod},
+         given={John\bibnamedelima L},
+         giveni={J\bibinitperiod\bibinitdelim L\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Morgan Kaufmann}%
+    }
+    \strng{namehash}{PDAHJL1}
+    \strng{fullhash}{PDAHJL1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{P}
+    \field{sortinithash}{P}
+    \field{title}{Computer organization and Design}
+    \field{year}{1994}
+  \endentry
+
+  \entry{mars}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=PSKV}{%
+         family={Pete\bibnamedelima Sanderson},
+         familyi={P\bibinitperiod\bibinitdelim S\bibinitperiod},
+         given={Kenneth\bibnamedelima Vollmar},
+         giveni={K\bibinitperiod\bibinitdelim V\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{PSKV1}
+    \strng{fullhash}{PSKV1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{P}
+    \field{sortinithash}{P}
+    \field{howpublished}{\url{https://dpetersanderson.github.io/}}
+    \field{note}{[Online; accessed 4-December-2024]}
+    \field{title}{MARS}
+    \field{year}{2024}
+  \endentry
+
   \entry{proebsting1994detecting}{inproceedings}{}
     \name{author}{2}{}{%
       {{hash=PTA}{%
@@ -171,6 +485,25 @@
     \field{pages}{280\bibrangedash 286}
     \field{title}{Detecting pipeline structural hazards quickly}
     \field{year}{1994}
+  \endentry
+
+  \entry{visualmips}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=V}{%
+         family={VisualMIPS},
+         familyi={V\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{V1}
+    \strng{fullhash}{V1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{V}
+    \field{sortinithash}{V}
+    \field{howpublished}{\url{https://visualmips.github.io/}}
+    \field{note}{[Online; accessed 4-December-2024]}
+    \field{title}{VisualMIPS}
+    \field{year}{2024}
   \endentry
 
   \entry{enwiki:1255528196}{misc}{}

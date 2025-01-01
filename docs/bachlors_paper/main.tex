@@ -9,12 +9,23 @@
 \usepackage[english]{babel}
 \usepackage{csquotes}
 \usepackage[a4paper]{geometry}
+\usepackage{dingbat}
+\usepackage{amssymb}
 \usepackage[
     left = \glqq,% 
     right = \grqq,% 
     leftsub = \glq,% 
     rightsub = \grq%
 ]{dirtytalk}
+\usepackage{color}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
 
 % SETTINGS - NAMES
 \newcommand{\myTitle}[0] {Simulator for instruction pipelining}
@@ -52,13 +63,13 @@
 \rfoot{}
 
 
-%style=iso-numeric
-%style=authortitle-dw
+% style STN ISO 690
 \usepackage[backend=bibtex,defernums=true]{biblatex}
 \defbibheading{references}[References]{ 
   \chapter*{#1}
   \markboth{#1}{#1}
 }
+% \bibliographystyle{ieeetr}
 \bibliography{\myBibliography}
 
 
@@ -103,7 +114,7 @@
 \include{preamble/annotation}
 
 % Table of contents
-\tableofcontents{}
+\tableofcontents
 
 % List of listings
 %\listoffigures\newpage{}
@@ -114,23 +125,18 @@
 \begin{refsegment}
 
 % Introduction
-\clearpage\null
 \input{content/intro}
 
 % Analysis
-\clearpage\null
 \input{content/analysis}
 
 % Solution Proposal
-\clearpage\null
 \input{content/solution}
 
 % Solution Proposal
-\clearpage\null
 \input{content/implementation}
 
 % Solution Verification
-\clearpage\null
 \input{content/verification}
 
 % % Evaluation
@@ -152,6 +158,9 @@
 % Bibliography
 \clearpage\null
 \printbibliography[heading=references,segment=\therefsegment,resetnumbers=true]
+
+% \bibliography{bib/refs} 
+% \bibliographystyle{ieeetr}
 
 \end{refsegment}
 
