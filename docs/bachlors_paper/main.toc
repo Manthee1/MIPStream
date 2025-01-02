@@ -7,12 +7,11 @@
 \contentsline {section}{\numberline {2.2}Instruction Pipelining}{5}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Introduction}{5}{subsection.2.2.1}%
 \contentsline {subsection}{\numberline {2.2.2}Instruction Pipeline Stages}{6}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}Pipeline Hazards}{6}{subsection.2.2.3}%
-\contentsline {subsubsection}{\numberline {2.2.3.1}Structural Hazards}{6}{subsubsection.2.2.3.1}%
-\contentsline {subsubsection}{\numberline {2.2.3.2}Data Hazards}{7}{subsubsection.2.2.3.2}%
-\contentsline {subsubsection}{\numberline {2.2.3.3}Control Hazards}{8}{subsubsection.2.2.3.3}%
-\contentsline {subsection}{\numberline {2.2.4}Pipeline Stalls}{8}{subsection.2.2.4}%
-\contentsline {subsection}{\numberline {2.2.5}Pipeline Bubbles}{9}{subsection.2.2.5}%
+\contentsline {subsection}{\numberline {2.2.3}Pipeline Stalls}{6}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Pipeline Hazards}{6}{subsection.2.2.4}%
+\contentsline {subsubsection}{\numberline {2.2.4.1}Structural Hazards}{7}{subsubsection.2.2.4.1}%
+\contentsline {subsubsection}{\numberline {2.2.4.2}Data Hazards}{7}{subsubsection.2.2.4.2}%
+\contentsline {subsubsection}{\numberline {2.2.4.3}Control Hazards}{9}{subsubsection.2.2.4.3}%
 \contentsline {section}{\numberline {2.3}MIPS}{9}{section.2.3}%
 \contentsline {subsection}{\numberline {2.3.1}Overview}{9}{subsection.2.3.1}%
 \contentsline {subsection}{\numberline {2.3.2}Registers}{10}{subsection.2.3.2}%
@@ -31,24 +30,26 @@
 \contentsline {subsubsection}{\numberline {2.3.5.3}Instruction Decode (ID) Stage}{19}{subsubsection.2.3.5.3}%
 \contentsline {subsubsection}{\numberline {2.3.5.4}Execute (EX) Stage}{20}{subsubsection.2.3.5.4}%
 \contentsline {subsubsection}{\numberline {2.3.5.5}Memory Access (MEM) Stage}{21}{subsubsection.2.3.5.5}%
-\contentsline {subsubsection}{\numberline {2.3.5.6}Write-Back (WB) Stage}{21}{subsubsection.2.3.5.6}%
-\contentsline {subsubsection}{\numberline {2.3.5.7}Pipeline Hazards}{22}{subsubsection.2.3.5.7}%
-\contentsline {subsection}{\numberline {2.3.6}Expanding the design with more jump capabilities}{23}{subsection.2.3.6}%
-\contentsline {subsection}{\numberline {2.3.7}Example execution of each instruction type}{24}{subsection.2.3.7}%
-\contentsline {subsubsection}{\numberline {2.3.7.1}R-type Instruction Execution}{25}{subsubsection.2.3.7.1}%
-\contentsline {subsubsection}{\numberline {2.3.7.2}J-type Instruction Execution}{29}{subsubsection.2.3.7.2}%
-\contentsline {section}{\numberline {2.4}Existing Solutions Analysis}{30}{section.2.4}%
-\contentsline {subsection}{\numberline {2.4.1}Overview}{30}{subsection.2.4.1}%
-\contentsline {subsection}{\numberline {2.4.2}What a MIPS Pipeline Simulator Should Have}{31}{subsection.2.4.2}%
-\contentsline {subsection}{\numberline {2.4.3}MIPSim Case Study}{31}{subsection.2.4.3}%
-\contentsline {subsection}{\numberline {2.4.4}Other Solutions Analysis}{33}{subsection.2.4.4}%
-\contentsline {section}{\numberline {2.5}Feature Analysis}{35}{section.2.5}%
-\contentsline {subsection}{\numberline {2.5.1}Instruction Input}{35}{subsection.2.5.1}%
-\contentsline {subsection}{\numberline {2.5.2}Instruction Execution}{36}{subsection.2.5.2}%
-\contentsline {subsection}{\numberline {2.5.3}Visualization}{36}{subsection.2.5.3}%
-\contentsline {subsection}{\numberline {2.5.4}Interactability}{37}{subsection.2.5.4}%
-\contentsline {subsection}{\numberline {2.5.5}User Interface}{37}{subsection.2.5.5}%
-\contentsline {subsection}{\numberline {2.5.6}Accessibility}{38}{subsection.2.5.6}%
+\contentsline {subsubsection}{\numberline {2.3.5.6}Write-Back (WB) Stage}{22}{subsubsection.2.3.5.6}%
+\contentsline {subsection}{\numberline {2.3.6}Pipeline Hazards}{22}{subsection.2.3.6}%
+\contentsline {subsection}{\numberline {2.3.7}Floating Point Operations}{23}{subsection.2.3.7}%
+\contentsline {subsection}{\numberline {2.3.8}Expanding the design with more jump capabilities}{24}{subsection.2.3.8}%
+\contentsline {subsection}{\numberline {2.3.9}Example execution of each instruction type}{25}{subsection.2.3.9}%
+\contentsline {subsubsection}{\numberline {2.3.9.1}R-type Instruction Execution}{26}{subsubsection.2.3.9.1}%
+\contentsline {subsubsection}{\numberline {2.3.9.2}J-type Instruction Execution}{30}{subsubsection.2.3.9.2}%
+\contentsline {section}{\numberline {2.4}Existing Solutions Analysis}{31}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Overview}{31}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}MIPSIM Case Study}{32}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}Other Solutions Analysis}{33}{subsection.2.4.3}%
+\contentsline {subsection}{\numberline {2.4.4}MIPS pipeline simulator requirements}{36}{subsection.2.4.4}%
+\contentsline {section}{\numberline {2.5}Feature Analysis}{36}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Instruction Input}{37}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Instruction Execution}{37}{subsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.5.3}Visualization}{37}{subsection.2.5.3}%
+\contentsline {subsection}{\numberline {2.5.4}Interactability}{38}{subsection.2.5.4}%
+\contentsline {subsection}{\numberline {2.5.5}User Interface}{38}{subsection.2.5.5}%
+\contentsline {subsection}{\numberline {2.5.6}Accessibility}{39}{subsection.2.5.6}%
+\contentsline {section}{\numberline {2.6}Analysis Conclusion}{39}{section.2.6}%
 \contentsline {chapter}{\numberline {3}Solution Proposal}{1}{chapter.3}%
 \contentsline {chapter}{\numberline {4}Implementation}{3}{chapter.4}%
 \contentsline {chapter}{\numberline {5}Solution Verification}{5}{chapter.5}%

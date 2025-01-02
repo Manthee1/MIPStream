@@ -129,27 +129,6 @@
     \field{year}{1996}
   \endentry
 
-  \entry{pipelinesimulator}{misc}{}
-    \name{author}{1}{}{%
-      {{hash=HDPSN}{%
-         family={Harrison\bibnamedelima Davis},
-         familyi={H\bibinitperiod\bibinitdelim D\bibinitperiod},
-         given={Prof. Satish\bibnamedelima Narayanasamy},
-         giveni={P\bibinitperiod\bibinitdelim S\bibinitperiod\bibinitdelim N\bibinitperiod},
-      }}%
-    }
-    \strng{namehash}{HDPSN1}
-    \strng{fullhash}{HDPSN1}
-    \field{labelnamesource}{author}
-    \field{labeltitlesource}{title}
-    \field{sortinit}{H}
-    \field{sortinithash}{H}
-    \field{howpublished}{\url{https://vhosts.eecs.umich.edu/370simulators/pipeline/simulator.html}}
-    \field{note}{[Online; accessed 4-December-2024]}
-    \field{title}{Pipeline Simulator}
-    \field{year}{2024}
-  \endentry
-
   \entry{he2023survey}{inproceedings}{}
     \name{author}{2}{}{%
       {{hash=HY}{%
@@ -306,6 +285,64 @@
     \field{journaltitle}{SoftwareX}
     \field{year}{2022}
     \warn{\item Invalid format of field 'month'}
+  \endentry
+
+  \entry{mipscompany}{misc}{}
+    \name{author}{1}{}{%
+      {{hash=M}{%
+         family={MIPS},
+         familyi={M\bibinitperiod},
+      }}%
+    }
+    \strng{namehash}{M1}
+    \strng{fullhash}{M1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{M}
+    \field{sortinithash}{M}
+    \field{howpublished}{\url{https://mips.com/company/}}
+    \field{note}{[Online; accessed 4-December-2024]}
+    \field{title}{MIPS}
+    \field{year}{2024}
+  \endentry
+
+  \entry{mirapuri1992mips}{article}{}
+    \name{author}{3}{}{%
+      {{hash=MS}{%
+         family={Mirapuri},
+         familyi={M\bibinitperiod},
+         given={S.},
+         giveni={S\bibinitperiod},
+      }}%
+      {{hash=WM}{%
+         family={Woodacre},
+         familyi={W\bibinitperiod},
+         given={M.},
+         giveni={M\bibinitperiod},
+      }}%
+      {{hash=VN}{%
+         family={Vasseghi},
+         familyi={V\bibinitperiod},
+         given={N.},
+         giveni={N\bibinitperiod},
+      }}%
+    }
+    \keyw{Microprocessors;CMOS logic circuits;Programmable control;CMOS technology;Reduced instruction set computing;System-on-a-chip;Central Processing Unit;Memory management;Technology management;Centralized control}
+    \strng{namehash}{MSWMVN1}
+    \strng{fullhash}{MSWMVN1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{M}
+    \field{sortinithash}{M}
+    \verb{doi}
+    \verb 10.1109/40.127580
+    \endverb
+    \field{number}{2}
+    \field{pages}{10\bibrangedash 22}
+    \field{title}{The Mips R4000 processor}
+    \field{volume}{12}
+    \field{journaltitle}{IEEE Micro}
+    \field{year}{1992}
   \endentry
 
   \entry{olanrewaju2017design}{article}{}
@@ -485,6 +522,29 @@
     \field{pages}{280\bibrangedash 286}
     \field{title}{Detecting pipeline structural hazards quickly}
     \field{year}{1994}
+  \endentry
+
+  \entry{ryzhyk2006arm}{article}{}
+    \name{author}{1}{}{%
+      {{hash=RL}{%
+         family={Ryzhyk},
+         familyi={R\bibinitperiod},
+         given={Leonid},
+         giveni={L\bibinitperiod},
+      }}%
+    }
+    \list{publisher}{1}{%
+      {Citeseer}%
+    }
+    \strng{namehash}{RL1}
+    \strng{fullhash}{RL1}
+    \field{labelnamesource}{author}
+    \field{labeltitlesource}{title}
+    \field{sortinit}{R}
+    \field{sortinithash}{R}
+    \field{title}{The arm architecture}
+    \field{journaltitle}{Chicago University, Illinois, EUA}
+    \field{year}{2006}
   \endentry
 
   \entry{visualmips}{misc}{}
