@@ -267,6 +267,11 @@ OUTPUT preamble/declaration.aux
 INPUT ./preamble/declaration.tex
 INPUT ./preamble/declaration.tex
 INPUT preamble/declaration.tex
+INPUT ./assets/images/decleration.png
+INPUT ./assets/images/decleration.png
+INPUT ./assets/images/decleration.png
+INPUT ./assets/images/decleration.png
+INPUT ./assets/images/decleration.png
 INPUT ./preamble/affidavit.tex
 INPUT ./preamble/affidavit.tex
 OUTPUT preamble/affidavit.aux

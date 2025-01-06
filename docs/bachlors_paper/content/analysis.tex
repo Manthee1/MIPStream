@@ -2,16 +2,16 @@
 
 \section{Background}
 \subsection{Historical Context}
-Pipelining as a concept existed far before even the first definitive RISC processor was developed.
-The machines like the IBM 7030(1959) and CDC 6600(1964) we're the first general-purpose pipelined machines. After that pipelining was constantly improving and by the 1980s most of the terminology and concepts we use today were already established\cite{pantazi2013history}. In the 1970s and 1980s in response to the increasing complexity of CISC(Complex Instruction Set Computer) processors researchers realized that simplifying the instruction set could lead to better performance. That is because in CISC \enquote{25\% of the instructions in the instructions' set make up 95\% of the execution time. This means that about 75\% of the hardware-sup-ported instructions often are not used at all}\cite{jamil1995risc}. This insight is how the first RISC(Reduced Instruction Set Computer) projects were developed\cite{aletan1992overview} and they were originally designed to have pipelining in mind\cite{pantazi2013history}. The first RISC system - as considered by Michael J. Flynn - was the IBM 801\cite{flynn1995computer}, which was developed in the early 1980s in an effort to make a digital telephone switch able to handle 300 phone calls per second\cite{cocke1990evolution}. The most notable mention especially  in the context of this thesis would be the Stanford MIPS architecture developed by John L. Hennessy and David A. Patterson in the 1980s. Its main goal was to attain high performance in the execution of compiled code by closely relating the instruction to the microcode instructions\cite{hennessy1982mips}. MIPS is still used today in embedded systems, networking, and educational settings. For a more detailed overview of the history of pipelining and RISC, see "The history and use of pipelining computer architecture" by Pantazi et al.\cite{pantazi2013history} and "The evolution of RISC technology at IBM" by Cocke and Markstein et al.\cite{cocke1990evolution}.
-
+Pipelining as a concept existed far before even the first definitive RISC processor was developed. Machines like the IBM 7030(1959) and CDC 6600(1964) were the first general-purpose pipelined machines. After that pipelining was constantly improving and by the 1980s most of the terminology and concepts we use today were already established\cite{pantazi2013history}. In the 1970s and 1980s in response to the increasing complexity of CISC(Complex Instruction Set Computer) processors, researchers realized that simplifying the instruction set could lead to better performance. That is because in CISC \enquote{25\% of the instructions in the instructions' set make up 95\% of the execution time. This means that about 75\% of the hardware-sup-ported instructions often are not used at all}\cite{jamil1995risc}. This insight led to the first RISC(Reduced Instruction Set Computer) projects\cite{aletan1992overview}, which were originally designed to have pipelining in mind\cite{pantazi2013history}. The first RISC system - as considered by Michael J. Flynn - was the IBM 801\cite{flynn1995computer}, which was developed in the early 1980s in an effort to make a digital telephone switch able to handle 300 phone calls per second\cite{cocke1990evolution}. The most notable mention especially  in the context of this thesis would be the Stanford MIPS architecture developed by John L. Hennessy and David A. Patterson in the 1980s. Its main goal was to attain high performance in the execution of compiled code by closely relating the instruction to the microcode instructions\cite{hennessy1982mips}. MIPS is still used today in embedded systems, networking, and educational settings. For a more detailed overview of the history of pipelining and RISC, see "The history and use of pipelining computer architecture" by Pantazi et al.\cite{pantazi2013history} and "The evolution of RISC technology at IBM" by Cocke and Markstein et al.\cite{cocke1990evolution}.
 \subsection{RISC vs CISC}
-The main difference between RISC and CISC is the complexity of the instruction set. CISC processors have complex instructions requiring multiple clock cycles and the use of microcode to execute, while RISC processors have simple instructions that can be executed in a single clock cycle\cite{jamil1995risc}. This makes RISC processors easier to implement and optimize, as well as more efficient in terms of power consumption and performance. And since the simple instructions can be executed in a single clock cycle, this makes RISC processors more suitable for pipelining. CISC processors, on the other hand, are more difficult to pipeline due to the complexity of the instructions. However, when it comes to program size, Compiled CISC programs are generally smaller than compiled RISC programs, because CISC instructions are more powerful and can perform more operations in a single instruction\cite{jamil1995risc}. This is why CISC processors are still used in many applications, such as desktop computers and servers, because of the backwards compatibility with older software and the ability to perform complex operations in a single instruction. RISC processors, on the other hand, are more commonly used in embedded systems, mobile devices, and other applications where power consumption and performance are critical\cite{ryzhyk2006arm}.
+The main difference between RISC and CISC is the complexity of their instruction sets. CISC processors have more complex instructions that require multiple clock cycles and microcode for execution, whereas RISC processors utilize simple instructions that can be executed in a single clock cycle\cite{jamil1995risc}. This simplicity makes RISC processors easier to implement and optimize, leading to greater efficiency in terms of power consumption and performance. Additionally, the straightforward nature of RISC instructions makes them better suited for pipelining. On the other hand, the complexity of CISC instructions makes them more difficult to pipeline.
+
+However, CISC processors have an advantage in terms of program size. Compiled CISC programs are generally smaller than their RISC counterparts because CISC instructions can perform more operations in a single instruction\cite{jamil1995risc}. This characteristic makes CISC processors ideal for applications like desktop computers and servers, where backward compatibility with older software and hardware is essential. RISC processors, on the other hand, are more commonly found in embedded systems, mobile devices, and other applications where power efficiency and performance are critical\cite{ryzhyk2006arm}.
 
 \section {Instruction Pipelining}\label{sec:pipelining}
 
 \subsection {Introduction}\label{sec:pipelining_intro}
-Pipelining is a method used to enhance a processor's throughput by overlapping the execution phases of multiple instructions. By dividing the execution of an instruction into several stages and executing multiple instructions concurrently, the processor can handle several instructions simultaneously, thereby increasing its throughput\cite{olanrewaju2017design}. Figure \ref{fig:pipeline} illustrates the concept of pipelining.
+Pipelining is a method used to enhance a processor's throughput by overlapping the execution phases of multiple instructions. By dividing the execution of an instruction into several stages and executing multiple instructions concurrently, the processor can handle multiple instructions simultaneously, thereby increasing its throughput.\cite{olanrewaju2017design}. Figure \ref{fig:pipeline} illustrates the concept of pipelining.
 
 \begin{figure}[H]
     \centering
@@ -24,7 +24,7 @@ As seen in Figure \ref{fig:pipeline}, this example pipeline is divided into five
 
 
 \subsection {Instruction Pipeline Stages}\label{sec:pipeline_stages}
-The classical RISC pipeline consists of five stages: instruction fetch, instruction decode, execute, memory access, and write-back \cite{enwiki:1255528196}\cite{he2023survey}. 
+The classical RISC pipeline consists of five stages: Instruction Fetch (IF), Instruction Decode (ID), Execute (EX), Memory Access (MEM), and Write-back (WB)\cite{patterson1994computer}\cite{he2023survey}. 
 
 \begin{itemize}
      \item \textbf{Instruction Fetch (IF)}: Fetches the instruction from memory using the program counter, which is then incremented.
@@ -36,7 +36,7 @@ The classical RISC pipeline consists of five stages: instruction fetch, instruct
 
 
 \subsection {Pipeline Stalls}\label{sec:pipeline_stalls}
-Pipeline stalls, also known as pipeline bubbles, are empty stages that occur when an instruction cannot move on to the next stage due to a hazard or dependency. Stalls decrease the efficiency of the pipeline and result in wasted clock cycles. \cite{patterson1994computer}.
+Pipeline stalls, also known as pipeline bubbles, are empty stages that occur when an instruction cannot move on to the next stage due to a hazard or dependency. Stalls decrease the efficiency of the pipeline and result in wasted clock cycles\cite{patterson1994computer}.
 
 \subsection {Pipeline Hazards}\label{sec:pipeline_hazards}
 A hazard is a condition that occurs when the pipeline cannot execute the next instruction in the cycle, or its execution will lead to unintended behavior. There are three types of hazards: structural, data, and control hazards\cite{olanrewaju2017design}.
@@ -44,9 +44,9 @@ A hazard is a condition that occurs when the pipeline cannot execute the next in
 \subsubsection {Structural Hazards}\label{sec:structural_hazards}
 Structural hazards occur when the hardware cannot support the combination of instructions in the pipeline. For example, if two instructions require the same hardware resource, such as the register control unit.
 This stalls the pipeline or corrupts a result.
-There are multitude of ways to avoid them, such as scheduling instructions to avoid conflicts, or adding extra hardware to support multiple instructions at once\cite{proebsting1994detecting}.
+There are multiple ways to avoid them, such as scheduling instructions to avoid conflicts, or adding extra hardware to support multiple instructions at once\cite{proebsting1994detecting}.
 \subsubsection {Data Hazards}\label{sec:data_hazards}
-Data hazards occur when an instruction depends on a previous instruction. There are four main types of data hazards: read-after-write (RAW), write-after-read (WAR), write-after-write (WAW), and read-after-read (RAR).
+Data hazards occur when an instruction depends on the result of a previous instruction. There are four main types of data hazards: read-after-write (RAW), write-after-read (WAR), write-after-write (WAW), and read-after-read (RAR).\cite{kiat2017comprehensive}.
 
 \textbf{Read-After-Write (RAW)}: Also known as a true dependency it occurs when an instruction reads a register before a previous instruction writes to it.\newline
 \textbf{Example}: Consider the following instructions:
@@ -81,15 +81,15 @@ Further detail is unnecessary because it is immediately obvious that this hazard
 
 
 \subsubsection {Control Hazards}\label{sec:control_hazards}
-Control hazards occur when the processor cannot determine the instruction to fetch next due to a branch instruction changing the program counter. This can lead to incorrect execution of instructions and wasted clock cycles. There are several techniques to mitigate control hazards, such as branch prediction, delayed branching and branch target buffers.\cite{pandey2016study}
+Control hazards occur when the processor cannot determine the next instruction to fetch due to a branch instruction changing the program counter. This can lead to incorrect execution of instructions and wasted clock cycles. There are several techniques to mitigate control hazards, such as static branch prediction or dynamic branch prediction.\cite{pandey2016study}
 
 
 \section {MIPS}\label{sec:mips}
 \subsection{Overview}
-MIPS, which stands for Microprocessor without Interlocked Pipeline Stages, is a RISC architecture that has made a significant impact in the world of computing. Developed by MIPS Tech LLC\cite{mipscompany}, a company founded in 1984 by Stanford University researchers including John L. Hennessy and David A. Patterson, MIPS has become a cornerstone in embedded systems, networking, and education. Its load/store architecture and 5-stage pipeline, detailed in section \ref{sec:mips_pipeline}, make it a model of simplicity and efficiency. This straightforward design is why MIPS is an excellent choice for teaching computer architecture. Especially because "Computer Organization and Design" by Patterson and Hennessy\cite{patterson1994computer}, which can be considered the bible of computer architecture, uses MIPS as the primary example throughout the book. Over the years, MIPS has evolved through several versions, including MIPS I, II, III, IV, V, MIPS32, and MIPS64, each adding new features and capabilities. In this section, we'll focus on the MIPS I architecture to grasp the fundamental concepts of the MIPS architecture and the inner workings of the MIPS pipeline.
+MIPS, which stands for Microprocessor without Interlocked Pipeline Stages, is a RISC architecture that has made a significant impact in the world of computing. Developed by MIPS Tech LLC\cite{mipscompany}, a company founded in 1984 by Stanford University researchers including John L. Hennessy and David A. Patterson, MIPS has become a cornerstone in embedded systems, networking, and education. Its load/store architecture and 5-stage pipeline, detailed in section \ref{sec:mips_pipeline}, make it a model of simplicity and efficiency. This straightforward design is why MIPS is an excellent choice for teaching computer architecture. Especially because "Computer Organization and Design" by Patterson and Hennessy\cite{patterson1994computer}, which can be considered the bible of computer architecture, uses MIPS as the primary example throughout the book. Over the years, MIPS has evolved through several versions, including MIPS I, II, III, IV, V, MIPS32, and MIPS64, each adding new features and capabilities. Because of how well suited MIPS is for teaching pipelining and computer architecture, it is the architecture of choice for this thesis. In this section, we'll focus on the MIPS I architecture to grasp the fundamental concepts of the MIPS architecture and the inner workings of the MIPS pipeline.
 
 \subsection{Registers}
-The MIPS architecture has 32 32-bit general-purpose registers and 32 floating point registers, numbered from \$0 to \$31 and \$f0 to \$f31 respectivly. For integer multiplication and division, there are two special registers, HI and LO, which store the high and low 32 bits of the result. And of course the program counter, which is used to store the address of the next instruction to be executed. The MIPS registers are used to store data, addresses, and control information, and are accessed using load and store instructions. The registers are divided into several categories, each with a specific purpose.
+The MIPS architecture has 32 32-bit general-purpose registers and 32 floating point registers, numbered from \$0 to \$31 and \$f0 to \$f31 respectivly. For integer multiplication and division, there are two special registers, HI and LO, which store the high and low 32 bits of the result. And of course the program counter, which is used to store the address of the next instruction to be executed. The MIPS registers are used to store data, addresses, and control information, and are accessed using load and store instructions. The registers are divided into several categories, each with a specific purpose\cite{sweetman2010see}\cite{patterson1994computer}.
 \subsubsection{General-Purpose Registers}
 General purpose registers are used to store data and perform arithmetic and logical operations, pass arguments to functions, store return values, and hold temporary values.
 Even though these registers could be used for any purpose, there are conventions on how they should be used:
@@ -111,7 +111,7 @@ Even though these registers could be used for any purpose, there are conventions
         \$30 & \$fp & Frame pointer \\ \hline
         \$31 & \$ra & Return address \\ \hline
         \end{tabular}
-    \caption{MIPS Registers and Their Names}
+    \caption{MIPS Registers and Their Conventional Names}
     \label{tab:mips_registers}
 \end{table}
 \subsubsection{\$at Register}
@@ -148,10 +148,10 @@ The return address register, which stores the address to return to after a funct
 MIPS supports the IEEE 754 single precision and double precision formats\cite{patterson1994computer} where the single precision format is 32 bits long and the double precision format is 64 bits long. A double precision floating point register is really an even-odd pair of single precision registers\cite{patterson1994computer}. For example \$f2 and \$f3 together form a double precision register referred to as \$f2, and same for all the other even-odd pairs. The floating point registers are used for floating point operations and are not preserved across function calls. They are numbered from \$f0 to \$f31 and don't have a definitive name and usage conventions. MIPS does not directly support floating point arithmetic\cite{hennessy1982mips}, instead, these operations are implemented with integer operations or by using a coprocessor.
 
 \subsubsection{HI and LO Registers}
-The HI and LO registers are used to store the high and low 32 bits of the result of a multiplication or division operation. The HI register stores the high 32 bits, and the LO register stores the low 32 bits. These registers are not preserved across function calls.
+The HI and LO registers are used to store the high and low 32 bits of the result of a multiplication or division operation. The HI register stores the high 32 bits, and the LO register stores the low 32 bits. These registers are not preserved across function calls\cite{patterson1994computer}.
 
 \subsection{Instruction Formats}
-The MIPS instruction set consists of three instruction formats: R-type, I-type, and J-type. Each format is used for different types of instructions, such as arithmetic, logical, and control instructions. The R-type format is used for arithmetic and logical instructions, the I-type format is used for immediate instructions, and the J-type format is used for jump instructions. The machine format of each instruction is 32 bit.
+The MIPS instruction set consists of three instruction formats: R-type, I-type, and J-type. Each format is used for different types of instructions, such as arithmetic, logical, and control instructions. The R-type format is used for arithmetic and logical instructions, the I-type format is used for immediate instructions, and the J-type format is used for jump instructions. The machine format of each instruction is 32 bit\cite{patterson1994computer}.
 
 
 \subsubsection{R-type Format}
@@ -179,7 +179,7 @@ The machine format of the instruction is as follows:
     \item \textbf{shamt}: The shift amount.
     \item \textbf{funct}: The function code.
 \end{itemize}
-The interesting thing in the R-type format is that the opcode is always 0, and the funct field is used to determine the operation to be performed. And shamt is used in shift instructions such as sll, srl, sra.
+The interesting thing in the R-type format is that the opcode is always 0, and the funct field is used to determine the operation to be performed\cite{patterson1994computer}. And shamt is used in shift instructions such as sll, srl, sra.
 
 \subsubsection{I-type Format}
 The I-type format is used for immediate instructions that operate on registers and immediate values. It has 3 arguments: the source register(rs), the destination register(rd), and the immediate value. Example:
@@ -276,7 +276,7 @@ The arithmetic, logical and comparison instructions operate on registers and imm
 There also exist exception handling instructions that are used to handle exceptions and interrupts. However, these are not used in the context of this thesis.
 
 \subsection{MIPS Pipeline}\label{sec:mips_pipeline}
-The MIPS pipeline consists of five stages: instruction fetch(IF), instruction decode(ID), execute(EX), memory access(MEM), and write-back(WB). Each stage is responsible for a specific part of the instruction execution process allowing it to overlap the execution of multiple instructions to improve performance and throughput. Here each stage will be described in detail according to the design shown in Figure \ref{fig:mips_pipeline}, which is the same design described in Patterson and Hennessy's "Computer Organization and Design" book\cite{patterson1994computer}.
+The MIPS pipeline consists of five stages: Instruction Fetch(IF), Instruction Decode(ID), Execute(EX), Memory Access(MEM), and Write-back(WB). Each stage is responsible for a specific part of the instruction execution process allowing it to overlap the execution of multiple instructions to improve performance and throughput. Here each stage will be described in detail according to the design shown in Figure \ref{fig:mips_pipeline}, which is the same design described in Patterson and Hennessy's "Computer Organization and Design" book\cite{patterson1994computer}.
 
 \begin{figure}[H]
     \centering
@@ -287,7 +287,7 @@ The MIPS pipeline consists of five stages: instruction fetch(IF), instruction de
 
 Figure \ref{fig:mips_pipeline} shows a high-level diagram of the MIPS pipeline with a control unit. It can get even more complex with the addition of forwarding and hazard detection units. But this current state is sufficient for the explanation of the pipeline stages.
 
-Note: This design doesn't feature support for any J-type instructions and many other more complicated instructions for simplicity’s sake, and since they are not necessary to make a turning complete processor. Also, note that the J-type could be simulated by using an I-type branch instructions whose condition is a tautology. For example, $beq \$zero, \$zero, label$ would be equivalent to a jump instruction. MIPSIM is based on a design that handles jump instructions in such a way. But adding support for real unconditional jump instructions is not that difficult and will be covered in section \ref{sec:jump_capabilities}.
+Note: This design doesn't feature support for any J-type instructions and many other more complicated instructions for simplicity’s sake, and since they are not necessary to make a Turing complete processor. Also, note that the J-type could be simulated by using an I-type branch instructions whose condition is a tautology. For example, $beq \$zero, \$zero, label$ would be equivalent to a jump instruction. MIPSIM is based on a design that handles jump instructions in such a way. But adding support for real unconditional jump instructions is not that difficult and will be covered in section \ref{sec:jump_capabilities}.
 
 
 
@@ -349,7 +349,7 @@ For load instructions, the data is read from memory at the address calculated in
 
 For branch instructions we have an AND gate that checks if the ALU Zero control signal is set to 1, and if it is, that means the condition that was evaluated in the EX stage is true. Based on that and the branch control signal, the multiplexer is sets either the branch address calculated in the EX stage or the PC+4 value as the new PC value.
 
-\subsubsection{Write-Back (WB) Stage}
+\subsubsection{Write-back (WB) Stage}
 The WB stage is responsible for writing the result of the operation to the destination register. Using the $MEMToReg$ control signal, the multiplexer selects if the load data from the MEM stage or the ALU result from the EX stage should be written to the register file. The register file is then written to if the $RegWrite$ control signal is set to 1.
 
 \subsection{Pipeline Hazards}
@@ -357,9 +357,9 @@ From the described pipeline stages, it would be immediately noticeable to someon
 
 However, it is still interesting to understand how these hazards would theoretically be handled in this pipeline design.
 
-For structural hazards, the simplest solution is to perform write operations at the beginning of a clock cycle and read operations at the end of it. More technically, this means writing at the rising edge of the clock and reading at the falling edge.
+For structural hazards, the simplest solution is to perform write operations at the beginning of a clock cycle and read operations at the end of it. More technically, this means writing at the rising edge of the clock and reading at the falling edge\cite{patterson1994computer}.
 
-For data hazards, one solution would beto stall the pipeline until the data is ready, which is slow, or a better solution would be adding a forwarding unit that would allow the result of an instruction to be forwarded to the next instruction that needs it. One case where forwarding cannot save the day is when an instruction tries to read a register following a load instruction that writes the same register\cite{patterson1994computer}. In that case in addition to a forwarding unit, a load-use hazard detection unit that would stall the pipeline until the load instruction has completed would be necessary.
+For data hazards, one solution would be to stall the pipeline until the data is ready, which is slow, or a better solution would be adding a forwarding unit that would allow the result of an instruction to be forwarded to the next instruction that needs it. One case where forwarding cannot save the day is when an instruction tries to read a register following a load instruction that writes the same register\cite{patterson1994computer}. In that case in addition to a forwarding unit, a load-use hazard detection unit that would stall the pipeline until the load instruction has completed would be necessary.
 
 For control hazards, solutions include stalling the pipeline or introducing a flushing mechanism to clear stage registers holding instructions that should not be executed. To improve the performance of determining when to flush, a branch prediction unit can be added. This unit predicts the outcome of branch instructions and decides whether to flush based on the prediction\cite{patterson1994computer}.
 
@@ -427,7 +427,7 @@ ADD Control signals:
     \label{tab:add_control_signals}
 \end{table}
 
-As we can see the only control signals that are set to 1 is $RegWrite$, and $RegDst$. $RegWrite$ is set to 1 because we are writing to a register, and $RegDst$ is set to 1 because the destination register is in the rd field of the instruction. The $ALUOp$ is set to 10 to identify an R-type isntruction that has a funct field that we want to use as the operation to be performed by the ALU. $ALUSrc$ is set to 0 because we are not using an immediate value, and the ALU is getting its inputs from the register file. $MemRead$, $MemWrite$, $MemToReg$, $Jump$, and $Branch$ are all set to 0 because we are not reading or writing to memory, and we are not branching nor jumping.
+As we can see, the only control signals that are set to 1 are $RegWrite$ and $RegDst$. $RegWrite$ is set to 1 because we are writing to a register, and $RegDst$ is set to 1 because the destination register is in the rd field of the instruction. The $ALUOp$ is set to 10 to identify an R-type instruction that has a funct field that we want to use as the operation to be performed by the ALU. $ALUSrc$ is set to 0 because we are not using an immediate value, and the ALU is getting its inputs from the register file. $MemRead$, $MemWrite$, $MemToReg$, $Jump$, and $Branch$ are all set to 0 because we are not reading or writing to memory, and we are not branching nor jumping.
 First the instruction is fetched from memory and the next pc value is calculated by adding 4 to PC. Moving forward this value will be refered to as NPC(Next Program Counter). Then in the ID stage the control signals are generated, and the registers $t1$ and $t2$ are read from the register file. In the EX stage the ALU performs the addition operation and together with $t0$ the result is passed to the MEM stage. The MEM stage updates the PC to NPC and passes the ALU result from the EX stage to the WB stage, where it is written to register $t0$.
 
 \textbf{Arithmetic and logical I-type instructions}\newline
@@ -576,7 +576,7 @@ All the control signals are low except for the $Jump$ control signal which is se
 \section {Existing Solutions Analysis}
 
 \subsection {Overview}\label{sec:existing_solutions_overview}
-There are many simulators available for simulating the MIPS and other pipelines. Simulators like WinDLX\cite{grunbacher1996windlx}, VisualMIPS\cite{visualmips}, MARS\cite{mars}, WebMIPS, WebRISC-V\cite{Mariotti22-softwarex} just to name a few. However, the most important one in the context of this thesis is MIPSIM\cite{grunbacher1996windlx}, as it is the main inspiration and motivation for it. Even though it's the same concept, the simulators differ in their informativeness, user experience, feature set, and accessibility. These factors are arguably the most important when a simulator is chosen for educational purposes. The more informative a simulator is, the more can be learned from it. The better the user experience, the more focus will go into learning rather than figuring out how to use the simulator. The more features a simulator has, the more versatile it is in teaching different topics. And the more accessible a simulator is, the more students can use it.
+There are many simulators available for simulating the MIPS and other pipelines. Simulators like WinDLX\cite{grunbacher1996windlx}, VisualMIPS\cite{visualmips}, MARS\cite{mars}, WebMIPS\cite{webmpis}, WebRISC-V\cite{giorgi2019webriscv} just to name a few. However, the most important one in the context of this thesis is MIPSIM\cite{grunbacher1996windlx}, as it is the main inspiration and motivation for it. Even though it's the same concept, the simulators differ in their informativeness, user experience, feature set, and accessibility. These factors are arguably the most important when a simulator is chosen for educational purposes. The more informative a simulator is, the more can be learned from it. The better the user experience, the more focus will go into learning rather than figuring out how to use the simulator. The more features a simulator has, the more versatile it is in teaching different topics. And the more accessible a simulator is, the more students can use it.
 If a simulator is a headache to use and doesn't provide enough information to the user, then it won't be very effective as a learning tool. In this section, the existing solutions will be analyzed based on these factors to see how they compare to each other.
 But before that, the inspiration for this thesis, MIPSIM, will be briefly discussed.
 
@@ -601,11 +601,11 @@ Originally, MIPSIM lacked proper debugging support, and some features visible in
 
 \subsection{Other Solutions Analysis}\label{sec:other_solutions_analysis}
 
-Arguably, the most fundamental aspect of a pipelining simulator is the underlying processor design. Many simulators, including MIPSIM, are based on a straightforward MIPS pipeline design that often lacks hazard detection or forwarding units, or at least obscures these components. This is similar to the design described in section \ref{sec:mips_pipeline}. Numerous simulators, such as MIPS Visualizer, do not incorporate pipelining at all, opting instead for a single-cycle design limiting its feature set. Conversely, more sophisticated simulators like WebMIPS support both forwarding and hazard detection units, and even more sophisticated ones like DrMIPS allow the user to choose between different CPU designs.
+One of the most fundamental aspects of a pipelining simulator is the underlying processor design. Many simulators, including MIPSIM, are based on a straightforward MIPS pipeline design that often lacks hazard detection or forwarding units, or at least obscures these components. This is similar to the design described in section \ref{sec:mips_pipeline}. Numerous simulators, such as MIPS Visualizer, do not incorporate pipelining at all, opting instead for a single-cycle design limiting its feature set. Conversely, more sophisticated simulators like WebMIPS support both forwarding and hazard detection units, and even more sophisticated ones like DrMIPS allow the user to choose between different CPU designs.
 
 However, regardless of the processor design, a simulator's educational value is significantly diminished without a user-friendly interface and informative features. WebMIPS excels in providing detailed information, displaying the bits of each machine instruction and the values of control signals. Unfortunately, its pipeline diagram is static and does not reflect the execution of instructions as MIPSIM or DrMIPS does, serving only as a visual aid. On the positive side, WebMIPS includes interactive elements that explain their functions when clicked, which is an excellent approach. This informativeness is very beneficial but also unfortunately, as is the case with WebMIPS, it can make the interface cluttered and hard to navigate. The interface of WebMIPS, while functional, may not be immediately intuitive, suggesting room for improvement despite a relatively shallow learning curve. 
 
-DrMIPS on the other hand shows exactly what WebMIPS does, except that it tie everything together in a much more intuitive design including a reactive pipeline diagram. It also, as previously mentioned, features multiple cpu designs which is great for teaching purposes. Even though the interface has some quirks and possible minor improvements. The most major problem with DrMIPS is that it is Windows only, which is a big downside for students that use other operating systems.
+DrMIPS, on the other hand, shows exactly what WebMIPS does, except that it ties everything together in a much more intuitive design, including a reactive pipeline diagram. It also, as previously mentioned, features multiple cpu designs which is great for teaching purposes. Even though the interface has some quirks and possible minor improvements. The most major problem with DrMIPS is that it is Windows only, which is a big downside for students that use other operating systems.
 
 That is where web based simulators come in to play. They are accessible to everyone on any device that supports a modern web browser, and they don't require any installation. WebRISC-V, WebMIPS, WeMIPS, VisualMIPS and a bunch of other web based simulators are great for this reason. Unfortunately none of them are as good as DrMIPS. The best out of the bunch is WebMIPS, but the issues mentioned before may be a dealbreaker for some students if not most students.
 
@@ -613,19 +613,18 @@ It would be important to mention that most simulators, such as VisualMIPS, WeMIP
 
 Each simulator analyzed has its own strengths and weaknesses when it comes to educational use. While some excel in certain areas more than others, none of them are satisfactory in all aspects. If we could combine and adjust the features of all these simulators to meet the needs of students, we would have an ideal MIPS pipeline educational simulator. Better yet, a pipelining simulator that supports multiple architectures and offers a customizable feature set tailored to student requirements would be the ultimate solution.
 
-% TODO: Reference all the simulators, fix the urls and add dates
-\begin{itemize}
-    \item MIPSIM\cite{grunbacher1996windlx}
-    \item WinDLX\cite{grunbacher1996windlx}
-    \item WebMIPS. (n.d.). Retrieved from \url{http://webmips.org}
-    \item MARS (MIPS Assembler and Runtime Simulator). (n.d.). Retrieved from \url{http://courses.missouristate.edu/KenVollmar/mars/}
-    \item DrMIPS. (n.d.). Retrieved from \url{http://drmips.org}
-    \item WeMIPS. (n.d.). Retrieved from \url{http://wemips.org}
-    \item MIPSim. (n.d.). Retrieved from \url{http://mipsim.org}
-    \item WebRISC-V. (n.d.). Retrieved from \url{http://webriscv.org}
-    \item VisualMIPS\cite{visualmips}
-    \item SPIM
-\end{itemize}
+Analyzed Simulators:
+\begin{list}{-}{}
+    \item MIPSIM\cite{grunbacher1996windlx}. (1996). Retrieved from \url{http://aplo.fiit.stuba.sk/aps/frames/generuj.php?id=22}
+    \item WinDLX\cite{grunbacher1996windlx}. (1996). Retrieved from \url{http://aplo.fiit.stuba.sk/aps/frames/generuj.php?id=22}
+    \item WebMIPS\cite{webmpis}. (2004). Retrieved from \url{https://webmips.diism.unisi.it/}
+    \item MARS (MIPS Assembler and Runtime Simulator)\cite{mars}. (2005). Retrieved from \url{https://dpetersanderson.github.io/index.html}
+    \item DrMIPS. (2013). Retrieved from \url{https://brunonova.github.io/drmips/}
+    \item WeMIPS. (2013). Retrieved from \url{https://rivoire.cs.sonoma.edu/cs351/wemips/}
+    \item WebRISC-V\cite{giorgi2019webriscv}. (2019). Retrieved from \url{http://webriscv.org}
+    \item VisualMIPS\cite{visualmips}. (2017). Retrieved from \url{https://visualmips.github.io/}
+    \item SPIM. (2011). Retrieved from \url{http://spimsimulator.sourceforge.net/}
+\end{list}
 
 \subsection{MIPS pipeline simulator requirements}\label{sec:mips_pipeline_simulator_requirements}
 
@@ -656,4 +655,4 @@ Accessibility plays a crucial role in the effectiveness of a teaching tool. The 
 
 
 \section{Analysis Conclusion}
-This chapter has provided an overview of pipelining in general, went into the specifics of the MIPS architecture and its pipeline, and analyzed existing solutions and their features. The analysis has shown that while there are many simulators available, none of them are satisfactory in all aspects. Some simulators excel in certain areas, such as user experience or informativeness, but fall short in others. The most important features of a MIPS pipeline simulator have been identified, including instruction input, execution, visualization, interactability, user interface, and accessibility. A simulator that combines the best features of existing solutions and offers a customizable feature set tailored to student requirements would be the ultimate solution. The next chapter will introduce the design of the MIPS pipeline simulator, focusing on the features identified in this analysis.
+This chapter has provided an overview of pipelining in general, delved into the specifics of the MIPS architecture and its pipeline, and analyzed existing solutions and their features. The analysis has shown that while there are many simulators available, none of them are satisfactory in all aspects. Some simulators excel in certain areas, such as user experience or informativeness, but fall short in others. The most important features of a MIPS pipeline simulator have been identified, including instruction input, execution, visualization, interactability, user interface, and accessibility. A simulator that combines the best features of existing solutions and offers a customizable feature set tailored to student requirements would be the ultimate solution. The next chapter will introduce the design of the MIPS pipeline simulator, focusing on the features identified in this analysis.
