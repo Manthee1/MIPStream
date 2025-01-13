@@ -1,3 +1,5 @@
+import { ComponentType } from "../../types/enums";
+
 export class ComponentBase implements ComponentBaseInterface {
     id: string = 'BaseComponent';
     label: string = ''

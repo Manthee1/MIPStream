@@ -1,15 +1,14 @@
 <script lang="ts" setup>
 import { defineComponent } from 'vue';
-import INSTRUCTION_SET from '../../assets/js/config/instructionSet';
-import { getStageName } from '../../assets/js/utils';
+// import { getStageName } from '../../assets/js/utils';
 
 </script>
 
 <template>
     <ol class="stages-list">
         <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-' + index" :title="JSON.stringify(stage, null, 2)">
-            <div>{{ getStageName(index) }}</div>
-            <div>{{ INSTRUCTION_SET[stage.IR.opcode].mnemonic }}</div>
+            <!-- <div>{{ getStageName(index) }}</div> -->
+            <!-- <div>{{ INSTRUCTION_SET[stage.IR.opcode].mnemonic }}</div> -->
         </li>
     </ol>
 </template>
@@ -24,7 +23,7 @@ export default defineComponent({
     },
     computed: {
         stages(): any {
-            return this.$cpuStore.MIPSCore.cpu.stages;
+            // return this.$programExecutionStore.MIPSCore.cpu.stages;
         },
     },
 });

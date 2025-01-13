@@ -1,3 +1,4 @@
+import { ComponentType } from "../../types/enums";
 import { ComponentBase } from "./ComponentBase";
 
 export class MUX extends ComponentBase {
@@ -12,7 +13,7 @@ export class MUX extends ComponentBase {
         // Make sure the inputs have same number of bits
         this.id = id;
         this.controlInputs = [controlInput];
-        this.inputs = Array.from({ length: inputCount }, (_v, k) => ({ bits: bits, name: 'in' + k }));
+        this.inputs = Array.from({ length: inputCount }, (_v, k) => ({ bits: bits, name: 'in' + (k + 1) }));
         this.outputs = [{ bits: bits, name: 'out' }];
 
     }

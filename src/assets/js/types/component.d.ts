@@ -1,34 +1,30 @@
-enum ComponentType {
-    PC = 'PC',
-    StageRegister = 'StageRegister',
-    RegisterFile = 'RegisterFile',
-    ALU = 'ALU',
-    ControlUnit = 'ControlUnit',
-    InstructionMemory = 'InstructionMemory',
-    DataMemory = 'DataMemory',
-    MUX = 'MUX',
-    SignExtender = 'SignExtender',
-    ShiftLeft = 'ShiftLeft',
-    Adder = 'Adder',
-    ALUControl = 'ALUControl',
-    Gate = 'Gate',
-    Constant = 'Constant'
-}
+// interface ControlInput {
+//     bits: number;
+//     name: string;
+// }
 
-interface ControlInput {
-    bits: number;
-    name: string;
-}
+// interface ControlSignal {
+//     bits: number;
+//     name: string;
+// }
 
-interface ControlSignal {
-    bits: number;
-    name: string;
-}
+// interface ComponentInput {
+//     bits: number;
+//     name: string;
+// }
 
-interface ComponentInput {
-    bits: number;
-    name: string;
-}
+
+// interface ComponentOutput {
+//     bits: number;
+//     name: string;
+// }
+
+type ControlInput = Port
+type ControlSignal = Port
+type ComponentInput = Port
+type ComponentOutput = Port
+
+
 
 interface ComponentConnection {
     bitRange: [number, number];
@@ -37,10 +33,7 @@ interface ComponentConnection {
     to: string;
 }
 
-interface ComponentOutput {
-    bits: number;
-    name: string;
-}
+
 
 interface ComponentBaseInterface {
     id: string;
@@ -52,12 +45,3 @@ interface ComponentBaseInterface {
     outputs: ComponentOutput[];
 }
 
-enum GateType {
-    AND = 'AND',
-    OR = 'OR',
-    XOR = 'XOR',
-    NOT = 'NOT',
-    NAND = 'NAND',
-    NOR = 'NOR',
-    XNOR = 'XNOR'
-}

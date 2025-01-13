@@ -1,6 +1,3 @@
-import { InstructionR, InstructionI, InstructionJ } from "./instruction";
-
-
 interface StageData {
     IR: InstructionR | InstructionI | InstructionJ; // The current instruction to decode 
 

@@ -4,18 +4,15 @@
 
 <template>
 	<div ref="editor" class="editor-container">
-		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$cpuStore.program" </div> -->
+		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$programExecutionStore.program" </div> -->
 		<!-- <div id="editor" ref="editor"> </div> -->
 	</div>
 </template>
 
 <script lang="ts">
 
-import { error } from 'console';
 import { defineComponent } from 'vue';
-import { assemble } from '../../assets/js/assembler';
-import { AssemblerError } from '../../assets/js/errors';
-import { getStageName } from '../../assets/js/utils';
+// import { getStageName } from '../../assets/js/utils';
 import { default as monaco, validate } from "../../config/monaco";
 
 let editor: monaco.editor.IStandaloneCodeEditor;
@@ -62,13 +59,13 @@ export default defineComponent({
 		validate(model);
 
 		// Listener for changes in the editor
-		this.$cpuStore.program = monaco.editor.getModels()[0].getValue();
+		this.$programExecutionStore.program = monaco.editor.getModels()[0].getValue();
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
 			const code = monaco.editor.getModels()[0].getValue();
-			this.$cpuStore.program = code;
+			this.$programExecutionStore.program = code;
 			this.$emit('update:modelValue', code);
 			validate(model);
-			this.$cpuStore.updateErrors();
+			this.$programExecutionStore.updateErrors();
 
 		});
 
@@ -90,29 +87,30 @@ export default defineComponent({
 
 	computed: {
 		currentPC(): number {
-			return this.$cpuStore.MIPSCore.cpu.PC;
+			return 0;
+			// return this.$programExecutionStore.MIPSCore.cpu.PC;
 		}
 	},
 	watch: {
-		currentPC(newVal: number) {
-			const model = editor.getModel();
-			if (!model) return;
-			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
-				const stageName = getStageName(index);
-				const stage = this.$cpuStore.MIPSCore.cpu.stages[index];
-				const line = this.$cpuStore.getStageLine(index);
-				if (line == -1)
-					return [];
-				return [
-					{
-						range: new monaco.Range(+line, 1, +line, 1),
-						options: {
-							isWholeLine: true,
-							className: 'run-line-' + stageName + ' run-line'
-						}
-					}
-				]
-			}).flat());
+		currentPC(_newVal: number) {
+			// const model = editor.getModel();
+			// if (!model) return;
+			// this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
+			// 	const stageName = getStageName(index);
+			// 	const stage = this.$programExecutionStore.MIPSCore.cpu.stages[index];
+			// 	const line = this.$programExecutionStore.getStageLine(index);
+			// 	if (line == -1)
+			// 		return [];
+			// 	return [
+			// 		{
+			// 			range: new monaco.Range(+line, 1, +line, 1),
+			// 			options: {
+			// 				isWholeLine: true,
+			// 				className: 'run-line-' + stageName + ' run-line'
+			// 			}
+			// 		}
+			// 	]
+			// }).flat());
 
 		},
 		'$viewStore.theme': {
@@ -150,7 +148,7 @@ export default defineComponent({
 		updateBreakpoints() {
 			const model = editor.getModel();
 			if (!model) return;
-			const decorations = model.deltaDecorations(this.decorations, this.$cpuStore.breakpoints.map(line => ({
+			const decorations = model.deltaDecorations(this.decorations, this.$programExecutionStore.breakpoints.map(line => ({
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
 					isWholeLine: true,
@@ -161,20 +159,20 @@ export default defineComponent({
 		},
 
 		toggleBreakpoint(line: number) {
-			if (this.$cpuStore.breakpoints.includes(line)) {
+			if (this.$programExecutionStore.breakpoints.includes(line)) {
 				this.removeBreakpoint(line);
 			} else {
 				this.addBreakpoint(line);
 			}
-			console.log('Breakpoints:', this.$cpuStore.breakpoints);
+			console.log('Breakpoints:', this.$programExecutionStore.breakpoints);
 
 		},
 		addBreakpoint(line: number) {
-			this.$cpuStore.breakpoints.push(line);
+			this.$programExecutionStore.breakpoints.push(line);
 			this.updateBreakpoints();
 		},
 		removeBreakpoint(line: number) {
-			this.$cpuStore.breakpoints = this.$cpuStore.breakpoints.filter(b => b !== line);
+			this.$programExecutionStore.breakpoints = this.$programExecutionStore.breakpoints.filter(b => b !== line);
 			this.updateBreakpoints();
 		}
 	}

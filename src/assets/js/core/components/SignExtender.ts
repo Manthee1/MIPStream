@@ -1,3 +1,4 @@
+import { ComponentType } from "../../types/enums";
 import { ComponentBase } from "./ComponentBase";
 
 export class SignExtender extends ComponentBase {

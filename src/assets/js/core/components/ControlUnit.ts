@@ -1,3 +1,4 @@
+import { ComponentType } from "../../types/enums";
 import { ComponentBase } from "./ComponentBase";
 
 let INSTRUCTION_CONFIG: InstructionConfig[];

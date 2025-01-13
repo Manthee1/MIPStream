@@ -1,9 +1,7 @@
 import * as monaco from 'monaco-editor';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
-import INSTRUCTION_SET from '../../assets/js/config/instructionSet';
-import { InstructionDef, InstructionType, MemOp } from '../../assets/js/interfaces/instruction';
-import { getInstructionSyntax } from '../../assets/js/utils';
-import { useViewStore } from '../../stores/viewStore';
+let INSTRUCTION_SET: InstructionConfig[] = [];
+
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);

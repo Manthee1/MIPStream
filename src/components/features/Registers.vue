@@ -37,7 +37,7 @@ export default defineComponent({
 	computed: {
 		registers(): number[] {
 			// @ts-ignore
-			return this.$cpuStore.MIPSCore.cpu.GPRegisters as number[]
+			return this.$programExecutionStore.MIPSCore.cpu.GPRegisters as number[]
 		}
 	}
 });

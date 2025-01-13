@@ -1,13 +1,15 @@
 import * as monaco from 'monaco-editor';
 import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
-import INSTRUCTION_SET from '../assets/js/config/instructionSet';
-import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
+// import INSTRUCTION_SET from '../assets/js/config/instructionSet';
+// import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
 import { isLabel } from '../assets/js/utils';
+import { InstructionType } from '../assets/js/types/enums';
 
 // Constants
+let INSTRUCTION_SET: InstructionConfig[] = [];
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
 const registers = Array.from({ length: 32 }, (_, i) => `R${i}`);
 const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
@@ -159,7 +161,7 @@ export function validate(model: monaco.editor.ITextModel) {
                 }
             }
 
-            if (instruction.memOp === MemOp.LOAD || instruction.memOp === MemOp.STORE) {
+            if (true) {
                 if (line.trim().split(',').length !== 2) {
                     errors.push({
                         startLineNumber: index + 1,
@@ -211,7 +213,7 @@ monaco.editor.defineTheme('light', {
     inherit: false,
     rules: rulesWhite,
     colors: {
-        
+
     }
 });
 

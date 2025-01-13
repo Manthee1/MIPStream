@@ -1,3 +1,4 @@
+import { ComponentType } from "../../types/enums";
 import { ComponentBase } from "./ComponentBase";
 
 export class Adder extends ComponentBase {
@@ -10,7 +11,7 @@ export class Adder extends ComponentBase {
     constructor(id: string, inputCount: number, bits: number) {
         super();
         this.id = id;
-        this.inputs = Array.from({ length: inputCount }, (_v, k) => ({ bits: bits, name: 'in' + k }));
+        this.inputs = Array.from({ length: inputCount }, (_v, k) => ({ bits: bits, name: 'in' + (k + 1) }));
         this.outputs = [{ bits: bits, name: 'out' }];
 
     }

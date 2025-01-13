@@ -1,3 +1,4 @@
+import { ComponentType, GateType } from "../../types/enums";
 import { ComponentBase } from "./ComponentBase";
 let gateType: GateType = GateType.AND;
 export class Gate extends ComponentBase {
@@ -15,7 +16,7 @@ export class Gate extends ComponentBase {
         gateType = type;
 
         this.id = id;
-        this.inputs = Array.from({ length: inputCount }, (_v, k) => ({ bits: bits, name: 'in' + k }));
+        this.inputs = Array.from({ length: inputCount }, (_v, k) => ({ bits: bits, name: 'in' + (k + 1) }));
         this.outputs = [{ bits: bits, name: 'out' }];
 
     }

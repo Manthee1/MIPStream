@@ -1,9 +1,5 @@
-import INSTRUCTION_SET from "./config/instructionSet";
-import { StageData } from "./interfaces/core";
-import { InstructionR, InstructionI, InstructionJ, InstructionType, InstructionDef, MemOp } from "./interfaces/instruction";
+import { InstructionType } from "./types/enums";
 
-const mnemonics: Set<string> = new Set();
-INSTRUCTION_SET.forEach((instruction) => mnemonics.add(instruction.mnemonic));
 
 // utils.ts
 
@@ -31,27 +27,6 @@ export function isLabel(str: string): boolean {
     const labelPattern = /^[a-zA-Z_]\w*$/;
     return labelPattern.test(str);
 }
-
-
-export function createBlankStageData(): StageData {
-    return {
-        IR: {
-            opcode: 0,
-            rs1: 0,
-            rs2: 0,
-            rd: 0,
-        },
-        OPC: -1,
-        NPC: 0,
-        A: 0,
-        B: 0,
-        I: 0,
-        ALUOutput: 0,
-        LMD: 0,
-        cond: false,
-    };
-}
-
 
 
 /**
@@ -105,7 +80,8 @@ export function isJType(instruction: InstructionR | InstructionI | InstructionJ)
 }
 
 export function isMnemonic(mnemonic: string): boolean {
-    return mnemonics.has(mnemonic.trim());
+    return false;
+    // return mnemonics.has(mnemonic.trim());
 }
 
 export function getInstructionType(instruction: InstructionR | InstructionI | InstructionJ): InstructionType {
@@ -120,12 +96,12 @@ export function getInstructionType(instruction: InstructionR | InstructionI | In
     }
 }
 
-export function getInstructionSyntax(instruction: InstructionDef) {
+export function getInstructionSyntax(instruction: InstructionConfig) {
     switch (instruction.type) {
         case InstructionType.R:
             return `${instruction.mnemonic} Rd, Rs1, Rs2`;
         case InstructionType.I:
-            if (instruction.memOp == MemOp.LOAD || instruction.memOp == MemOp.STORE)
+            if (false)
                 return `${instruction.mnemonic} Rd, imm(Rn)`;
             return `${instruction.mnemonic} Rd, Rs, imm`;
         case InstructionType.J:
@@ -212,4 +188,14 @@ export function formatSize(size: number): string {
     } else {
         return (size / 1024 / 1024 / 1024).toFixed(2) + ' GB';
     }
+}
+
+
+export function clone<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
+}
+
+// Function to only extract the first x bits of a number
+export function extractBits(num: number, x: number): number {
+    return num & ((1 << x) - 1);
 }

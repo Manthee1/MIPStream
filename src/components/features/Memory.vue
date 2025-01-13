@@ -31,7 +31,7 @@ export default defineComponent({
     computed: {
         memoryRows(): number[][] {
             // @ts-ignore
-            const data = this.$cpuStore.MIPSCore.memory.data
+            const data = this.$programExecutionStore.MIPSCore.memory.data
             // Split the memory into 8 byte rows
             return data.reduce((rows: number[][], value: number, index: number) => {
                 const rowIndex = Math.floor(index / 16)

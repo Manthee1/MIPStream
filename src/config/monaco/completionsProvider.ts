@@ -1,8 +1,9 @@
 import * as monaco from 'monaco-editor';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
-import INSTRUCTION_SET from '../../assets/js/config/instructionSet';
-import { InstructionDef, InstructionType, MemOp } from '../../assets/js/interfaces/instruction';
 import { getInstructionSyntax } from '../../assets/js/utils';
+import { InstructionType } from '../../assets/js/types/enums';
+
+let INSTRUCTION_SET: InstructionConfig[] = [];
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -37,51 +38,51 @@ function getlabels(code: string) {
     const labels = code.match(/(?<=\n|^)([a-zA-Z_]\w*):/g);
     if (!labels) return [];
     return labels.map((label) => label.slice(0, -1));
-    
+
 }
 
 
 export default {
     triggerCharacters: [' ', '\t'],
     provideCompletionItems: (model, position, context, token): monaco.languages.CompletionList => {
-        
+
         const line = model.getLineContent(position.lineNumber);
         const lineUntilPosition = line.substring(0, position.column - 1);
 
         if (position.column <= line.search(/\S|$/) + 2) {
-               const instructionSuggestions: monaco.languages.CompletionItem[] = INSTRUCTION_SET.map((instruction) => ({
-                    label: instruction.mnemonic,
-                    kind: monaco.languages.CompletionItemKind.Method,
-                    insertText: instruction.mnemonic + ' ',
-                    
-                    command: (instruction.mnemonic === 'NOP' || instruction.mnemonic === 'HALT') ? undefined : { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
-                    detail: getInstructionSyntax(instruction),
-                    documentation: {
-                        value: instruction.description,
-                        isTrusted: true,
-                    }
-                })) as monaco.languages.CompletionItem[]
-                const newLabelSuggestion: monaco.languages.CompletionItem = {
-                    label: 'label',
-                    kind: monaco.languages.CompletionItemKind.Reference,
-                    insertText: '${1:label}:',
-                    range: new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column),
-                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                    detail: 'Label',
-                    documentation: {
-                        value: 'The label to jump to',
-                        isTrusted: true
-                    },
+            const instructionSuggestions: monaco.languages.CompletionItem[] = INSTRUCTION_SET.map((instruction) => ({
+                label: instruction.mnemonic,
+                kind: monaco.languages.CompletionItemKind.Method,
+                insertText: instruction.mnemonic + ' ',
+
+                command: (instruction.mnemonic === 'NOP' || instruction.mnemonic === 'HALT') ? undefined : { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
+                detail: getInstructionSyntax(instruction),
+                documentation: {
+                    value: instruction.description,
+                    isTrusted: true,
                 }
-                
-                return {
-                    suggestions: [...instructionSuggestions,newLabelSuggestion],
-                };
+            })) as monaco.languages.CompletionItem[]
+            const newLabelSuggestion: monaco.languages.CompletionItem = {
+                label: 'label',
+                kind: monaco.languages.CompletionItemKind.Reference,
+                insertText: '${1:label}:',
+                range: new monaco.Range(position.lineNumber, 1, position.lineNumber, position.column),
+                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                detail: 'Label',
+                documentation: {
+                    value: 'The label to jump to',
+                    isTrusted: true
+                },
+            }
+
+            return {
+                suggestions: [...instructionSuggestions, newLabelSuggestion],
+            };
         }
 
         // Find the instruction
         const mnemonic = line.trim().split(' ')[0];
-        const instruction = INSTRUCTION_SET.find((instruction: InstructionDef) => instruction.mnemonic === mnemonic);
+        const instruction = INSTRUCTION_SET.find((instruction: InstructionConfig) => instruction.mnemonic === mnemonic);
 
         if (!instruction || instruction.mnemonic === 'NOP' || instruction.mnemonic === 'HALT') return { suggestions: [] };
 
@@ -105,7 +106,7 @@ export default {
             if (registerCount == 0) return getRegisterCompletions(true, true, true);
 
             // If the instruction is a load or store instruction
-            if (instruction.memOp == MemOp.LOAD || instruction.memOp == MemOp.STORE) {
+            if (false) {
                 // Suggest imm(Rn)
                 if (lineUntilPosition.trim().split(',').length === 2) {
 

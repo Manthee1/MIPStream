@@ -1,22 +1,8 @@
-enum InstructionType {
-    R,
-    I,
-    J,
-    INVALID,
-}
-enum OperandType {
-    UNUSED,
-    REGISTER,
-    IMMEDIATE,
-    LABEL
-}
 
-enum OperandRole {
-    DESTINATION,
-    SOURCE,
-    IMMEDIATE
+interface OperandConfig {
+    type: OperandType;
+    role: OperandRole;
 }
-
 
 interface InstructionR {
     opcode: number; //Control/Opcode/Instruction
@@ -43,17 +29,17 @@ interface BaseInstructionConfig {
     opcode: number;
     mnemonic: string;
     type: InstructionType;
-    controlSignals: ControlSignals;
+    description?: string;
+    controlSignals: { [name: string]: number };
     funct?: number; // Only for R-Type instructions
+    operands?: Array<OperandType>;
 }
 
 interface RTypeInstructionConfig extends BaseInstructionConfig {
-    opcode: 0x00;
     funct: number;
-
 }
 interface ITypeInstructionConfig extends BaseInstructionConfig {
 }
 interface JTypeInstructionConfig extends BaseInstructionConfig {
 }
-type InstructionConfig = ITypeInstructionConfig | RTypeInstructionConfig | JTypeInstructionConfig;
+declare type InstructionConfig = ITypeInstructionConfig | RTypeInstructionConfig | JTypeInstructionConfig;

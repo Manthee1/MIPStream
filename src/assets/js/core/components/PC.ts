@@ -1,3 +1,4 @@
+import { ComponentType } from "../../types/enums";
 import { ComponentBase } from "./ComponentBase";
 
 export class PC extends ComponentBase {
@@ -6,8 +7,8 @@ export class PC extends ComponentBase {
     type = ComponentType.PC;
     description = 'Program Counter';
     controlInputs = [];
-    inputs = [{ bits: 32, name: 'in' }];
-    outputs = [{ bits: 32, name: 'out' }];
+    inputs = [{ bits: 32, name: 'Input' }];
+    outputs = [{ bits: 32, name: 'Output' }];
 
     constructor() {
         super();
