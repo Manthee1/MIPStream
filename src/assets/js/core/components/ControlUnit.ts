@@ -27,11 +27,13 @@ export class ControlUnit extends ComponentBase {
         super();
         INSTRUCTION_CONFIG = instructionConfig;
         this.outputs = controlSignals;
-        this.portsLayout = this.outputs.map((_, i) => {
+
+        const outputCount = Object.keys(controlSignals).length;
+        this.portsLayout = controlSignals.map((cs, i) => {
             return <PortLayout>{
-                name: Object.keys(this.outputs)[i],
+                name: cs.name,
                 location: 'right',
-                relPos: (i + 1) / (this.outputs.length + 1),
+                relPos: (i + 1) / (outputCount + 1),
             };
         }).concat(this.portsLayout);
     }

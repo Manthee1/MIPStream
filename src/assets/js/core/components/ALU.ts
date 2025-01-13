@@ -54,12 +54,12 @@ export class ALU extends ComponentBase {
         {
             name: 'A',
             location: 'left',
-            relPos: 0.5
+            relPos: 0.2
         },
         {
             name: 'B',
             location: 'left',
-            relPos: 0.5
+            relPos: 0.8
         },
         {
             name: 'Result',

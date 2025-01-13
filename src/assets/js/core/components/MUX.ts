@@ -7,11 +7,7 @@ export class MUX extends ComponentBase {
     type = ComponentType.MUX;
 
     portsLayout: PortLayout[] = [
-        {
-            name: 'Control',
-            location: 'left',
-            relPos: 0.8
-        },
+
         {
             name: 'out',
             location: 'right',
@@ -34,6 +30,11 @@ export class MUX extends ComponentBase {
                 relPos: (i + 1) / (inputCount + 1),
             };
         }).concat(this.portsLayout);
+        this.portsLayout.push({
+            name: controlInput.name,
+            location: 'top',
+            relPos: 0.5
+        });
 
     }
     public execute(inputs: Array<number>, controlInputs: Array<number>): Array<number> {
