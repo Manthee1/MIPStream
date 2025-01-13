@@ -15,6 +15,18 @@ export class SignExtender extends ComponentBase {
         bits: 32,
         name: 'Output',
     }];
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Input',
+            location: 'left',
+            relPos: 0.5
+        },
+        {
+            name: 'Output',
+            location: 'right',
+            relPos: 0.5
+        }
+    ];
 
     constructor(id: string) {
         super();

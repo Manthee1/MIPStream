@@ -36,6 +36,24 @@ export class ALUControl extends ComponentBase {
         name: 'Operation',
     }];
 
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Opcode',
+            location: 'right',
+            relPos: 0.5
+        },
+        {
+            name: 'Funct',
+            location: 'top',
+            relPos: 0.5
+        },
+        {
+            name: 'Operation',
+            location: 'left',
+            relPos: 0.5
+        }
+    ];
+
     constructor() {
         super();
     }

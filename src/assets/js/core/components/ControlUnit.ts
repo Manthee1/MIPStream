@@ -15,10 +15,25 @@ export class ControlUnit extends ComponentBase {
         name: 'Opcode',
     }];
 
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Opcode',
+            location: 'left',
+            relPos: 0.5
+        }
+    ];
+
     constructor(controlSignals: ControlSignal[], instructionConfig: InstructionConfig[]) {
         super();
         INSTRUCTION_CONFIG = instructionConfig;
         this.outputs = controlSignals;
+        this.portsLayout = this.outputs.map((_, i) => {
+            return <PortLayout>{
+                name: Object.keys(this.outputs)[i],
+                location: 'right',
+                relPos: (i + 1) / (this.outputs.length + 1),
+            };
+        }).concat(this.portsLayout);
     }
 
     execute(inputs: Array<number>): Array<number> {

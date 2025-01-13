@@ -33,6 +33,44 @@ export class RegisterControlUnit extends ComponentBase {
         name: 'ReadData2',
     }];
 
+    portsLayout: PortLayout[] = [
+        {
+            name: 'RegWrite',
+            location: 'top',
+            relPos: 0.5
+        },
+        {
+            name: 'ReadRegister1',
+            location: 'left',
+            relPos: 0.1
+        },
+        {
+            name: 'ReadRegister2',
+            location: 'left',
+            relPos: 0.3
+        },
+        {
+            name: 'WriteRegister',
+            location: 'left',
+            relPos: 0.7
+        },
+        {
+            name: 'WriteData',
+            location: 'left',
+            relPos: 0.9
+        },
+        {
+            name: 'ReadData1',
+            location: 'right',
+            relPos: 0.1
+        },
+        {
+            name: 'ReadData2',
+            location: 'right',
+            relPos: 0.6
+        }
+    ];
+
     constructor() {
         super();
     }

@@ -1,6 +1,6 @@
 import { ComponentType } from "../../types/enums";
 
-export class ComponentBase implements ComponentBaseInterface {
+export class ComponentBase {
     id: string = 'BaseComponent';
     label: string = ''
     name: string = 'BaseComponent';
@@ -9,6 +9,8 @@ export class ComponentBase implements ComponentBaseInterface {
     controlInputs: ControlInput[] = [];
     inputs: ComponentInput[] = [];
     outputs: ComponentOutput[] = [];
+
+    portsLayout: PortLayout[] = [];
 
 
     public execute(inputs: Array<number>, controlInputs: Array<number>, read: (value: number) => number, write: (value: number, address: number) => void): Array<number> {

@@ -9,6 +9,18 @@ export class PC extends ComponentBase {
     controlInputs = [];
     inputs = [{ bits: 32, name: 'Input' }];
     outputs = [{ bits: 32, name: 'Output' }];
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Input',
+            location: 'left',
+            relPos: 0.5
+        },
+        {
+            name: 'Output',
+            location: 'right',
+            relPos: 0.5
+        }
+    ];
 
     constructor() {
         super();

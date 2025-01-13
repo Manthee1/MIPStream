@@ -27,6 +27,34 @@ export class DataMemory extends ComponentBase {
         name: 'ReadData',
     }];
 
+    portsLayout: PortLayout[] = [
+        {
+            name: 'MemWrite',
+            location: 'top',
+            relPos: 0.5
+        },
+        {
+            name: 'MemRead',
+            location: 'bottom',
+            relPos: 0.5
+        },
+        {
+            name: 'Address',
+            location: 'left',
+            relPos: 0.1
+        },
+        {
+            name: 'WriteData',
+            location: 'left',
+            relPos: 0.9
+        },
+        {
+            name: 'ReadData',
+            location: 'right',
+            relPos: 0.9
+        }
+    ];
+
     constructor() {
         super();
     }

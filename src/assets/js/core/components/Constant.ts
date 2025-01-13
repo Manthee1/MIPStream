@@ -9,6 +9,14 @@ export class Constant extends ComponentBase {
     inputs = [];
     value = 0;
 
+    portsLayout: PortLayout[] = [
+        {
+            name: 'out',
+            location: 'right',
+            relPos: 0.5
+        }
+    ];
+
     constructor(id: string, value: number, bits: number) {
         super();
 

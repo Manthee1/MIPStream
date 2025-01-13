@@ -45,6 +45,34 @@ export class ALU extends ComponentBase {
     }
     ];
 
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Operation',
+            location: 'bottom',
+            relPos: 0.5
+        },
+        {
+            name: 'A',
+            location: 'left',
+            relPos: 0.5
+        },
+        {
+            name: 'B',
+            location: 'left',
+            relPos: 0.5
+        },
+        {
+            name: 'Result',
+            location: 'right',
+            relPos: 0.5
+        },
+        {
+            name: 'Zero',
+            location: 'right',
+            relPos: 0.4
+        }
+    ];
+
     constructor() {
         super();
     }

@@ -15,6 +15,18 @@ export class InstructionMemory extends ComponentBase {
         bits: 32,
         name: 'Instruction',
     }];
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Address',
+            location: 'left',
+            relPos: 0.2
+        },
+        {
+            name: 'Instruction',
+            location: 'right',
+            relPos: 0.2
+        }
+    ];
 
     constructor() {
         super();

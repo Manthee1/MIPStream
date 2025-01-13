@@ -16,6 +16,19 @@ export class ShiftLeft extends ComponentBase {
         name: 'Output',
     }];
     value: number;
+    portsLayout: PortLayout[] = [
+        {
+            name: 'Input',
+            location: 'left',
+            relPos: 0.5
+        },
+        {
+            name: 'Output',
+            location: 'right',
+            relPos: 0.5
+        }
+    ];
+
 
     constructor(id: string, value: number = 2) {
         super();
