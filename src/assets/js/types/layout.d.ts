@@ -15,6 +15,7 @@ interface Dimensions {
 
 interface PortLayout {
     name: string;
+    type?: 'input' | 'output';
     location: 'top' | 'bottom' | 'left' | 'right';
     // there is no x or y, just a relative position on the side of the component
     relPos: number; // a number smaller or equal to 1. Represents the position of the port on the side of the component

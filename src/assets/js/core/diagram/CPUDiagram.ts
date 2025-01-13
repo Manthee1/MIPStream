@@ -79,19 +79,14 @@ export class CPUDiagram {
         this.layout = {
             width: layout.width,
             height: layout.height,
-            components: new Map(layout.components.map((component) => {
-                const ports = new Map(component.ports?.map((port) => [port.name, port]) ?? []);
-                const pos = this.getPos(component.pos, component.dimensions);
-                return [component.id, { id: component.id, dimensions: component.dimensions, pos: { x: pos[0], y: pos[1] }, ports }];
-            }
-            ))
+            components: new Map(),
         };
 
         // Set the canvas size to the layout size
         this.canvas.width = this.layout.width;
         this.canvas.height = this.layout.height;
 
-        this.initializeComponents();
+        this.initializeComponents(layout);
         this.initializePlugins();
 
 
@@ -104,9 +99,28 @@ export class CPUDiagram {
         return [x, y];
     }
 
+    getPortPrefix(type: 'input' | 'output') {
+        return type === 'input' ? 'in_' : 'out_';
+    }
 
+    private initializeComponents(layout: CPULayout) {
 
-    private initializeComponents() {
+        // Add components in the layout
+        layout.components.forEach((component) => {
+            const componentConfig = this.cpuConfig.components.get(component.id);
+            if (!componentConfig) throw new Error(`Component config not found for ${component.id}`);
+            // Check if the component is already in the layout
+            if (this.layout.components.get(component.id)) throw new Error(`Component ${component.id} already in layout`);
+
+            const pos = this.getPos(component.pos, component.dimensions);
+            this.layout.components.set(component.id, {
+                id: component.id,
+                dimensions: component.dimensions,
+                pos: { x: pos[0], y: pos[1] },
+                ports: new Map(),
+            });
+        });
+
         // Find components not in the layout and add them
         this.cpuConfig.components.forEach((component, componentId) => {
             if (this.layout.components.get(componentId)) return;
@@ -116,40 +130,69 @@ export class CPUDiagram {
                 id: componentId,
                 dimensions: dimensions,
                 pos: { x, y },
-                ports: new Map([component.controlInputs, ...component.inputs, ...component.outputs].map((port) => [port.name, {
-                    name: port.name,
-                    location: 'right',
-                    relPos: 0,
-                }]))
+                ports: new Map(),
             });
         });
 
 
-        // Find ports not in the layout and add them
+        // Add all the ports to the components
         this.layout.components.forEach((component, componentId) => {
             const componentConfig = this.cpuConfig.components.get(componentId) as ComponentBase;
             if (!componentConfig) throw new Error(`Component config not found for ${componentId}`);
 
-            [...componentConfig.controlInputs, ...componentConfig.inputs, ...componentConfig.outputs].forEach((port) => {
-                let portLayout = component.ports.get(port.name) ?? null;
-                if (!portLayout) {
-                    component.ports.set(port.name, {
-                        name: port.name,
-                        location: 'right',
-                        relPos: 0.5,
-                    });
-                    portLayout = component.ports.get(port.name) as PortLayout;
-                }
-                // Make sure the position is smaller or equal to 1
-                if (portLayout.relPos > 1) {
-                    console.warn(`Port position for ${port.name} in ${componentId} is greater than 1. Setting to 1`);
-                    portLayout.relPos = 1;
-                }
+            const unmappedLayoutComponent = layout.components.find((c) => c.id === componentId)
+            if (!unmappedLayoutComponent) throw new Error(`Component layout not found for ${componentId}`);
 
-                // Set an absolute position for the port
-                const { x, y } = this.getAbsolutePortPosition(portLayout, component);
-                portLayout.pos = { x, y };
-            });
+            const processPortLayout = (ports: Port[], type: 'input' | 'output') => {
+                for (let port of ports) {
+
+                    let portLayoutIndex = unmappedLayoutComponent.ports?.findIndex((p) => p.name === port.name) ?? -1;
+                    // Remove the port from the layout
+                    if (portLayoutIndex >= 0) {
+                        unmappedLayoutComponent.ports?.splice(portLayoutIndex, 1);
+                        console.log('Removed port from layout', port.name);
+
+                    }
+
+                    let portLayout = unmappedLayoutComponent.ports?.[portLayoutIndex];
+
+                    if (!portLayout) {
+
+                        // Check if the component config has a port layout
+                        portLayoutIndex = componentConfig.portsLayout.findIndex((p) => p.name === port.name);
+                        if (portLayoutIndex >= 0) {
+                            portLayout = componentConfig.portsLayout[portLayoutIndex];
+                            componentConfig.portsLayout.splice(portLayoutIndex, 1);
+                        }
+                        if (!portLayout) {
+                            portLayout = {
+                                name: port.name,
+                                location: 'right',
+                                relPos: 0.5,
+                            };
+                        }
+                    }
+                    // Make sure the position is smaller or equal to 1
+                    if (portLayout.relPos > 1) {
+                        console.warn(`Port position for ${port.name} in ${componentId} is greater than 1. Setting to 1`);
+                        portLayout.relPos = 1;
+                    }
+
+                    // Set an absolute position for the port
+                    const { x, y } = this.getAbsolutePortPosition(portLayout, component);
+                    portLayout.pos = { x, y };
+                    portLayout.type = type;
+
+                    const prefix = this.getPortPrefix(type);
+                    component.ports.set(prefix + port.name, portLayout);
+
+                }
+            }
+
+            processPortLayout(componentConfig.controlInputs, 'input');
+            processPortLayout(componentConfig.inputs, 'input');
+            processPortLayout(componentConfig.outputs, 'output');
+
         });
     }
 
@@ -255,26 +298,26 @@ export class CPUDiagram {
 
     drawConnection(from: string, to: string, bitRange: [number, number]) {
         // Get the from and to component layouts
-        const fromLayout = this.layout.components.get(from.split('.')[0]);
-        if (!fromLayout) {
+        const fromComponentLayout = this.layout.components.get(from.split('.')[0]);
+        if (!fromComponentLayout) {
             throw new Error(`Component layout not found for ${from.split('.')[0]}`);
         }
 
-        const toLayout = this.layout.components.get(to.split('.')[0]);
-        if (!toLayout) {
+        const toComponentLayout = this.layout.components.get(to.split('.')[0]);
+        if (!toComponentLayout) {
             throw new Error(`Component layout not found for ${to.split('.')[0]}`);
         }
 
         // Get the from and to ports
-        const fromPortName = from.split('.')[1];
+        const fromPortName = this.getPortPrefix('output') + from.split('.')[1];
 
-        const fromPort = fromLayout.ports.get(fromPortName);
+        const fromPort = fromComponentLayout.ports.get(fromPortName);
         if (!fromPort) {
             throw new Error(`Port layout not found for ${fromPortName}`);
         }
 
-        const toPortName = to.split('.')[1];
-        const toPort = toLayout.ports.get(toPortName);
+        const toPortName = this.getPortPrefix('input') + to.split('.')[1];
+        const toPort = toComponentLayout.ports.get(toPortName);
         if (!toPort) {
             throw new Error(`Port layout not found for ${toPortName}`);
         }
