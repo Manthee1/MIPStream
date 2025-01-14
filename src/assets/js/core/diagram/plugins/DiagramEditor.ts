@@ -2,6 +2,7 @@ import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
 export class DiagramEditor extends CPUDiagramPlugin {
     mouse: { x: number, y: number, isDown: boolean, lastClick: { x: number, y: number } } = { x: 0, y: 0, isDown: false, lastClick: { x: 0, y: 0 } };
+    keyboard: { keys: { [key: string]: boolean } } = { keys: {} };
     draggingComponent: {
         id: string;
         oldPos: Position;
@@ -19,6 +20,10 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
         this.initializeMouseEvents();
 
+    }
+
+    isKeyDown(key: string) {
+        return this.keyboard.keys[key] || false;
     }
 
     initializeMouseEvents() {
@@ -41,36 +46,46 @@ export class DiagramEditor extends CPUDiagramPlugin {
         });
 
         document.addEventListener('keydown', (e) => {
+            this.keyboard.keys[e.key] = true;
+            this.keyDownHandler(e);
 
 
-            switch (e.key) {
-                case 's':
-                    const layout = this.saveConfig();
-                    console.log(layout);
-                    break;
-                case 'Escape':
-                    if (this.draggingComponent) {
-                        const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponent.id);
-                        if (!componentLayout) return;
-                        componentLayout.pos = this.draggingComponent.oldPos;
-                        this.cpuDiagram.recalculateComponentPorts(componentLayout);
-                        this.draggingComponent = null;
-                    }
-                    if (this.draggingComponentPort) {
-                        const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponentPort.componentId);
-                        if (!componentLayout) return;
-                        const portLayout = componentLayout.ports.get(this.draggingComponentPort.portName);
-                        if (!portLayout) return;
-                        portLayout.pos = this.draggingComponentPort.oldPos;
-                        portLayout.location = this.draggingComponentPort.oldLocation;
-                        portLayout.relPos = this.draggingComponentPort.relPos;
-                        this.cpuDiagram.recalculateComponentPorts(componentLayout);
-                        this.draggingComponentPort = null;
-                    }
-                    break;
-            }
+
 
         });
+
+        document.addEventListener('keyup', (e) => {
+            this.keyboard.keys[e.key] = false;
+        });
+    }
+
+    keyDownHandler(e: KeyboardEvent) {
+        switch (e.key) {
+            case 's':
+                const layout = this.saveConfig();
+                console.log(layout);
+                break;
+            case 'Escape':
+                if (this.draggingComponent) {
+                    const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponent.id);
+                    if (!componentLayout) return;
+                    componentLayout.pos = this.draggingComponent.oldPos;
+                    this.cpuDiagram.recalculateComponentPorts(componentLayout);
+                    this.draggingComponent = null;
+                }
+                if (this.draggingComponentPort) {
+                    const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponentPort.componentId);
+                    if (!componentLayout) return;
+                    const portLayout = componentLayout.ports.get(this.draggingComponentPort.portName);
+                    if (!portLayout) return;
+                    portLayout.pos = this.draggingComponentPort.oldPos;
+                    portLayout.location = this.draggingComponentPort.oldLocation;
+                    portLayout.relPos = this.draggingComponentPort.relPos;
+                    this.cpuDiagram.recalculateComponentPorts(componentLayout);
+                    this.draggingComponentPort = null;
+                }
+                break;
+        }
     }
 
     mouseMove() {
