@@ -80,6 +80,7 @@ export class CPUDiagram {
             width: layout.width,
             height: layout.height,
             components: new Map(),
+            connections: new Map(),
         };
 
         // Set the canvas size to the layout size
@@ -87,6 +88,7 @@ export class CPUDiagram {
         this.canvas.height = this.layout.height;
 
         this.initializeComponents(layout);
+        this.initializeConnections(layout);
         this.initializePlugins();
 
 
@@ -196,6 +198,39 @@ export class CPUDiagram {
         });
     }
 
+    initializeConnections(layout: CPULayout) {
+
+        let connectionsMap = new Map<string, ConnectionLayout>();
+
+        // Add missing connections
+        layout.connections.forEach((connection) => {
+
+            const connectionId = connection.id;
+            const connectionConfig = this.cpuConfig.connections.get(connectionId);
+            if (!connectionConfig) throw new Error(`Connection config not found for ${connectionId}`);
+
+            // Add the connection
+            connectionsMap.set(connectionId, {
+                id: connectionId,
+                bends: connection.bends,
+            });
+        });
+
+
+        this.cpuConfig.connections.forEach((connection, connectionId) => {
+            if (connectionsMap.get(connectionId)) return;
+            connectionsMap.set(connectionId, {
+                id: connectionId,
+                bends: [],
+            });
+
+        });
+
+        this.layout.connections = connectionsMap;
+
+
+    }
+
     private initializePlugins() {
         // Initialize plugins
         this.plugins.forEach((plugin) => {
@@ -296,7 +331,9 @@ export class CPUDiagram {
         });
     }
 
-    drawConnection(from: string, to: string, bitRange: [number, number]) {
+    drawConnection(connectionLayout: ConnectionLayout) {
+        const [from, to, bitRange0, bitRange1] = connectionLayout.id.split('-');
+        const bitRange = [parseInt(bitRange0), parseInt(bitRange1)];
         // Get the from and to component layouts
         const fromComponentLayout = this.layout.components.get(from.split('.')[0]);
         if (!fromComponentLayout) {
@@ -327,22 +364,26 @@ export class CPUDiagram {
         const toPortPos = toPort.pos as Position;
 
 
+        const pathPoints = [fromPortPos, ...connectionLayout.bends, toPortPos];
 
-        // Draw the connection
+        // Draw the path
+        this.ctx.strokeStyle = 'black';
+
         this.ctx.beginPath();
         this.ctx.moveTo(fromPortPos.x, fromPortPos.y);
-        this.ctx.lineTo(toPortPos.x, toPortPos.y);
+        pathPoints.forEach((point) => {
+            this.ctx.lineTo(point.x, point.y);
+        });
         this.ctx.stroke();
 
-        // Draw the bit range
-        const bitRangeText = `${bitRange[0]}-${bitRange[1]}`;
-        const textX = (fromPortPos.x + toPortPos.x) / 2;
-        const textY = (fromPortPos.y + toPortPos.y) / 2;
-        this.ctx.fillStyle = 'black';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.font = '12px Arial';
-        this.ctx.fillText(bitRangeText, textX, textY);
+
+
+
+        // // Draw the bit range
+        // const bitRangeText = `${bitRange[0]}-${bitRange[1]}`;
+        // const textX = (fromPortPos.x + toPortPos.x) / 2;
+        // const textY = (fromPortPos.y + toPortPos.y) / 2;
+        // this.drawText(bitRangeText, textX, textY, 'black', '12px Arial', 'center', 'middle');
     }
 
     draw() {
@@ -356,8 +397,8 @@ export class CPUDiagram {
         });
 
         // Draw the connections
-        this.cpuConfig.connections.forEach((connection) => {
-            this.drawConnection(connection.from, connection.to, connection.bitRange);
+        this.layout.connections.forEach((connection) => {
+            this.drawConnection(connection);
         });
 
         // Draw plugins

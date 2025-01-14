@@ -198,9 +198,10 @@ export class DiagramEditor extends CPUDiagramPlugin {
                     id: component.id,
                     dimensions: component.dimensions,
                     pos: { x: component.pos.x, y: component.pos.y },
-                    ports
+                    ports: []
                 };
-            })
+            }),
+            connections: []
         };
 
         return layout;

@@ -36,16 +36,22 @@ interface ComponentLayoutMapped {
     ports: Map<string, PortLayout>;
 }
 
+interface ConnectionLayout {
+    id: string; // Comprised of componentId.fromPortName.componentId.toPortName-highBit-lowBit
+    bends: Array<Position>;
+}
+
 interface CPULayout {
     width: number;
     height: number;
     components: Array<ComponentLayout>;
-
+    connections: Array<ConnectionLayout>;
 }
 
 interface CPULayoutMapped {
     width: number;
     height: number;
     components: Map<string, ComponentLayoutMapped>;
+    connections: Map<string, ConnectionLayout>;
 }
 
