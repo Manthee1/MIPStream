@@ -52,9 +52,9 @@ export class CPUDiagram {
             console.error(e);
         }
 
-        this.drawIntervalRefence = setInterval(() => {
-            this.draw();
-        }, 1000 / 60);
+        // this.drawIntervalRefence = setInterval(() => {
+        this.draw();
+        // }, 1000 / 60);
 
         console.log('Diagram', this);
 

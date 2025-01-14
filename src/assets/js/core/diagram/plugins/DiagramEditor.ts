@@ -6,6 +6,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
     draggingComponent: {
         id: string;
         oldPos: Position;
+        prevTMPPos: Position;
     } | null = null;
     draggingComponentPort: {
         componentId: string;
@@ -94,9 +95,17 @@ export class DiagramEditor extends CPUDiagramPlugin {
         if (this.draggingComponent) {
             const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponent.id);
             if (!componentLayout) return;
-            const [x, y] = this.cpuDiagram.getPos({ x: this.draggingComponent.oldPos.x + offsetX, y: this.draggingComponent.oldPos.y + offsetY }, componentLayout.dimensions);
+            let [x, y] = this.cpuDiagram.getPos({ x: this.draggingComponent.oldPos.x + offsetX, y: this.draggingComponent.oldPos.y + offsetY }, componentLayout.dimensions);
+            // If constrol is pressed, snap to grid
+            if (this.isKeyDown('Control')) {
+                x = Math.round(x / 10) * 10;
+                y = Math.round(y / 10) * 10;
+            }
+            if (x == this.draggingComponent.prevTMPPos.x && y == this.draggingComponent.prevTMPPos.y) return;
             componentLayout.pos = { x, y };
+            this.draggingComponent.prevTMPPos = { x, y }
             this.cpuDiagram.recalculateComponentPorts(componentLayout);
+            this.cpuDiagram.draw();
             return;
         }
         if (this.draggingComponentPort) {
@@ -107,6 +116,8 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (!portLayout) return;
 
             // If is inbetween the component X
+            this.cpuDiagram.draw();
+
             if (componentPos.x < this.mouse.x && componentPos.x + componentLayout.dimensions.width > this.mouse.x) {
                 // If is above the component
                 portLayout.location = (componentPos.y > this.mouse.y) ? 'top' : 'bottom';
@@ -114,6 +125,8 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 // If is to the left of the component
                 portLayout.location = (componentPos.x > this.mouse.x) ? 'left' : 'right';
             }
+
+            this.cpuDiagram.draw();
 
             portLayout.relPos = portLayout.location === 'top' || portLayout.location === 'bottom' ? (this.mouse.x - componentPos.x) / componentLayout.dimensions.width : (this.mouse.y - componentPos.y) / componentLayout.dimensions.height;
             portLayout.relPos = Math.max(0, Math.min(1, portLayout.relPos));
