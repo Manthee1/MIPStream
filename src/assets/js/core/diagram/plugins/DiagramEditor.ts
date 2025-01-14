@@ -116,8 +116,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (!portLayout) return;
 
             // If is inbetween the component X
-            this.cpuDiagram.draw();
-
             if (componentPos.x < this.mouse.x && componentPos.x + componentLayout.dimensions.width > this.mouse.x) {
                 // If is above the component
                 portLayout.location = (componentPos.y > this.mouse.y) ? 'top' : 'bottom';
@@ -154,7 +152,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
             const [x, y] = this.cpuDiagram.getPos(component.pos, component.dimensions);
             if (this.isOverRect(x, y, component.dimensions.width, component.dimensions.height)) {
-                this.draggingComponent = { id: component.id, oldPos: { x: x, y: y } };
+                this.draggingComponent = { id: component.id, oldPos: { x: x, y: y }, prevTMPPos: { x: x, y: y } }
                 found = true;
                 break;
             }
