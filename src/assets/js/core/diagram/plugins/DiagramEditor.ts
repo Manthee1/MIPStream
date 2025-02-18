@@ -60,6 +60,49 @@ export class DiagramEditor extends CPUDiagramPlugin {
         });
     }
 
+
+
+
+    bendConnections() {
+        // Go thorugh each connection and bend it so that the connection is straight
+        for (let connection of this.cpuDiagram.layout.connections.values()) {
+            // If not straight bend at the beggining and if output higher then above the first bend, otherwise below
+            const [from, to] = [connection.id.split('-')[0], connection.id.split('-')[1]];
+            const fromPort = this.cpuDiagram.getPort(from, 'output');
+            const toPort = this.cpuDiagram.getPort(to, 'input');
+
+            connection.bends = [];
+            let bend = { x: connection.fromPos.x, y: connection.fromPos.y };
+            switch (fromPort.location) {
+                case 'top':
+                    bend.y -= 15;
+                    break;
+                case 'bottom':
+                    bend.y += 15;
+                    break;
+                case 'left':
+                    bend.x -= 15;
+                    break;
+                case 'right':
+                    bend.x += 15;
+                    break;
+            }
+            connection.bends.push(bend);
+
+            if ((fromPort.location === "left" || fromPort.location === "right") == (toPort.location === "left" || toPort.location === "right")) {
+
+                if ((fromPort.location === "left" || fromPort.location === "right")) {
+                    bend = { x: connection.bends[0].x, y: connection.toPos.y };
+                } else {
+                    bend = { x: connection.toPos.x, y: connection.bends[0].y };
+                }
+                connection.bends.push(bend);
+            }
+            continue;
+        }
+        this.cpuDiagram.draw();
+    }
+
     keyDownHandler(e: KeyboardEvent) {
         switch (e.key) {
             case 's':
@@ -86,6 +129,20 @@ export class DiagramEditor extends CPUDiagramPlugin {
                     this.draggingComponentPort = null;
                 }
                 break;
+            case 'g':
+                // If ctrl and g was pressed then snap every component to grid
+                for (let component of this.cpuDiagram.layout.components.values()) {
+                    const componentLayout = this.cpuDiagram.layout.components.get(component.id);
+                    if (!componentLayout) continue;
+                    componentLayout.pos = { x: Math.round(componentLayout.pos.x / 10) * 10, y: Math.round(componentLayout.pos.y / 10) * 10 };
+                    this.cpuDiagram.recalculateComponentPorts(componentLayout);
+                }
+                this.cpuDiagram.draw();
+                break;
+            case 'b':
+                this.bendConnections();
+
+                break;
         }
     }
 
@@ -105,6 +162,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
             componentLayout.pos = { x, y };
             this.draggingComponent.prevTMPPos = { x, y }
             this.cpuDiagram.recalculateComponentPorts(componentLayout);
+            this.bendConnections();
             this.cpuDiagram.draw();
             return;
         }
