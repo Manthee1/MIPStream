@@ -1,4 +1,10 @@
+import SpatialMap from "../../../utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
+
+// TODO:
+// [] Add ability to connect ports
+// [] Add ability to move wires
+// [] Add undo/redo
 
 export class DiagramEditor extends CPUDiagramPlugin {
     mouse: { x: number, y: number, isDown: boolean, lastClick: { x: number, y: number } } = { x: 0, y: 0, isDown: false, lastClick: { x: 0, y: 0 } };
@@ -15,16 +21,56 @@ export class DiagramEditor extends CPUDiagramPlugin {
         oldLocation: 'top' | 'bottom' | 'left' | 'right';
         relPos: number;
     } | null = null;
+    hoveringOverId: string | null = null;
+
+    spatialMap: SpatialMap = new SpatialMap(0, 0, 20);
 
     constructor(cpuDiagram: CPUDiagram) {
         super(cpuDiagram);
 
+
+        this.bendConnections();
+        this.initializeSpatialMap();
         this.initializeMouseEvents();
 
     }
 
     isKeyDown(key: string) {
         return this.keyboard.keys[key] || false;
+    }
+
+    initializeSpatialMap() {
+        this.spatialMap = new SpatialMap(this.cpuDiagram.width, this.cpuDiagram.height, 20);
+
+        // Insert all the components
+        this.cpuDiagram.layout.components.forEach(component => {
+            this.spatialMap.insert(component.id, component.pos, component.dimensions);
+        });
+
+        // Insert all the wires
+        this.cpuDiagram.layout.connections.forEach(connection => {
+            const [from, to] = [connection.id.split('-')[0], connection.id.split('-')[1]];
+            const fromPort = this.cpuDiagram.getPort(from, 'output');
+            const bends = connection.bends;
+            const toPort = this.cpuDiagram.getPort(to, 'input');
+
+            const points = [fromPort.pos as Position, ...bends, toPort.pos as Position];
+
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const [from, to] = [points[i], points[i + 1]];
+                const [x1, y1, x2, y2] = [from.x - 5, from.y - 5, to.x - 5, to.y - 5];
+                const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
+
+                const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
+                this.spatialMap.insert(connection.id + '|' + i, { x, y }, { width, height });
+            }
+
+        });
+
+
+
+
     }
 
     initializeMouseEvents() {
@@ -189,6 +235,15 @@ export class DiagramEditor extends CPUDiagramPlugin {
             this.cpuDiagram.recalculateComponentPorts(componentLayout);
             return;
         }
+
+
+        if (this.hoveringOverId != this.spatialMap.query(this.mouse.x, this.mouse.y)) {
+            this.hoveringOverId = this.spatialMap.query(this.mouse.x, this.mouse.y);
+
+            this.cpuDiagram.draw();
+        }
+
+
     }
 
     mouseDown() {
@@ -271,6 +326,47 @@ export class DiagramEditor extends CPUDiagramPlugin {
         this.cpuDiagram.ctx.textBaseline = 'middle';
         this.cpuDiagram.ctx.font = '12px Arial';
         this.cpuDiagram.ctx.fillText(`Mouse: ${this.mouse.x}, ${this.mouse.y}, ${this.mouse.isDown}`, 0, this.cpuDiagram.height - 20);
+
+
+
+        if (this.hoveringOverId) {
+            const hoveringOverId = this.hoveringOverId;
+            // If the hovering over a component, highlight it
+
+            // If the id has '|' it is a wire
+            if (hoveringOverId.includes('|')) {
+                const [connectionId] = hoveringOverId.split('|');
+                const connection = this.cpuDiagram.layout.connections.get(connectionId);
+                if (!connection) return;
+                const [from, to] = [connection.id.split('-')[0], connection.id.split('-')[1]];
+                const fromPort = this.cpuDiagram.getPort(from, 'output');
+                const toPort = this.cpuDiagram.getPort(to, 'input');
+
+
+                this.cpuDiagram.ctx.strokeStyle = 'red';
+                this.cpuDiagram.ctx.lineWidth = 2;
+                this.cpuDiagram.ctx.beginPath();
+                this.cpuDiagram.ctx.moveTo(connection.fromPos.x, connection.fromPos.y);
+                for (let bend of connection.bends) {
+                    this.cpuDiagram.ctx.lineTo(bend.x, bend.y);
+                }
+                this.cpuDiagram.ctx.lineTo(connection.toPos.x, connection.toPos.y);
+                this.cpuDiagram.ctx.stroke();
+                this.cpuDiagram.ctx.strokeStyle = 'black';
+                this.cpuDiagram.ctx.lineWidth = 1;
+                return;
+            }
+
+            const component = this.cpuDiagram.layout.components.get(hoveringOverId);
+            if (!component) return;
+            const [x, y] = this.cpuDiagram.getPos(component.pos, component.dimensions);
+            this.cpuDiagram.ctx.strokeStyle = 'red';
+            this.cpuDiagram.ctx.lineWidth = 2;
+            this.cpuDiagram.ctx.strokeRect(x, y, component.dimensions.width, component.dimensions.height);
+            this.cpuDiagram.ctx.strokeStyle = 'black';
+            this.cpuDiagram.ctx.lineWidth = 1;
+        }
+
 
     }
 
