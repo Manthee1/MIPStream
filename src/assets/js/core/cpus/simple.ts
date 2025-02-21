@@ -105,6 +105,8 @@ const INSTRUCTION_CONFIG: InstructionConfig[] = [
 	},
 ];
 
+const STAGE_PORTS_SPACING = { name: "", bits: 0 };
+
 const cpuConfig: CPUConfig = {
 	controlSignals: Object.values(CONTROL_SIGNALS),
 	instructions: INSTRUCTION_CONFIG,
@@ -146,8 +148,8 @@ const cpuConfig: CPUConfig = {
 			id: "IFtoID",
 			name: "IF/ID",
 			ports: [
+				{ name: "NextPC", bits: 32 },
 				{ name: "Instruction", bits: 32 },
-				{ name: "PC", bits: 32 },
 			],
 		},
 		{
@@ -163,13 +165,15 @@ const cpuConfig: CPUConfig = {
 				CONTROL_SIGNALS.ALUOp,
 				CONTROL_SIGNALS.ALUSrc,
 
-				{ name: "Instruction", bits: 32 },
+				{ name: "NextPC", bits: 32 },
+
+
 				{ name: "ReadData1", bits: 32 },
 				{ name: "ReadData2", bits: 32 },
 				{ name: "SignExtendedImm", bits: 32 },
 				{ name: "rt", bits: 5 },
 				{ name: "rd", bits: 5 },
-				{ name: "PC", bits: 32 },
+				{ name: "Instruction", bits: 32 },
 			],
 		},
 		{
@@ -182,17 +186,28 @@ const cpuConfig: CPUConfig = {
 				CONTROL_SIGNALS.MemRead,
 				CONTROL_SIGNALS.Branch,
 
-				{ name: "Instruction", bits: 32 },
+				{ name: "BranchAddress", bits: 32 },
+
+				{ name: "Zero", bits: 1 },
 				{ name: "ALUResult", bits: 32 },
+
 				{ name: "ReadData2", bits: 32 },
 				{ name: "WriteData", bits: 32 },
-				{ name: "PC", bits: 32 },
+
+				{ name: "Instruction", bits: 32 },
 			],
 		},
 		{
 			id: "MEMtoWB",
 			name: "MEM/WB",
-			ports: [{ name: "Instruction", bits: 32 }, { name: "ALUResult", bits: 32 }, { name: "ReadData", bits: 32 }, CONTROL_SIGNALS.RegWrite, CONTROL_SIGNALS.MemtoReg],
+			ports: [
+				CONTROL_SIGNALS.RegWrite,
+				CONTROL_SIGNALS.MemtoReg,
+
+				{ name: "Instruction", bits: 32 },
+				{ name: "ALUResult", bits: 32 },
+				{ name: "ReadData", bits: 32 },
+			],
 		},
 	],
 
@@ -235,12 +250,12 @@ const cpuConfig: CPUConfig = {
 		{ from: "InstructionMemory.Instruction", to: "IFtoID.Instruction", bitRange: [31, 0] },
 		{ from: "PC.Output", to: "NextPCAdder.in1", bitRange: [31, 0] },
 		{ from: "Const4.out", to: "NextPCAdder.in2", bitRange: [31, 0] },
-		{ from: "NextPCAdder.out", to: "IFtoID.PC", bitRange: [31, 0] },
-		{ from: "NextPCAdder.out", to: "BranchAdder.in2", bitRange: [31, 0] },
+		{ from: "NextPCAdder.out", to: "IFtoID.NextPC", bitRange: [31, 0] },
+		// { from: "NextPCAdder.out", to: "BranchAdder.in1", bitRange: [31, 0] },
 
 		// ID
 		{ from: "IFtoID.Instruction", to: "IDtoEX.Instruction", bitRange: [31, 0] },
-		{ from: "IFtoID.PC", to: "IDtoEX.PC", bitRange: [31, 0] },
+		{ from: "IFtoID.NextPC", to: "IDtoEX.NextPC", bitRange: [31, 0] },
 		{ from: "IFtoID.Instruction", to: "ControlUnit.Opcode", bitRange: [31, 26] },
 		{ from: "IFtoID.Instruction", to: "RegisterControlUnit.ReadRegister1", bitRange: [25, 21] },
 		{ from: "IFtoID.Instruction", to: "RegisterControlUnit.ReadRegister2", bitRange: [20, 16] },
@@ -263,7 +278,12 @@ const cpuConfig: CPUConfig = {
 
 		// EX
 
-		// { from: 'IDtoEX.ReadData2', to: 'ShiftLeft.in', bitRange: [31, 0] },
+		{ from: 'IDtoEX.NextPC', to: 'BranchAdder.in1', bitRange: [31, 0] },
+		{ from: 'IDtoEX.SignExtendedImm', to: 'ShiftLeft.Input', bitRange: [31, 0] },
+		{ from: 'ShiftLeft.Output', to: 'BranchAdder.in2', bitRange: [31, 0] },
+		{ from: 'BranchAdder.out', to: 'EXtoMEM.BranchAddress', bitRange: [31, 0] },
+
+
 	],
 };
 
@@ -271,10 +291,10 @@ const cpuLayout: CPULayout = {
 	width: 1200,
 	height: 800,
 	components: [
-		{ id: "IFtoID", dimensions: { width: 30, height: 400 }, pos: { x: 290, y: 150 }, ports: [] },
-		{ id: "IDtoEX", dimensions: { width: 30, height: 400 }, pos: { x: 590, y: 130 }, ports: [] },
-		{ id: "EXtoMEM", dimensions: { width: 30, height: 400 }, pos: { x: 880, y: 150 }, ports: [] },
-		{ id: "MEMtoWB", dimensions: { width: 30, height: 400 }, pos: { x: 1080, y: 120 }, ports: [] },
+		{ id: "IFtoID", dimensions: { width: 30, height: 500 }, pos: { x: 290, y: 150 }, ports: [] },
+		{ id: "IDtoEX", dimensions: { width: 30, height: 500 }, pos: { x: 590, y: 150 }, ports: [] },
+		{ id: "EXtoMEM", dimensions: { width: 30, height: 500 }, pos: { x: 880, y: 150 }, ports: [] },
+		{ id: "MEMtoWB", dimensions: { width: 30, height: 500 }, pos: { x: 1080, y: 150 }, ports: [] },
 		{ id: "PC", dimensions: { width: 50, height: 50 }, pos: { x: 50, y: 220 }, ports: [] },
 		{ id: "InstructionMemory", dimensions: { width: 100, height: 150 }, pos: { x: 140, y: 220 }, ports: [] },
 		{ id: "Const4", dimensions: { width: 50, height: 50 }, pos: { x: 200, y: 60 }, ports: [] },

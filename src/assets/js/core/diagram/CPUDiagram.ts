@@ -43,6 +43,12 @@ export class CPUDiagram {
 
         // Map the layout to a more efficient structure
 
+        // Load the layout from localStorage
+        const layoutSaved = localStorage.getItem('layout');
+        if (layoutSaved) {
+            layout = JSON.parse(layoutSaved);
+        }
+
 
         try {
             this.mountCanvas(selector);
@@ -347,6 +353,10 @@ export class CPUDiagram {
             const toPort = this.getPort(connectionLayout.id.split('-')[1], 'input');
             connectionLayout.fromPos = fromPort.pos as Position;
             connectionLayout.toPos = toPort.pos as Position;
+
+
+
+
         });
     }
 
@@ -366,7 +376,7 @@ export class CPUDiagram {
         return portLayout;
     }
 
-    drawConnection(connectionLayout: ConnectionLayout) {
+    public getConnectionPoints(connectionLayout: ConnectionLayout) {
         const [from, to, bitRange0, bitRange1] = connectionLayout.id.split('-');
         const bitRange = [parseInt(bitRange0), parseInt(bitRange1)];
 
@@ -378,15 +388,38 @@ export class CPUDiagram {
         const fromPortPos = fromPort.pos as Position;
         const toPortPos = toPort.pos as Position;
 
-        const pathPoints = [fromPortPos, ...connectionLayout.bends, toPortPos];
+        // Adda offset so that the port has a bit of space between the connection
+        const offset = 15;
+        let offsetPointFrom = { x: fromPortPos.x, y: fromPortPos.y };
+        switch (fromPort.location) {
+            case 'top': offsetPointFrom.y -= offset; break;
+            case 'bottom': offsetPointFrom.y += offset; break;
+            case 'left': offsetPointFrom.x -= offset; break;
+            case 'right': offsetPointFrom.x += offset; break;
+            default: break;
+        }
 
-        // Draw the path
-        this.ctx.strokeStyle = 'black';
+        let offsetPointTo = { x: toPortPos.x, y: toPortPos.y };
+        switch (toPort.location) {
+            case 'top': offsetPointTo.y -= offset; break;
+            case 'bottom': offsetPointTo.y += offset; break;
+            case 'left': offsetPointTo.x -= offset; break;
+            case 'right': offsetPointTo.x += offset; break;
+            default: break;
+        }
+
+
+        return [fromPortPos, offsetPointFrom, ...connectionLayout.bends, offsetPointTo, toPortPos];
+    }
+
+    drawConnection(connectionLayout: ConnectionLayout) {
+        const pathPoints = this.getConnectionPoints(connectionLayout);
+
 
         this.ctx.beginPath();
         this.ctx.translate(0.5, 0.5);
 
-        this.ctx.moveTo(fromPortPos.x, fromPortPos.y);
+        this.ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
         pathPoints.forEach((point) => {
             this.ctx.lineTo(point.x, point.y);
         });
@@ -415,6 +448,7 @@ export class CPUDiagram {
         });
 
         // Draw the connections
+        this.ctx.strokeStyle = 'black';
         this.layout.connections.forEach((connection) => {
             this.drawConnection(connection);
         });

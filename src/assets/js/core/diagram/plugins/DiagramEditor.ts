@@ -1,4 +1,5 @@
-import SpatialMap from "../../../utils/SpatialMap";
+import SpatialMap, { SpatialItem } from "../../../utils/SpatialMap";
+import { ComponentBase } from "../../components/ComponentBase";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
 // TODO:
@@ -17,11 +18,17 @@ export class DiagramEditor extends CPUDiagramPlugin {
     draggingComponentPort: {
         componentId: string;
         portName: string;
+        type: 'input' | 'output';
         oldPos: Position;
         oldLocation: 'top' | 'bottom' | 'left' | 'right';
         relPos: number;
     } | null = null;
-    hoveringOverId: string | null = null;
+    draggingConnection: { id: string, bendIndex: number } | null = null;
+
+    newConnectionOriginPort: { componentId: string, portName: string } | null = null;
+    newConnections: Array<ComponentConnection> = [];
+
+    hoveringOver: SpatialItem | null = null;
 
     spatialMap: SpatialMap = new SpatialMap(0, 0, 20);
 
@@ -32,6 +39,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
         this.bendConnections();
         this.initializeSpatialMap();
         this.initializeMouseEvents();
+        console.log(this.spatialMap);
 
     }
 
@@ -44,17 +52,38 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
         // Insert all the components
         this.cpuDiagram.layout.components.forEach(component => {
-            this.spatialMap.insert(component.id, component.pos, component.dimensions);
+            this.spatialMap.insert(component.id, component.pos, component.dimensions, 'component');
+            // Insert all the ports
+            component.ports.forEach(port => {
+                const [x, y] = this.cpuDiagram.getPos(component.pos, component.dimensions);
+                const [width, height] = [component.dimensions.width, component.dimensions.height];
+                const [x1, y1, x2, y2] = [x, y, x + width, y + height];
+                let [portX, portY] = [x1, y1];
+                switch (port.location) {
+                    case 'top':
+                        portX = x1 + port.relPos * width;
+                        portY = y1;
+                        break;
+                    case 'bottom':
+                        portX = x1 + port.relPos * width;
+                        portY = y2;
+                        break;
+                    case 'left':
+                        portX = x1;
+                        portY = y1 + port.relPos * height;
+                        break;
+                    case 'right':
+                        portX = x2;
+                        portY = y1 + port.relPos * height;
+                        break;
+                }
+                this.spatialMap.insert(component.id + '|' + port.name + "|" + port.type, { x: portX - 10, y: portY - 5 }, { width: 20, height: 10 }, 'port');
+            });
         });
 
-        // Insert all the wires
+        // Insert all the connections
         this.cpuDiagram.layout.connections.forEach(connection => {
-            const [from, to] = [connection.id.split('-')[0], connection.id.split('-')[1]];
-            const fromPort = this.cpuDiagram.getPort(from, 'output');
-            const bends = connection.bends;
-            const toPort = this.cpuDiagram.getPort(to, 'input');
-
-            const points = [fromPort.pos as Position, ...bends, toPort.pos as Position];
+            const points = this.cpuDiagram.getConnectionPoints(connection);
 
 
             for (let i = 0; i < points.length - 1; i++) {
@@ -63,7 +92,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
 
                 const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
-                this.spatialMap.insert(connection.id + '|' + i, { x, y }, { width, height });
+                this.spatialMap.insert(connection.id + '|' + i, { x, y }, { width, height }, 'connection');
             }
 
         });
@@ -144,6 +173,25 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 }
                 connection.bends.push(bend);
             }
+
+            // Add the last bend a little bit off of the to port
+            bend = { x: connection.toPos.x, y: connection.toPos.y };
+            switch (toPort.location) {
+                case 'top':
+                    bend.y -= 15;
+                    break;
+                case 'bottom':
+                    bend.y += 15;
+                    break;
+                case 'left':
+                    bend.x -= 15;
+                    break;
+                case 'right':
+                    bend.x += 15;
+                    break;
+            }
+
+            connection.bends.push(bend);
             continue;
         }
         this.cpuDiagram.draw();
@@ -154,6 +202,10 @@ export class DiagramEditor extends CPUDiagramPlugin {
             case 's':
                 const layout = this.saveConfig();
                 console.log(layout);
+                break;
+            case 'R':
+                // Reset the layout
+                localStorage.removeItem('layout');
                 break;
             case 'Escape':
                 if (this.draggingComponent) {
@@ -195,6 +247,17 @@ export class DiagramEditor extends CPUDiagramPlugin {
     mouseMove() {
         const [offsetX, offsetY] = [this.mouse.x - this.mouse.lastClick.x, this.mouse.y - this.mouse.lastClick.y];
 
+        if (this.newConnectionOriginPort) {
+            this.cpuDiagram.draw();
+        }
+
+        if (this.hoveringOver != this.spatialMap.query(this.mouse.x, this.mouse.y)) {
+            this.hoveringOver = this.spatialMap.query(this.mouse.x, this.mouse.y);
+            console.log(this.hoveringOver);
+
+            this.cpuDiagram.draw();
+        }
+
         if (this.draggingComponent) {
             const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponent.id);
             if (!componentLayout) return;
@@ -208,16 +271,18 @@ export class DiagramEditor extends CPUDiagramPlugin {
             componentLayout.pos = { x, y };
             this.draggingComponent.prevTMPPos = { x, y }
             this.cpuDiagram.recalculateComponentPorts(componentLayout);
-            this.bendConnections();
+            this.spatialMap.update(this.draggingComponent.id, { x, y }, {}, 'component');
             this.cpuDiagram.draw();
             return;
         }
         if (this.draggingComponentPort) {
             const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponentPort.componentId);
             if (!componentLayout) return;
+            console.log(componentLayout);
             const componentPos = componentLayout.pos;
-            const portLayout = componentLayout.ports.get(this.draggingComponentPort.portName);
+            const portLayout = this.cpuDiagram.getPort(this.draggingComponentPort.componentId + '.' + this.draggingComponentPort.portName, this.draggingComponentPort.type);
             if (!portLayout) return;
+
 
             // If is inbetween the component X
             if (componentPos.x < this.mouse.x && componentPos.x + componentLayout.dimensions.width > this.mouse.x) {
@@ -233,58 +298,176 @@ export class DiagramEditor extends CPUDiagramPlugin {
             portLayout.relPos = portLayout.location === 'top' || portLayout.location === 'bottom' ? (this.mouse.x - componentPos.x) / componentLayout.dimensions.width : (this.mouse.y - componentPos.y) / componentLayout.dimensions.height;
             portLayout.relPos = Math.max(0, Math.min(1, portLayout.relPos));
             this.cpuDiagram.recalculateComponentPorts(componentLayout);
+            this.spatialMap.update(this.draggingComponentPort.componentId + '|' + this.draggingComponentPort.portName + '|' + this.draggingComponentPort.type, { x: this.mouse.x - 10, y: this.mouse.y - 5 }, { width: 20, height: 10 }, 'port');
             return;
         }
+        if (this.draggingConnection) {
+            // Move the connection
+            const connection = this.cpuDiagram.layout.connections.get(this.draggingConnection.id);
+            if (!connection) return;
 
+            const [from, to] = [connection.id.split('-')[0], connection.id.split('-')[1]];
+            const fromPort = this.cpuDiagram.getPort(from, 'output');
+            const toPort = this.cpuDiagram.getPort(to, 'input');
 
-        if (this.hoveringOverId != this.spatialMap.query(this.mouse.x, this.mouse.y)) {
-            this.hoveringOverId = this.spatialMap.query(this.mouse.x, this.mouse.y);
+            // Only move the connection either horizontally or vertically depending on if the connection is horizontal or vertical
+            const [x, y] = [this.mouse.x, this.mouse.y];
+            const bendIndex = this.draggingConnection.bendIndex - 2;
+            console.log(bendIndex);
+
+            const isHorizontal = connection.bends[bendIndex].y === connection.bends[bendIndex + 1].y;
+            if (isHorizontal) {
+                // Only update the y of both bends
+                connection.bends[bendIndex + 1].y = y;
+                connection.bends[bendIndex].y = y;
+            } else {
+                // Only update the x of both bends
+                connection.bends[bendIndex + 1].x = x;
+                connection.bends[bendIndex].x = x;
+            }
+
+            const points = this.cpuDiagram.getConnectionPoints(connection);
+            for (let i = 0; i < points.length - 1; i++) {
+                const [from, to] = [points[i], points[i + 1]];
+                const [x1, y1, x2, y2] = [from.x - 5, from.y - 5, to.x - 5, to.y - 5];
+                const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
+
+                const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
+                this.spatialMap.update(connection.id + '|' + i, { x, y }, { width, height }, 'connection');
+            }
 
             this.cpuDiagram.draw();
+
+            return;
+
         }
+
+
+
+
+
+
+
 
 
     }
 
     mouseDown() {
         // Get a component that the mouse is over
-        let found = false;
-        for (let component of this.cpuDiagram.layout.components.values()) {
+        if (!this.hoveringOver) return;
 
-            // Check if the mouse is over a port
-            for (let port of component.ports.values()) {
-                const portPos = port.pos as Position;
-                if (!portPos) continue;
-                if (this.isOverRect(portPos.x - 10, portPos.y - 5, 20, 10)) {
-                    this.draggingComponentPort = { componentId: component.id, portName: port.name, oldPos: portPos, oldLocation: port.location, relPos: port.relPos };
-                    found = true;
-                    break;
-                }
-            }
-            if (found) break;
+        // If the hovering over a component, set it as dragging
+        if (this.hoveringOver.type == 'component') {
+            const component = this.cpuDiagram.layout.components.get(this.hoveringOver.id);
+            if (!component) return;
+
+
 
             const [x, y] = this.cpuDiagram.getPos(component.pos, component.dimensions);
-            if (this.isOverRect(x, y, component.dimensions.width, component.dimensions.height)) {
-                this.draggingComponent = { id: component.id, oldPos: { x: x, y: y }, prevTMPPos: { x: x, y: y } }
-                found = true;
-                break;
-            }
+            this.draggingComponent = { id: component.id, oldPos: { x: x, y: y }, prevTMPPos: { x: x, y: y } }
+        } else if (this.hoveringOver.type == 'connection') {
+            // Get the bend index
+            const [connectionId, bendIndex] = this.hoveringOver.id.split('|');
+            this.draggingConnection = { id: connectionId, bendIndex: parseInt(bendIndex) };
+        } else if (this.hoveringOver.type == 'port') {
+
+
+
+
+            const [componentId, portName, portType] = this.hoveringOver.id.split('|');
+            const component = this.cpuDiagram.layout.components.get(componentId);
+            if (!component) return;
+            const port = this.cpuDiagram.getPort(componentId + '.' + portName, portType as 'input' | 'output');
+            if (!port) return;
+
+
+            // this.newConnectionOriginPort = { componentId, portName };
+            this.draggingComponentPort = {
+                componentId,
+                portName: portName,
+                type: portType as 'input' | 'output',
+                oldPos: port.pos as Position ?? { x: 0, y: 0 },
+                oldLocation: port.location,
+                relPos: port.relPos
+            };
+
+            console.log(this.draggingComponentPort);
+
+
+
+
+
         }
 
-        if (!found) {
-            this.draggingComponent = null;
-        }
+
+
 
     }
 
     mouseUp() {
         this.draggingComponent = null;
         this.draggingComponentPort = null;
+        this.draggingConnection = null;
+
+        this.handleNewConnection();
+
+
+        this.newConnectionOriginPort = null;
+
+
 
 
     }
 
+    handleNewConnection() {
+        if (this.newConnectionOriginPort && this.hoveringOver?.type == 'port') {
+            const fromComponent = this.cpuDiagram.cpuConfig.components.get(this.newConnectionOriginPort.componentId) as ComponentBase;
+            if (!fromComponent) return;
+            const fromPort = fromComponent.outputs.find(port => port.name == this.newConnectionOriginPort?.portName);
+            if (!fromPort) return;
 
+            const [componentId, portName, portType] = this.hoveringOver.id.split('|');
+            const toComponent = this.cpuDiagram.cpuConfig.components.get(componentId) as ComponentBase
+            if (!toComponent) return;
+            const toPort = toComponent.inputs.find(port => port.name == portName);
+            if (!toPort || portType != 'input') return;
+
+            const [highBits, lowBits] = [Math.max(fromPort.bits, toPort.bits) - 1, Math.min(fromPort.bits, toPort.bits) - 1];
+
+            this.cpuDiagram.layout.connections.set(
+                fromComponent.id + '.' + fromPort.name + '-' +
+                toComponent.id + '.' + toPort.name + '-' +
+                highBits + '-' +
+                lowBits
+                , {
+                    id: fromComponent.id + '.' + fromPort.name + '-' + toComponent.id + '.' + toPort.name,
+                    bends: [],
+                    fromPos: { x: 0, y: 0 },
+                    toPos: { x: 0, y: 0 }
+                }
+            );
+
+            this.cpuDiagram.cpuConfig.connections.set(
+                fromComponent.id + '.' + fromPort.name + '-' +
+                toComponent.id + '.' + toPort.name + '-' +
+                highBits + '-' +
+                lowBits
+                , {
+                    bitRange: [lowBits, highBits],
+                    from: fromComponent.id + '.' + fromPort.name,
+                    to: toComponent.id + '.' + toPort.name
+                }
+            );
+
+            this.newConnections.push({
+                bitRange: [highBits, lowBits],
+                from: fromComponent.id + '.' + fromPort.name,
+                to: toComponent.id + '.' + toPort.name
+            });
+            console.log(JSON.stringify(this.newConnections));
+
+        }
+    }
 
 
     isOverRect(x: number, y: number, width: number, height: number) {
@@ -315,6 +498,10 @@ export class DiagramEditor extends CPUDiagramPlugin {
             connections: []
         };
 
+        // Save the layout to localStorage
+        localStorage.setItem('layout', JSON.stringify(layout));
+
+
         return layout;
     }
 
@@ -329,35 +516,80 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
 
 
-        if (this.hoveringOverId) {
-            const hoveringOverId = this.hoveringOverId;
-            // If the hovering over a component, highlight it
-
-            // If the id has '|' it is a wire
-            if (hoveringOverId.includes('|')) {
-                const [connectionId] = hoveringOverId.split('|');
-                const connection = this.cpuDiagram.layout.connections.get(connectionId);
-                if (!connection) return;
-                const [from, to] = [connection.id.split('-')[0], connection.id.split('-')[1]];
-                const fromPort = this.cpuDiagram.getPort(from, 'output');
-                const toPort = this.cpuDiagram.getPort(to, 'input');
 
 
-                this.cpuDiagram.ctx.strokeStyle = 'red';
-                this.cpuDiagram.ctx.lineWidth = 2;
-                this.cpuDiagram.ctx.beginPath();
-                this.cpuDiagram.ctx.moveTo(connection.fromPos.x, connection.fromPos.y);
-                for (let bend of connection.bends) {
-                    this.cpuDiagram.ctx.lineTo(bend.x, bend.y);
-                }
-                this.cpuDiagram.ctx.lineTo(connection.toPos.x, connection.toPos.y);
-                this.cpuDiagram.ctx.stroke();
-                this.cpuDiagram.ctx.strokeStyle = 'black';
-                this.cpuDiagram.ctx.lineWidth = 1;
-                return;
+        // if a a new connection is being made
+        if (this.newConnectionOriginPort) {
+            // Origin position
+            const component = this.cpuDiagram.layout.components.get(this.newConnectionOriginPort.componentId);
+            if (!component) return;
+            const port = this.cpuDiagram.getPort(this.newConnectionOriginPort.componentId + '.' + this.newConnectionOriginPort.portName, 'output');
+            if (!port) return;
+            const [x1, y1] = this.cpuDiagram.getPos(port.pos ?? { x: 0, y: 0 });
+
+            // If hovering over a port, draw a line from the port to the mouse
+            let [x2, y2] = [this.mouse.x, this.mouse.y];
+            let toPortType: null | 'input' | 'output' = null;
+            if (this.hoveringOver?.type === 'port') {
+                toPortType = this.hoveringOver.id.split('|')[2] as 'input' | 'output';
+                if (port.type != toPortType)
+                    [x2, y2] = [this.hoveringOver.x + 10, this.hoveringOver.y + 5];
             }
 
-            const component = this.cpuDiagram.layout.components.get(hoveringOverId);
+            this.cpuDiagram.ctx.beginPath();
+            this.cpuDiagram.ctx.moveTo(x1, y1);
+            this.cpuDiagram.ctx.lineTo(x2, y2);
+            this.cpuDiagram.ctx.stroke();
+            this.cpuDiagram.ctx.closePath();
+
+            // Highlight the port
+            this.cpuDiagram.ctx.lineWidth = 2;
+            this.cpuDiagram.ctx.strokeStyle = 'green';
+            this.cpuDiagram.ctx.strokeRect(x1 - 10, y1 - 5, 20, 10);
+            if (this.hoveringOver?.type === 'port' && port.type != toPortType) {
+                this.cpuDiagram.ctx.strokeStyle = 'red';
+                this.cpuDiagram.ctx.strokeRect(x2 - 10, y2 - 5, 20, 10);
+            }
+            this.cpuDiagram.ctx.strokeStyle = 'black';
+            this.cpuDiagram.ctx.lineWidth = 1;
+
+
+
+
+            return;
+        }
+
+        if (!this.hoveringOver) return;
+        const hoveringOver = this.hoveringOver;
+
+        // If the hovering over a component, highlight it
+
+        // If the id has '|' it is a connection
+        if (hoveringOver.type === 'connection') {
+            const [connectionId, bendIndex] = hoveringOver.id.split('|');
+            const connection = this.cpuDiagram.layout.connections.get(connectionId);
+            if (!connection) return;
+
+
+
+            this.cpuDiagram.ctx.strokeStyle = 'red';
+            this.cpuDiagram.drawConnection(connection);
+            this.cpuDiagram.ctx.strokeStyle = 'blue';
+            this.cpuDiagram.ctx.lineWidth = 1;
+
+            // Highlight the closest bend position
+            let index = parseInt(bendIndex) - 1;
+            if (index > 0) {
+                const [x1, y1, x2, y2] = [connection.bends[index - 1].x, connection.bends[index - 1].y, connection.bends[index].x, connection.bends[index].y];
+                const [width, height] = [Math.abs(x1 - x2), Math.abs(y1 - y2)];
+                const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
+                this.cpuDiagram.ctx.strokeRect(x - 5, y - 5, width + 10, height + 10);
+            }
+
+            return;
+        }
+        if (hoveringOver.type === 'component') {
+            const component = this.cpuDiagram.layout.components.get(hoveringOver.id);
             if (!component) return;
             const [x, y] = this.cpuDiagram.getPos(component.pos, component.dimensions);
             this.cpuDiagram.ctx.strokeStyle = 'red';
@@ -365,7 +597,27 @@ export class DiagramEditor extends CPUDiagramPlugin {
             this.cpuDiagram.ctx.strokeRect(x, y, component.dimensions.width, component.dimensions.height);
             this.cpuDiagram.ctx.strokeStyle = 'black';
             this.cpuDiagram.ctx.lineWidth = 1;
+            return;
         }
+        if (hoveringOver.type === 'port') {
+            const [componentId, portName, portType] = hoveringOver.id.split('|');
+            const component = this.cpuDiagram.layout.components.get(componentId);
+            if (!component) return;
+            const port = this.cpuDiagram.getPort(componentId + '.' + portName, portType as 'input' | 'output');
+            if (!port) return;
+
+            const [x, y] = this.cpuDiagram.getPos(port.pos ?? { x: 0, y: 0 });
+            this.cpuDiagram.ctx.strokeStyle = 'red';
+            this.cpuDiagram.ctx.lineWidth = 2;
+            this.cpuDiagram.ctx.strokeRect(x - 10, y - 5, 20, 10);
+            this.cpuDiagram.ctx.strokeStyle = 'black';
+            this.cpuDiagram.ctx.lineWidth = 1;
+
+            return;
+        }
+
+
+
 
 
     }

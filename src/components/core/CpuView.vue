@@ -39,12 +39,16 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.cpu-view {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    min-width: 300px;
-}
+<style lang='sass' scoped>
+
+.cpu-view 
+    display: flex
+    justify-content: center
+    align-items: center
+    height: 100%
+    min-width: 300px
+
+    #cpu-diagram 
+        border: 2px solid #000
+
 </style>
