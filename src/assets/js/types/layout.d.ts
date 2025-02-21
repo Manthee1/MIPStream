@@ -3,49 +3,39 @@ interface Position {
     x: number;
     y: number;
 }
-
-interface CanvasPoint {
-    x: number | 'center';
-    y: number | 'center';
-}
 interface Dimensions {
     width: number;
     height: number;
 }
 
 interface PortLayout {
-    name: string;
+    id: string;
+    label: string;
     type?: 'input' | 'output';
     location: 'top' | 'bottom' | 'left' | 'right';
-    // there is no x or y, just a relative position on the side of the component
+    bits: number;
+    value: number;
     relPos: number; // a number smaller or equal to 1. Represents the position of the port on the side of the component
-    pos?: CanvasPoint // the absolute position of the port. used by the layout editor
+    pos?: Position // the absolute position of the port. used by the diagram for drawing
 }
 
 interface ComponentLayout {
     id: string;
+    label: string;
+    type: 'register' | 'stage_register' | 'and' | 'or' | 'mux' | 'adder' | 'control_unit' | 'alu' | 'shift' | 'sign_extend' | 'register_unit' | 'const' | 'instruction_memory' | 'data_memory';
     dimensions: Dimensions;
-    pos: CanvasPoint;
+    pos: Position;
     ports?: Array<PortLayout>;
 }
 
-interface ComponentLayoutMapped {
-    id: string;
-    dimensions: Dimensions;
-    pos: Position;
-    ports: Map<string, PortLayout>;
-}
-
 interface ConnectionLayout {
-    id: string; // Comprised of componentId.fromPortName.componentId.toPortName-highBit-lowBit
+    from: string; // id of the to port
+    to: string; // id of the from port
     bends: Array<Position>;
+    bitRange: Array<[number, number]>;
+    type: 'data' | 'control';
     fromPos?: Position;
     toPos?: Position;
-}
-
-interface ConnectionLayoutMapped extends ConnectionLayout {
-    fromPos: Position;
-    toPos: Position;
 }
 
 interface CPULayout {
@@ -53,12 +43,5 @@ interface CPULayout {
     height: number;
     components: Array<ComponentLayout>;
     connections: Array<ConnectionLayout>;
-}
-
-interface CPULayoutMapped {
-    width: number;
-    height: number;
-    components: Map<string, ComponentLayoutMapped>;
-    connections: Map<string, ConnectionLayoutMapped>;
 }
 

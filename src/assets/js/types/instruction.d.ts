@@ -4,6 +4,8 @@ interface OperandConfig {
     role: OperandRole;
 }
 
+type InstructionType = 'R' | 'I' | 'J' | 'INVALID';
+
 interface InstructionR {
     opcode: number; //Control/Opcode/Instruction
     rs1: number; //Source Register

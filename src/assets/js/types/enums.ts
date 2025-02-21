@@ -38,9 +38,3 @@ export enum OperandRole {
     SOURCE,
     IMMEDIATE
 }
-export enum InstructionType {
-    R,
-    I,
-    J,
-    INVALID,
-}
