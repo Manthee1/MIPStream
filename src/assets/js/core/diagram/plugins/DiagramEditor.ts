@@ -212,7 +212,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
                     const componentLayout = this.cpuDiagram.layout.components.get(this.draggingComponent.id);
                     if (!componentLayout) return;
                     componentLayout.pos = this.draggingComponent.oldPos;
-                    this.cpuDiagram.recalculateComponentPorts(componentLayout);
+                    this.recalculateComponentPorts(componentLayout);
                     this.draggingComponent = null;
                 }
                 if (this.draggingComponentPort) {
@@ -223,7 +223,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
                     portLayout.pos = this.draggingComponentPort.oldPos;
                     portLayout.location = this.draggingComponentPort.oldLocation;
                     portLayout.relPos = this.draggingComponentPort.relPos;
-                    this.cpuDiagram.recalculateComponentPorts(componentLayout);
+                    this.recalculateComponentPorts(componentLayout);
                     this.draggingComponentPort = null;
                 }
                 break;
@@ -233,7 +233,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
                     const componentLayout = this.cpuDiagram.layout.components.get(component.id);
                     if (!componentLayout) continue;
                     componentLayout.pos = { x: Math.round(componentLayout.pos.x / 10) * 10, y: Math.round(componentLayout.pos.y / 10) * 10 };
-                    this.cpuDiagram.recalculateComponentPorts(componentLayout);
+                    this.recalculateComponentPorts(componentLayout);
                 }
                 this.cpuDiagram.draw();
                 break;
@@ -270,7 +270,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (x == this.draggingComponent.prevTMPPos.x && y == this.draggingComponent.prevTMPPos.y) return;
             componentLayout.pos = { x, y };
             this.draggingComponent.prevTMPPos = { x, y }
-            this.cpuDiagram.recalculateComponentPorts(componentLayout);
+            this.recalculateComponentPorts(componentLayout);
             this.spatialMap.update(this.draggingComponent.id, { x, y }, {}, 'component');
             this.cpuDiagram.draw();
             return;
@@ -297,7 +297,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
             portLayout.relPos = portLayout.location === 'top' || portLayout.location === 'bottom' ? (this.mouse.x - componentPos.x) / componentLayout.dimensions.width : (this.mouse.y - componentPos.y) / componentLayout.dimensions.height;
             portLayout.relPos = Math.max(0, Math.min(1, portLayout.relPos));
-            this.cpuDiagram.recalculateComponentPorts(componentLayout);
+            this.recalculateComponentPorts(componentLayout);
             this.spatialMap.update(this.draggingComponentPort.componentId + '|' + this.draggingComponentPort.portName + '|' + this.draggingComponentPort.type, { x: this.mouse.x - 10, y: this.mouse.y - 5 }, { width: 20, height: 10 }, 'port');
             return;
         }
@@ -467,6 +467,27 @@ export class DiagramEditor extends CPUDiagramPlugin {
             console.log(JSON.stringify(this.newConnections));
 
         }
+    }
+
+    recalculateComponentPorts(componentLayout: ComponentLayout) {
+        componentLayout?.ports?.forEach((port) => {
+            const portLayout = port;
+            const { x, y } = this.cpuDiagram.getAbsolutePortPosition(portLayout, componentLayout);
+            portLayout.pos = { x, y };
+        });
+
+        // Recalculate connection positions
+        this.recalculateConnectionPositions();
+    }
+
+    recalculateConnectionPositions() {
+        this.cpuDiagram.connections.forEach((connectionLayout) => {
+
+            const fromPort = this.cpuDiagram.getPort(connectionLayout.id.split('-')[0], 'output');
+            const toPort = this.cpuDiagram.getPort(connectionLayout.id.split('-')[1], 'input');
+            connectionLayout.fromPos = fromPort.pos as Position;
+            connectionLayout.toPos = toPort.pos as Position;
+        });
     }
 
 
