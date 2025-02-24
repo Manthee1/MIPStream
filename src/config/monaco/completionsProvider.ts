@@ -1,7 +1,6 @@
 import * as monaco from 'monaco-editor';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
 import { getInstructionSyntax } from '../../assets/js/utils';
-import { InstructionType } from '../../assets/js/types/enums';
 
 let INSTRUCTION_SET: InstructionConfig[] = [];
 

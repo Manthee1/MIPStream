@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import MIPSCore from '../assets/js/core/MIPSCore'
+// import MIPSCore from '../assets/js/core/MIPSCore'
 import { wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
 import { Assembler } from '../assets/js/core/Assembler';
@@ -10,7 +10,7 @@ import { useSettingsStore } from './settingsStore';
 
 export const useProgramExecutionStore = defineStore('programexec', {
     state: () => ({
-        MIPSCore: {} as MIPSCore,
+        // MIPSCore: {} as MIPSCore,
         assembler: new Assembler([]),
         program: '' as string,
         status: 'stopped' as ('running' | 'stopped' | 'paused'),

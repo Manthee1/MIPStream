@@ -1,4 +1,3 @@
-import { InstructionType } from "./types/enums";
 
 
 // utils.ts
@@ -86,25 +85,25 @@ export function isMnemonic(mnemonic: string): boolean {
 
 export function getInstructionType(instruction: InstructionR | InstructionI | InstructionJ): InstructionType {
     if (isRType(instruction)) {
-        return InstructionType.R;
+        return 'R';
     } else if (isIType(instruction)) {
-        return InstructionType.I;
+        return 'I';
     } else if (isJType(instruction)) {
-        return InstructionType.J;
+        return 'J';
     } else {
-        return InstructionType.INVALID;
+        return 'INVALID';
     }
 }
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
     switch (instruction.type) {
-        case InstructionType.R:
+        case 'R':
             return `${instruction.mnemonic} Rd, Rs1, Rs2`;
-        case InstructionType.I:
+        case 'I':
             if (false)
                 return `${instruction.mnemonic} Rd, imm(Rn)`;
             return `${instruction.mnemonic} Rd, Rs, imm`;
-        case InstructionType.J:
+        case 'J':
             return `${instruction.mnemonic} label`;
     }
 }

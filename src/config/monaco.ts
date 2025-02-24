@@ -6,7 +6,6 @@ import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
 import { isLabel } from '../assets/js/utils';
-import { InstructionType } from '../assets/js/types/enums';
 
 // Constants
 let INSTRUCTION_SET: InstructionConfig[] = [];
@@ -14,7 +13,7 @@ const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
 const registers = Array.from({ length: 32 }, (_, i) => `R${i}`);
 const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
 const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
-const JTypeMnemonics = INSTRUCTION_SET.filter((instruction) => instruction.type === InstructionType.J).map(
+const JTypeMnemonics = INSTRUCTION_SET.filter((instruction) => instruction.type === 'J').map(
     (instruction) => instruction.mnemonic
 );
 
@@ -126,7 +125,7 @@ export function validate(model: monaco.editor.ITextModel) {
             const registerCount = line.match(registerRegex)?.length ?? 0;
 
             // If the the first register is R0, warn the user
-            if (instruction.type !== InstructionType.J && line.trim().replace(',', ' ').split(' ')[1]?.trim() === 'R0') {
+            if (instruction.type !== 'J' && line.trim().replace(',', ' ').split(' ')[1]?.trim() === 'R0') {
                 errors.push({
                     startLineNumber: index + 1,
                     startColumn: line.indexOf('R0') + 1,
@@ -137,7 +136,7 @@ export function validate(model: monaco.editor.ITextModel) {
                 });
             }
 
-            if (instruction.type === InstructionType.R) {
+            if (instruction.type === 'R') {
                 if (registerCount !== 3) {
                     errors.push({
                         startLineNumber: index + 1,
@@ -148,7 +147,7 @@ export function validate(model: monaco.editor.ITextModel) {
                         severity: monaco.MarkerSeverity.Error,
                     });
                 }
-            } else if (instruction.type === InstructionType.I) {
+            } else if (instruction.type === 'I') {
                 if (registerCount !== 2) {
                     errors.push({
                         startLineNumber: index + 1,

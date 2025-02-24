@@ -1,4 +1,3 @@
-import { InstructionType } from "../types/enums"
 import { ComponentBase } from "./components/ComponentBase"
 import { StageRegister } from "./components/StageRegister"
 

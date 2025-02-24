@@ -1,7 +1,7 @@
 import { Memory } from "../interfaces/core"
 import { getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, } from "../utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
-import { InstructionType, OperandRole, OperandType } from "../types/enums";
+import { OperandRole, OperandType } from "../types/enums";
 
 export class Assembler {
     INSTRUCTION_SET: InstructionConfig[];
@@ -108,7 +108,7 @@ export class Assembler {
 
 
         switch (instructionDef.type) {
-            case InstructionType.R:
+            case 'R':
                 encodedInstruction = {
                     opcode: instructionOpcode,
                     rd: decodedValues[0],
@@ -116,7 +116,7 @@ export class Assembler {
                     rs2: decodedValues[2],
                 } as InstructionR;
                 break;
-            case InstructionType.I:
+            case 'I':
                 encodedInstruction = {
                     opcode: instructionOpcode,
                     rd: decodedValues[0],
@@ -124,7 +124,7 @@ export class Assembler {
                     imm: decodedValues[2],
                 } as InstructionI;
                 break;
-            case InstructionType.J:
+            case 'J':
                 encodedInstruction = {
                     opcode: instructionOpcode,
                     offset: decodedValues[0],
