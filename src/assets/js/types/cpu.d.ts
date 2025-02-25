@@ -45,3 +45,15 @@ interface CPUConfigMapped {
     components: Map<string, ComponentBase>
     connections: Map<string, ComponentConnection>
 }
+
+
+type CPUOptionsConfig = Array<{
+    label: string;
+    key: string;
+    default: any;
+    type: 'number' | 'string' | 'boolean';
+    min?: number;
+    max?: number;
+    verify?: (value: any) => boolean | never;
+}>
+
