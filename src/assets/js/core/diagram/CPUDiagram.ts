@@ -35,15 +35,11 @@ export class CPUDiagram {
 
         // Map the layout to a more efficient structure
 
-        // // Load the layout from localStorage
-        // const layoutSaved = localStorage.getItem('layout');
-        // if (layoutSaved) {
-        //     layout = JSON.parse(layoutSaved);
-        // }
 
 
         try {
             this.mountCanvas(selector);
+
             this.init(layout);
         } catch (e) {
             console.error('Error initializing diagram');
@@ -80,9 +76,20 @@ export class CPUDiagram {
         this.canvas.style.width = this.width + 'px';
         this.canvas.style.height = this.height + 'px';
 
+
+        // Load the layout from localStorage
+        const layoutSaved = localStorage.getItem('layout');
+        if (layoutSaved) {
+            const parsedLayout = JSON.parse(layoutSaved);
+            layout.components = parsedLayout.components;
+            layout.connections = parsedLayout.connections;
+            layout.ports = parsedLayout.ports;
+            console.log('Loaded layout from localStorage', this.components, this.connections, this.ports);
+        }
+
         this.initializeComponents(layout); // Also initializez the ports
+        console.log('Initialized components', this.components, this.ports);
         this.initializeConnections(layout);
-        console.log('Ports', this.ports);
         this.initializePlugins();
 
 
@@ -98,6 +105,15 @@ export class CPUDiagram {
 
             this.components.set(component.id, component);
         });
+        if (layout.ports) {
+            layout.ports.forEach((port) => {
+                // Check if the port is already in the layout
+                if (this.ports.get(port.id)) throw new Error(`Port ${port.id} already in layout`);
+
+                this.ports.set(port.id, port);
+            });
+            return;
+        }
 
         // Add all the ports to the components
         this.components.forEach((component, componentId) => {
@@ -128,10 +144,10 @@ export class CPUDiagram {
         // Add missing connections
         layout.connections.forEach((connection, index) => {
 
-            if (this.ports.get(connection.from))
+            if (!this.ports.get(connection.from))
                 throw new Error(`Port ${connection.from} not found`);
 
-            if (this.ports.get(connection.to))
+            if (!this.ports.get(connection.to))
                 throw new Error(`Port ${connection.to} not found`);
 
 

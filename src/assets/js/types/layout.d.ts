@@ -43,6 +43,7 @@ interface CPULayout {
     width: number;
     height: number;
     components: Array<ComponentLayout>;
+    ports?: Array<PortLayout>;
     connections: Array<ConnectionLayout>;
 }
 

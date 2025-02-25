@@ -1,3 +1,4 @@
+import { clone } from "../../../utils";
 import SpatialMap, { SpatialItem } from "../../../utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
@@ -9,6 +10,7 @@ import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 export class DiagramEditor extends CPUDiagramPlugin {
     mouse: { x: number, y: number, isDown: boolean, lastClick: { x: number, y: number } } = { x: 0, y: 0, isDown: false, lastClick: { x: 0, y: 0 } };
     keyboard: { keys: { [key: string]: boolean } } = { keys: {} };
+    mode: 'connect' | 'move' = 'move';
     draggingComponent: {
         id: string;
         oldPos: Position;
@@ -178,6 +180,14 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
     keyDownHandler(e: KeyboardEvent) {
         switch (e.key) {
+            case 'c':
+                this.mode = 'connect';
+                this.cpuDiagram.draw();
+                break;
+            case 'm':
+                this.mode = 'move';
+                this.cpuDiagram.draw();
+                break;
             case 's':
                 const layout = this.saveConfig();
                 console.log(layout);
@@ -354,14 +364,16 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (!port) return;
 
 
-
-            // this.newConnectionOriginPort = { componentId, portName };
-            this.draggingComponentPort = {
-                id: portId,
-                oldPos: port.pos as Position ?? { x: 0, y: 0 },
-                oldLocation: port.location,
-                relPos: port.relPos
-            };
+            if (this.mode == 'connect') {
+                this.newConnectionOriginPort = { id: portId };
+            } else if (this.mode == 'move') {
+                this.draggingComponentPort = {
+                    id: portId,
+                    oldPos: port.pos as Position ?? { x: 0, y: 0 },
+                    oldLocation: port.location,
+                    relPos: port.relPos
+                };
+            }
 
             console.log(this.draggingComponentPort);
 
@@ -389,14 +401,16 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
     handleNewConnection() {
         if (this.newConnectionOriginPort && this.hoveringOver?.type == 'port') {
+
             const fromPort = this.cpuDiagram.ports.get(this.newConnectionOriginPort.id);
             if (!fromPort) return;
-
             const toPortId = this.hoveringOver.id;
             const toPort = this.cpuDiagram.ports.get(toPortId);
-            if (!toPort || fromPort.type == fromPort.type) return;
+            if (!toPort || fromPort.type == toPort.type) return;
 
-            const [highBits, lowBits] = [Math.max(fromPort.bits, toPort.bits) - 1, Math.min(fromPort.bits, toPort.bits) - 1];
+
+
+            const [highBits, lowBits] = [Math.max(fromPort.bits, toPort.bits) - 1, 0];
 
             let newId = this.cpuDiagram.connections.size;;
             while (newId++ in this.cpuDiagram.connections) {
@@ -416,6 +430,9 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 toPos: { x: 0, y: 0 }
             }
             );
+
+            console.log(this.cpuDiagram.connections);
+
 
             // this.newConnections.push({
             //     bitRange: [highBits, lowBits],
@@ -455,14 +472,15 @@ export class DiagramEditor extends CPUDiagramPlugin {
     }
 
     saveConfig() {
+
         // Save layout confing by converting it to the original format
         const layout = {
             width: this.cpuDiagram.width,
             height: this.cpuDiagram.height,
 
-            components: this.cpuDiagram.components,
-            ports: this.cpuDiagram.ports,
-            connections: this.cpuDiagram.connections
+            components: Array.from(this.cpuDiagram.components.values()),
+            ports: Array.from(this.cpuDiagram.ports.values()),
+            connections: Array.from(this.cpuDiagram.connections.values())
         };
 
         // Save the layout to localStorage
@@ -479,6 +497,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
         this.cpuDiagram.ctx.textAlign = 'left';
         this.cpuDiagram.ctx.textBaseline = 'middle';
         this.cpuDiagram.ctx.font = '12px Arial';
+        this.cpuDiagram.ctx.fillText(`${this.mode}`, 0, this.cpuDiagram.height - 40);
         this.cpuDiagram.ctx.fillText(`Mouse: ${this.mouse.x}, ${this.mouse.y}, ${this.mouse.isDown}`, 0, this.cpuDiagram.height - 20);
 
 
@@ -488,11 +507,13 @@ export class DiagramEditor extends CPUDiagramPlugin {
         // if a a new connection is being made
         if (this.newConnectionOriginPort) {
             // Origin position
-            const component = this.cpuDiagram.components.get(this.newConnectionOriginPort.id);
-            if (!component) return;
+
             const port = this.cpuDiagram.ports.get(this.newConnectionOriginPort.id);
-            if (!port) return;
-            const [x1, y1] = port.pos ? [port.pos.x, port.pos.y] : [0, 0];
+            if (!port || !port.pos) return;
+            const { x: x1, y: y1 } = port.pos;
+
+            console.log("Drawing new connection");
+
 
             // If hovering over a port, draw a line from the port to the mouse
             let [x2, y2] = [this.mouse.x, this.mouse.y];
