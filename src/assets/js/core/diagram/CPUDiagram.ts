@@ -195,23 +195,23 @@ export class CPUDiagram {
         this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
     }
 
-    getAbsolutePortPosition(port: PortLayout, componentLayout: ComponentLayout) {
+    getAbsolutePortPosition(portLayout: PortLayout, componentLayout: ComponentLayout) {
         let [x, y] = [componentLayout.pos.x, componentLayout.pos.y];
 
-        switch (port.location) {
+        switch (portLayout.location) {
             case 'top':
-                x += port.relPos * componentLayout.dimensions.width;
+                x += portLayout.relPos * componentLayout.dimensions.width;
                 break;
             case 'bottom':
-                x += port.relPos * componentLayout.dimensions.width;
+                x += portLayout.relPos * componentLayout.dimensions.width;
                 y += componentLayout.dimensions.height;
                 break;
             case 'left':
-                y += port.relPos * componentLayout.dimensions.height;
+                y += portLayout.relPos * componentLayout.dimensions.height;
                 break;
             case 'right':
                 x += componentLayout.dimensions.width;
-                y += port.relPos * componentLayout.dimensions.height;
+                y += portLayout.relPos * componentLayout.dimensions.height;
                 break;
         }
         return { x, y };
