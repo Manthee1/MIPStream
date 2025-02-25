@@ -13,7 +13,7 @@ import Window from '@/components/common/Window.vue';
 import { defineComponent } from 'vue';
 // import { cpuConfig, cpuLayout } from '../../assets/js/core/cpus/simple';
 import { CPUDiagram } from '../../assets/js/core/diagram/CPUDiagram';
-// import { DiagramEditor } from '../../assets/js/core/diagram/plugins/DiagramEditor';
+import { DiagramEditor } from '../../assets/js/core/diagram/plugins/DiagramEditor';
 import MIPSBase from '../../assets/js/core/MIPSBase';
 export default defineComponent({
     components: { Window },
@@ -31,7 +31,7 @@ export default defineComponent({
         console.log(cpu);
 
 
-        const cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout);
+        const cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramEditor]);
     },
     methods: {
 

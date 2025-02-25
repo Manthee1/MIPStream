@@ -116,6 +116,7 @@ export class CPUDiagram {
                 // Set an absolute position for the port
                 const { x, y } = this.getAbsolutePortPosition(port, component);
                 port.pos = { x, y };
+                port.id = newPortId;
                 this.ports.set(newPortId, port);
 
             }
@@ -136,6 +137,7 @@ export class CPUDiagram {
 
             connection.fromPos = this.ports.get(connection.from)?.pos
             connection.toPos = this.ports.get(connection.to)?.pos
+            connection.id = index;
 
             // Add the connection
             this.connections.set(index, connection);

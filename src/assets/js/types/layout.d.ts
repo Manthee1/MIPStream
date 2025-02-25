@@ -29,10 +29,11 @@ interface ComponentLayout {
 }
 
 interface ConnectionLayout {
+    id?: number;
     from: string; // id of the to port
     to: string; // id of the from port
     bends: Array<Position>;
-    bitRange: Array<[number, number]>;
+    bitRange: [number, number];
     type: 'data' | 'control';
     fromPos?: Position;
     toPos?: Position;
