@@ -230,6 +230,32 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 this.bendConnections();
 
                 break;
+            // If del is pressed, delete the thing that is being hovered over
+
+            case 'Delete':
+                if (this.hoveringOver?.type === 'component') {
+                    const component = this.cpuDiagram.components.get(this.hoveringOver.id);
+                    if (!component) return;
+                    this.cpuDiagram.components.delete(this.hoveringOver.id);
+                    this.spatialMap.remove(this.hoveringOver.id,);
+                    this.cpuDiagram.draw();
+                }
+                if (this.hoveringOver?.type === 'port') {
+                    const port = this.cpuDiagram.ports.get(this.hoveringOver.id);
+                    if (!port) return;
+                    this.cpuDiagram.ports.delete(this.hoveringOver.id);
+                    this.spatialMap.remove(this.hoveringOver.id);
+                    this.cpuDiagram.draw();
+                }
+                if (this.hoveringOver?.type === 'connection') {
+                    const [connectionId, bendIndex] = this.hoveringOver.id.split('|');
+                    this.cpuDiagram.connections.delete(parseInt(connectionId));
+                    for (let i = 0; i < 4; i++) {
+                        this.spatialMap.remove(connectionId + '|' + i);
+                    }
+                    this.cpuDiagram.draw();
+                }
+                break;
         }
     }
 
