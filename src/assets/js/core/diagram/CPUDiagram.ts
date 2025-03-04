@@ -81,9 +81,13 @@ export class CPUDiagram {
         const layoutSaved = localStorage.getItem('layout');
         if (layoutSaved) {
             const parsedLayout = JSON.parse(layoutSaved);
-            layout.components = parsedLayout.components;
+            layout.components = parsedLayout.components.map((component: any) => {
+                const layoutComponent = layout.components.find((layoutComponent) => layoutComponent.id === component.id);
+                if (!layoutComponent) throw new Error(`Component ${component.id} not found in layout`);
+                return { ...layoutComponent, ...component, ...{ ports: layoutComponent.ports } };
+            });
             layout.connections = parsedLayout.connections;
-            layout.ports = parsedLayout.ports;
+            // layout.ports = parsedLayout.ports;
             console.log('Loaded layout from localStorage', this.components, this.connections, this.ports);
         }
 
