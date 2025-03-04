@@ -57,6 +57,49 @@ export const twoToOnePorts: Array<PortLayout> = [
     ...clone(singleOutput),
 ]
 
+export const muxPorts: Array<PortLayout> = [
+    ...clone(doubleInput),
+    ...clone(singleOutput),
+    {
+        id: "select",
+        label: "select",
+        type: 'input',
+        location: 'top',
+        bits: 1,
+        value: 0,
+        relPos: 0.5,
+    },
+]
+
+const controlInput: PortLayout = {
+    id: "control",
+    label: "control",
+    type: 'input',
+    location: 'top',
+    bits: 1,
+    value: 0,
+    relPos: 0.5,
+}
+
+
+export const muxesPorts: { [key: string]: Array<PortLayout> } = {};
+
+const muxControlSignals = ['ALUSrc', 'MemtoReg', 'Branch', 'RegDst'];
+
+for (let i = 0; i < muxControlSignals.length; i++) {
+    const cs = muxControlSignals[i];
+    muxesPorts[cs + 'MUX'] = [
+        ...clone(doubleInput),
+        ...clone(singleOutput),
+        {
+            ...clone(controlInput),
+            label: cs,
+        },
+    ];
+}
+
+
+
 
 export const instructionMemoryPorts: Array<PortLayout> = [
     {
@@ -66,7 +109,7 @@ export const instructionMemoryPorts: Array<PortLayout> = [
         location: 'left',
         bits: 32,
         value: 0,
-        relPos: 0.5,
+        relPos: 0.2,
     },
     {
         id: "instruction",
@@ -75,7 +118,7 @@ export const instructionMemoryPorts: Array<PortLayout> = [
         location: 'right',
         bits: 32,
         value: 0,
-        relPos: 0.5,
+        relPos: 0.2,
     },
 ]
 
@@ -91,9 +134,23 @@ export const controlUnitPorts: Array<PortLayout> = [
     },
 ]
 
-const controlSignalsAmount = Object.keys(controlSignals).length;
-for (let controlSignalIndex in Object.values(controlSignals)) {
-    const controlSignal = Object.values(controlSignals)[controlSignalIndex];
+export let controlSignalPorts: { [value: string]: PortLayout } = {};
+const controlSignalsValues = Object.values(controlSignals);
+
+for (let i = 0; i < controlSignalsValues.length; i++) {
+    const controlSignal = controlSignalsValues[i];
+
+    controlSignalPorts[controlSignal.name] =
+    {
+        id: controlSignal.name,
+        label: controlSignal.name,
+        type: 'input',
+        location: 'left',
+        bits: controlSignal.bits,
+        value: 0,
+        relPos: 0.02 + i * 0.02
+    };
+
     controlUnitPorts.push({
         id: controlSignal.name,
         label: controlSignal.name,
@@ -101,15 +158,15 @@ for (let controlSignalIndex in Object.values(controlSignals)) {
         location: 'right',
         bits: controlSignal.bits,
         value: 0,
-        relPos: (parseInt(controlSignalIndex) + 1) / (controlSignalsAmount + 1),
+        relPos: (i + 1) / (controlSignalsValues.length + 1),
     });
-}
 
+}
 
 export const registerFilePorts: Array<PortLayout> = [
     {
-        id: "read1",
-        label: "read1",
+        id: "reg1",
+        label: "Read Reg 1",
         type: 'input',
         location: 'left',
         bits: 5,
@@ -117,13 +174,13 @@ export const registerFilePorts: Array<PortLayout> = [
         relPos: 0.2,
     },
     {
-        id: "read2",
-        label: "read2",
+        id: "reg2",
+        label: "Read Reg 2",
         type: 'input',
         location: 'left',
         bits: 5,
         value: 0,
-        relPos: 0.8,
+        relPos: 0.4,
     },
     {
         id: "write",
@@ -132,7 +189,7 @@ export const registerFilePorts: Array<PortLayout> = [
         location: 'left',
         bits: 5,
         value: 0,
-        relPos: 0.5,
+        relPos: 0.6,
     },
     {
         id: "data",
@@ -141,25 +198,30 @@ export const registerFilePorts: Array<PortLayout> = [
         location: 'left',
         bits: 32,
         value: 0,
-        relPos: 0.5,
-    },
-    {
-        id: "read1Data",
-        label: "read1Data",
-        type: 'output',
-        location: 'right',
-        bits: 32,
-        value: 0,
-        relPos: 0.2,
-    },
-    {
-        id: "read2Data",
-        label: "read2Data",
-        type: 'output',
-        location: 'right',
-        bits: 32,
-        value: 0,
         relPos: 0.8,
+    },
+    {
+        id: "reg1Data",
+        label: "Reg1Data",
+        type: 'output',
+        location: 'right',
+        bits: 32,
+        value: 0,
+        relPos: 0.4,
+    },
+    {
+        id: "reg2Data",
+        label: "Reg2Data",
+        type: 'output',
+        location: 'right',
+        bits: 32,
+        value: 0,
+        relPos: 0.6,
+    },
+    {
+        ...clone(controlSignalPorts["RegWrite"]),
+        relPos: 0.5,
+        location: 'top',
     },
 ];
 
@@ -200,6 +262,15 @@ export const aluPorts: Array<PortLayout> = [
         bits: 32,
         value: 0,
         relPos: 0.45,
+    },
+    {
+        id: "ALUControl",
+        label: "ALUControl",
+        type: 'input',
+        location: 'bottom',
+        bits: 4,
+        value: 0,
+        relPos: 0.5,
     },
 ];
 
@@ -262,7 +333,19 @@ export const dataMemoryPorts: Array<PortLayout> = [
         value: 0,
         relPos: 0.8,
     },
+    {
+        ...clone(controlSignalPorts["MemWrite"]),
+        relPos: 0.2,
+        location: 'top',
+    },
+    {
+        ...clone(controlSignalPorts["MemRead"]),
+        relPos: 0.8,
+        location: 'top',
+    },
+
 ];
+
 
 export const stagePorts: { [key: string]: Array<PortLayout> } = {
     IFtoIDPorts: [
@@ -273,7 +356,7 @@ export const stagePorts: { [key: string]: Array<PortLayout> } = {
             location: 'left',
             bits: 32,
             value: 0,
-            relPos: 0.33,
+            relPos: 0.44,
         },
         {
             id: "PC",
@@ -282,20 +365,29 @@ export const stagePorts: { [key: string]: Array<PortLayout> } = {
             location: 'left',
             bits: 32,
             value: 0,
-            relPos: 0.2,
+            relPos: 0.23,
         },
 
     ],
     IDtoEXPorts: [
-        {
-            id: "instruction",
-            label: "instruction",
-            type: 'input',
-            location: 'left',
-            bits: 32,
-            value: 0,
-            relPos: 0.33,
-        },
+        clone(controlSignalPorts["RegWrite"]),
+        clone(controlSignalPorts["MemtoReg"]),
+        clone(controlSignalPorts["MemWrite"]),
+        clone(controlSignalPorts["MemRead"]),
+        clone(controlSignalPorts["Branch"]),
+        clone(controlSignalPorts["ALUOp"]),
+        clone(controlSignalPorts["ALUSrc"]),
+        clone(controlSignalPorts["RegDst"]),
+
+        // {
+        //     id: "instruction",
+        //     label: "instruction",
+        //     type: 'input',
+        //     location: 'left',
+        //     bits: 32,
+        //     value: 0,
+        //     relPos: 0.33,
+        // },
         {
             id: "PC",
             label: "NextPC",
@@ -303,48 +395,148 @@ export const stagePorts: { [key: string]: Array<PortLayout> } = {
             location: 'left',
             bits: 32,
             value: 0,
-            relPos: 0.2,
+            relPos: 0.23,
         },
+        {
+            id: "reg1Data",
+            label: "Reg1Data",
+            type: 'input',
+            location: 'left',
+            bits: 32,
+            value: 0,
+            relPos: 0.4,
+        },
+        {
+            id: "reg2Data",
+            label: "Reg2Data",
+            type: 'input',
+            location: 'left',
+            bits: 32,
+            value: 0,
+            relPos: 0.5,
+        },
+        {
+            id: "imm",
+            label: "Immidiate",
+            type: 'input',
+            location: 'left',
+            bits: 32,
+            value: 0,
+            relPos: 0.8,
+        },
+        {
+            id: "Rd",
+            label: "Rd",
+            type: 'input',
+            location: 'left',
+            bits: 5,
+            value: 0,
+            relPos: 0.9,
+        },
+        {
+            id: "Rt",
+            label: "Rt",
+            type: 'input',
+            location: 'left',
+            bits: 5,
+            value: 0,
+            relPos: 0.95,
+        }
+
+
     ],
     EXtoMEMPorts: [
+        clone(controlSignalPorts["RegWrite"]),
+        clone(controlSignalPorts["MemtoReg"]),
+        clone(controlSignalPorts["MemWrite"]),
+        clone(controlSignalPorts["MemRead"]),
+        clone(controlSignalPorts["Branch"]),
+        // {
+        //     id: "instruction",
+        //     label: "instruction",
+        //     type: 'input',
+        //     location: 'left',
+        //     bits: 32,
+        //     value: 0,
+        //     relPos: 0.33,
+        // },
         {
-            id: "instruction",
-            label: "instruction",
-            type: 'input',
-            location: 'left',
-            bits: 32,
-            value: 0,
-            relPos: 0.33,
-        },
-        {
-            id: "PC",
-            label: "NextPC",
+            id: "targetPC",
+            label: "Target PC",
             type: 'input',
             location: 'left',
             bits: 32,
             value: 0,
             relPos: 0.2,
         },
+        {
+            id: "zero",
+            label: "Zero",
+            type: 'input',
+            location: 'left',
+            bits: 1,
+            value: 0,
+            relPos: 0.38,
+        },
+        {
+            id: "ALUResult",
+            label: "ALUResult",
+            type: 'input',
+            location: 'left',
+            bits: 32,
+            value: 0,
+            relPos: 0.4,
+        },
+        {
+            id: "reg2Data",
+            label: "Reg2Data",
+            type: 'input',
+            location: 'left',
+            bits: 32,
+            value: 0,
+            relPos: 0.555,
+        },
+        {
+            id: "Rt",
+            label: "Rt",
+            type: 'input',
+            location: 'left',
+            bits: 5,
+            value: 0,
+            relPos: 0.95,
+        }
     ],
     MEMtoWBPorts: [
+        clone(controlSignalPorts["RegWrite"]),
+        clone(controlSignalPorts["MemtoReg"]),
         {
-            id: "instruction",
-            label: "instruction",
+            id: "ReadData",
+            label: "ReadData",
             type: 'input',
             location: 'left',
             bits: 32,
             value: 0,
-            relPos: 0.33,
+            relPos: 0.74,
+
         },
         {
-            id: "PC",
-            label: "NextPC",
+            id: "ALUResult",
+            label: "ALUResult",
             type: 'input',
             location: 'left',
             bits: 32,
             value: 0,
-            relPos: 0.2,
+            relPos: 0.8,
         },
+        {
+            id: "Rt",
+            label: "Rt",
+            type: 'input',
+            location: 'left',
+            bits: 5,
+            value: 0,
+            relPos: 0.95,
+        }
     ],
 }
 

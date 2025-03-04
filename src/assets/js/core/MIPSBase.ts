@@ -1,7 +1,7 @@
 import { clone } from "../utils";
 import { controlSignals } from "./config/controlSignals";
 import { instructionConfig } from "./config/instructions";
-import { ALUControlPorts, aluPorts, controlUnitPorts, dataMemoryPorts, instructionMemoryPorts, oneToOnePorts, registerFilePorts, singleOutput, stagePorts, twoToOnePorts } from "./config/ports";
+import { ALUControlPorts, aluPorts, controlUnitPorts, dataMemoryPorts, instructionMemoryPorts, muxesPorts, muxPorts, oneToOnePorts, registerFilePorts, singleOutput, stagePorts, twoToOnePorts } from "./config/ports";
 
 export default class MIPSBase {
 
@@ -43,21 +43,21 @@ export default class MIPSBase {
             { id: "MEMtoWB", label: "MEMtoWB", type: 'register', dimensions: { width: 30, height: 500 }, pos: { x: 1080, y: 150 }, ports: stagePorts.MEMtoWBPorts },
             { id: "PC", label: "PC", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 50, y: 220 }, ports: clone(oneToOnePorts) },
             { id: "InstructionMemory", label: "InstructionMemory", type: 'register', dimensions: { width: 100, height: 150 }, pos: { x: 140, y: 220 }, ports: instructionMemoryPorts },
-            { id: "Const4", label: "Const4", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 200, y: 60 }, ports: [...clone(singleOutput)] },
+            { id: "Const4", label: "Const4", type: 'register', dimensions: { width: 30, height: 30 }, pos: { x: 200, y: 60 }, ports: [...clone(singleOutput)] },
             { id: "NextPCAdder", label: "NextPCAdder", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 290, y: 50 }, ports: clone(twoToOnePorts) },
             { id: "ControlUnit", label: "ControlUnit", type: 'register', dimensions: { width: 50, height: 100 }, pos: { x: 410, y: 90 }, ports: controlUnitPorts },
             { id: "RegisterControlUnit", label: "RegisterControlUnit", type: 'register', dimensions: { width: 120, height: 200 }, pos: { x: 400, y: 220 }, ports: registerFilePorts },
             { id: "ImmExtend", label: "ImmExtend", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 440, y: 450 }, ports: clone(oneToOnePorts) },
             { id: "ShiftLeft", label: "ShiftLeft", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 700, y: 110 }, ports: clone(oneToOnePorts) },
-            { id: "BranchAdder", label: "BranchAdder", type: 'register', dimensions: { width: 25, height: 25 }, pos: { x: 770, y: 80 }, ports: clone(twoToOnePorts) },
-            { id: "ALUSrcMUX", label: "ALUSrcMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 720, y: 280 }, ports: clone(twoToOnePorts) },
+            { id: "BranchAdder", label: "BranchAdder", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 770, y: 80 }, ports: clone(twoToOnePorts) },
+            { id: "ALUSrcMUX", label: "ALUSrcMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 720, y: 280 }, ports: muxesPorts["ALUSrcMUX"] },
             { id: "ALU", label: "ALU", type: 'register', dimensions: { width: 50, height: 100 }, pos: { x: 780, y: 220 }, ports: aluPorts },
             { id: "ALUControl", label: "ALUControl", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 780, y: 360 }, ports: ALUControlPorts },
-            { id: "RegDstMUX", label: "RegDstMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 700, y: 470 }, ports: clone(twoToOnePorts) },
-            { id: "BranchAndGate", label: "BranchAndGate", type: 'register', dimensions: { width: 50, height: 50 }, pos: { x: 960, y: 80 }, ports: twoToOnePorts },
-            { id: "BranchMUX", label: "BranchMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 1040, y: 40 }, ports: clone(twoToOnePorts) },
+            { id: "RegDstMUX", label: "RegDstMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 700, y: 470 }, ports: muxesPorts["RegDstMUX"] },
+            { id: "BranchAndGate", label: "BranchAndGate", type: 'register', dimensions: { width: 25, height: 25 }, pos: { x: 960, y: 80 }, ports: twoToOnePorts },
+            { id: "BranchMUX", label: "BranchMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 1040, y: 40 }, ports: muxesPorts["BranchMUX"] },
             { id: "DataMemory", label: "DataMemory", type: 'register', dimensions: { width: 100, height: 150 }, pos: { x: 960, y: 190 }, ports: dataMemoryPorts },
-            { id: "MemtoRegMUX", label: "MemtoRegMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 1160, y: 330 }, ports: clone(twoToOnePorts) },
+            { id: "MemtoRegMUX", label: "MemtoRegMUX", type: 'mux', dimensions: { width: 25, height: 50 }, pos: { x: 1160, y: 330 }, ports: muxesPorts["MemtoRegMUX"] },
         ],
         connections: [],
     }
