@@ -67,6 +67,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
         let connectionId = 0;
         this.cpuDiagram.connections.forEach(connection => {
             const points = this.cpuDiagram.getConnectionPoints(connection);
+            console.log(connection);
 
             for (let i = 0; i < points.length - 1; i++) {
                 const [from, to] = [points[i], points[i + 1]];
@@ -74,9 +75,9 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
 
                 const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
-                this.spatialMap.insert(connectionId.toString(), { x, y }, { width, height }, 'connection');
-                connectionId++;
+                this.spatialMap.insert(connectionId.toString() + '|' + i, { x, y }, { width, height }, 'connection');
             }
+            connectionId++;
         });
 
 
@@ -121,61 +122,84 @@ export class DiagramEditor extends CPUDiagramPlugin {
     bendConnections() {
         // Go thorugh each connection and bend it so that the connection is straight
         for (let connection of this.cpuDiagram.connections.values()) {
-            // If not straight bend at the beggining and if output higher then above the first bend, otherwise below
+            if (connection.bends.length == 3) continue;
+
             const [from, to] = [connection.from, connection.to];
             const fromPort = this.cpuDiagram.ports.get(from);
             const toPort = this.cpuDiagram.ports.get(to);
             if (!fromPort || !toPort || !connection.fromPos || !connection.toPos) continue;
 
-            connection.bends = [];
-            let bend = { x: connection.fromPos.x, y: connection.fromPos.y };
-            switch (fromPort.location) {
-                case 'top':
-                    bend.y -= 15;
-                    break;
-                case 'bottom':
-                    bend.y += 15;
-                    break;
-                case 'left':
-                    bend.x -= 15;
-                    break;
-                case 'right':
-                    bend.x += 15;
-                    break;
-            }
-            connection.bends.push(bend);
+            connection.bends = [
+                { x: connection.fromPos.x, y: connection.fromPos.y },
+                { x: connection.fromPos.x, y: connection.toPos.y },
+                { x: connection.toPos.x, y: connection.toPos.y }
+            ];
+            const isVertical = fromPort.location === 'top' || fromPort.location === 'bottom';
+            const isHorizontal = fromPort.location === 'left' || fromPort.location === 'right';
 
-            if ((fromPort.location === "left" || fromPort.location === "right") == (toPort.location === "left" || toPort.location === "right")) {
+            if (isVertical) {
+                connection.bends[0].y += (fromPort.location === 'top' ? -15 : 15);
+                connection.bends[2].y += (toPort.location === 'top' ? -15 : 15);
+                connection.bends[1].x = connection.bends[0].x;
+                connection.bends[1].y = connection.bends[2].y;
 
-                if ((fromPort.location === "left" || fromPort.location === "right")) {
-                    bend = { x: connection.bends[0].x, y: connection.toPos.y };
-                } else {
-                    bend = { x: connection.toPos.x, y: connection.bends[0].y };
-                }
-                connection.bends.push(bend);
+            } else {
+                connection.bends[0].x += (fromPort.location === 'left' ? -15 : 15);
+                connection.bends[2].x += (toPort.location === 'left' ? -15 : 15);
+                connection.bends[1].x = connection.bends[2].x;
+                connection.bends[1].y = connection.bends[0].y;
+
             }
 
-            // Add the last bend a little bit off of the to port
-            bend = { x: connection.toPos.x, y: connection.toPos.y };
-            switch (toPort.location) {
-                case 'top':
-                    bend.y -= 15;
-                    break;
-                case 'bottom':
-                    bend.y += 15;
-                    break;
-                case 'left':
-                    bend.x -= 15;
-                    break;
-                case 'right':
-                    bend.x += 15;
-                    break;
-            }
-
-            connection.bends.push(bend);
-            continue;
+            this.fixConnectionBends(connection);
         }
         this.cpuDiagram.draw();
+    }
+
+
+    fixConnectionBends(connection: ConnectionLayout) {
+        console.log("Fixing bends");
+
+        // return;
+        // Make sure that each next bend has at least the same x or y as the previous bend
+        if (!connection.fromPos || !connection.toPos) return;
+        const fromPort = this.cpuDiagram.ports.get(connection.from);
+        const points = this.cpuDiagram.getConnectionPoints(connection);
+        let prevType: 'horizontal' | 'vertical' = 'horizontal';
+        console.log(points);
+
+        const fixBends = (bendIndex: number, from: Position, to: Position) => {
+            const isHorizontal = from.y === to.y;
+            const isVertical = from.x === to.x;
+            console.log(from, to, isHorizontal, isVertical, prevType);
+            if (prevType === 'horizontal' && !isVertical) {
+                connection.bends[bendIndex].x = to.x;
+                connection.bends[bendIndex].y = from.y;
+                prevType = 'vertical';
+                return;
+            }
+            if (prevType === 'vertical' && !isHorizontal) {
+                connection.bends[bendIndex].x = from.x;
+                connection.bends[bendIndex].y = to.y;
+                prevType = 'horizontal';
+                return;
+            }
+
+            prevType = isHorizontal ? 'horizontal' : 'vertical';
+        }
+
+
+        prevType = (fromPort?.location === 'top' || fromPort?.location === 'bottom') ? 'vertical' : 'horizontal';
+        fixBends(0, points[2], points[1]);
+
+        let bendIndex = 0;
+        for (let i = 2; i < points.length - 2; i++, bendIndex++) {
+
+            const [from, to] = [points[i], points[i + 1]];
+            if (!from || !to) continue;
+            fixBends(bendIndex, from, to);
+        }
+
     }
 
     keyDownHandler(e: KeyboardEvent) {
@@ -417,7 +441,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
         this.handleNewConnection();
 
-
         this.newConnectionOriginPort = null;
 
 
@@ -435,10 +458,9 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (!toPort || fromPort.type == toPort.type) return;
 
 
-
             const [highBits, lowBits] = [Math.max(fromPort.bits, toPort.bits) - 1, 0];
 
-            let newId = this.cpuDiagram.connections.size;;
+            let newId = this.cpuDiagram.connections.size;
             while (newId++ in this.cpuDiagram.connections) {
                 // A hardcode limit of 1000 connections in case of infinite loop
                 if (newId > 1000) break;
@@ -472,24 +494,32 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
     recalculateComponentPorts(componentLayout: ComponentLayout) {
         componentLayout?.ports?.forEach((port) => {
-            const portLayout = port;
+            const portLayout = this.cpuDiagram.ports.get(port.id);
+            if (!portLayout) return;
             const { x, y } = this.cpuDiagram.getAbsolutePortPosition(portLayout, componentLayout);
+            console.log(x, y);
             portLayout.pos = { x, y };
+            this.spatialMap.update(port.id, { x: x - 10, y: y - 5 }, { width: 20, height: 10 }, 'port');
         });
 
-        // Recalculate connection positions
-        this.recalculateConnectionPositions();
+        // Get all the connections that are connected to the component
+        for (let connection of this.cpuDiagram.connections.values()) {
+            if (connection.from.split('.')[0] == componentLayout.id || connection.to.split('.')[0] == componentLayout.id)
+                this.recalculateConnectionPositions(connection);
+        }
     }
 
-    recalculateConnectionPositions() {
-        this.cpuDiagram.connections.forEach((connectionLayout) => {
+    recalculateConnectionPositions(connectionLayout: ConnectionLayout) {
 
-            const fromPort = this.cpuDiagram.ports.get(connectionLayout.from);
-            const toPort = this.cpuDiagram.ports.get(connectionLayout.to);
-            if (!fromPort || !toPort) return;
-            connectionLayout.fromPos = fromPort.pos as Position;
-            connectionLayout.toPos = toPort.pos as Position;
-        });
+        const fromPort = this.cpuDiagram.ports.get(connectionLayout.from);
+        const toPort = this.cpuDiagram.ports.get(connectionLayout.to);
+        if (!fromPort || !toPort) return;
+        connectionLayout.fromPos = fromPort.pos as Position;
+        connectionLayout.toPos = toPort.pos as Position;
+        // Update the bends
+        this.fixConnectionBends(connectionLayout);
+
+
     }
 
 
