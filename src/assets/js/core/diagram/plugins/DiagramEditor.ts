@@ -117,40 +117,42 @@ export class DiagramEditor extends CPUDiagramPlugin {
     }
 
 
+    bendConnection(connection: ConnectionLayout) {
+        if (!connection) return;
+        if (connection.bends.length == 3) return;
 
+        const [from, to] = [connection.from, connection.to];
+        const fromPort = this.cpuDiagram.ports.get(from);
+        const toPort = this.cpuDiagram.ports.get(to);
+        if (!fromPort || !toPort || !connection.fromPos || !connection.toPos) return;
+
+        connection.bends = [
+            { x: connection.fromPos.x, y: connection.fromPos.y },
+            { x: connection.fromPos.x, y: connection.toPos.y },
+            { x: connection.toPos.x, y: connection.toPos.y }
+        ];
+        const isVertical = fromPort.location === 'top' || fromPort.location === 'bottom';
+        const isHorizontal = fromPort.location === 'left' || fromPort.location === 'right';
+
+        if (isVertical) {
+            connection.bends[0].y += (fromPort.location === 'top' ? -15 : 15);
+            connection.bends[2].y += (toPort.location === 'top' ? -15 : 15);
+            connection.bends[1].x = connection.bends[0].x;
+            connection.bends[1].y = connection.bends[2].y;
+
+        } else {
+            connection.bends[0].x += (fromPort.location === 'left' ? -15 : 15);
+            connection.bends[2].x += (toPort.location === 'left' ? -15 : 15);
+            connection.bends[1].x = connection.bends[2].x;
+            connection.bends[1].y = connection.bends[0].y;
+
+        }
+    }
 
     bendConnections() {
         // Go thorugh each connection and bend it so that the connection is straight
         for (let connection of this.cpuDiagram.connections.values()) {
-            if (connection.bends.length == 3) continue;
-
-            const [from, to] = [connection.from, connection.to];
-            const fromPort = this.cpuDiagram.ports.get(from);
-            const toPort = this.cpuDiagram.ports.get(to);
-            if (!fromPort || !toPort || !connection.fromPos || !connection.toPos) continue;
-
-            connection.bends = [
-                { x: connection.fromPos.x, y: connection.fromPos.y },
-                { x: connection.fromPos.x, y: connection.toPos.y },
-                { x: connection.toPos.x, y: connection.toPos.y }
-            ];
-            const isVertical = fromPort.location === 'top' || fromPort.location === 'bottom';
-            const isHorizontal = fromPort.location === 'left' || fromPort.location === 'right';
-
-            if (isVertical) {
-                connection.bends[0].y += (fromPort.location === 'top' ? -15 : 15);
-                connection.bends[2].y += (toPort.location === 'top' ? -15 : 15);
-                connection.bends[1].x = connection.bends[0].x;
-                connection.bends[1].y = connection.bends[2].y;
-
-            } else {
-                connection.bends[0].x += (fromPort.location === 'left' ? -15 : 15);
-                connection.bends[2].x += (toPort.location === 'left' ? -15 : 15);
-                connection.bends[1].x = connection.bends[2].x;
-                connection.bends[1].y = connection.bends[0].y;
-
-            }
-
+            this.bendConnection(connection);
             this.fixConnectionBends(connection);
         }
         this.cpuDiagram.draw();
@@ -251,7 +253,17 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 this.cpuDiagram.draw();
                 break;
             case 'b':
-                this.bendConnections();
+                if (this.hoveringOver?.type == 'connection') {
+                    const [connectionId, bendIndex] = this.hoveringOver.id.split('|');
+                    const connection = this.cpuDiagram.connections.get(parseInt(connectionId));
+                    if (!connection) return;
+                    // Remove all the bends and recalculate them
+                    connection.bends = [];
+                    this.bendConnection(connection);
+
+
+                    this.cpuDiagram.draw();
+                }
 
                 break;
             // If del is pressed, delete the thing that is being hovered over
@@ -414,16 +426,16 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (!port) return;
 
 
-            if (this.mode == 'connect') {
-                this.newConnectionOriginPort = { id: portId };
-            } else if (this.mode == 'move') {
-                this.draggingComponentPort = {
-                    id: portId,
-                    oldPos: port.pos as Position ?? { x: 0, y: 0 },
-                    oldLocation: port.location,
-                    relPos: port.relPos
-                };
-            }
+            // if (this.mode == 'connect') {
+            this.newConnectionOriginPort = { id: portId };
+            // } else if (this.mode == 'move') {
+            //     this.draggingComponentPort = {
+            //         id: portId,
+            //         oldPos: port.pos as Position ?? { x: 0, y: 0 },
+            //         oldLocation: port.location,
+            //         relPos: port.relPos
+            //     };
+            // }
 
             console.log(this.draggingComponentPort);
 
@@ -442,6 +454,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
         this.handleNewConnection();
 
         this.newConnectionOriginPort = null;
+        this.cpuDiagram.draw();
 
 
 
