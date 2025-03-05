@@ -298,7 +298,7 @@ export default class MIPSBase {
 
     fetch() {
         // Fetch instruction from memory
-        const instruction = this.instructionMemory[this.stages.IFtoID.NPC / 4]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
+        const instruction = this.instructionMemory[this.PC / 4]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
         this.stages.IFtoID.IR = instruction;
 
         // Increment PC
@@ -316,7 +316,7 @@ export default class MIPSBase {
         const rs = (instruction >> 21) & 0x1F;
         const rt = (instruction >> 16) & 0x1F;
         const rd = (instruction >> 11) & 0x1F;
-        const imm = instruction & 0xFFFF;
+        const imm = instruction << 16 >> 16 // sign extend
 
 
         // Forward NPC
