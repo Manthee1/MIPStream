@@ -78,16 +78,23 @@ export function isMnemonic(mnemonic: string): boolean {
 
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
-    switch (instruction.type) {
-        case 'R':
-            return `${instruction.mnemonic} Rd, Rs1, Rs2`;
-        case 'I':
-            if (false)
-                return `${instruction.mnemonic} Rd, imm(Rn)`;
-            return `${instruction.mnemonic} Rd, Rs, imm`;
-        case 'J':
-            return `${instruction.mnemonic} label`;
-    }
+    const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
+    const operandExamples = operands.map((operand) => {
+        switch (operand) {
+            case 'REG_DESTINATION':
+                return 'Rd';
+            case 'REG_SOURCE':
+                return 'Rs';
+            case 'IMMEDIATE':
+                return 'imm';
+            case 'LABEL':
+                return 'label';
+            default:
+                return '';
+        }
+    });
+    return `${instruction.mnemonic} ${operandExamples.join(', ')}`;
+
 }
 
 

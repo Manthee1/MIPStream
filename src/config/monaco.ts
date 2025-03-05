@@ -5,7 +5,7 @@ import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
 import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
-import { isLabel } from '../assets/js/utils';
+import { getDefaultInstructionDefOperands, isLabel } from '../assets/js/utils';
 import { instructionConfig } from '../assets/js/core/config/instructions';
 
 // Constants
@@ -99,77 +99,93 @@ export function validate(model: monaco.editor.ITextModel) {
                 });
 
             labels.add(label);
-
+            return;
         }
 
 
         const mnemonic = firstWord;
-        if (mnemonic !== '' && mnemonic !== ';') {
-            const instruction = INSTRUCTION_SET.find((instruction) => instruction.mnemonic === mnemonic);
-            if (!instruction) {
-                errors.push({
-                    startLineNumber: index + 1,
-                    startColumn: 1,
-                    endLineNumber: index + 1,
-                    endColumn: line.length,
-                    message: `Invalid mnemonic: ${mnemonic}`,
-                    severity: monaco.MarkerSeverity.Error,
-                });
-                return;
-            }
+        if (mnemonic == '' || mnemonic[0] == ';') return;
 
-            if (instruction.mnemonic === 'HALT' || instruction.mnemonic === 'NOP') return;
+        const instruction = INSTRUCTION_SET.find((instruction) => instruction.mnemonic === mnemonic);
+        if (!instruction) {
+            errors.push({
+                startLineNumber: index + 1,
+                startColumn: 1,
+                endLineNumber: index + 1,
+                endColumn: line.length,
+                message: `Invalid mnemonic: ${mnemonic}`,
+                severity: monaco.MarkerSeverity.Error,
+            });
+            return;
+        }
+        const expectedOperandTypes = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
 
-            const registerCount = line.match(registerRegex)?.length ?? 0;
+        const operands = line.split(/,|\s/).slice(1).filter((operand) => operand !== '');
 
-            // If the the first register is R0, warn the user
-            if (instruction.type !== 'J' && line.trim().replace(',', ' ').split(' ')[1]?.trim() === 'R0') {
-                errors.push({
-                    startLineNumber: index + 1,
-                    startColumn: line.indexOf('R0') + 1,
-                    endLineNumber: index + 1,
-                    endColumn: line.indexOf('R0') + 3,
-                    message: 'R0 should not be used as a destination register as it is hardwired to zero and will not be modified',
-                    severity: monaco.MarkerSeverity.Warning,
-                });
-            }
+        if (operands.length !== expectedOperandTypes.length) {
+            errors.push({
+                startLineNumber: index + 1,
+                startColumn: line.indexOf(operands[0]) + 1,
+                endLineNumber: index + 1,
+                endColumn: line.indexOf(operands[operands.length - 1]) + operands[operands.length - 1].length + 1,
+                message: `Expected ${expectedOperandTypes.length} operands, but got ${operands.length}`,
+                severity: monaco.MarkerSeverity.Error,
+            });
+            return;
+        }
 
-            if (instruction.type === 'R') {
-                if (registerCount !== 3) {
+        // If the the destination register is R0, show a warning
+        const rdIndex = expectedOperandTypes.indexOf('REG_DESTINATION');
+        if (rdIndex !== -1 && operands[rdIndex] === 'R0') {
+            errors.push({
+                startLineNumber: index + 1,
+                startColumn: line.indexOf('R0') + 1,
+                endLineNumber: index + 1,
+                endColumn: line.indexOf('R0') + 3,
+                message: 'R0 should not be used as a destination register as it is hardwired to zero and will not be modified',
+                severity: monaco.MarkerSeverity.Warning,
+            });
+        }
+
+        // Check if the operands are valid
+        for (let i = 0; i < operands.length; i++) {
+            const operand = operands[i];
+            const operandType = expectedOperandTypes[i];
+            if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION') {
+                if (!registers.includes(operand)) {
                     errors.push({
                         startLineNumber: index + 1,
-                        startColumn: 1,
+                        startColumn: line.indexOf(operand) + 1,
                         endLineNumber: index + 1,
-                        endColumn: line.length,
-                        message: `Expected 3 registers, found ${registerCount}`,
+                        endColumn: line.indexOf(operand) + operand.length + 1,
+                        message: `Invalid register: ${operand}`,
                         severity: monaco.MarkerSeverity.Error,
                     });
                 }
-            } else if (instruction.type === 'I') {
-                if (registerCount !== 2) {
+            } else if (operandType === 'IMMEDIATE') {
+                if (isNaN(Number(operand))) {
                     errors.push({
                         startLineNumber: index + 1,
-                        startColumn: 1,
+                        startColumn: line.indexOf(operand) + 1,
                         endLineNumber: index + 1,
-                        endColumn: line.length,
-                        message: `Expected 2 registers, found ${registerCount}`,
+                        endColumn: line.indexOf(operand) + operand.length + 1,
+                        message: `Invalid immediate value: ${operand}`,
+                        severity: monaco.MarkerSeverity.Error,
+                    });
+                }
+            } else if (operandType === 'LABEL') {
+                if (!isLabel(operand)) {
+                    errors.push({
+                        startLineNumber: index + 1,
+                        startColumn: line.indexOf(operand) + 1,
+                        endLineNumber: index + 1,
+                        endColumn: line.indexOf(operand) + operand.length + 1,
+                        message: `Invalid label: ${operand}`,
                         severity: monaco.MarkerSeverity.Error,
                     });
                 }
             }
 
-            if (true) {
-                if (line.trim().split(',').length !== 2) {
-                    errors.push({
-                        startLineNumber: index + 1,
-                        startColumn: 1,
-                        endLineNumber: index + 1,
-                        endColumn: line.length,
-                        message: `Expected 2 operands, found ${line.trim().split(',').length}`,
-                        severity: monaco.MarkerSeverity.Error,
-                    });
-                }
-            }
         }
 
 
