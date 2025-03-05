@@ -92,7 +92,9 @@ export class Assembler {
                 if (!isLabel(operand)) throw new Error(`Invalid label: ${operand}.`);
                 if (!labels.has(operand)) throw new Error(`Invalid label: ${operand}.`);
                 const value = labels.get(operand) as number;
-                offset = value - pc;
+                offset = imm = value - pc - 1;
+                console.log('offset', offset);
+
             } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
 
@@ -102,7 +104,8 @@ export class Assembler {
             funct = instructionDef.funct as number;
             encodedInstruction = (instructionOpcode << 26) | (rs << 21) | (rt << 16) | (rd << 11) | (shamt << 6) | funct;
         } else if (instructionDef.type === 'I') {
-            encodedInstruction = (instructionOpcode << 26) | (rs << 21) | (rd << 16) | (imm & 0xFFFF);
+            if (instructionDef.controlSignals.RegWrite == 1) rt = rd;
+            encodedInstruction = (instructionOpcode << 26) | (rs << 21) | (rt << 16) | (imm & 0xFFFF);
         } else if (instructionDef.type === 'J') {
             encodedInstruction = (instructionOpcode << 26) | (offset & 0x3FFFFFF);
         } else throw new Error(`Invalid instruction type: ${instructionDef.type}.`);
