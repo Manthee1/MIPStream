@@ -38,8 +38,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
         this.bendConnections();
         this.initializeSpatialMap();
         this.initializeMouseEvents();
-        console.log(this.spatialMap);
-
     }
 
     isKeyDown(key: string) {
@@ -67,7 +65,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
         let connectionId = 0;
         this.cpuDiagram.connections.forEach(connection => {
             const points = this.cpuDiagram.getConnectionPoints(connection);
-            console.log(connection);
 
             for (let i = 0; i < points.length - 1; i++) {
                 const [from, to] = [points[i], points[i + 1]];
@@ -160,7 +157,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
 
     fixConnectionBends(connection: ConnectionLayout) {
-        console.log("Fixing bends");
 
         // return;
         // Make sure that each next bend has at least the same x or y as the previous bend
@@ -168,12 +164,10 @@ export class DiagramEditor extends CPUDiagramPlugin {
         const fromPort = this.cpuDiagram.ports.get(connection.from);
         const points = this.cpuDiagram.getConnectionPoints(connection);
         let prevType: 'horizontal' | 'vertical' = 'horizontal';
-        console.log(points);
 
         const fixBends = (bendIndex: number, from: Position, to: Position) => {
             const isHorizontal = from.y === to.y;
             const isVertical = from.x === to.x;
-            console.log(from, to, isHorizontal, isVertical, prevType);
             if (prevType === 'horizontal' && !isVertical) {
                 connection.bends[bendIndex].x = to.x;
                 connection.bends[bendIndex].y = from.y;
@@ -216,7 +210,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 break;
             case 's':
                 const layout = this.saveConfig();
-                console.log(layout);
                 break;
             case 'R':
                 // Reset the layout
@@ -304,7 +297,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
         if (this.hoveringOver != this.spatialMap.query(this.mouse.x, this.mouse.y)) {
             this.hoveringOver = this.spatialMap.query(this.mouse.x, this.mouse.y);
-            console.log(this.hoveringOver);
 
             this.cpuDiagram.draw();
         }
@@ -329,7 +321,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
         if (this.draggingComponentPort) {
             const componentLayout = this.cpuDiagram.components.get(this.draggingComponentPort.id.split('.')[0]);
             if (!componentLayout) return;
-            console.log(componentLayout);
             const componentPos = componentLayout.pos;
             const portLayout = this.cpuDiagram.ports.get(this.draggingComponentPort.id);
             if (!portLayout) return;
@@ -360,7 +351,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
             // Only move the connection either horizontally or vertically depending on if the connection is horizontal or vertical
             const [x, y] = [this.mouse.x, this.mouse.y];
             const bendIndex = this.draggingConnection.bendIndex - 2;
-            console.log(bendIndex);
 
             const isHorizontal = connection.bends[bendIndex].y === connection.bends[bendIndex + 1].y;
             if (isHorizontal) {
@@ -437,8 +427,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
             //     };
             // }
 
-            console.log(this.draggingComponentPort);
-
         }
 
 
@@ -492,8 +480,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
             }
             );
 
-            console.log(this.cpuDiagram.connections);
-
 
             // this.newConnections.push({
             //     bitRange: [highBits, lowBits],
@@ -510,7 +496,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
             const portLayout = this.cpuDiagram.ports.get(port.id);
             if (!portLayout) return;
             const { x, y } = this.cpuDiagram.getAbsolutePortPosition(portLayout, componentLayout);
-            console.log(x, y);
             portLayout.pos = { x, y };
             this.spatialMap.update(port.id, { x: x - 10, y: y - 5 }, { width: 20, height: 10 }, 'port');
         });
