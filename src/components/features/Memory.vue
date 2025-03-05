@@ -13,8 +13,8 @@ import { decToHex } from '../../assets/js/utils';
         <ol class="memory-row" v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
             <li class="memory-address">{{ decToHex(rowIndex * 16, 8) }}</li>
             <li class="memory-item" v-for="(value, index) in row"
-            :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index"
-            :class="{ 'non-zero': value !== 0 }">{{ decToHex(value, 8) }}</li>
+                :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index"
+                :class="{ 'non-zero': value !== 0 }">{{ decToHex(value, 8) }}</li>
         </ol>
     </div>
 </template>
@@ -29,18 +29,14 @@ export default defineComponent({
     name: 'Memory',
 
     computed: {
-        memoryRows(): number[][] {
-            // @ts-ignore
-            const data = this.$programExecutionStore.MIPSCore.memory.data
-            // Split the memory into 8 byte rows
-            return data.reduce((rows: number[][], value: number, index: number) => {
-                const rowIndex = Math.floor(index / 16)
-                if (!rows[rowIndex]) {
-                    rows[rowIndex] = []
-                }
-                rows[rowIndex].push(value)
-                return rows
-            }, [])
+        memoryRows(): Uint8Array[] {
+            const data = this.$programExecutionStore.core.dataMemory as Uint8Array;
+            // Split the data memory into rows of 16 bytes
+            const rows = [];
+            for (let i = 0; i < data.length; i += 16) {
+                rows.push(data.slice(i, i + 16));
+            }
+            return rows;
 
         }
     },

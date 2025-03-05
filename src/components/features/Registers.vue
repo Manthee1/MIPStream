@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
 import { decToHex } from '../../assets/js/utils';
-import Window from '../Window.vue';
 </script>
 
 <template>
@@ -32,14 +31,14 @@ import Window from '../Window.vue';
 
 
 export default defineComponent({
-	name: 'Registers',
+    name: 'Registers',
 
-	computed: {
-		registers(): number[] {
-			// @ts-ignore
-			return this.$programExecutionStore.MIPSCore.cpu.GPRegisters as number[]
-		}
-	}
+    computed: {
+        registers(): number[] {
+            // @ts-ignore
+            return this.$programExecutionStore.core.registerFile as number[]
+        }
+    }
 });
 </script>
 

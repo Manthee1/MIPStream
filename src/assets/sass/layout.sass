@@ -119,8 +119,18 @@
     flex: 1 1 calc(8.3333333333% - var(--gap))
 
 @each $size, $value in variables.$sizes
+    .gapx-#{$size}
+        column-gap: $value
+        --gap: #{$value}
+
+    .gapy-#{$size}
+        row-gap: $value
+        --gap: #{$value}
+
     .gap-#{$size}
-        gap: $value
+        column-gap: $value
+        row-gap: $value
+        --gap: #{$value}
 
     .m-#{$size}
         margin: $value

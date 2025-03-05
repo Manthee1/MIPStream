@@ -6,9 +6,17 @@ import { defineComponent } from 'vue';
 
 <template>
     <ol class="stages-list">
-        <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-' + index" :title="JSON.stringify(stage, null, 2)">
-            <!-- <div>{{ getStageName(index) }}</div> -->
-            <!-- <div>{{ INSTRUCTION_SET[stage.IR.opcode].mnemonic }}</div> -->
+        <li class="stage-item" v-for="(stage, index) in stages" :key="'stage-' + index">
+            <!-- Table displaying all the values of each stage -->
+
+            <div class="flex flex-row flex-wrap text-left gapx-2">
+                <label class="flex-12 text-center m-0">{{ index }}</label>
+                <div class="flex-6 flex flex-row flex-nowrap" v-for="(value, key) in stage" :key="key">
+                    <span class="flex-6">{{ key }}</span>
+                    <span class="flex-6 text-right">{{ value }}</span>
+                </div>
+                <div class="flex-6"></div>
+            </div>
         </li>
     </ol>
 </template>
@@ -22,8 +30,8 @@ export default defineComponent({
         };
     },
     computed: {
-        stages(): any {
-            // return this.$programExecutionStore.MIPSCore.cpu.stages;
+        stages(): typeof this.$programExecutionStore.core.stages {
+            return this.$programExecutionStore.core.stages;
         },
     },
 });
@@ -32,15 +40,15 @@ export default defineComponent({
 <style lang="sass" scoped>
 .stages-list
     display: flex
-    flex-flow: row nowrap
+    flex-flow: column nowrap
     list-style-type: none
+    font-size: 1.1rem
     padding: 0
     margin: 0
     
     .stage-item
-        border: 1px solid var(--color-black)
+        border-bottom: 1px solid var(--color-medium)
         padding: 0.5rem
-        text-align: center
         flex: 1 1 auto
 
 </style>
