@@ -1,7 +1,5 @@
-import { Memory } from "../interfaces/core"
-import { getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, } from "../utils"
+import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, } from "../utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
-import { OperandRole, OperandType } from "../types/enums";
 
 export class Assembler {
     INSTRUCTION_SET: InstructionConfig[];
@@ -16,25 +14,30 @@ export class Assembler {
     }
 
 
-    encodeInstruction(instruction: string, labels: Map<string, number>, pc: number): InstructionR | InstructionI | InstructionJ {
+    encodeInstruction(instruction: string, labels: Map<string, number>, pc: number): number {
         const mnemonic = instruction.split(" ")[0];
         const operands = this.getOperands(instruction);
         // If the instruction NOP, return a NOP instruction
         if (mnemonic === "NOP")
-            return { opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI;
+            return 0;
 
-        const instructionOpcode = this.INSTRUCTION_SET.findIndex((instructionDef) => instructionDef.mnemonic === mnemonic);
+        const instructionIndex = this.INSTRUCTION_SET.findIndex((instructionDef) => instructionDef.mnemonic === mnemonic);
 
-        if (instructionOpcode == -1) throw new Error(`Invalid instruction: ${mnemonic}.`);
+        if (instructionIndex == -1) throw new Error(`Invalid instruction: ${mnemonic}.`);
 
-        const instructionDef = this.INSTRUCTION_SET[instructionOpcode];
 
-        let encodedInstruction: InstructionR | InstructionI | InstructionJ = {} as InstructionR | InstructionI | InstructionJ;
-        if (!this.INSTRUCTION_SET[instructionOpcode].operands) throw new Error(`Instruction ${mnemonic} is not configured correctly.`);
+        const instructionDef = this.INSTRUCTION_SET[instructionIndex];
+        const instructionOpcode = instructionDef.opcode;
+
+        let encodedInstruction: number = 0;
+        if (!instructionDef.operands) {
+            // Add operand config if not present
+            instructionDef.operands = getDefaultInstructionDefOperands(instructionDef);
+        }
 
 
         // IF the instruction is a LOAD or STORE instruction, the operands are different so convert them to the standard operands
-        if (false) {
+        if (instructionDef.controlSignals.MemRead == 1 || instructionDef.controlSignals.MemWrite == 1) {
             if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
             // Check if operands are valid
@@ -47,100 +50,73 @@ export class Assembler {
         }
 
         // Check if the number of operands is correct
-        const expectedOperandCount = this.INSTRUCTION_SET[instructionOpcode].operands.filter((operand) => operand.type !== OperandType.UNUSED).length;
-        if (operands.length !== expectedOperandCount) {
+        if (operands.length !== instructionDef.operands.length) {
             throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
         }
 
 
-        let decodedValues = [0, 0, 0]
-        let isFirstSourceOperand = true;
+
 
         console.log('operands', operands);
 
-
-        let index = 0;
-        this.INSTRUCTION_SET[instructionOpcode].operands.forEach((operand) => {
-            if (operand.type === OperandType.UNUSED) return;
-
-            let value = 0;
-            if (operand.type === OperandType.REGISTER) {
-                if (!isRegister(operands[index])) throw new Error(`Invalid register: ${operands[index]}.`);
-                if (!isValidRegister(getRegisterNumber(operands[index]))) throw new Error(`Invalid register: ${operands[index]}.`);
-                value = getRegisterNumber(operands[index]);
-            }
-            else if (operand.type === OperandType.IMMEDIATE) {
-                if (!isValue(operands[index])) throw new Error(`Invalid immediate value: ${operands[index]}.`);
-                if (isXBit(parseInt(operands[index]), 16)) throw new Error(`Immediate value out of range: ${operands[index]}.`);
-                value = parseInt(operands[index]);
-            } else if (operand.type === OperandType.LABEL) {
-                console.log('Label index', index);
-
-                if (!isLabel(operands[index])) throw new Error(`Invalid label: ${operands[index]}.`);
-                if (!labels.has(operands[index])) throw new Error(`Invalid label: ${operands[index]}.`);
-                value = labels.get(operands[index]) as number;
-                value = value - pc - 3;
-            } else throw new Error(`Invalid operand type: ${operand.type}.`);
-
-            index++;
+        let rs = 0;
+        let rt = 0;
+        let rd = 0;
+        let imm = 0;
+        let offset = 0;
+        let shamt = 0;
+        let funct = 0;
 
 
-            if (operand.role === OperandRole.DESTINATION) {
-                decodedValues[0] = value;
-                return;
-            }
-            if (operand.role === OperandRole.SOURCE) {
-                if (isFirstSourceOperand == true) {
-                    isFirstSourceOperand = false;
-                    decodedValues[1] = value;
-                    return;
+        let regSourceCount = 0;
+
+
+        for (let i = 0; i < operands.length; i++) {
+            const operand = operands[i];
+            const operandType = instructionDef.operands[i];
+            if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION') {
+                if (!isRegister(operand)) throw new Error(`Invalid register: ${operand}.`);
+                if (!isValidRegister(getRegisterNumber(operand))) throw new Error(`Invalid register: ${operand}.`);
+                const value = getRegisterNumber(operand);
+                if (operandType === 'REG_SOURCE') {
+                    if (regSourceCount++ == 0) rs = value;
+                    else rt = value;
                 }
-                decodedValues[2] = value;
-                return;
+                else rd = value;
             }
-            if (operand.role === OperandRole.IMMEDIATE) {
-                decodedValues[2] = value;
-            }
-        });
-
-        console.log('Decoded values', decodedValues);
-
-
-
-        switch (instructionDef.type) {
-            case 'R':
-                encodedInstruction = {
-                    opcode: instructionOpcode,
-                    rd: decodedValues[0],
-                    rs1: decodedValues[1],
-                    rs2: decodedValues[2],
-                } as InstructionR;
-                break;
-            case 'I':
-                encodedInstruction = {
-                    opcode: instructionOpcode,
-                    rd: decodedValues[0],
-                    rs: decodedValues[1],
-                    imm: decodedValues[2],
-                } as InstructionI;
-                break;
-            case 'J':
-                encodedInstruction = {
-                    opcode: instructionOpcode,
-                    offset: decodedValues[0],
-                } as InstructionJ;
-                break;
+            else if (operandType === 'IMMEDIATE') {
+                if (!isValue(operand)) throw new Error(`Invalid immediate value: ${operand}.`);
+                if (isXBit(parseInt(operand), 16)) throw new Error(`Immediate value must be a 16-bit number: ${operand}.`);
+                imm = parseInt(operand);
+            } else if (operandType === "LABEL") {
+                if (!isLabel(operand)) throw new Error(`Invalid label: ${operand}.`);
+                if (!labels.has(operand)) throw new Error(`Invalid label: ${operand}.`);
+                const value = labels.get(operand) as number;
+                offset = value - pc;
+            } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
+
+
+
+        if (instructionDef.type === 'R') {
+            funct = instructionDef.funct as number;
+            encodedInstruction = (instructionOpcode << 26) | (rs << 21) | (rt << 16) | (rd << 11) | (shamt << 6) | funct;
+        } else if (instructionDef.type === 'I') {
+            encodedInstruction = (instructionOpcode << 26) | (rs << 21) | (rd << 16) | (imm & 0xFFFF);
+        } else if (instructionDef.type === 'J') {
+            encodedInstruction = (instructionOpcode << 26) | (offset & 0x3FFFFFF);
+        } else throw new Error(`Invalid instruction type: ${instructionDef.type}.`);
+
 
         return encodedInstruction;
     }
 
 
-    public assemble(program: string): { memory: Memory, labels: Map<string, number> } | never {
+    public assemble(program: string) {
         let errors: AssemblerErrorList = new AssemblerErrorList([]);
 
         const programLines = program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.trim());
-        let encodedInstructions: (InstructionR | InstructionI | InstructionJ)[] = [];
+        let encodedInstructions: Uint32Array = new Uint32Array(programLines.length);
 
 
         // Handle labels first because they are used in the encoding of instructions
@@ -170,6 +146,7 @@ export class Assembler {
 
 
         // Encode instructions
+        let pcLineMap: number[] = [];
         let line = 0;
         pc = 0;
         programLines.forEach((instruction) => {
@@ -180,27 +157,19 @@ export class Assembler {
             let encodedInstruction;
             try {
                 encodedInstruction = this.encodeInstruction(instruction, labels, pc);
-                encodedInstructions.push(encodedInstruction);
+                encodedInstructions[pc] = encodedInstruction;
             } catch (error: any) {
                 errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, error.message));
             }
+            pcLineMap[pc] = line;
             pc++;
         });
         if (errors.length) {
             console.log('Errors', errors);
             throw errors;
         }
-        // Add A HALT and 4 NOP instructions to the end of the program
-        encodedInstructions.push(this.encodeInstruction("HALT", labels, pc) as InstructionJ);
-        encodedInstructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
-        encodedInstructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
-        encodedInstructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
-        encodedInstructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
-        encodedInstructions.push({ opcode: 0, rs: 0, rd: 0, imm: 0 } as InstructionI);
 
-        const memory: Memory = { instructions: encodedInstructions, data: [] };
-
-        return { memory, labels: labels };
+        return { instructions: encodedInstructions, pcLineMap, labels: labels };
     }
 
 }

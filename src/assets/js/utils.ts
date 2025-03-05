@@ -2,6 +2,11 @@
 
 // utils.ts
 
+import { instructionConfig } from "./core/config/instructions";
+
+
+const mnemonics = new Set(instructionConfig.map((instruction) => instruction.mnemonic));
+
 /**
  * Checks if the given string is a register.
  * @param str - The string to check.
@@ -66,34 +71,11 @@ export function getEffectiveAddressImm(value: string): number {
     return parseInt(value.split('(')[0]);
 }
 
-export function isRType(instruction: InstructionR | InstructionI | InstructionJ): instruction is InstructionR {
-    return (instruction as InstructionR).rs1 !== undefined;
-}
-
-export function isIType(instruction: InstructionR | InstructionI | InstructionJ): instruction is InstructionI {
-    return (instruction as InstructionI).rs !== undefined;
-}
-
-export function isJType(instruction: InstructionR | InstructionI | InstructionJ): instruction is InstructionJ {
-    return (instruction as InstructionJ).offset !== undefined;
-}
 
 export function isMnemonic(mnemonic: string): boolean {
-    return false;
-    // return mnemonics.has(mnemonic.trim());
+    return mnemonics.has(mnemonic.trim());
 }
 
-export function getInstructionType(instruction: InstructionR | InstructionI | InstructionJ): InstructionType {
-    if (isRType(instruction)) {
-        return 'R';
-    } else if (isIType(instruction)) {
-        return 'I';
-    } else if (isJType(instruction)) {
-        return 'J';
-    } else {
-        return 'INVALID';
-    }
-}
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
     switch (instruction.type) {
@@ -197,4 +179,19 @@ export function clone<T>(obj: T): T {
 // Function to only extract the first x bits of a number
 export function extractBits(num: number, x: number): number {
     return num & ((1 << x) - 1);
+}
+
+
+export function getDefaultInstructionDefOperands(instruction: InstructionConfig): OperandType[] {
+    switch (instruction.type) {
+        case 'R':
+            return ['REG_DESTINATION', 'REG_SOURCE', 'REG_SOURCE'];
+        case 'I':
+            return ['REG_DESTINATION', 'REG_SOURCE', 'IMMEDIATE'];
+        case 'J':
+            return ['LABEL'];
+        default:
+            throw new Error(`Invalid instruction type: ${instruction.type}.`);
+    }
+
 }
