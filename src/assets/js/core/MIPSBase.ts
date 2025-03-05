@@ -6,6 +6,24 @@ import { controlSignals } from "./config/controlSignals";
 import { instructionConfig } from "./config/instructions";
 import { ALUControlPorts, aluPorts, controlUnitPorts, dataMemoryPorts, instructionMemoryPorts, muxesPorts, muxPorts, oneToOnePorts, registerFilePorts, singleOutput, stagePorts, twoToOnePorts } from "./config/ports";
 
+const ALUOperations = {
+    ADD: 0b0000,
+    SUB: 0b0001,
+    AND: 0b0010,
+    OR: 0b0011,
+    XOR: 0b0100,
+    SLL: 0b0101,
+    SRL: 0b0110,
+    SRA: 0b0111,
+    SLT: 0b1000,
+    SLTU: 0b1001,
+    MUL: 0b1010,
+    DIV: 0b1011,
+    MFHI: 0b1100,
+    MFLO: 0b1101
+};
+
+
 export default class MIPSBase {
     cpuOptionsConfig: CPUOptionsConfig = [
         {
@@ -66,8 +84,8 @@ export default class MIPSBase {
     //     return this._options;
     // }
 
-    registerFile: Uint32Array;
-    instructionMemory: Uint8Array;
+    registerFile: number[];
+    instructionMemory: Uint32Array;
     dataMemory: Uint8Array;
 
     verifyOptions(options: Array<{ [name: string]: any }>) {
@@ -113,8 +131,373 @@ export default class MIPSBase {
 
         this.options = options;
 
-        this.registerFile = new Uint32Array(32);
-        this.instructionMemory = new Uint8Array(this.options.instructionMemorySize);
-        this.dataMemory = new Uint8Array(this.options.dataMemorySize);
+        this.reset();
+
     }
+
+    PC: number = 0;
+    HI: number = 0;
+    LO: number = 0;
+    halted: boolean = false;
+    stages = {
+        IFtoID: {
+            IR: 0,
+            NPC: 0,
+        },
+        IDtoEX: {
+            IR: 0,
+            // Control Signals
+            RegWrite: 0,
+            MemtoReg: 0,
+            MemWrite: 0,
+            MemRead: 0,
+            Branch: 0,
+            ALUOp: 0,
+            ALUSrc: 0,
+            RegDst: 0,
+
+            NPC: 0,
+
+            // Data
+            Reg1Data: 0,
+            Reg2Data: 0,
+            Imm: 0,
+            Rd: 0,
+            Rt: 0,
+
+
+        },
+        EXtoMEM: {
+            IR: 0,
+            // Control Signals
+            RegWrite: 0,
+            MemtoReg: 0,
+            MemWrite: 0,
+            MemRead: 0,
+            Branch: 0,
+
+            TargetPC: 0,
+            Zero: 0,
+            ALUResult: 0,
+            Reg2Data: 0,
+            WriteRegister: 0,
+        },
+        MEMtoWB: {
+            IR: 0,
+            // Control Signals
+            RegWrite: 0,
+            MemtoReg: 0,
+
+            ALUResult: 0,
+            MemData: 0,
+            WriteRegister: 0,
+
+        },
+
+    }
+
+    resetStages() {
+        this.stages = {
+            IFtoID: {
+                IR: 0,
+                NPC: 0,
+            },
+            IDtoEX: {
+                IR: 0,
+                // Control Signals
+                RegWrite: 0,
+                MemtoReg: 0,
+                MemWrite: 0,
+                MemRead: 0,
+                Branch: 0,
+                ALUOp: 0,
+                ALUSrc: 0,
+                RegDst: 0,
+
+                NPC: 0,
+
+                // Data
+                Reg1Data: 0,
+                Reg2Data: 0,
+                Imm: 0,
+                Rd: 0,
+                Rt: 0,
+
+
+            },
+            EXtoMEM: {
+                IR: 0,
+                // Control Signals
+                RegWrite: 0,
+                MemtoReg: 0,
+                MemWrite: 0,
+                MemRead: 0,
+                Branch: 0,
+
+                TargetPC: 0,
+                Zero: 0,
+                ALUResult: 0,
+                Reg2Data: 0,
+                WriteRegister: 0,
+            },
+            MEMtoWB: {
+                IR: 0,
+                // Control Signals
+                RegWrite: 0,
+                MemtoReg: 0,
+
+                ALUResult: 0,
+                MemData: 0,
+                WriteRegister: 0,
+
+            },
+        }
+    }
+
+    loadProgram(instructions: Uint32Array) {
+        if (instructions.length > this.options.instructionMemorySize) {
+            throw new Error(`Program size exceeds instruction memory size`);
+        }
+        this.reset();
+        this.instructionMemory.set(instructions);
+    }
+
+
+
+
+    reset() {
+        this.registerFile = new Array(32).fill(0);
+        this.instructionMemory = new Uint32Array(this.options.instructionMemorySize);
+        this.dataMemory = new Uint8Array(this.options.dataMemorySize);
+        this.PC = 0;
+        this.HI = 0;
+        this.LO = 0;
+        this.halted = false;
+
+        // Reset all stage data
+        this.resetStages()
+        window.cpu = this;
+
+    }
+
+
+    runCycle() {
+        if (this.halted) return;
+
+        // Writeback
+        this.writeback();
+        // Memory
+        this.memory();
+        // Execute
+        this.execute();
+        // Decode
+        this.decode();
+        // Fetch
+        this.fetch();
+    }
+
+    fetch() {
+        // Fetch instruction from memory
+        const instruction = this.instructionMemory[this.stages.IFtoID.NPC / 4]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
+        this.stages.IFtoID.IR = instruction;
+
+        // Increment PC
+        const NPC = this.PC + 4;
+        this.stages.IFtoID.NPC = NPC;
+
+        // Update PC
+        this.PC = (this.stages.EXtoMEM.Branch && this.stages.EXtoMEM.Zero) ? this.stages.EXtoMEM.TargetPC : NPC;
+    }
+
+    decode() {
+        const currStage = this.stages.IFtoID;
+        const instruction = currStage.IR;
+        const opcode = instruction >>> 26;
+        const rs = (instruction >> 21) & 0x1F;
+        const rt = (instruction >> 16) & 0x1F;
+        const rd = (instruction >> 11) & 0x1F;
+        const imm = instruction & 0xFFFF;
+
+
+        // Forward NPC
+        this.stages.IDtoEX.NPC = currStage.NPC;
+
+        // Forward IR
+        this.stages.IDtoEX.IR = currStage.IR;
+
+        // Control Signals
+        const instructionConfig = this.instructionConfig.find((config) => (config.opcode & 0b111111) === opcode);
+        if (!instructionConfig) {
+            throw new Error(`Invalid instruction: ${instruction}`);
+        }
+        console.log('is', instructionConfig);
+
+        const controlSignals = instructionConfig.controlSignals;
+
+
+        this.stages.IDtoEX.RegWrite = controlSignals.RegWrite ?? 0;
+        this.stages.IDtoEX.MemtoReg = controlSignals.MemtoReg ?? 0;
+        this.stages.IDtoEX.MemWrite = controlSignals.MemWrite ?? 0;
+        this.stages.IDtoEX.MemRead = controlSignals.MemRead ?? 0;
+        this.stages.IDtoEX.Branch = controlSignals.Branch ?? 0;
+        this.stages.IDtoEX.ALUOp = controlSignals.ALUOp ?? 0;
+        this.stages.IDtoEX.ALUSrc = controlSignals.ALUSrc ?? 0;
+        this.stages.IDtoEX.RegDst = controlSignals.RegDst ?? 0;
+
+
+
+
+        // Register File
+        this.stages.IDtoEX.Reg1Data = this.registerFile[rs];
+        this.stages.IDtoEX.Reg2Data = this.registerFile[rt];
+
+        // Forward Immediate(sign extended), Rd, Rt
+        this.stages.IDtoEX.Imm = imm;
+        this.stages.IDtoEX.Rd = rd;
+        this.stages.IDtoEX.Rt = rt;
+
+    }
+
+    execute() {
+
+        let currStage = this.stages.IDtoEX;
+
+        // Forward IR
+
+        this.stages.EXtoMEM.IR = currStage.IR;
+
+        // Control Signals
+        this.stages.EXtoMEM.RegWrite = currStage.RegWrite;
+        this.stages.EXtoMEM.MemtoReg = currStage.MemtoReg;
+        this.stages.EXtoMEM.MemWrite = currStage.MemWrite;
+        this.stages.EXtoMEM.MemRead = currStage.MemRead;
+        this.stages.EXtoMEM.Branch = currStage.Branch;
+
+        // Calculate TargetPC
+        this.stages.EXtoMEM.TargetPC = currStage.NPC + (currStage.Imm << 2);
+
+        // ALU Control
+        const ALUOp = currStage.ALUOp & 0b11;
+        const func = currStage.Imm & 0b001111;
+
+        let ALUControl: number = 0;
+        switch (ALUOp) {
+            case 0b00:
+                ALUControl = ALUOperations.ADD;
+                break;
+            case 0b01:
+                ALUControl = ALUOperations.SUB;
+                break;
+            case 0b10:
+                // Map the funct field to the ALU operation
+                ALUControl = func;
+                break;
+            default:
+                throw new Error("Unknown ALU operation");
+        }
+
+        // ALU
+        const ALUSrc = currStage.ALUSrc;
+        const Reg1Data = currStage.Reg1Data;
+        const Reg2Data = ALUSrc ? currStage.Imm : currStage.Reg2Data;
+
+        let ALUResult = 0;
+        let HI = this.HI;
+        let LO = this.LO;
+
+
+        switch (ALUControl) {
+            case ALUOperations.ADD: ALUResult = Reg1Data + Reg2Data; break;
+            case ALUOperations.SUB: ALUResult = Reg1Data - Reg2Data; break;
+            case ALUOperations.AND: ALUResult = Reg1Data & Reg2Data; break;
+            case ALUOperations.OR: ALUResult = Reg1Data | Reg2Data; break;
+            case ALUOperations.XOR: ALUResult = Reg1Data ^ Reg2Data; break;
+            case ALUOperations.SLL: ALUResult = Reg1Data << Reg2Data; break;
+            case ALUOperations.SRL: ALUResult = Reg1Data >>> Reg2Data; break;
+            case ALUOperations.SRA: ALUResult = Reg1Data >> Reg2Data; break;
+            case ALUOperations.SLT: ALUResult = Reg1Data < Reg2Data ? 1 : 0; break;
+            case ALUOperations.SLTU: ALUResult = (Reg1Data >>> 0) < (Reg2Data >>> 0) ? 1 : 0; break;
+            case ALUOperations.MUL:
+                const result = BigInt(Reg1Data) * BigInt(Reg2Data);
+                HI = Number(result >> 32n); // High 32 bits
+                LO = Number(result & 0xFFFFFFFFn); // Low 32 bits
+                ALUResult = LO; // For simplicity, returning the low part
+                break;
+            case ALUOperations.DIV:
+                if (Reg2Data !== 0) {
+                    LO = Math.floor(Reg1Data / Reg2Data);
+                    HI = Reg1Data % Reg2Data;
+                    ALUResult = LO; // For simplicity, returning the low part
+                } else throw new Error("Division by zero");
+                break;
+            case ALUOperations.MFHI: ALUResult = HI; break;
+            case ALUOperations.MFLO: ALUResult = LO; break;
+            default: throw new Error("Unknown ALU operation");
+        }
+
+        // Forward ALUResult
+        this.stages.EXtoMEM.ALUResult = ALUResult;
+        this.stages.EXtoMEM.Zero = ALUResult === 0 ? 1 : 0;
+
+        // Forward Reg2Data
+        this.stages.EXtoMEM.Reg2Data = Reg2Data;
+
+        // Forward WriteRegister
+        this.stages.EXtoMEM.WriteRegister = currStage.RegDst ? currStage.Rd : currStage.Rt;
+    }
+
+
+    memory() {
+        let currStage = this.stages.EXtoMEM;
+
+        // Check for halt instruction
+        const instruction = currStage.IR;
+        const opcode = (instruction & 0xFC000000) >>> 26;
+        if (opcode === 0b111111) {
+            this.halt();
+            return;
+        }
+
+        // Forward IR
+        this.stages.MEMtoWB.IR = currStage.IR;
+
+        // Forward ALUResult
+        this.stages.MEMtoWB.ALUResult = currStage.ALUResult;
+
+        // Forward WriteRegister
+        this.stages.MEMtoWB.WriteRegister = currStage.WriteRegister;
+
+        // Control Signals
+        this.stages.MEMtoWB.RegWrite = currStage.RegWrite;
+        this.stages.MEMtoWB.MemtoReg = currStage.MemtoReg;
+
+        // Memory
+        if (currStage.MemRead) {
+            const address = currStage.ALUResult;
+            this.stages.MEMtoWB.MemData = this.dataMemory[address];
+        } else if (currStage.MemWrite) {
+            const address = currStage.ALUResult;
+            this.dataMemory[address] = currStage.Reg2Data;
+        }
+    }
+
+    writeback() {
+        let currStage = this.stages.MEMtoWB;
+
+        // Writeback
+        if (currStage.RegWrite) {
+            const value = currStage.MemtoReg ? currStage.MemData : currStage.ALUResult;
+            this.registerFile[currStage.WriteRegister] = value;
+            console.log(this.registerFile);
+
+            console.log(`Writeback: ${currStage.WriteRegister} = ${value}`);
+
+        }
+    }
+
+
+    halt() {
+        this.halted = true;
+    }
+
 }
