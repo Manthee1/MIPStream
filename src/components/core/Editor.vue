@@ -87,35 +87,38 @@ export default defineComponent({
 
 	computed: {
 		currentPC(): number {
-			return 0;
-			// return this.$programExecutionStore.MIPSCore.cpu.PC;
+			// return 0;
+			console.log('PC:', this.$programExecutionStore.core.PC);
+
+			return this.$programExecutionStore.core.PC;
 		}
 	},
 	watch: {
 		currentPC(_newVal: number) {
-			// const model = editor.getModel();
-			// if (!model) return;
-			// this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
-			// 	const stageName = getStageName(index);
-			// 	const stage = this.$programExecutionStore.MIPSCore.cpu.stages[index];
-			// 	const line = this.$programExecutionStore.getStageLine(index);
-			// 	if (line == -1)
-			// 		return [];
-			// 	return [
-			// 		{
-			// 			range: new monaco.Range(+line, 1, +line, 1),
-			// 			options: {
-			// 				isWholeLine: true,
-			// 				className: 'run-line-' + stageName + ' run-line'
-			// 			}
-			// 		}
-			// 	]
-			// }).flat());
+			const model = editor.getModel();
+			if (!model) return;
+			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
+				const line = this.$programExecutionStore.PCToLineMap[this.$programExecutionStore.stagePCs[index]];
+				const stageName = "stage-" + index;
+				console.log('Stage:', stageName, line);
+
+				if (line == -1)
+					return [];
+				return [
+					{
+						range: new monaco.Range(+line, 1, +line, 1),
+						options: {
+							isWholeLine: true,
+							className: 'run-line-' + stageName + ' run-line'
+						}
+					}
+				]
+			}).flat());
 
 		},
 		'$viewStore.theme': {
 			handler() {
-				if(!editor) return;
+				if (!editor) return;
 				editor.updateOptions({
 					theme: this.$viewStore.theme
 				});
@@ -214,27 +217,27 @@ export default defineComponent({
 		line-height: 0.9em
 	.run-line
 		border: 2px solid
-	.run-line-IF
+	.run-line-stage-0
 		border-color: #FFD70030
 		&::after
 			background-color: #FFD70030
 			content: 'IF'
-	.run-line-ID
+	.run-line-stage-1
 		border-color: #00FF0030
 		&::after
 			background-color: #00FF0030
 			content: 'ID'
-	.run-line-EX
+	.run-line-stage-2
 		border-color: #fa807230
 		&::after
 			background-color: #fa807230
 			content: 'EX'
-	.run-line-MEM
+	.run-line-stage-3
 		border-color: #87ceeb30
 		&::after
 			background-color: #87ceeb30
 			content: 'MEM'
-	.run-line-WB
+	.run-line-stage-4
 		border-color: #ff69b430
 		&::after
 			background-color: #ff69b430
