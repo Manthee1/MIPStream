@@ -1,13 +1,24 @@
+const RType: InstructionConfig = {
+    mnemonic: "",
+    opcode: 0x00,
+    type: 'R',
+    controlSignals: {
+        RegDst: 1,
+        RegWrite: 1,
+        ALUOp: 2,
+    },
+}
+
+
 export const instructionConfig: InstructionConfig[] = [
     {
-        opcode: 0x00,
+        ...RType,
+        mnemonic: "nop",
+        operands: [],
+    },
+    {
+        ...RType,
         mnemonic: "add",
-        type: 'R',
-        controlSignals: {
-            RegDst: 1,
-            RegWrite: 1,
-            ALUOp: 2,
-        },
         funct: 0x20,
     },
     {
@@ -50,5 +61,15 @@ export const instructionConfig: InstructionConfig[] = [
             ALUOp: 1,
             Branch: 1,
         },
+        operands: ['REG_SOURCE', 'REG_SOURCE', 'LABEL'],
     },
+    {
+        opcode: 0xff,
+        mnemonic: "halt",
+        type: 'J',
+        controlSignals: {},
+        operands: [],
+
+    }
 ];
+
