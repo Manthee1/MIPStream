@@ -3,20 +3,22 @@ import { defineStore } from 'pinia'
 import { wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
 import { Assembler } from '../assets/js/core/Assembler';
-import { Memory } from '../assets/js/interfaces/core';
 import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
+import MIPSBase from '../assets/js/core/MIPSBase';
+import { instructionConfig } from '../assets/js/core/config/instructions';
 
 
 export const useProgramExecutionStore = defineStore('programexec', {
     state: () => ({
-        // MIPSCore: {} as MIPSCore,
-        assembler: new Assembler([]),
+        core: new MIPSBase(),
+        assembler: new Assembler(instructionConfig),
         program: '' as string,
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
-        speed: 0 as number, // cycles per second
+        speed: 1 as number, // cycles per second
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
+        stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
         errors: [] as string[],
         errorsUpdateTimeout: null as any,
     }),
@@ -24,22 +26,6 @@ export const useProgramExecutionStore = defineStore('programexec', {
 
     },
     actions: {
-        mapPCToLine() {
-            const program = this.program.replace(/\r/g, '\n').split('\n').map(line => line.trim());
-            const PCToLineMap: number[] = [];
-            for (let line = 0; line < program.length; line++) {
-                if (program[line].trim() == '') continue;
-                if (program[line].trim().endsWith(':')) continue;
-                if (program[line].trim().startsWith(';')) continue;
-
-                PCToLineMap.push(line + 1);
-            }
-            this.PCToLineMap = PCToLineMap;
-            console.log(this.PCToLineMap);
-
-        },
-
-
         updateErrors() {
             let timeOut = 500;
             if (useSettingsStore().instantProblemListUpdate) {
@@ -62,66 +48,71 @@ export const useProgramExecutionStore = defineStore('programexec', {
         },
 
         loadProgram() {
-            // this.status = 'paused';
-            // let memory: Memory;
+            this.status = 'paused';
+            let instructionMemory: Uint32Array;
 
-            // try {
-            //     this.errors = [];
-            //     const data = assemble(this.program);
-            //     memory = data.memory;
-            // } catch (errors: any) {
-            //     const errorMessage = 'Error/s occurred while loading the program';
-            //     this.errors = errors;
-            //     notify({
-            //         type: 'error',
-            //         title: 'Error',
-            //         text: errorMessage,
-            //     });
-            //     this.status = 'stopped';
-            //     console.error(errors);
+            try {
+                this.errors = [];
+                const data = this.assembler.assemble(this.program);
+                instructionMemory = data.instructions;
+                this.PCToLineMap = data.pcLineMap;
+            } catch (errors: any) {
+                const errorMessage = 'Error/s occurred while loading the program';
+                this.errors = errors;
+                notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: errorMessage,
+                });
+                this.status = 'stopped';
+                console.error(errors);
 
-            //     return;
-            // }
+                return;
+            }
+            this.stagePCs = [-1, -1, -1, -1, -1];
 
-            // this.MIPSCore.loadProgram(memory.instructions, memory.data);
+            this.core.loadProgram(instructionMemory);
         },
         step() {
-            // if (this.status != 'paused') return;
-            // this.MIPSCore.runCycle();
-            // const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
-            // if (this.MIPSCore.cpu.stages[4].IR?.opcode == haltOpcode) this.status = 'stopped'
-
+            if (this.status != 'paused') return;
+            this.core.runCycle();
+            // Add current pc to stagePCs and remove the oldest one
+            this.stagePCs.unshift(this.core.PC / 4);
+            this.stagePCs.pop();
+            if (this.core.halted) this.status = 'stopped'
         },
         pause() {
-            // this.status = 'paused';
+            this.status = 'paused';
         },
         stop() {
-            // this.status = 'stopped';
-            // this.MIPSCore.reset();
+            this.status = 'stopped';
+            this.core.reset();
+            this.stagePCs = [-1, -1, -1, -1, -1];
         },
         run() {
-            // this.loadProgram();
-            // if (this.status === 'stopped') return;
-            // this.resume();
+            this.loadProgram();
+            if (this.status === 'stopped') return;
+            this.resume();
         },
 
         async resume() {
-            // const haltOpcode: number = INSTRUCTION_SET.findIndex(instruction => instruction.mnemonic === 'HALT');
-            // this.status = 'running';
-            // // Run until the program is finished
-            // while (this.status == 'running' && this.MIPSCore.cpu.stages[4].IR?.opcode !== haltOpcode) {
-            //     this.MIPSCore.runCycle();
-            //     console.log(this.breakpoints, this.PCToLineMap[this.MIPSCore.cpu.PC]);
-            //     if (this.breakpoints.includes(this.PCToLineMap[this.MIPSCore.cpu.PC])) {
-            //         this.status = 'paused';
-            //         return;
-            //     }
-            //     if (this.status === 'paused') return;
-            //     await wait(1000 / this.speed);
+            this.status = 'running';
+            // Run until the program is finished
+            while (this.status == 'running' && !this.core.halted) {
+                this.core.runCycle();
+                // Add current pc to stagePCs and remove the oldest one
+                this.stagePCs.unshift(this.core.PC / 4);
+                this.stagePCs.pop();
+                console.log(this.breakpoints, this.PCToLineMap[this.core.PC / 4]);
+                if (this.breakpoints.includes(this.PCToLineMap[this.core.PC / 4])) {
+                    this.status = 'paused';
+                    return;
+                }
+                await wait(1000 / this.speed);
 
-            // }
+            }
 
-            // this.status = 'stopped';
+            this.status = 'stopped';
         }
 
     }
