@@ -6,9 +6,10 @@ import completionsProvider from './monaco/completionsProvider';
 import hoverProvider from './monaco/hoverProvider';
 import definitionProvider from './monaco/definitionProvider';
 import { isLabel } from '../assets/js/utils';
+import { instructionConfig } from '../assets/js/core/config/instructions';
 
 // Constants
-let INSTRUCTION_SET: InstructionConfig[] = [];
+let INSTRUCTION_SET: InstructionConfig[] = instructionConfig;
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
 const registers = Array.from({ length: 32 }, (_, i) => `R${i}`);
 const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
@@ -16,8 +17,6 @@ const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
 const JTypeMnemonics = INSTRUCTION_SET.filter((instruction) => instruction.type === 'J').map(
     (instruction) => instruction.mnemonic
 );
-
-console.log('JTypeMnemonics', JTypeMnemonics);
 
 
 // Monaco Language Registration
@@ -98,7 +97,6 @@ export function validate(model: monaco.editor.ITextModel) {
                     message: labelErrorMessage,
                     severity: monaco.MarkerSeverity.Error,
                 });
-            return;
 
             labels.add(label);
 

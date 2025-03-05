@@ -1,6 +1,7 @@
 import * as monaco from 'monaco-editor';
+import { instructionConfig } from '../../assets/js/core/config/instructions';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
-let INSTRUCTION_SET: InstructionConfig[] = [];
+let INSTRUCTION_SET: InstructionConfig[] = instructionConfig;
 
 
 // Constants

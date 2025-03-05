@@ -1,8 +1,9 @@
 import * as monaco from 'monaco-editor';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
 import { getInstructionSyntax } from '../../assets/js/utils';
+import { instructionConfig } from '../../assets/js/core/config/instructions';
 
-let INSTRUCTION_SET: InstructionConfig[] = [];
+let INSTRUCTION_SET: InstructionConfig[] = instructionConfig;
 
 // Constants
 const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
@@ -89,7 +90,7 @@ export default {
 
 
         // R-type instructions
-        if (instruction.type === InstructionType.R) {
+        if (instruction.type === 'R') {
             // Only 3 registers are allowed for R-type instructions. 
             if (registerCount === 3) return { suggestions: [] };
 
@@ -99,7 +100,7 @@ export default {
 
 
         // I-type instructions
-        if (instruction.type === InstructionType.I) {
+        if (instruction.type === 'I') {
 
             // If there is no register
             if (registerCount == 0) return getRegisterCompletions(true, true, true);
@@ -145,7 +146,7 @@ export default {
 
         }
 
-        if (instruction.type === InstructionType.J) {
+        if (instruction.type === 'J') {
             return {
                 suggestions: getlabels(model.getValue()).map((label) => ({
                     label: label,
