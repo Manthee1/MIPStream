@@ -2,7 +2,7 @@
   <div class="content-wrapper">
     <div class="content-container">
       <h1>Projects</h1>
-      <MButton accent filled icon="plus" @click="$viewStore.createProject()">Create Project</MButton>
+      <MButton accent filled icon="plus" @click="setupProject()">Create Project</MButton>
       <table class="projects-table">
         <thead>
           <tr>
@@ -57,6 +57,11 @@ export default defineComponent({
 		deleteProject(id: number) {
 			console.log('Delete Project', id);
 		},
+    async setupProject() {
+      const project = await this.$viewStore.setupProject();
+      if(!project) return;
+           this.$router.push({ name: 'Workspace', params: { id: project.id } });
+    },
     formatDateRecent,
     formatSize
     

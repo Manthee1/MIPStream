@@ -102,7 +102,7 @@ export const useViewStore = defineStore('view', {
 
         },
 
-        async createProject(){
+        async setupProject(){
             const name = await this.prompt({
 				title: 'Create Project',
 				message: 'Enter the name of the project',
@@ -120,9 +120,18 @@ export const useViewStore = defineStore('view', {
 			if (!name || typeof name !== 'string') return;
 			console.log('Create Project', name);
 
-
-			const project = createProject(name);
-			useRouter().push({ name: 'Workspace', params: { id: project.id } });
+            try {
+                const project = createProject(name);
+                return project;
+            } catch (error) {
+                this.confirm({
+                    title: 'Error',
+                    message: error.message,
+                    confirmText: 'Ok',
+                    confirmButtonType: 'error',
+                });
+            }
+            return null;
 
         },
 
