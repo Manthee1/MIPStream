@@ -1,3 +1,5 @@
+import SpatialMap from "../../utils/SpatialMap";
+
 export class CPUDiagramPlugin {
     cpuDiagram: CPUDiagram;
 
@@ -26,6 +28,9 @@ export class CPUDiagram {
     drawIntervalRefence: NodeJS.Timeout = null as any;
     plugins: Array<typeof CPUDiagramPlugin> = [];
     pluginInstances: CPUDiagramPlugin[] = [];
+
+    spatialMap: SpatialMap = new SpatialMap(0, 0, 20);
+
 
     worker: Worker = null as any;
 
@@ -73,8 +78,8 @@ export class CPUDiagram {
         // Set the canvas size to the layout size
         this.canvas.width = this.width = layout.width;
         this.canvas.height = this.height = layout.height;
-        this.canvas.style.width = this.width + 'px';
-        this.canvas.style.height = this.height + 'px';
+        // this.canvas.style.width = this.width + 'px';
+        // this.canvas.style.height = this.height + 'px';
 
 
         // Load the layout from localStorage
@@ -94,10 +99,10 @@ export class CPUDiagram {
         this.initializeComponents(layout); // Also initializez the ports
         console.log('Initialized components', this.components, this.ports);
         this.initializeConnections(layout);
+
+        this.initializeSpatialMap();
+
         this.initializePlugins();
-
-
-
     }
 
     private initializeComponents(layout: CPULayout) {
@@ -162,6 +167,42 @@ export class CPUDiagram {
             // Add the connection
             this.connections.set(index, connection);
         });
+
+    }
+
+    initializeSpatialMap() {
+        this.spatialMap = new SpatialMap(this.width, this.height, 20);
+
+        // Insert all the components
+        this.components.forEach(component => {
+            this.spatialMap.insert(component.id, component.pos, component.dimensions, 'component');
+
+        });
+
+        // Insert all the ports
+        this.ports.forEach(port => {
+            const [x, y] = [port.pos?.x, port.pos?.y];
+            if (!x || !y) return;
+
+            this.spatialMap.insert(port.id, { x: x - 10, y: y - 5 }, { width: 20, height: 10 }, 'port');
+        });
+
+        // Insert all the connections
+        let connectionId = 0;
+        this.connections.forEach(connection => {
+            const points = this.getConnectionPoints(connection);
+
+            for (let i = 0; i < points.length - 1; i++) {
+                const [from, to] = [points[i], points[i + 1]];
+                const [x1, y1, x2, y2] = [from.x - 5, from.y - 5, to.x - 5, to.y - 5];
+                const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
+
+                const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
+                this.spatialMap.insert(connectionId.toString() + '|' + i, { x, y }, { width, height }, 'connection');
+            }
+            connectionId++;
+        });
+
 
     }
 

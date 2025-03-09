@@ -1,11 +1,5 @@
-import { clone } from "../../../utils";
-import SpatialMap, { SpatialItem } from "../../../utils/SpatialMap";
+import { SpatialItem } from "../../../utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
-
-// TODO:
-// [] Add ability to connect ports
-// [] Add ability to move wires
-// [] Add undo/redo
 
 export class DiagramEditor extends CPUDiagramPlugin {
     mouse: { x: number, y: number, isDown: boolean, lastClick: { x: number, y: number } } = { x: 0, y: 0, isDown: false, lastClick: { x: 0, y: 0 } };
@@ -29,14 +23,11 @@ export class DiagramEditor extends CPUDiagramPlugin {
 
     hoveringOver: SpatialItem | null = null;
 
-    spatialMap: SpatialMap = new SpatialMap(0, 0, 20);
 
     constructor(cpuDiagram: CPUDiagram) {
         super(cpuDiagram);
 
-
         this.bendConnections();
-        this.initializeSpatialMap();
         this.initializeMouseEvents();
     }
 
@@ -44,41 +35,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
         return this.keyboard.keys[key] || false;
     }
 
-    initializeSpatialMap() {
-        this.spatialMap = new SpatialMap(this.cpuDiagram.width, this.cpuDiagram.height, 20);
-
-        // Insert all the components
-        this.cpuDiagram.components.forEach(component => {
-            this.spatialMap.insert(component.id, component.pos, component.dimensions, 'component');
-
-        });
-
-        // Insert all the ports
-        this.cpuDiagram.ports.forEach(port => {
-            const [x, y] = [port.pos?.x, port.pos?.y];
-            if (!x || !y) return;
-
-            this.spatialMap.insert(port.id, { x: x - 10, y: y - 5 }, { width: 20, height: 10 }, 'port');
-        });
-
-        // Insert all the connections
-        let connectionId = 0;
-        this.cpuDiagram.connections.forEach(connection => {
-            const points = this.cpuDiagram.getConnectionPoints(connection);
-
-            for (let i = 0; i < points.length - 1; i++) {
-                const [from, to] = [points[i], points[i + 1]];
-                const [x1, y1, x2, y2] = [from.x - 5, from.y - 5, to.x - 5, to.y - 5];
-                const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
-
-                const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
-                this.spatialMap.insert(connectionId.toString() + '|' + i, { x, y }, { width, height }, 'connection');
-            }
-            connectionId++;
-        });
-
-
-    }
+    
 
     initializeMouseEvents() {
 
@@ -102,10 +59,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
         document.addEventListener('keydown', (e) => {
             this.keyboard.keys[e.key] = true;
             this.keyDownHandler(e);
-
-
-
-
         });
 
         document.addEventListener('keyup', (e) => {
@@ -142,7 +95,6 @@ export class DiagramEditor extends CPUDiagramPlugin {
             connection.bends[2].x += (toPort.location === 'left' ? -15 : 15);
             connection.bends[1].x = connection.bends[2].x;
             connection.bends[1].y = connection.bends[0].y;
-
         }
     }
 
@@ -152,6 +104,18 @@ export class DiagramEditor extends CPUDiagramPlugin {
             this.bendConnection(connection);
             this.fixConnectionBends(connection);
         }
+
+        // Update the spatial map
+        for (let connection of this.cpuDiagram.connections.values()) {
+            const points = this.cpuDiagram.getConnectionPoints(connection);
+            for (let i = 0; i < points.length - 1; i++) {
+                const [from, to] = [points[i], points[i + 1]];
+                const [x, y] = [Math.min(from.x, to.x)-5, Math.min(from.y, to.y)-5];
+                const [width, height] = [Math.abs(from.x - to.x)+10, Math.abs(from.y - to.y)+10];
+                this.cpuDiagram.spatialMap.update(connection.id + '|' + i, { x, y }, { width, height }, 'connection');
+            }
+        }
+
         this.cpuDiagram.draw();
     }
 
@@ -266,21 +230,21 @@ export class DiagramEditor extends CPUDiagramPlugin {
                     const component = this.cpuDiagram.components.get(this.hoveringOver.id);
                     if (!component) return;
                     this.cpuDiagram.components.delete(this.hoveringOver.id);
-                    this.spatialMap.remove(this.hoveringOver.id,);
+                    this.cpuDiagram.spatialMap.remove(this.hoveringOver.id,);
                     this.cpuDiagram.draw();
                 }
                 if (this.hoveringOver?.type === 'port') {
                     const port = this.cpuDiagram.ports.get(this.hoveringOver.id);
                     if (!port) return;
                     this.cpuDiagram.ports.delete(this.hoveringOver.id);
-                    this.spatialMap.remove(this.hoveringOver.id);
+                    this.cpuDiagram.spatialMap.remove(this.hoveringOver.id);
                     this.cpuDiagram.draw();
                 }
                 if (this.hoveringOver?.type === 'connection') {
                     const [connectionId, bendIndex] = this.hoveringOver.id.split('|');
                     this.cpuDiagram.connections.delete(parseInt(connectionId));
                     for (let i = 0; i < 4; i++) {
-                        this.spatialMap.remove(connectionId + '|' + i);
+                        this.cpuDiagram.spatialMap.remove(connectionId + '|' + i);
                     }
                     this.cpuDiagram.draw();
                 }
@@ -295,8 +259,8 @@ export class DiagramEditor extends CPUDiagramPlugin {
             this.cpuDiagram.draw();
         }
 
-        if (this.hoveringOver != this.spatialMap.query(this.mouse.x, this.mouse.y)) {
-            this.hoveringOver = this.spatialMap.query(this.mouse.x, this.mouse.y);
+        if (this.hoveringOver != this.cpuDiagram.spatialMap.query(this.mouse.x, this.mouse.y)) {
+            this.hoveringOver = this.cpuDiagram.spatialMap.query(this.mouse.x, this.mouse.y);
 
             this.cpuDiagram.draw();
         }
@@ -314,7 +278,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
             componentLayout.pos = { x, y };
             this.draggingComponent.prevTMPPos = { x, y }
             this.recalculateComponentPorts(componentLayout);
-            this.spatialMap.update(this.draggingComponent.id, { x, y }, {}, 'component');
+            this.cpuDiagram.spatialMap.update(this.draggingComponent.id, { x, y }, {}, 'component');
             this.cpuDiagram.draw();
             return;
         }
@@ -340,7 +304,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
             portLayout.relPos = portLayout.location === 'top' || portLayout.location === 'bottom' ? (this.mouse.x - componentPos.x) / componentLayout.dimensions.width : (this.mouse.y - componentPos.y) / componentLayout.dimensions.height;
             portLayout.relPos = Math.max(0, Math.min(1, portLayout.relPos));
             this.recalculateComponentPorts(componentLayout);
-            this.spatialMap.update(this.draggingComponentPort.id, { x: this.mouse.x - 10, y: this.mouse.y - 5 }, { width: 20, height: 10 }, 'port');
+            this.cpuDiagram.spatialMap.update(this.draggingComponentPort.id, { x: this.mouse.x - 10, y: this.mouse.y - 5 }, { width: 20, height: 10 }, 'port');
             return;
         }
         if (this.draggingConnection) {
@@ -370,7 +334,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
                 const [width, height] = [Math.abs(x1 - x2) + 10, Math.abs(y1 - y2) + 10];
 
                 const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)];
-                this.spatialMap.update(connection.id + '|' + i, { x, y }, { width, height }, 'connection');
+                this.cpuDiagram.spatialMap.update(connection.id + '|' + i, { x, y }, { width, height }, 'connection');
             }
 
             this.cpuDiagram.draw();
@@ -497,7 +461,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
             if (!portLayout) return;
             const { x, y } = this.cpuDiagram.getAbsolutePortPosition(portLayout, componentLayout);
             portLayout.pos = { x, y };
-            this.spatialMap.update(port.id, { x: x - 10, y: y - 5 }, { width: 20, height: 10 }, 'port');
+            this.cpuDiagram.spatialMap.update(port.id, { x: x - 10, y: y - 5 }, { width: 20, height: 10 }, 'port');
         });
 
         // Get all the connections that are connected to the component
