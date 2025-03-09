@@ -16,7 +16,6 @@
 
 <script lang="ts">
 import { ComponentCustomProperties, defineComponent } from "vue";
-import { DropdownItem } from "../../types";
 
 
 export default defineComponent({

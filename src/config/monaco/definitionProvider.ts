@@ -13,7 +13,7 @@ const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
 
 
 export default {
-    provideDefinition: function (model, position) {
+    provideDefinition: function (model, position, _token) {
         console.log(model.getWordAtPosition(position));
         const word = model.getWordAtPosition(position);
 
@@ -25,9 +25,9 @@ export default {
                 const instruction = INSTRUCTION_SET.find(inst => inst.mnemonic === text);
                 if (instruction) {
                     return {
-                        range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
-                        uri: 0,
-                    };
+                        // range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+                        // uri: 0,
+                    } as monaco.languages.ProviderResult<monaco.languages.Location>;
                 }
             }
         }

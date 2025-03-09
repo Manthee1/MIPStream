@@ -130,7 +130,9 @@ export default class MIPSBase {
         }
 
         this.options = options;
-
+        this.registerFile = [];
+        this.instructionMemory = new Uint32Array();
+        this.dataMemory = new Uint8Array();
         this.reset();
 
     }
@@ -276,7 +278,6 @@ export default class MIPSBase {
 
         // Reset all stage data
         this.resetStages()
-        window.cpu = this;
 
     }
 

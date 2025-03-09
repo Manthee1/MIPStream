@@ -1,6 +1,5 @@
 import { loadProjects } from "../storage/projectsStorage";
 import { useViewStore } from "../stores/viewStore";
-import { DropdownItem } from "../types";
 
 export let dropdownItemsConfig: Record<string, DropdownItem>;
 

@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { DropdownItem, ModalData } from '../types';
 import { settings } from '../storage/settingsStorage';
 import { createProject } from '../storage/projectsStorage';
 import { useRouter } from 'vue-router';

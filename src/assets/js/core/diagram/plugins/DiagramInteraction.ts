@@ -114,7 +114,7 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                 case 'port':
                     const port = this.cpuDiagram.ports.get(this.hoveringOver.id);
                     if (!port) return;
-                    this.drawInfoBox(this.hoveringOver.x, this.hoveringOver.y, port.label, port.value, '');
+                    // this.drawInfoBox(this.hoveringOver.x, this.hoveringOver.y, port.label, port.value, '');
                     break;
                 case 'connection':
                     this.drawInfoBox(this.hoveringOver.x, this.hoveringOver.y, 'Connection', 'Connection', 'This is a connection');

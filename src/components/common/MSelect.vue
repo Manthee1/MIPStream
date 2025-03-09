@@ -6,7 +6,7 @@
             <vue-feather type="chevron-down" class="arrow" :class="{ 'open': isOpen }" />
         </div>
         <ul v-if="isOpen" class="options">
-            <li v-for="option in options" :key="option" @click="selectOption(option)" :class="{ 'selected': option.value === selectedOption.value }">
+            <li v-for="option in options" :key="option.value+'-'+option.value" @click="selectOption(option)" :class="{ 'selected': option.value === selectedOption.value }">
                 {{ option.label }}
             </li>
         </ul>

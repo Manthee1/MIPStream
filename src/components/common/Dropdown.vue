@@ -9,7 +9,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import DropdownMenu from './DropdownMenu.vue';
-import { DropdownItem } from "../../types";
 
 import MButton from './MButton.vue';
 
