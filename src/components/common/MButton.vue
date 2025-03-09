@@ -1,5 +1,6 @@
 <template>
-    <button  class="m-button" :class="[{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly },buttonType]">
+    <button class="m-button"
+        :class="[{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly }, buttonType]">
         <vue-feather :type="icon" class="icon" v-if="icon" />
         <span v-if="!iconOnly">
             <slot></slot>
@@ -17,7 +18,6 @@ export default defineComponent({
     },
     data() {
         return {
-            iconOnly: false,
             buttonType: this.type,
         }
     },
@@ -39,13 +39,13 @@ export default defineComponent({
             type: Boolean,
             default: false,
         },
-        accent:{
+        accent: {
             type: Boolean,
             default: false,
         },
         type: {
             type: String,
-            default: 'default' as 'default' |'accent' | 'error' | 'success' | 'warning',
+            default: 'default' as 'default' | 'accent' | 'error' | 'success' | 'warning',
         },
     },
 
@@ -57,14 +57,15 @@ export default defineComponent({
         isFilled() {
             return this.filled;
         },
+
+        iconOnly() {
+            return ((!this.$slots.default) && this.icon != undefined);
+        }
     },
     mounted() {
-        // Check if there is text or just icon
-        if (!this.$slots.default || this.$slots.default.length === 0) {
-            this.iconOnly = true;
-        }
-        this.buttonType = this.accent ? 'type-accent': ('type-'+this.type);
-        
+
+        this.buttonType = this.accent ? 'type-accent' : ('type-' + this.type);
+
     },
 });
 </script>
