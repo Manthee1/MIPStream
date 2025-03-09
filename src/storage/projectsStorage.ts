@@ -7,6 +7,7 @@ export interface Project {
     name: string;
     code: string;
     data: number[];
+    layoutConfig: any;
     createdAt: Date;
     updatedAt: Date;
     size: number;
@@ -20,6 +21,7 @@ export const createProject = (name: string): Project => {
         name,
         code: '',
         data: [],
+        layoutConfig: {},
         createdAt: new Date(),
         updatedAt: new Date(),
         size: 0

@@ -1,13 +1,11 @@
-import { ComponentCustomProperties } from "vue";
-
-export interface DropdownItem {
+interface DropdownItem {
     label?: string;
     action?: (context: ComponentCustomProperties) => void;
     type?: 'item' | 'separator' | 'submenu';
     items?: DropdownItem[]; // Only for submenu
 }
 
-export type ModalData = {
+type ModalData = {
     show?: boolean,
     title?: string,
     message?: string,
@@ -21,4 +19,13 @@ export type ModalData = {
     input?: string,
     inputPlaceholder?: string,
     verifyInput?: (input: string) => boolean | void
+}
+
+
+interface LayoutConfig {
+    id?: string;
+    title?: string;
+    component?: string;
+    type: 'row' | 'column' | 'panel';
+    children?: LayoutConfig[];
 }

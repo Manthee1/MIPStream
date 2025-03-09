@@ -4,23 +4,31 @@
 import Editor from "@/components/core/Editor.vue";
 import Controls from "@/components/core/Controls.vue";
 import SideBar from "@/components/layout/SideBar.vue";
-import Settings from "@/components/windows/Settings.vue";
 import CpuView from "@/components/core/CpuView.vue";
 import Window from "@/components/common/Window.vue";
+
 </script>
 
 <template>
-	<div class="content-wrapper">
-		<SideBar />
-		<div class="editor-wrapper">
+	<DockviewVue @ready="onReady"
+		:class="{ 'dockview-theme-light': $viewStore.theme == 'light', 'dockview-theme-dark': $viewStore.theme == 'dark' }"
+		style="height: 100%">
+		<SideBar id="sidebar" />
+		<Stages />
+		<Registers />
+		<Memory />
+
+		<div id="editor">
 			<Controls />
 			<Editor :key="project.id" v-model="project.code" @update:modelValue="codeUpdate()" />
-			<Accordion style="flex:1 1 auto" open :label="`Problems (${ $programExecutionStore.errors.length })`">
-				<Problems />
-			</Accordion>
 		</div>
-		<CpuView v-show="$viewStore.showCpuView" />
-	</div>
+
+		<Accordion id='problems' open :label="`Problems (${$programExecutionStore.errors.length})`">
+			<Problems />
+		</Accordion>
+
+		<CpuView id='cpuView' v-show="$viewStore.showCpuView" />
+	</DockviewVue>
 </template>
 
 <script lang="ts">
@@ -28,8 +36,13 @@ import { defineComponent } from "vue";
 import { downloadProject, loadProject, Project, saveProject } from "../storage/projectsStorage";
 import Problems from "../components/core/Problems.vue";
 import Accordion from "../components/common/Accordion.vue";
+import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vue";
+import Registers from "../components/features/Registers.vue";
+import Stages from "../components/features/Stages.vue";
+import Memory from "../components/features/Memory.vue";
 
 let confirmSaveBeforeLeave = async () => true;
+let codeUpdate = (code) => { };
 
 export default defineComponent({
 	components: {
@@ -39,7 +52,11 @@ export default defineComponent({
 		CpuView,
 		Window,
 		Problems,
+		Registers,
 		Accordion,
+		Stages,
+		Memory,
+		DockviewVue,
 	},
 	name: "Main",
 
@@ -93,10 +110,10 @@ export default defineComponent({
 
 
 	},
-	async beforeRouteLeave(to, from) {
+	async beforeRouteLeave(_to, _from) {
 		return await confirmSaveBeforeLeave();
 	},
-	async beforeRouteUpdate(to, from) {
+	async beforeRouteUpdate(_to, _from) {
 		return await confirmSaveBeforeLeave();
 	},
 	mounted() {
@@ -130,7 +147,11 @@ export default defineComponent({
 			this.$viewStore.setTitle(this.project.name + " - DLXSim");
 			this.projectSaved = true;
 		},
-		codeUpdate() {
+		codeUpdate(code?: string) {
+			if (!code) return;
+			this.project.code = code;
+			console.log("Code Updated", this.project.code);
+
 			this.projectSaved = false;
 			this.$viewStore.setTitle(this.project.name + " - DLXSim *");
 
@@ -142,6 +163,133 @@ export default defineComponent({
 				}, 2000);
 			}
 		},
+		onReady(event: DockviewReadyEvent) {
+			console.log('Dockview ready', event);
+			const api = event.api;
+
+
+			// event.api.onDidLayoutChange(() => {
+			// 	const layout = api.toJSON();
+			// 	this.project.layoutConfig = layout;
+			// 	saveProject(this.project);
+			// });
+
+			// Storage
+			// const layoutConfig = this.project?.layoutConfig ?? {};
+			// if (Object.keys(layoutConfig).length > 0) {
+			// 	api.fromJSON(layoutConfig);
+			// 	return;
+			// }
+
+			const layoutGridConfig = {
+				"root": {
+					"type": "branch",
+					"data": [
+						{
+							"type": "leaf",
+							"data": {
+								"views": [
+									"stages",
+									"registers",
+									"memory"
+								],
+								"activeView": "memory",
+								"id": "2"
+							},
+							"size": 371
+						},
+						{
+							"type": "leaf",
+							"data": {
+								"views": [
+									"editor"
+								],
+								"activeView": "editor",
+								"id": "3"
+							},
+							"size": 688
+						},
+						{
+							"type": "branch",
+							"data": [
+								{
+									"type": "leaf",
+									"data": {
+										"views": [
+											"cpuView"
+										],
+										"activeView": "cpuView",
+										"id": "4"
+									},
+									"size": 586
+								},
+								{
+									"type": "leaf",
+									"data": {
+										"views": [
+											"problems"
+										],
+										"activeView": "problems",
+										"id": "5"
+									},
+									"size": 317
+								}
+							],
+							"size": 861
+						}
+					],
+					"size": 903
+				},
+				"width": 1920,
+				"height": 903,
+				"orientation": "HORIZONTAL"
+			};
+
+			const conf: SerializedDockview = {
+				"grid": layoutGridConfig as any,
+				"panels": {
+					"stages": {
+						"id": "stages",
+						"contentComponent": "Stages",
+						"title": "Stages"
+					},
+					"registers": {
+						"id": "registers",
+						"contentComponent": "Registers",
+						"title": "Registers"
+					},
+					"memory": {
+						"id": "memory",
+						"contentComponent": "Memory",
+						"title": "Memory"
+					},
+					"editor": {
+						"id": "editor",
+						"contentComponent": "Editor",
+						"title": "Editor",
+						"params": {
+							"id": this.project.id,
+							"code": this.project.code,
+							"onUpdate": this.codeUpdate,
+						},
+
+					},
+					"cpuView": {
+						"id": "cpuView",
+						"contentComponent": "CpuView",
+						"title": "CPU"
+					},
+					"problems": {
+						"id": "problems",
+						"contentComponent": "Problems",
+						"title": "Problems"
+					}
+				},
+				"activeGroup": "5"
+			};
+
+			api.fromJSON(conf);
+		}
 	},
 });
 </script>

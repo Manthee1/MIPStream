@@ -3,10 +3,14 @@
 </script>
 
 <template>
+	<!-- <div id="editor-wrapper"> -->
+	<Controls />
 	<div ref="editor" class="editor-container">
 		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$programExecutionStore.program" </div> -->
 		<!-- <div id="editor" ref="editor"> </div> -->
 	</div>
+	<!-- </div> -->
+
 </template>
 
 <script lang="ts">
@@ -14,21 +18,34 @@
 import { defineComponent } from 'vue';
 // import { getStageName } from '../../assets/js/utils';
 import { default as monaco, validate } from "../../config/monaco";
+import Controls from './Controls.vue';
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 export default defineComponent({
+	components: {
+		Controls
+	},
 	data() {
 		return {
 			decorations: [] as string[],
 			hoverDecorations: [] as string[],
 			stageDecorations: [] as string[],
+
+			onUpdate: (code: string) => {
+				console.log('Code Updated:', code);
+			}
 		}
 	},
 	props: {
-		modelValue: String
+		params: Object
 	},
 
 	mounted() {
+
+		console.log('Editor Mounted', this.params);
+		let code = this.params?.params.code
+		this.onUpdate = this.params?.params.onUpdate;
+
 		const editorEl = this.$refs.editor as HTMLElement;
 		editor = monaco.editor.create(editorEl, {
 			language: 'asm',
@@ -41,7 +58,7 @@ export default defineComponent({
 				top: 10,
 				bottom: 10
 			},
-			value: this.modelValue,
+			value: code,
 			parameterHints: {
 				enabled: true
 			},
@@ -63,7 +80,8 @@ export default defineComponent({
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
 			const code = monaco.editor.getModels()[0].getValue();
 			this.$programExecutionStore.program = code;
-			this.$emit('update:modelValue', code);
+			// this.$emit('update:modelValue', code);
+			this.onUpdate(code);
 			validate(model);
 			this.$programExecutionStore.updateErrors();
 
@@ -181,7 +199,14 @@ export default defineComponent({
 	}
 })
 </script>
+
 <style lang="sass">
+.editor-wrapper
+	display: flex
+	flex-flow: column nowrap
+	height: 100%
+	width: 100%
+	overflow: hidden
 .editor-container
 	min-width: 300px
 	height: 100%

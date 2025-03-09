@@ -9,7 +9,8 @@ import VueFeather from 'vue-feather';
 import Notifications from '@kyvg/vue3-notification';
 
 import { initRouter } from './router'
-import { ModalData } from "./types";
+
+import 'dockview-core/dist/styles/dockview.css'
 
 const pinia = createPinia()
 
@@ -43,6 +44,7 @@ app.config.globalProperties.$settings = settings;
 app.config.globalProperties.$viewStore = viewStore;
 app.config.globalProperties.$confirm = viewStore.confirm;
 app.config.globalProperties.$prompt = viewStore.prompt;
+
 
 const router = initRouter();
 app.use(router);
