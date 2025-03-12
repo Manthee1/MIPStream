@@ -202,3 +202,7 @@ export function getDefaultInstructionDefOperands(instruction: InstructionConfig)
     }
 
 }
+
+export function getProgramLines(program: string): string[] {
+    return program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.trim())
+}

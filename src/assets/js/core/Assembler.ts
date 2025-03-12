@@ -1,4 +1,4 @@
-import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, } from "../utils"
+import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, } from "../utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
 
 export class Assembler {
@@ -55,10 +55,6 @@ export class Assembler {
         }
 
 
-
-
-        console.log('operands', operands);
-
         let rs = 0;
         let rt = 0;
         let rd = 0;
@@ -93,8 +89,6 @@ export class Assembler {
                 if (!labels.has(operand)) throw new Error(`Invalid label: ${operand}.`);
                 const value = labels.get(operand) as number;
                 offset = imm = value - pc - 1;
-                console.log('offset', offset);
-
             } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
 
@@ -118,7 +112,7 @@ export class Assembler {
     public assemble(program: string) {
         let errors: AssemblerErrorList = new AssemblerErrorList([]);
 
-        const programLines = program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.trim());
+        const programLines = getProgramLines(program);
         let encodedInstructions: Uint32Array = new Uint32Array(programLines.length);
 
 
