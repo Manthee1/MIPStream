@@ -21,11 +21,3 @@ type ModalData = {
     verifyInput?: (input: string) => boolean | void
 }
 
-
-interface LayoutConfig {
-    id?: string;
-    title?: string;
-    component?: string;
-    type: 'row' | 'column' | 'panel';
-    children?: LayoutConfig[];
-}
