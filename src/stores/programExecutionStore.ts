@@ -7,6 +7,7 @@ import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
 import MIPSBase from '../assets/js/core/MIPSBase';
 import { instructionConfig } from '../assets/js/core/config/instructions';
+import { useViewStore } from './viewStore';
 
 
 export const useProgramExecutionStore = defineStore('programexec', {
@@ -15,7 +16,7 @@ export const useProgramExecutionStore = defineStore('programexec', {
         assembler: new Assembler(instructionConfig),
         program: '' as string,
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
-        speed: 1 as number, // cycles per second
+        speed: 10 as number, // cycles per second
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
         stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
@@ -69,16 +70,18 @@ export const useProgramExecutionStore = defineStore('programexec', {
 
                 return;
             }
-            this.stagePCs = [-1, -1, -1, -1, -1];
+            this.stagePCs = [0, -1, -1, -1, -1];
 
             this.core.loadProgram(instructionMemory);
+            useViewStore().cpuDiagram.draw();
         },
         step() {
             if (this.status != 'paused') return;
-            this.core.runCycle();
             // Add current pc to stagePCs and remove the oldest one
-            this.stagePCs.unshift(this.core.PC / 4);
+            this.core.runCycle();
+            this.stagePCs.unshift(this.core.PC.value / 4);
             this.stagePCs.pop();
+            useViewStore().cpuDiagram.draw();
             if (this.core.halted) this.status = 'stopped'
         },
         pause() {
@@ -99,12 +102,13 @@ export const useProgramExecutionStore = defineStore('programexec', {
             this.status = 'running';
             // Run until the program is finished
             while (this.status == 'running' && !this.core.halted) {
-                this.core.runCycle();
                 // Add current pc to stagePCs and remove the oldest one
-                this.stagePCs.unshift(this.core.PC / 4);
+                this.core.runCycle();
+                this.stagePCs.unshift(this.core.PC.value / 4);
                 this.stagePCs.pop();
-                console.log(this.breakpoints, this.PCToLineMap[this.core.PC / 4]);
-                if (this.breakpoints.includes(this.PCToLineMap[this.core.PC / 4])) {
+                useViewStore().cpuDiagram.draw();
+                console.log(this.breakpoints, this.PCToLineMap[this.core.PC.value / 4]);
+                if (this.breakpoints.includes(this.PCToLineMap[this.core.PC.value / 4])) {
                     this.status = 'paused';
                     return;
                 }

@@ -30,7 +30,7 @@ export default defineComponent({
         console.log(cpu);
 
 
-        const cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
+        this.$viewStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
     },
     methods: {
 

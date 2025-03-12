@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
 import { createProject } from '../storage/projectsStorage';
 import { useRouter } from 'vue-router';
+import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 
 
 const theme = settings.theme;
@@ -14,6 +15,7 @@ export const useViewStore = defineStore('view', {
         showCpuView: false,
         showSettings: false,
         theme: theme,
+        cpuDiagram: {} as CPUDiagram,
         modalData: {} as ModalData,
         topBar: {
             title: '',
@@ -71,7 +73,7 @@ export const useViewStore = defineStore('view', {
                 data.message = data.title;
                 data.title = '';
             }
-            this.modalData = Object.assign( {
+            this.modalData = Object.assign({
                 show: true,
                 title: data.title,
                 message: data.message,
@@ -102,23 +104,23 @@ export const useViewStore = defineStore('view', {
 
         },
 
-        async setupProject(){
+        async setupProject() {
             const name = await this.prompt({
-				title: 'Create Project',
-				message: 'Enter the name of the project',
-				inputPlaceholder: 'Project Name',
-				verifyInput: (input?: string) => {
-					if (!input) throw 'Project name is required';
-					if (input.length < 3)
-						throw 'Project name must be at least 3 characters long';
+                title: 'Create Project',
+                message: 'Enter the name of the project',
+                inputPlaceholder: 'Project Name',
+                verifyInput: (input?: string) => {
+                    if (!input) throw 'Project name is required';
+                    if (input.length < 3)
+                        throw 'Project name must be at least 3 characters long';
 
-					return true;
-				},
-				confirmText: 'Create Project',
-			});
+                    return true;
+                },
+                confirmText: 'Create Project',
+            });
 
-			if (!name || typeof name !== 'string') return;
-			console.log('Create Project', name);
+            if (!name || typeof name !== 'string') return;
+            console.log('Create Project', name);
 
             try {
                 const project = createProject(name);
@@ -145,9 +147,9 @@ export const useViewStore = defineStore('view', {
 
             if (confirm) {
                 console.log('Delete Project', projectId);
-            }   
-            
-        },    
+            }
+
+        },
 
         setTopBar(title: string, dropdownItems: DropdownItem[]) {
 

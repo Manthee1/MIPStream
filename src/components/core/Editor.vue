@@ -106,9 +106,7 @@ export default defineComponent({
 	computed: {
 		currentPC(): number {
 			// return 0;
-			console.log('PC:', this.$programExecutionStore.core.PC);
-
-			return this.$programExecutionStore.core.PC;
+			return this.$programExecutionStore.stagePCs[0];	
 		}
 	},
 	watch: {
@@ -116,12 +114,13 @@ export default defineComponent({
 			const model = editor.getModel();
 			if (!model) return;
 			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
-				const line = this.$programExecutionStore.PCToLineMap[this.$programExecutionStore.stagePCs[index]];
-				const stageName = "stage-" + index;
-				console.log('Stage:', stageName, line);
 
-				if (line == -1)
-					return [];
+				if (this.$programExecutionStore.stagePCs[index] == -1) return [];
+
+				const stageName = "stage-" + index;
+				const line = this.$programExecutionStore.PCToLineMap[this.$programExecutionStore.stagePCs[index]];
+
+				console.log('Stage:', stageName, line, this.$programExecutionStore.stagePCs[index]);
 				return [
 					{
 						range: new monaco.Range(+line, 1, +line, 1),
