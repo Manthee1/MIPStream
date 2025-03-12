@@ -4,23 +4,30 @@ import { decToHex } from '../../assets/js/utils';
 </script>
 
 <template>
-    <div class="registers-container">
-        <ul class="register-list">
-            <li class="register-item" v-for="(value, index) in registers.slice(0, 16)" :key="index">
-                <span>R{{ index }}</span>
-                <!-- Binary value -->
-                <span>0x{{ decToHex(value, 8) }}</span>
-                <span>{{ value }}</span>
-            </li>
-        </ul>
-        <ul class="register-list">
-            <li class="register-item" v-for="(value, index) in registers.slice(16)" :key="index">
-                <span>R{{ index + 16 }}</span>
-                <!-- Binary value -->
-                <span>0x{{ decToHex(value, 8) }}</span>
-                <span>{{ value }}</span>
-            </li>
-        </ul>
+    <div>
+        <div class="pc">
+            <span>PC</span>
+            <span>0x{{ decToHex($programExecutionStore.core.PC.value, 8) }}</span>
+            <span>{{ $programExecutionStore.core.PC.value }} ({{ $programExecutionStore.core.PC.value / 4 }})</span>
+        </div>
+        <div class="registers-container">
+            <ul class="register-list">
+                <li class="register-item" v-for="(value, index) in registers.slice(0, 16)" :key="index">
+                    <span>R{{ index }}</span>
+                    <!-- Binary value -->
+                    <span>0x{{ decToHex(value, 8) }}</span>
+                    <span>{{ value }}</span>
+                </li>
+            </ul>
+            <ul class="register-list">
+                <li class="register-item" v-for="(value, index) in registers.slice(16)" :key="index">
+                    <span>R{{ index + 16 }}</span>
+                    <!-- Binary value -->
+                    <span>0x{{ decToHex(value, 8) }}</span>
+                    <span>{{ value }}</span>
+                </li>
+            </ul>
+        </div>
     </div>
 </template>
 
@@ -45,6 +52,14 @@ export default defineComponent({
 <style lang="sass" scoped>
 // Simmple compact code like style for the register list
 
+.pc
+    display: flex
+    flex-flow: row nowrap
+    justify-content: space-between
+    padding: 0.5rem 1rem
+    font-size: 1.5rem
+    border-bottom: 1px solid #ccc
+
 .registers-container
     display: flex
     flex-flow: row nowrap
@@ -60,6 +75,7 @@ export default defineComponent({
         display: grid
         grid-template-columns: repeat(3, 1fr)
         column-gap: 1rem
+        flex: 1 1 auto
         &:first-child
             padding-right: 2rem
             border-right: 1px solid #ccc

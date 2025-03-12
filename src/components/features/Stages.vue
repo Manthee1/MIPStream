@@ -11,9 +11,9 @@ import { defineComponent } from 'vue';
 
             <div class="flex flex-row flex-wrap text-left gapx-2">
                 <label class="flex-12 text-center m-0">{{ index }}</label>
-                <div class="flex-6 flex flex-row flex-nowrap" v-for="(value, key) in stage" :key="key">
+                <div class="flex-6 flex flex-row flex-nowrap" v-for="(reference, key) in stage" :key="key">
                     <span class="flex-6">{{ key }}</span>
-                    <span class="flex-6 text-right">{{ value }}</span>
+                    <span class="flex-6 text-right">{{ reference.value }}</span>
                 </div>
                 <div class="flex-6"></div>
             </div>
@@ -30,8 +30,8 @@ export default defineComponent({
         };
     },
     computed: {
-        stages(): typeof this.$programExecutionStore.core.stages {
-            return this.$programExecutionStore.core.stages;
+        stages(): typeof this.$programExecutionStore.core.stageRegisters {
+            return this.$programExecutionStore.core.stageRegisters;
         },
     },
 });
