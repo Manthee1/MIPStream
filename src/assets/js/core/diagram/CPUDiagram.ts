@@ -56,8 +56,6 @@ export class CPUDiagram {
         // }, 1000 / 60);
 
         console.log('Diagram', this);
-
-
     }
 
     mountCanvas(selector: string) {
@@ -316,13 +314,15 @@ export class CPUDiagram {
 
     drawPort(port: PortLayout) {
         const { x, y } = port.pos as Position;
-        const width = 10;
-        const height = 10;
+        const width = 20;
+        const height = 12;
 
         this.drawRectCenter(x, y, width, height, 'white', 'black');
 
         // Add the name to the center of the component
-        this.drawText(port.label, x, y, 'black', '12px Arial', 'center', 'middle');
+
+        const value = ((typeof port.value === 'object') ? port.value._value : port.value).toString() ?? '';
+        this.drawText(value, x, y, 'black', '12px Arial', 'center', 'middle');
     }
 
     drawConnection(connectionLayout: ConnectionLayout) {
@@ -334,14 +334,22 @@ export class CPUDiagram {
             this.ctx.strokeStyle = 'black';
         } else {
             this.ctx.setLineDash([5, 5]);
-            this.ctx.strokeStyle = 'gray';
+            this.ctx.strokeStyle = 'red';
         }
+        // Get the from port value
+        const fromPort = this.ports.get(connectionLayout.from) as PortLayout;
+        const fromPortValue = ((typeof fromPort.value === 'object') ? fromPort.value.value : fromPort.value) as number;
+        this.ctx.globalAlpha = fromPortValue == 0 ? 0.5 : 1;
+
 
         this.ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
         pathPoints.forEach((point) => {
             this.ctx.lineTo(point.x, point.y);
         });
         this.ctx.stroke();
+        this.ctx.setLineDash([]);
+        this.ctx.globalAlpha = 1;
+
 
         // // Draw the bit range
         // const bitRangeText = `${bitRange[0]}-${bitRange[1]}`;
@@ -359,17 +367,17 @@ export class CPUDiagram {
         this.components.forEach((component) => {
             this.drawComponent(component);
         });
-
-        // Draw the ports
-        this.ports.forEach((port) => {
-            this.drawPort(port);
-        });
-
         // Draw the connections
         this.ctx.strokeStyle = 'black';
         this.connections.forEach((connection) => {
             this.drawConnection(connection);
         });
+        // Draw the ports
+        this.ports.forEach((port) => {
+            this.drawPort(port);
+        });
+
+
 
         // Draw plugins
         this.pluginInstances.forEach((plugin) => {
