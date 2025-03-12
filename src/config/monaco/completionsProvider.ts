@@ -53,7 +53,7 @@ export default {
             const instructionSuggestions: monaco.languages.CompletionItem[] = INSTRUCTION_SET.map((instruction) => ({
                 label: instruction.mnemonic,
                 kind: monaco.languages.CompletionItemKind.Method,
-                insertText: instruction.mnemonic + ' ',
+                insertText: instruction.mnemonic + ((instruction.operands && instruction.operands.length == 0) ? '' : ' '),
 
                 command: (instruction.operands && instruction.operands.length == 0) ? undefined : { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
                 detail: getInstructionSyntax(instruction),
@@ -94,12 +94,21 @@ export default {
         const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
         const operandIndex = lineUntilPosition.split(',').length - 1;
         const operand = operands[operandIndex];
+        const isLastOperand = operandIndex === operands.length - 1;
+
+        let currentOperand = lineUntilPosition.split(',').pop();
+        // Trim all the beggining spaces
+        currentOperand = currentOperand.replace(/^\s+/, '');
+        // IF there are still spaces, then don't suggest anything
+        if (isLastOperand && currentOperand.includes(' ')) return { suggestions: [] };
+
+        console.log(currentOperand, operand);
 
         console.log(operandIndex, operand, operands);
 
-        if (operand === 'REG_DESTINATION' || operand === 'REG_SOURCE') {
+        if (operand === 'REG_DESTINATION' || operand === 'REG_SOURCE' || operand === 'REG_TARGET') {
             const addComma = operands.length > 1 && operandIndex < operands.length - 1;
-            const includeZero = operand === 'REG_SOURCE';
+            const includeZero = operand !== 'REG_DESTINATION';
             const triggerSuggest = operandIndex < operands.length - 1;
             return getRegisterCompletions(addComma, includeZero, triggerSuggest);
         }
@@ -112,8 +121,26 @@ export default {
                         kind: monaco.languages.CompletionItemKind.Value,
                         insertText: '0',
                         detail: 'Immediate',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                         documentation: {
                             value: 'Immediate value',
+                            isTrusted: true,
+                        },
+                    } as monaco.languages.CompletionItem,
+                ],
+            };
+        }
+
+        if (operand === 'MEM_ADDRESS') {
+            return {
+                suggestions: [
+                    {
+                        label: 'address',
+                        kind: monaco.languages.CompletionItemKind.Value,
+                        insertText: '0(R0)',
+                        detail: 'Memory Address',
+                        documentation: {
+                            value: 'Memory address',
                             isTrusted: true,
                         },
                     } as monaco.languages.CompletionItem,

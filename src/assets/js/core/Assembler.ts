@@ -37,17 +37,17 @@ export class Assembler {
 
 
         // IF the instruction is a LOAD or STORE instruction, the operands are different so convert them to the standard operands
-        if (instructionDef.controlSignals.MemRead == 1 || instructionDef.controlSignals.MemWrite == 1) {
-            if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
+        // if (instructionDef.controlSignals.MemRead == 1 || instructionDef.controlSignals.MemWrite == 1) {
+        //     if (operands.length !== 2) throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
 
-            // Check if operands are valid
-            if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
-            if (!isEffectiveAddress(operands[1])) throw new Error(`Invalid effective address: ${operands[1]}.`);
-            const [rs, imm] = [getEffectiveAddressRegister(operands[1]), getEffectiveAddressImm(operands[1])];
+        //     // Check if operands are valid
+        //     if (!isRegister(operands[0])) throw new Error(`Invalid register: ${operands[0]}.`);
+        //     if (!isEffectiveAddress(operands[1])) throw new Error(`Invalid effective address: ${operands[1]}.`);
+        //     const [rs, imm] = [getEffectiveAddressRegister(operands[1]), getEffectiveAddressImm(operands[1])];
 
-            operands[1] = rs.toString();
-            operands.push(imm.toString());
-        }
+        //     operands[1] = rs.toString();
+        //     operands.push(imm.toString());
+        // }
 
         // Check if the number of operands is correct
         if (operands.length !== instructionDef.operands.length) {
@@ -70,15 +70,17 @@ export class Assembler {
         for (let i = 0; i < operands.length; i++) {
             const operand = operands[i];
             const operandType = instructionDef.operands[i];
-            if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION') {
+
+            if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION' || operandType === 'REG_TARGET') {
                 if (!isRegister(operand)) throw new Error(`Invalid register: ${operand}.`);
                 if (!isValidRegister(getRegisterNumber(operand))) throw new Error(`Invalid register: ${operand}.`);
                 const value = getRegisterNumber(operand);
-                if (operandType === 'REG_SOURCE') {
-                    if (regSourceCount++ == 0) rs = value;
-                    else rt = value;
+                switch (operandType) {
+                    case 'REG_SOURCE': rs = value; break;
+                    case 'REG_TARGET': rt = value; break;
+                    case 'REG_DESTINATION': rd = value; break;
+                    default: break;
                 }
-                else rd = value;
             }
             else if (operandType === 'IMMEDIATE') {
                 if (!isValue(operand)) throw new Error(`Invalid immediate value: ${operand}.`);
@@ -89,6 +91,9 @@ export class Assembler {
                 if (!labels.has(operand)) throw new Error(`Invalid label: ${operand}.`);
                 const value = labels.get(operand) as number;
                 offset = imm = value - pc - 1;
+            } else if (operandType === "MEM_ADDRESS") {
+                if (!isEffectiveAddress(operand)) throw new Error(`Invalid effective address: ${operand}.`);
+                [rs, imm] = [getEffectiveAddressRegister(operand), getEffectiveAddressImm(operand)];
             } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
 
