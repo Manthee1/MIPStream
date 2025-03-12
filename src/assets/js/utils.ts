@@ -85,8 +85,12 @@ export function getInstructionSyntax(instruction: InstructionConfig) {
                 return 'Rd';
             case 'REG_SOURCE':
                 return 'Rs';
+            case 'REG_TARGET':
+                return 'Rt';
             case 'IMMEDIATE':
                 return 'imm';
+            case 'MEM_ADDRESS':
+                return 'imm(Rs)';
             case 'LABEL':
                 return 'label';
             default:
@@ -192,7 +196,7 @@ export function extractBits(num: number, x: number): number {
 export function getDefaultInstructionDefOperands(instruction: InstructionConfig): OperandType[] {
     switch (instruction.type) {
         case 'R':
-            return ['REG_DESTINATION', 'REG_SOURCE', 'REG_SOURCE'];
+            return ['REG_DESTINATION', 'REG_SOURCE', 'REG_TARGET'];
         case 'I':
             return ['REG_DESTINATION', 'REG_SOURCE', 'IMMEDIATE'];
         case 'J':

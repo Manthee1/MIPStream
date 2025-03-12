@@ -1,5 +1,5 @@
 
-type OperandType = 'REG_SOURCE' | 'REG_DESTINATION' | 'IMMEDIATE' | 'ADDRESS' | 'LABEL' | 'INVALID';
+type OperandType = 'REG_SOURCE' | 'REG_TARGET' | 'REG_DESTINATION' | 'IMMEDIATE' | 'MEM_ADDRESS' | 'LABEL' | 'INVALID';
 
 type InstructionType = 'R' | 'I' | 'J' | 'INVALID';
 

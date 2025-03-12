@@ -42,6 +42,7 @@ export const instructionConfig: InstructionConfig[] = [
             RegWrite: 1,
             ALUOp: 0,
         },
+        operands: ['REG_DESTINATION', 'MEM_ADDRESS'],
     },
     {
         opcode: 0x2b,
@@ -52,6 +53,7 @@ export const instructionConfig: InstructionConfig[] = [
             MemWrite: 1,
             ALUOp: 0,
         },
+        operands: ['REG_TARGET', 'MEM_ADDRESS'],
     },
     {
         opcode: 0x04,
