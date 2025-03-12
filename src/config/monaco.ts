@@ -127,7 +127,7 @@ export function validate(model: monaco.editor.ITextModel) {
                 startLineNumber: index + 1,
                 startColumn: line.indexOf(operands[0]) + 1,
                 endLineNumber: index + 1,
-                endColumn: line.indexOf(operands[operands.length - 1]) + operands[operands.length - 1].length + 1,
+                endColumn: operands.length == 0 ? 0 : line.indexOf(operands[operands.length - 1]) + operands[operands.length - 1].length + 1,
                 message: `Expected ${expectedOperandTypes.length} operands, but got ${operands.length}`,
                 severity: monaco.MarkerSeverity.Error,
             });

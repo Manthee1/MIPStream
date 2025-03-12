@@ -88,7 +88,7 @@ export default class MIPSBase {
 
     registerFile: number[];
     instructionMemory: Uint32Array;
-    dataMemory: Uint8Array;
+    dataMemory: number[];
 
     verifyOptions(options: Array<{ [name: string]: any }>) {
         // Covert options to array
@@ -134,7 +134,7 @@ export default class MIPSBase {
         this.options = options;
         this.registerFile = [];
         this.instructionMemory = new Uint32Array();
-        this.dataMemory = new Uint8Array();
+        this.dataMemory = [];
         this.reset();
 
     }
@@ -172,7 +172,7 @@ export default class MIPSBase {
     reset() {
         this.registerFile = new Array(32).fill(0);
         this.instructionMemory = new Uint32Array(this.options.instructionMemorySize);
-        this.dataMemory = new Uint8Array(this.options.dataMemorySize);
+        this.dataMemory = new Array(this.options.dataMemorySize).fill(0);
         this.PC.value = 0;
         this.HI = 0;
         this.LO = 0;
@@ -378,6 +378,8 @@ export default class MIPSBase {
 
         _.TargetPC_MEM.value = currStage.TargetPC.value;
         _.Branch_MEM.value = currStage.Branch.value;
+        _.MemWrite_MEM.value = currStage.MemWrite.value;
+        _.MemRead_MEM.value = currStage.MemRead.value;
         _.Zero_MEM.value = currStage.Zero.value;
         _.Reg2Data_MEM.value = currStage.Reg2Data.value;
         _.BranchCond_MEM.value = (currStage.Branch.value && currStage.Zero.value) ? 1 : 0;
@@ -397,13 +399,14 @@ export default class MIPSBase {
         this.stageRegisters.MEMtoWB.MemtoReg.value = _.MemtoReg_MEM.value = currStage.MemtoReg.value;
 
         // Memory
-        if (currStage.MemRead.value) {
-            const address = currStage.ALUResult.value;
-            this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value = this.dataMemory[address];
-        } else if (currStage.MemWrite.value) {
-            const address = currStage.ALUResult.value;
+        const address = currStage.ALUResult.value;
+
+        if (currStage.MemWrite.value)
             this.dataMemory[address] = currStage.Reg2Data.value;
-        }
+
+        if (currStage.MemRead.value)
+            this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value = this.dataMemory[address];
+
     }
 
     writeback() {
