@@ -168,20 +168,15 @@ export default defineComponent({
 			const api = event.api;
 
 
-			// event.api.onDidLayoutChange(() => {
-			// 	const layout = api.toJSON();
-			// 	this.project.layoutConfig = layout;
-			// 	saveProject(this.project);
-			// });
+			event.api.onDidLayoutChange(() => {
+				const layout = api.toJSON();
+				this.project.layoutGridConfig = layout.grid;
+				saveProject(this.project);
+			});
 
-			// Storage
-			// const layoutConfig = this.project?.layoutConfig ?? {};
-			// if (Object.keys(layoutConfig).length > 0) {
-			// 	api.fromJSON(layoutConfig);
-			// 	return;
-			// }
 
-			const layoutGridConfig = {
+
+			const defaultLayoutGridConfig = {
 				"root": {
 					"type": "branch",
 					"data": [
@@ -244,6 +239,10 @@ export default defineComponent({
 				"height": 903,
 				"orientation": "HORIZONTAL"
 			};
+
+			console.log(this?.project?.layoutGridConfig);
+
+			const layoutGridConfig = (Object.keys(this?.project?.layoutGridConfig ?? {}).length > 0) ? this.project.layoutGridConfig : defaultLayoutGridConfig;
 
 			const conf: SerializedDockview = {
 				"grid": layoutGridConfig as any,
