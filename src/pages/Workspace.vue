@@ -83,7 +83,7 @@ export default defineComponent({
 			}
 			this.project = project;
 			this.$nextTick(() => {
-				this.$viewStore.setTitle(this.project.name + " - DLXSim");
+				this.$viewStore.setTitle(this.project.name + " - MIPStream");
 			});
 		},
 	},
@@ -117,7 +117,7 @@ export default defineComponent({
 		return await confirmSaveBeforeLeave();
 	},
 	mounted() {
-		this.$viewStore.setTitle(this.project.name + " - DLXSim");
+		this.$viewStore.setTitle(this.project.name + " - MIPStream");
 
 		// Add a CTRL+S shortcut to save the project
 		window.addEventListener("keydown", (e) => {
@@ -144,7 +144,7 @@ export default defineComponent({
 	methods: {
 		saveProject() {
 			saveProject(this.project);
-			this.$viewStore.setTitle(this.project.name + " - DLXSim");
+			this.$viewStore.setTitle(this.project.name + " - MIPStream");
 			this.projectSaved = true;
 		},
 		codeUpdate(code?: string) {
@@ -153,7 +153,7 @@ export default defineComponent({
 			console.log("Code Updated", this.project.code);
 
 			this.projectSaved = false;
-			this.$viewStore.setTitle(this.project.name + " - DLXSim *");
+			this.$viewStore.setTitle(this.project.name + " - MIPStream *");
 
 			// If no activity in 2 seconds, and autoSave is enabled, save the project
 			if (this.$settings.autoSave) {
