@@ -14,7 +14,7 @@ interface PortLayout {
     type?: 'input' | 'output';
     location: 'top' | 'bottom' | 'left' | 'right';
     bits: number;
-    value: number;
+    value: Ref<number> | number;
     relPos: number; // a number smaller or equal to 1. Represents the position of the port on the side of the component
     pos?: Position // the absolute position of the port. used by the diagram for drawing
 }
