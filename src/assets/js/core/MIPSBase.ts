@@ -5,6 +5,7 @@ import { connections } from "./config/connections";
 import { controlSignals } from "./config/controlSignals";
 import { instructionConfig } from "./config/instructions";
 import { ALUControlPorts, aluPorts, controlUnitPorts, dataMemoryPorts, instructionMemoryPorts, muxesPorts, muxPorts, oneToOnePorts, registerFilePorts, singleOutput, stagePorts, twoToOnePorts } from "./config/ports";
+import { stageRegisters } from "./config/stages-registers";
 import { default as _ } from "./config/cpu-variables";
 
 const ALUOperations = {
@@ -138,122 +139,20 @@ export default class MIPSBase {
 
     }
 
-    PC: number = 0;
+    PC = _.PC;
     HI: number = 0;
     LO: number = 0;
     halted: boolean = false;
-    stages = {
-        IFtoID: {
-            IR: 0,
-            NPC: 0,
-        },
-        IDtoEX: {
-            IR: 0,
-            // Control Signals
-            RegWrite: 0,
-            MemtoReg: 0,
-            MemWrite: 0,
-            MemRead: 0,
-            Branch: 0,
-            ALUOp: 0,
-            ALUSrc: 0,
-            RegDst: 0,
-
-            NPC: 0,
-
-            // Data
-            Reg1Data: 0,
-            Reg2Data: 0,
-            Imm: 0,
-            Rd: 0,
-            Rt: 0,
-
-
-        },
-        EXtoMEM: {
-            IR: 0,
-            // Control Signals
-            RegWrite: 0,
-            MemtoReg: 0,
-            MemWrite: 0,
-            MemRead: 0,
-            Branch: 0,
-
-            TargetPC: 0,
-            Zero: 0,
-            ALUResult: 0,
-            Reg2Data: 0,
-            WriteRegister: 0,
-        },
-        MEMtoWB: {
-            IR: 0,
-            // Control Signals
-            RegWrite: 0,
-            MemtoReg: 0,
-
-            ALUResult: 0,
-            MemData: 0,
-            WriteRegister: 0,
-
-        },
-
-    }
+    stageRegisters = stageRegisters;
 
     resetStages() {
-        this.stages = {
-            IFtoID: {
-                IR: 0,
-                NPC: 0,
-            },
-            IDtoEX: {
-                IR: 0,
-                // Control Signals
-                RegWrite: 0,
-                MemtoReg: 0,
-                MemWrite: 0,
-                MemRead: 0,
-                Branch: 0,
-                ALUOp: 0,
-                ALUSrc: 0,
-                RegDst: 0,
+        for (let stage in this.stageRegisters) {
+            console.log(stage);
+            let stageData = this.stageRegisters[stage];
+            for (let key in stageData) {
+                this.stageRegisters[stage][key].value = 0;
+            }
 
-                NPC: 0,
-
-                // Data
-                Reg1Data: 0,
-                Reg2Data: 0,
-                Imm: 0,
-                Rd: 0,
-                Rt: 0,
-
-
-            },
-            EXtoMEM: {
-                IR: 0,
-                // Control Signals
-                RegWrite: 0,
-                MemtoReg: 0,
-                MemWrite: 0,
-                MemRead: 0,
-                Branch: 0,
-
-                TargetPC: 0,
-                Zero: 0,
-                ALUResult: 0,
-                Reg2Data: 0,
-                WriteRegister: 0,
-            },
-            MEMtoWB: {
-                IR: 0,
-                // Control Signals
-                RegWrite: 0,
-                MemtoReg: 0,
-
-                ALUResult: 0,
-                MemData: 0,
-                WriteRegister: 0,
-
-            },
         }
     }
 
@@ -263,6 +162,8 @@ export default class MIPSBase {
         }
         this.reset();
         this.instructionMemory.set(instructions);
+        _.IR_IF.value = this.instructionMemory[0]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
+
     }
 
 
@@ -272,13 +173,18 @@ export default class MIPSBase {
         this.registerFile = new Array(32).fill(0);
         this.instructionMemory = new Uint32Array(this.options.instructionMemorySize);
         this.dataMemory = new Uint8Array(this.options.dataMemorySize);
-        this.PC = 0;
+        this.PC.value = 0;
         this.HI = 0;
         this.LO = 0;
         this.halted = false;
-
         // Reset all stage data
         this.resetStages()
+
+        _.NPC_MEM.value = 4;
+        _.NPC_IF.value = 4;
+
+
+
 
     }
 
@@ -299,88 +205,97 @@ export default class MIPSBase {
     }
 
     fetch() {
-        // Fetch instruction from memory
-        const instruction = this.instructionMemory[this.PC / 4]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
-        this.stages.IFtoID.IR = instruction;
-
-        // Increment PC
-        const NPC = this.PC + 4;
-        this.stages.IFtoID.NPC = NPC;
 
         // Update PC
-        this.PC = (this.stages.EXtoMEM.Branch && this.stages.EXtoMEM.Zero) ? this.stages.EXtoMEM.TargetPC : NPC;
+        this.PC.value = _.NPC_MEM.value;
+
+        // Fetch instruction from memory
+        _.IR_IF.value = this.instructionMemory[this.PC.value / 4]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
+
+        // Increment PC
+        this.stageRegisters.IFtoID.NPC.value = _.NPC_IF.value = this.PC.value + 4;
+        _.NPC_MEM.value = _.BranchCond_MEM.value ? _.TargetPC_MEM.value : _.NPC_IF.value;
+
+
+
+
     }
 
     decode() {
-        const currStage = this.stages.IFtoID;
-        const instruction = currStage.IR;
-        const opcode = instruction >>> 26;
-        const rs = (instruction >> 21) & 0x1F;
-        const rt = (instruction >> 16) & 0x1F;
-        const rd = (instruction >> 11) & 0x1F;
-        const imm = instruction << 16 >> 16 // sign extend
+        const currStage = this.stageRegisters.IFtoID;
+        const instruction = currStage.IR.value;
+        const opcode = _.OPCODE_ID.value = instruction >>> 26;
+        const rs = _.Rs_ID.value = (instruction >> 21) & 0x1F;
+        const rt = _.Rt_ID.value = (instruction >> 16) & 0x1F;
+        const rd = _.Rd_ID.value = (instruction >> 11) & 0x1F;
+        _.Imm_ID.value = instruction & 0xFFFF;
+        const imm = _.SignedImm_ID.value = instruction << 16 >> 16 // sign extend
 
 
         // Forward NPC
-        this.stages.IDtoEX.NPC = currStage.NPC;
+        this.stageRegisters.IDtoEX.NPC.value = currStage.NPC.value;
 
         // Forward IR
-        this.stages.IDtoEX.IR = currStage.IR;
+        this.stageRegisters.IDtoEX.IR.value = currStage.IR.value;
 
         // Control Signals
         const instructionConfig = this.instructionConfig.find((config) => (config.opcode & 0b111111) === opcode);
         if (!instructionConfig) {
             throw new Error(`Invalid instruction: ${instruction}`);
         }
-        console.log('is', instructionConfig);
 
         const controlSignals = instructionConfig.controlSignals;
 
 
-        this.stages.IDtoEX.RegWrite = controlSignals.RegWrite ?? 0;
-        this.stages.IDtoEX.MemtoReg = controlSignals.MemtoReg ?? 0;
-        this.stages.IDtoEX.MemWrite = controlSignals.MemWrite ?? 0;
-        this.stages.IDtoEX.MemRead = controlSignals.MemRead ?? 0;
-        this.stages.IDtoEX.Branch = controlSignals.Branch ?? 0;
-        this.stages.IDtoEX.ALUOp = controlSignals.ALUOp ?? 0;
-        this.stages.IDtoEX.ALUSrc = controlSignals.ALUSrc ?? 0;
-        this.stages.IDtoEX.RegDst = controlSignals.RegDst ?? 0;
-
-
+        this.stageRegisters.IDtoEX.RegWrite.value = controlSignals.RegWrite ?? 0;
+        this.stageRegisters.IDtoEX.MemtoReg.value = controlSignals.MemtoReg ?? 0;
+        this.stageRegisters.IDtoEX.MemWrite.value = controlSignals.MemWrite ?? 0;
+        this.stageRegisters.IDtoEX.MemRead.value = controlSignals.MemRead ?? 0;
+        this.stageRegisters.IDtoEX.Branch.value = controlSignals.Branch ?? 0;
+        this.stageRegisters.IDtoEX.ALUOp.value = controlSignals.ALUOp ?? 0;
+        this.stageRegisters.IDtoEX.ALUSrc.value = controlSignals.ALUSrc ?? 0;
+        this.stageRegisters.IDtoEX.RegDst.value = controlSignals.RegDst ?? 0;
 
 
         // Register File
-        this.stages.IDtoEX.Reg1Data = this.registerFile[rs];
-        this.stages.IDtoEX.Reg2Data = this.registerFile[rt];
+        this.stageRegisters.IDtoEX.Reg1Data.value = this.registerFile[rs];
+        this.stageRegisters.IDtoEX.Reg2Data.value = this.registerFile[rt];
 
         // Forward Immediate(sign extended), Rd, Rt
-        this.stages.IDtoEX.Imm = imm;
-        this.stages.IDtoEX.Rd = rd;
-        this.stages.IDtoEX.Rt = rt;
+        this.stageRegisters.IDtoEX.Imm.value = imm;
+        this.stageRegisters.IDtoEX.Rd.value = rd;
+        this.stageRegisters.IDtoEX.Rt.value = rt;
 
     }
 
     execute() {
 
-        let currStage = this.stages.IDtoEX;
+        let currStage = this.stageRegisters.IDtoEX;
 
         // Forward IR
+        this.stageRegisters.EXtoMEM.IR.value = currStage.IR.value;
+        _.NPC_EX.value = currStage.NPC.value;
 
-        this.stages.EXtoMEM.IR = currStage.IR;
+        _.Rt_EX.value = currStage.Rt.value;
+        _.Rd_EX.value = currStage.Rd.value;
 
         // Control Signals
-        this.stages.EXtoMEM.RegWrite = currStage.RegWrite;
-        this.stages.EXtoMEM.MemtoReg = currStage.MemtoReg;
-        this.stages.EXtoMEM.MemWrite = currStage.MemWrite;
-        this.stages.EXtoMEM.MemRead = currStage.MemRead;
-        this.stages.EXtoMEM.Branch = currStage.Branch;
+        this.stageRegisters.EXtoMEM.RegWrite.value = currStage.RegWrite.value;
+        this.stageRegisters.EXtoMEM.MemtoReg.value = currStage.MemtoReg.value;
+        this.stageRegisters.EXtoMEM.MemWrite.value = currStage.MemWrite.value;
+        this.stageRegisters.EXtoMEM.MemRead.value = currStage.MemRead.value;
+        this.stageRegisters.EXtoMEM.Branch.value = currStage.Branch.value;
+        _.ALUSrc_EX.value = currStage.ALUSrc.value;
 
         // Calculate TargetPC
-        this.stages.EXtoMEM.TargetPC = currStage.NPC + (currStage.Imm << 2);
+        _.SignedImm_EX.value = currStage.Imm.value;
+        _.ShiftedImm_EX.value = currStage.Imm.value << 2;
+        this.stageRegisters.EXtoMEM.TargetPC.value = currStage.NPC.value + _.ShiftedImm_EX.value;
+
 
         // ALU Control
-        const ALUOp = currStage.ALUOp & 0b11;
-        const func = currStage.Imm & 0b001111;
+        const ALUOp = _.ALUOp_EX.value = currStage.ALUOp.value & 0b11;
+        const func = _.funct_EX.value = currStage.Imm.value & 0b001111;
 
         let ALUControl: number = 0;
         switch (ALUOp) {
@@ -397,11 +312,12 @@ export default class MIPSBase {
             default:
                 throw new Error("Unknown ALU operation");
         }
+        _.ALUCONTROL_EX.value = ALUControl;
 
         // ALU
-        const ALUSrc = currStage.ALUSrc;
-        const Reg1Data = currStage.Reg1Data;
-        const Reg2Data = ALUSrc ? currStage.Imm : currStage.Reg2Data;
+        const ALUSrc = _.ALUSrc_EX.value = currStage.ALUSrc.value;
+        const ALUInput1 = _.Reg1Data_EX.value = currStage.Reg1Data.value;
+        const ALUInput2 = _.ALUIn2_EX.value = ALUSrc ? currStage.Imm.value : currStage.Reg2Data.value;
 
         let ALUResult = 0;
         let HI = this.HI;
@@ -409,26 +325,26 @@ export default class MIPSBase {
 
 
         switch (ALUControl) {
-            case ALUOperations.ADD: ALUResult = Reg1Data + Reg2Data; break;
-            case ALUOperations.SUB: ALUResult = Reg1Data - Reg2Data; break;
-            case ALUOperations.AND: ALUResult = Reg1Data & Reg2Data; break;
-            case ALUOperations.OR: ALUResult = Reg1Data | Reg2Data; break;
-            case ALUOperations.XOR: ALUResult = Reg1Data ^ Reg2Data; break;
-            case ALUOperations.SLL: ALUResult = Reg1Data << Reg2Data; break;
-            case ALUOperations.SRL: ALUResult = Reg1Data >>> Reg2Data; break;
-            case ALUOperations.SRA: ALUResult = Reg1Data >> Reg2Data; break;
-            case ALUOperations.SLT: ALUResult = Reg1Data < Reg2Data ? 1 : 0; break;
-            case ALUOperations.SLTU: ALUResult = (Reg1Data >>> 0) < (Reg2Data >>> 0) ? 1 : 0; break;
+            case ALUOperations.ADD: ALUResult = ALUInput1 + ALUInput2; break;
+            case ALUOperations.SUB: ALUResult = ALUInput1 - ALUInput2; break;
+            case ALUOperations.AND: ALUResult = ALUInput1 & ALUInput2; break;
+            case ALUOperations.OR: ALUResult = ALUInput1 | ALUInput2; break;
+            case ALUOperations.XOR: ALUResult = ALUInput1 ^ ALUInput2; break;
+            case ALUOperations.SLL: ALUResult = ALUInput1 << ALUInput2; break;
+            case ALUOperations.SRL: ALUResult = ALUInput1 >>> ALUInput2; break;
+            case ALUOperations.SRA: ALUResult = ALUInput1 >> ALUInput2; break;
+            case ALUOperations.SLT: ALUResult = ALUInput1 < ALUInput2 ? 1 : 0; break;
+            case ALUOperations.SLTU: ALUResult = (ALUInput1 >>> 0) < (ALUInput2 >>> 0) ? 1 : 0; break;
             case ALUOperations.MUL:
-                const result = BigInt(Reg1Data) * BigInt(Reg2Data);
+                const result = BigInt(ALUInput1) * BigInt(ALUInput2);
                 HI = Number(result >> 32n); // High 32 bits
                 LO = Number(result & 0xFFFFFFFFn); // Low 32 bits
                 ALUResult = LO; // For simplicity, returning the low part
                 break;
             case ALUOperations.DIV:
-                if (Reg2Data !== 0) {
-                    LO = Math.floor(Reg1Data / Reg2Data);
-                    HI = Reg1Data % Reg2Data;
+                if (ALUInput2 !== 0) {
+                    LO = Math.floor(ALUInput1 / ALUInput2);
+                    HI = ALUInput1 % ALUInput2;
                     ALUResult = LO; // For simplicity, returning the low part
                 } else throw new Error("Division by zero");
                 break;
@@ -438,61 +354,68 @@ export default class MIPSBase {
         }
 
         // Forward ALUResult
-        this.stages.EXtoMEM.ALUResult = ALUResult;
-        this.stages.EXtoMEM.Zero = ALUResult === 0 ? 1 : 0;
+        this.stageRegisters.EXtoMEM.ALUResult.value = ALUResult;
+        this.stageRegisters.EXtoMEM.Zero.value = _.Zero_EX.value = ALUResult === 0 ? 1 : 0;
 
         // Forward Reg2Data
-        this.stages.EXtoMEM.Reg2Data = Reg2Data;
+        this.stageRegisters.EXtoMEM.Reg2Data.value = currStage.Reg2Data.value;
 
         // Forward WriteRegister
-        this.stages.EXtoMEM.WriteRegister = currStage.RegDst ? currStage.Rd : currStage.Rt;
+        this.stageRegisters.EXtoMEM.WriteRegister.value = currStage.RegDst.value ? currStage.Rd.value : currStage.Rt.value;
     }
 
 
     memory() {
-        let currStage = this.stages.EXtoMEM;
+        let currStage = this.stageRegisters.EXtoMEM;
 
         // Check for halt instruction
-        const instruction = currStage.IR;
+        const instruction = currStage.IR.value;
         const opcode = (instruction & 0xFC000000) >>> 26;
         if (opcode === 0b111111) {
             this.halt();
             return;
         }
 
+        _.TargetPC_MEM.value = currStage.TargetPC.value;
+        _.Branch_MEM.value = currStage.Branch.value;
+        _.Zero_MEM.value = currStage.Zero.value;
+        _.Reg2Data_MEM.value = currStage.Reg2Data.value;
+        _.BranchCond_MEM.value = (currStage.Branch.value && currStage.Zero.value) ? 1 : 0;
+
+
         // Forward IR
-        this.stages.MEMtoWB.IR = currStage.IR;
+        this.stageRegisters.MEMtoWB.IR.value = currStage.IR.value;
 
         // Forward ALUResult
-        this.stages.MEMtoWB.ALUResult = currStage.ALUResult;
+        this.stageRegisters.MEMtoWB.ALUResult.value = _.ALUResult_MEM.value = currStage.ALUResult.value;
 
         // Forward WriteRegister
-        this.stages.MEMtoWB.WriteRegister = currStage.WriteRegister;
+        this.stageRegisters.MEMtoWB.WriteRegister.value = _.WriteRegister_MEM.value = currStage.WriteRegister.value;
 
         // Control Signals
-        this.stages.MEMtoWB.RegWrite = currStage.RegWrite;
-        this.stages.MEMtoWB.MemtoReg = currStage.MemtoReg;
+        this.stageRegisters.MEMtoWB.RegWrite.value = _.RegWrite_MEM.value = currStage.RegWrite.value;
+        this.stageRegisters.MEMtoWB.MemtoReg.value = _.MemtoReg_MEM.value = currStage.MemtoReg.value;
 
         // Memory
-        if (currStage.MemRead) {
-            const address = currStage.ALUResult;
-            this.stages.MEMtoWB.MemData = this.dataMemory[address];
-        } else if (currStage.MemWrite) {
-            const address = currStage.ALUResult;
-            this.dataMemory[address] = currStage.Reg2Data;
+        if (currStage.MemRead.value) {
+            const address = currStage.ALUResult.value;
+            this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value = this.dataMemory[address];
+        } else if (currStage.MemWrite.value) {
+            const address = currStage.ALUResult.value;
+            this.dataMemory[address] = currStage.Reg2Data.value;
         }
     }
 
     writeback() {
-        let currStage = this.stages.MEMtoWB;
+        let currStage = this.stageRegisters.MEMtoWB;
 
         // Writeback
-        if (currStage.RegWrite) {
-            const value = currStage.MemtoReg ? currStage.MemData : currStage.ALUResult;
-            this.registerFile[currStage.WriteRegister] = value;
+        if (currStage.RegWrite.value) {
+            const value = currStage.MemtoReg.value ? currStage.MemReadResult.value : currStage.ALUResult.value;
+            this.registerFile[currStage.WriteRegister.value] = value;
             console.log(this.registerFile);
 
-            console.log(`Writeback: ${currStage.WriteRegister} = ${value}`);
+            console.log(`Writeback: ${currStage.WriteRegister.value} = ${value}`);
 
         }
     }
