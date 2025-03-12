@@ -1,13 +1,58 @@
-- [ ] Add Jump register instruction
-- [ ] Add Jump and link register instruction
-- [ ] Add Jump and link label instruction
-- [ ] Add conditional jumps
-- [ ] Add conditional jumps with link
-- [ ] Make imm jumps work
-- [ ] Make editor resizable
-- [ ] Add settings
-- [ ] Add insruction documentation
-- [ ] Fix dark theme
-- [x] Trim lines before sending to asembler
-- monaco
-  - [x] Add jump label completion
+- [x] Make editor resizable
+- [x] Add settings
+- [x] Fix dark theme
+- [x] Trim lines before sending to assembler
+- [x] Add jump label completion
+
+
+
+- [ ] Change the project's root directory's name
+
+Menu
+- [ ] Fix Open Recent
+- [ ] Make "New" work
+- [ ] Make "Open" work
+
+Simulator
+- [ ] Add instruction documentation
+- [ ] Add more instructions
+- [ ] Add Speed control
+- [ ] Add shortcuts simulation control
+- [ ] Add hex and binary number support
+- [ ] Add advance register convention support
+- [ ] Add ability to change register and memory values
+- [ ] Disable control buttons when not possible to use
+- [ ] Add multi cpu support
+
+Project Settings
+- [ ] Add project settings 
+- [ ] Add ability to change the memory size
+- [ ] Add ability to change current cpu
+
+Diagram
+- [ ] Add more hover information
+- [ ] Add highlighting of components
+- [ ] Add ability to change in what format the data is shown (hex, binary, decimal)
+- [ ] Add proper dark mode support
+- [ ] Add bit-range display
+- [ ] Add custom icons for components
+- [ ] Connect Reg1Data to the ALU
+- [ ] Add the ability to pan and zoom the diagram (very low priority)
+
+Other Visuals
+- [ ] Add the ability to show what data is going to be changed/used in the next instruction
+- [ ] Remove CPU window title
+- [ ] Fix editor popover clipping
+- [ ] Add info about code changes that were not assembled while the cpu is running
+
+Settings
+- [ ] Make autosave work
+- [ ] Add overlay for settings
+- [ ] Add shortcuts to settings (exit)
+
+
+Bugs
+- [ ] Fix editing the code while running the simulation directly changing cpuview stage instruction info
+- [ ] Closable tabs that will vanish forever
+- [ ] Fix badly parsed error when assembling
+- [ ] Fix project delete
