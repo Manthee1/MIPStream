@@ -27,7 +27,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
     constructor(cpuDiagram: CPUDiagram) {
         super(cpuDiagram);
 
-        this.bendConnections();
+        // this.bendConnections();
         this.initializeMouseEvents();
     }
 
@@ -35,7 +35,7 @@ export class DiagramEditor extends CPUDiagramPlugin {
         return this.keyboard.keys[key] || false;
     }
 
-    
+
 
     initializeMouseEvents() {
 
@@ -81,21 +81,38 @@ export class DiagramEditor extends CPUDiagramPlugin {
             { x: connection.fromPos.x, y: connection.toPos.y },
             { x: connection.toPos.x, y: connection.toPos.y }
         ];
-        const isVertical = fromPort.location === 'top' || fromPort.location === 'bottom';
-        const isHorizontal = fromPort.location === 'left' || fromPort.location === 'right';
+        const isFromVertical = fromPort.location === 'top' || fromPort.location === 'bottom';
+        const isToVertical = toPort.location === 'top' || toPort.location === 'bottom';
 
-        if (isVertical) {
+
+
+
+        if (isFromVertical) {
             connection.bends[0].y += (fromPort.location === 'top' ? -15 : 15);
-            connection.bends[2].y += (toPort.location === 'top' ? -15 : 15);
-            connection.bends[1].x = connection.bends[0].x;
-            connection.bends[1].y = connection.bends[2].y;
+
 
         } else {
             connection.bends[0].x += (fromPort.location === 'left' ? -15 : 15);
+        }
+
+        if (isToVertical) {
+            connection.bends[2].y += (toPort.location === 'top' ? -15 : 15);
+        } else {
             connection.bends[2].x += (toPort.location === 'left' ? -15 : 15);
+        }
+
+        if (isFromVertical && isToVertical) {
+            connection.bends[1].x = connection.bends[0].x;
+            connection.bends[1].y = connection.bends[2].y;
+        } else if (!isFromVertical && !isToVertical) {
             connection.bends[1].x = connection.bends[2].x;
             connection.bends[1].y = connection.bends[0].y;
+        } else {
+            connection.bends[1].x = connection.bends[0].x;
+            connection.bends[1].y = connection.bends[2].y;
         }
+
+
     }
 
     bendConnections() {
@@ -110,8 +127,8 @@ export class DiagramEditor extends CPUDiagramPlugin {
             const points = this.cpuDiagram.getConnectionPoints(connection);
             for (let i = 0; i < points.length - 1; i++) {
                 const [from, to] = [points[i], points[i + 1]];
-                const [x, y] = [Math.min(from.x, to.x)-5, Math.min(from.y, to.y)-5];
-                const [width, height] = [Math.abs(from.x - to.x)+10, Math.abs(from.y - to.y)+10];
+                const [x, y] = [Math.min(from.x, to.x) - 5, Math.min(from.y, to.y) - 5];
+                const [width, height] = [Math.abs(from.x - to.x) + 10, Math.abs(from.y - to.y) + 10];
                 this.cpuDiagram.spatialMap.update(connection.id + '|' + i, { x, y }, { width, height }, 'connection');
             }
         }
