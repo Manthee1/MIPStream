@@ -22,7 +22,7 @@ import { CPUDiagram } from '../../assets/js/core/diagram/CPUDiagram';
 import { DiagramEditor } from '../../assets/js/core/diagram/plugins/DiagramEditor';
 import MIPSBase from '../../assets/js/core/MIPSBase';
 import { DiagramInteraction } from '../../assets/js/core/diagram/plugins/DiagramInteraction';
-import { getProgramLines } from '../../assets/js/utils';
+import { clone, getProgramLines } from '../../assets/js/utils';
 export default defineComponent({
     components: { Window },
     name: 'CpuView',
@@ -47,7 +47,7 @@ export default defineComponent({
         console.log(cpu);
 
 
-        this.$viewStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
+        this.$viewStore.cpuDiagram = new CPUDiagram('#cpu-diagram', clone(cpu.cpuLayout), [DiagramInteraction]);
     },
 
     methods: {

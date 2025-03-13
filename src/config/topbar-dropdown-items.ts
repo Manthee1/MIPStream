@@ -20,8 +20,11 @@ export function createConfig() {
         newItem:
         {
             label: 'New',
-            action: () => {
+            action: async (context) => {
                 console.log('New clicked');
+                const project = await viewStore.setupProject();
+                if (!project) return;
+                context.$router.push({ name: 'Workspace', params: { id: project.id } });
             }
         },
         openItem:

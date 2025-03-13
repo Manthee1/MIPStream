@@ -10,7 +10,7 @@
 
 Menu
 - [x] Fix Open Recent
-- [ ] Make "New" work
+- [x] Make "New" work
 - [ ] Make "Open" work
 
 Simulator
@@ -56,7 +56,8 @@ Bugs
 - [x] Closable tabs that will vanish forever
 - [x] Fix badly parsed error when assembling
 - [x] Fix project delete
-- [ ] Fix loading project the second time breaks diagram
+- [x] Assembler errors persisting after leaving project and ignoring unsaved changes and opening the project again
+- [x] Fix loading project the second time breaks diagram
 
 
 

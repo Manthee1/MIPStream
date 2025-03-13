@@ -86,6 +86,9 @@ export default defineComponent({
 			this.project = project;
 			this.$nextTick(() => {
 				this.$viewStore.setTitle(this.project.name + " - MIPStream");
+				this.$programExecutionStore.loadedProgram = '';
+				this.$programExecutionStore.status = 'stopped';
+				this.$programExecutionStore.errors = [];
 			});
 		},
 	},
