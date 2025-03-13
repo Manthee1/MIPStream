@@ -247,7 +247,7 @@ export default defineComponent({
 			const layoutGridConfig = (Object.keys(this?.project?.layoutGridConfig ?? {}).length > 0) ? this.project.layoutGridConfig : defaultLayoutGridConfig;
 
 			const conf: SerializedDockview = {
-				"grid": defaultLayoutGridConfig as any,
+				"grid": layoutGridConfig as any,
 				"panels": {
 					"stages": {
 						"id": "stages",

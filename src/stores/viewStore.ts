@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
-import { createProject } from '../storage/projectsStorage';
+import { createProject, removeProject } from '../storage/projectsStorage';
 import { useRouter } from 'vue-router';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
+import { useNotification } from '@kyvg/vue3-notification';
 
 
 const theme = settings.theme;
@@ -147,8 +148,19 @@ export const useViewStore = defineStore('view', {
 
             if (confirm) {
                 console.log('Delete Project', projectId);
+                try {
+                    removeProject(projectId);
+                } catch (error) {
+                    useNotification().notify({
+                        type: 'error',
+                        title: 'Error',
+                        text: error.message,
+                    });
+                    return false;
+                }
+                return true;
             }
-
+            return false;
         },
 
         setTopBar(title: string, dropdownItems: DropdownItem[]) {

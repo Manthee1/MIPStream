@@ -84,8 +84,14 @@ export const loadProject = (id: string): Project | null => {
 };
 
 export const removeProject = (id: string) => {
-    let projects = loadProjects(true);
-    projects = projects.filter((project: Project) => project.id !== id);
+    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    const existingProjectIndex = projects.findIndex((p: Project) => p.id === id);
+
+    if (existingProjectIndex === -1)
+        throw new Error('Project does not exist');
+
+    projects.splice(existingProjectIndex, 1);
+    // removeFromStorage(PROJECTS_KEY);
     saveToStorage(PROJECTS_KEY, projects);
 };
 

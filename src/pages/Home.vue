@@ -22,7 +22,7 @@
             <td>{{ formatDateRecent(new Date(project.updatedAt)) }}</td>
             <td>{{ formatSize(project.size) }}</td>
             <td class="flex">
-              <MButton type="error" filled class="delete-button" @click="$viewStore.deleteProject(project.id)" icon="trash" />
+              <MButton type="error" filled class="delete-button" @click="deleteProject(project.id)" icon="trash" />
             </td>
           </tr>
         </tbody>
@@ -37,35 +37,38 @@ import { formatDateRecent, formatSize } from '../assets/js/utils';
 import MButton from '../components/common/MButton.vue';
 import { Project, loadProjects } from '../storage/projectsStorage';
 
-
-
 export default defineComponent({
-	name: 'Projects',
-	components: {
-		MButton
-	},
-	data() {
-		return {
-			projects: [] as Project[],
-		};
-	},
-	mounted() {
-		this.projects = loadProjects(true);
+  name: 'Projects',
+  components: {
+    MButton
+  },
+  data() {
+    return {
+      projects: [] as Project[],
+    };
+  },
+  mounted() {
+    this.projects = loadProjects(true);
 
-	},
-	methods: {
-		deleteProject(id: number) {
-			console.log('Delete Project', id);
-		},
+  },
+  methods: {
+
+    async deleteProject(id: string) {
+
+      const success = await this.$viewStore.deleteProject(id);
+      if (!success) return;
+      this.projects = loadProjects(true);
+    },
+
     async setupProject() {
       const project = await this.$viewStore.setupProject();
-      if(!project) return;
-           this.$router.push({ name: 'Workspace', params: { id: project.id } });
+      if (!project) return;
+      this.$router.push({ name: 'Workspace', params: { id: project.id } });
     },
     formatDateRecent,
     formatSize
-    
-	},
+
+  },
 });
 
 </script>
