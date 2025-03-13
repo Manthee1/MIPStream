@@ -36,7 +36,7 @@ export default defineComponent({
     },
     computed: {
         program() {
-            return getProgramLines(this.$programExecutionStore.program);
+            return getProgramLines(this.$programExecutionStore.loadedProgram);
         },
         stagePCs() {
             return this.$programExecutionStore.stagePCs;

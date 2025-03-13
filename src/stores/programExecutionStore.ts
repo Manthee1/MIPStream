@@ -14,7 +14,10 @@ export const useProgramExecutionStore = defineStore('programexec', {
     state: () => ({
         core: new MIPSBase(),
         assembler: new Assembler(instructionConfig),
+        // Program is the currently running program that had no assembly errors
+        loadedProgram: '' as string,
         program: '' as string,
+
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
         speed: 10 as number, // cycles per second
         breakpoints: [] as number[],
@@ -89,7 +92,7 @@ export const useProgramExecutionStore = defineStore('programexec', {
                 return;
             }
             this.stagePCs = [0, -1, -1, -1, -1];
-
+            this.loadedProgram = this.program;
             this.core.loadProgram(instructionMemory);
             useViewStore().cpuDiagram.draw();
         },

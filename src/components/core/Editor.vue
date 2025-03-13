@@ -6,7 +6,7 @@
 	<!-- <div id="editor-wrapper"> -->
 	<Controls />
 	<div ref="editor" class="editor-container">
-		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$programExecutionStore.program" </div> -->
+		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$programExecutionStore.loadedProgram" </div> -->
 		<!-- <div id="editor" ref="editor"> </div> -->
 	</div>
 	<!-- </div> -->
@@ -106,7 +106,7 @@ export default defineComponent({
 	computed: {
 		currentPC(): number {
 			// return 0;
-			return this.$programExecutionStore.stagePCs[0];	
+			return this.$programExecutionStore.stagePCs[0];
 		}
 	},
 	watch: {

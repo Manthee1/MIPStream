@@ -1,7 +1,7 @@
 <template>
     <div class="dropdown" :class="{ compact }" @click="toggleDropdown" ref="dropdown">
-        <MButton class="dropdown-toggle" :icon="icon">{{label}}</MButton>
-        
+        <MButton class="dropdown-toggle" :icon="icon">{{ label }}</MButton>
+
         <DropdownMenu v-if="isOpen" :class="{ show: isOpen }" :items="items" />
     </div>
 </template>
@@ -107,6 +107,7 @@ export default defineComponent({
             background-color: var(--color-light)
 
         .dropdown-submenu
+            position: relative
             >.icon
                 margin: auto 0
                 margin-left: auto
@@ -115,8 +116,7 @@ export default defineComponent({
             .dropdown-menu
                 position: absolute
                 display: block
-                top: -2.8rem
-                transform: translateY(100%)
+                top: -0.5rem
                 left: 100%
                 padding: 0.5em 0.5em
                 background-color: var(--color-background-dark)

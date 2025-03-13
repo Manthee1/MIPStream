@@ -10,7 +10,7 @@ export function createConfig() {
     dropdownItemsConfig =
     {
 
-        backHomeItem:{
+        backHomeItem: {
             label: 'Back to Home',
             action: (context) => {
                 context.$router.push({ name: 'Home' });
@@ -28,7 +28,7 @@ export function createConfig() {
         {
             label: 'Open',
             action: (context) => {
-                
+
             }
         },
         openRecentItem:

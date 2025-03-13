@@ -54,8 +54,9 @@ export const saveProject = (project: Project) => {
     saveToStorage(PROJECTS_KEY, projects);
 };
 
-export const loadProjects = (loadOnlyMetadata: boolean = false): Project[] => {
-    const projects = loadFromStorage(PROJECTS_KEY) || [];
+export const loadProjects = (loadOnlyMetadata: boolean = false, limit = 10): Project[] => {
+    let projects = loadFromStorage(PROJECTS_KEY) || [];
+    projects = projects.slice(0, limit);
     // Remove empty projects
     if (loadOnlyMetadata) {
         return projects.map((project: Project) => ({

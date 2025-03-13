@@ -9,7 +9,7 @@
 - [x] Change the project's root directory's name
 
 Menu
-- [ ] Fix Open Recent
+- [x] Fix Open Recent
 - [ ] Make "New" work
 - [ ] Make "Open" work
 
@@ -52,7 +52,7 @@ Settings
 
 
 Bugs
-- [ ] Fix editing the code while running the simulation directly changing cpuview stage instruction info
+- [x] Fix editing the code while running the simulation directly changing cpuview stage instruction info
 - [x] Closable tabs that will vanish forever
 - [x] Fix badly parsed error when assembling
 - [x] Fix project delete

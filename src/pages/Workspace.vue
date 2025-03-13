@@ -11,7 +11,7 @@ import DockviewTab from "../components/layout/DockviewTab.vue";
 </script>
 
 <template>
-	<DockviewVue @ready="onReady"
+	<DockviewVue @ready="onReady" :key="project.id"
 		:class="{ 'dockview-theme-light': $viewStore.theme == 'light', 'dockview-theme-dark': $viewStore.theme == 'dark' }"
 		style="height: 100%">
 		<SideBar id="sidebar" />
