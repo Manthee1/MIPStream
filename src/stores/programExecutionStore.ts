@@ -51,6 +51,24 @@ export const useProgramExecutionStore = defineStore('programexec', {
         loadProgram() {
             this.status = 'paused';
             let instructionMemory: Uint32Array;
+            if (this.program === '') {
+                notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'No program to load',
+                });
+                return;
+            }
+
+            // If we have errors, don't load the program
+            if (this.errors.length > 0) {
+                notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'Please fix the errors before loading the program',
+                });
+                return;
+            }
 
             try {
                 this.errors = [];

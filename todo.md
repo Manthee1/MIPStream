@@ -54,7 +54,7 @@ Settings
 Bugs
 - [ ] Fix editing the code while running the simulation directly changing cpuview stage instruction info
 - [x] Closable tabs that will vanish forever
-- [ ] Fix badly parsed error when assembling
+- [x] Fix badly parsed error when assembling
 - [ ] Fix project delete
 - [ ] Fix loading project the second time breaks diagram
 
