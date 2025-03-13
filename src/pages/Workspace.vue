@@ -6,6 +6,7 @@ import Controls from "@/components/core/Controls.vue";
 import SideBar from "@/components/layout/SideBar.vue";
 import CpuView from "@/components/core/CpuView.vue";
 import Window from "@/components/common/Window.vue";
+import DockviewTab from "../components/layout/DockviewTab.vue";
 
 </script>
 
@@ -57,6 +58,7 @@ export default defineComponent({
 		Stages,
 		Memory,
 		DockviewVue,
+		DockviewTab,
 	},
 	name: "Main",
 
@@ -245,22 +247,26 @@ export default defineComponent({
 			const layoutGridConfig = (Object.keys(this?.project?.layoutGridConfig ?? {}).length > 0) ? this.project.layoutGridConfig : defaultLayoutGridConfig;
 
 			const conf: SerializedDockview = {
-				"grid": layoutGridConfig as any,
+				"grid": defaultLayoutGridConfig as any,
 				"panels": {
 					"stages": {
 						"id": "stages",
 						"contentComponent": "Stages",
-						"title": "Stages"
+						"title": "Stages",
+						"tabComponent": "DockviewTab",
+
 					},
 					"registers": {
 						"id": "registers",
 						"contentComponent": "Registers",
-						"title": "Registers"
+						"title": "Registers",
+						"tabComponent": "DockviewTab",
 					},
 					"memory": {
 						"id": "memory",
 						"contentComponent": "Memory",
-						"title": "Memory"
+						"title": "Memory",
+						"tabComponent": "DockviewTab",
 					},
 					"editor": {
 						"id": "editor",
@@ -271,17 +277,20 @@ export default defineComponent({
 							"code": this.project.code,
 							"onUpdate": this.codeUpdate,
 						},
+						"tabComponent": "DockviewTab",
 
 					},
 					"cpuView": {
 						"id": "cpuView",
 						"contentComponent": "CpuView",
-						"title": "CPU"
+						"title": "CPU",
+						"tabComponent": "DockviewTab",
 					},
 					"problems": {
 						"id": "problems",
 						"contentComponent": "Problems",
-						"title": "Problems"
+						"title": "Problems",
+						"tabComponent": "DockviewTab",
 					}
 				},
 				"activeGroup": "5"

@@ -6,7 +6,7 @@
 
 
 
-- [ ] Change the project's root directory's name
+- [x] Change the project's root directory's name
 
 Menu
 - [ ] Fix Open Recent
@@ -53,6 +53,11 @@ Settings
 
 Bugs
 - [ ] Fix editing the code while running the simulation directly changing cpuview stage instruction info
-- [ ] Closable tabs that will vanish forever
+- [x] Closable tabs that will vanish forever
 - [ ] Fix badly parsed error when assembling
 - [ ] Fix project delete
+- [ ] Fix loading project the second time breaks diagram
+
+
+
+
