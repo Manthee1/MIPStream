@@ -95,6 +95,11 @@ export default defineComponent({
             text-decoration: none
             transition: background-color 0.3s
             gap: 0.2em
+            .item-icon
+                margin: auto 0
+                width: 1em
+                height: 1em
+                margin-right: 0.3em
             >*
                 margin: auto 0px
             &:hover,
@@ -118,7 +123,7 @@ export default defineComponent({
                 display: block
                 top: -0.5rem
                 left: 100%
-                padding: 0.5em 0.5em
+                padding: 0.5em 0em
                 background-color: var(--color-background-dark)
                 box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
                 z-index: 1000

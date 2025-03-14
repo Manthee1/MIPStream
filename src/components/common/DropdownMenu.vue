@@ -1,14 +1,16 @@
 <template>
-  <ul class="dropdown-menu" @mousemove="handleMouseMove">
-        <template v-for="(item, index) in items" :key="item.label" >
+    <ul class="dropdown-menu" @mousemove="handleMouseMove">
+        <template v-for="(item, index) in items" :key="item.label">
             <li class="dropdown-item" @click="itemClicked(item)" v-if="item.type == 'item'">
+                <vue-feather v-if="item.icon" :type="item.icon" class="icon item-icon" />
                 {{ item.label }}
             </li>
             <li v-else-if="item.type === 'separator'" class="dropdown-separator"></li>
             <li v-else-if="item.type === 'submenu'" class="dropdown-item dropdown-submenu">
+                <vue-feather v-if="item.icon" :type="item.icon" class="icon item-icon" />
                 {{ item.label }}
                 <vue-feather type="chevron-right" class="icon icon-chevron" />
-                <DropdownMenu :items="item.items" v-show="index == lastHoveredItemIndex" />
+                <DropdownMenu :items="item.items" v-show="index == hoverItemActiveIndex" />
             </li>
         </template>
     </ul>
@@ -19,45 +21,60 @@ import { ComponentCustomProperties, defineComponent } from "vue";
 
 
 export default defineComponent({
-  name: "DropdownMenu",
-  props: {
-    items: {
-      type: Array as () => DropdownItem[],
-      required: true,
+    name: "DropdownMenu",
+    props: {
+        items: {
+            type: Array as () => DropdownItem[],
+            required: true,
+        },
     },
-  },
-  data() {
-    return {
-      lastHoveredItemIndex: -1,
-    };
-  },
-  mounted() {
-    this.items.forEach((item: DropdownItem) => {
-        item.type = item.type || 'item';
-    });
+    data() {
+        return {
+            lastHoveredItemIndex: -1,
+            lastHoverChange: 0,
+            hoverItemActiveIndex: -1,
+            activeItemTimeout: 0,
+        };
+    },
+    mounted() {
+        this.items.forEach((item: DropdownItem) => {
+            item.type = item.type || 'item';
+        });
 
-    this.lastHoveredItemIndex = -1;
-  },
+        this.lastHoveredItemIndex = -1;
+        this.hoverItemActiveIndex = -1;
+        this.lastHoverChange = Date.now();
 
-  methods: {
-    itemClicked(item: DropdownItem) {
-      console.log(this.$context);
-      // item.action 
-      item.action && item.action(this.$context as unknown as ComponentCustomProperties);
     },
-    handleMouseMove(event: MouseEvent) {
-        console.log('mouse move');
-        
-        
-    //   If the mouse is moving, get the dropdown item that is being hovered and set it as the last hovered item
-        const dropdownItems = document.querySelectorAll('.dropdown-item');
-        const hoveredItemIndex = Array.from(dropdownItems).findIndex((item: Element) => item.contains(event.target as Node));
-        if (hoveredItemIndex == this.lastHoveredItemIndex) return;
-        this.lastHoveredItemIndex = hoveredItemIndex;
-      
-        
-    
+
+    methods: {
+        itemClicked(item: DropdownItem) {
+            console.log(this.$context);
+            // item.action 
+            item.action && item.action(this.$context as unknown as ComponentCustomProperties);
+        },
+        handleMouseMove(event: MouseEvent) {
+            console.log('mouse move');
+
+
+            // If the mouse is moving, get the dropdown item that is being hovered and set it as the last hovered item
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            const hoveredItemIndex = Array.from(dropdownItems).findIndex((item: Element) => item.contains(event.target as Node));
+            if (hoveredItemIndex == this.lastHoveredItemIndex) return;
+            this.lastHoveredItemIndex = hoveredItemIndex;
+            this.lastHoverChange = Date.now();
+
+            if (this.activeItemTimeout) clearTimeout(this.activeItemTimeout);
+            // If the hovered item is unchanged for 500ms, set it as the active item
+            this.activeItemTimeout = setTimeout(() => {
+                if (Date.now() - this.lastHoverChange >= 500) {
+                    this.hoverItemActiveIndex = hoveredItemIndex;
+                }
+            }, 500);
+
+
+
+        },
     },
-  },
 });
 </script>

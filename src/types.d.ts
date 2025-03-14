@@ -1,5 +1,6 @@
 interface DropdownItem {
     label?: string;
+    icon?: string;
     action?: (context: ComponentCustomProperties) => void;
     type?: 'item' | 'separator' | 'submenu';
     items?: DropdownItem[]; // Only for submenu
