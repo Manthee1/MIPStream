@@ -47,7 +47,7 @@ Diagram
 
 Other Visuals
 - [ ] Add the ability to show what data is going to be changed/used in the next instruction
-- [ ] Remove CPU window title
+- [x] Remove CPU window title
 - [ ] Fix editor popover clipping
 - [ ] Add info about code changes that were not assembled while the cpu is running
 

@@ -1,5 +1,5 @@
 <template>
-    <Window title="CPU">
+    <div>
         <div class="stages">
             <!-- render stage and the instruction of that stage -->
             <div class="stage" :class="'stage-' + index" v-for="(stagePC, index) in stagePCs" :key="index">
@@ -11,7 +11,7 @@
         <div class="cpu-view">
             <canvas id="cpu-diagram"></canvas>
         </div>
-    </Window>
+    </div>
 </template>
 
 <script>
