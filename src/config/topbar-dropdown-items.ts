@@ -123,8 +123,8 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
         case 'Home':
             return [
                 dropdownItemsConfig.newItem,
-                dropdownItemsConfig.importItem,
                 dropdownItemsConfig.openRecentItem,
+                dropdownItemsConfig.importItem,
 
                 dropdownItemsConfig.seperatorItem,
 
@@ -139,11 +139,11 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
             ]
         case 'Workspace':
             return [
-                dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.newItem,
-                dropdownItemsConfig.importItem,
                 dropdownItemsConfig.openRecentItem,
                 dropdownItemsConfig.saveItem,
+                dropdownItemsConfig.seperatorItem,
+                dropdownItemsConfig.importItem,
                 dropdownItemsConfig.saveAsItem,
 
                 dropdownItemsConfig.seperatorItem,
@@ -154,6 +154,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
 
                 dropdownItemsConfig.seperatorItem,
 
+                dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.exitItem
             ]
 

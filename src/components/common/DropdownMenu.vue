@@ -67,10 +67,8 @@ export default defineComponent({
             if (this.activeItemTimeout) clearTimeout(this.activeItemTimeout);
             // If the hovered item is unchanged for 500ms, set it as the active item
             this.activeItemTimeout = setTimeout(() => {
-                if (Date.now() - this.lastHoverChange >= 500) {
-                    this.hoverItemActiveIndex = hoveredItemIndex;
-                }
-            }, 500);
+                this.hoverItemActiveIndex = hoveredItemIndex;
+            }, 200);
 
 
 
