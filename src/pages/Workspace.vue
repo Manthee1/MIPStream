@@ -41,6 +41,7 @@ import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vu
 import Registers from "../components/features/Registers.vue";
 import Stages from "../components/features/Stages.vue";
 import Memory from "../components/features/Memory.vue";
+import { defaultLayoutGridConfig, panels } from "../config/layout";
 
 let confirmSaveBeforeLeave = async () => true;
 let codeUpdate = (code) => { };
@@ -179,123 +180,20 @@ export default defineComponent({
 				saveProject(this.project);
 			});
 
-
-
-			const defaultLayoutGridConfig = {
-				"root": {
-					"type": "branch",
-					"data": [
-						{
-							"type": "leaf",
-							"data": {
-								"views": [
-									"stages",
-									"registers",
-									"memory"
-								],
-								"activeView": "memory",
-								"id": "2"
-							},
-							"size": 371
-						},
-						{
-							"type": "leaf",
-							"data": {
-								"views": [
-									"editor"
-								],
-								"activeView": "editor",
-								"id": "3"
-							},
-							"size": 688
-						},
-						{
-							"type": "branch",
-							"data": [
-								{
-									"type": "leaf",
-									"data": {
-										"views": [
-											"cpuView"
-										],
-										"activeView": "cpuView",
-										"id": "4"
-									},
-									"size": 586
-								},
-								{
-									"type": "leaf",
-									"data": {
-										"views": [
-											"problems"
-										],
-										"activeView": "problems",
-										"id": "5"
-									},
-									"size": 317
-								}
-							],
-							"size": 861
-						}
-					],
-					"size": 903
-				},
-				"width": 1920,
-				"height": 903,
-				"orientation": "HORIZONTAL"
-			};
-
 			console.log(this?.project?.layoutGridConfig);
 
 			const layoutGridConfig = (Object.keys(this?.project?.layoutGridConfig ?? {}).length > 0) ? this.project.layoutGridConfig : defaultLayoutGridConfig;
 
+			const panelConfig = panels;
+			panelConfig['editor'].params = {
+				"id": this.project.id,
+				"code": this.project.code,
+				"onUpdate": this.codeUpdate,
+			}
+
 			const conf: SerializedDockview = {
 				"grid": layoutGridConfig as any,
-				"panels": {
-					"stages": {
-						"id": "stages",
-						"contentComponent": "Stages",
-						"title": "Stages",
-						"tabComponent": "DockviewTab",
-
-					},
-					"registers": {
-						"id": "registers",
-						"contentComponent": "Registers",
-						"title": "Registers",
-						"tabComponent": "DockviewTab",
-					},
-					"memory": {
-						"id": "memory",
-						"contentComponent": "Memory",
-						"title": "Memory",
-						"tabComponent": "DockviewTab",
-					},
-					"editor": {
-						"id": "editor",
-						"contentComponent": "Editor",
-						"title": "Editor",
-						"params": {
-							"id": this.project.id,
-							"code": this.project.code,
-							"onUpdate": this.codeUpdate,
-						},
-						"tabComponent": "DockviewTab",
-
-					},
-					"cpuView": {
-						"id": "cpuView",
-						"contentComponent": "CpuView",
-						"title": "CPU",
-						"tabComponent": "DockviewTab",
-					},
-					"problems": {
-						"id": "problems",
-						"contentComponent": "Problems",
-						"title": "Problems",
-						"tabComponent": "DockviewTab",
-					}
-				},
+				"panels": panelConfig,
 				"activeGroup": "5"
 			};
 
