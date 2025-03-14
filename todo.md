@@ -11,7 +11,7 @@
 Menu
 - [x] Fix Open Recent
 - [x] Make "New" work
-- [ ] Make "Open" work
+- [x] Make "Open" work - Renamed to "Import Project"
 
 Simulator
 - [ ] Add instruction documentation
@@ -29,6 +29,12 @@ Project Settings
 - [ ] Add ability to change the memory size
 - [ ] Add ability to change current cpu
 
+Settings
+- [ ] Make autosave work
+- [ ] Add overlay for settings
+- [ ] Add shortcuts to settings (exit)
+
+
 Diagram
 - [ ] Add more hover information
 - [ ] Add highlighting of components
@@ -45,10 +51,8 @@ Other Visuals
 - [ ] Fix editor popover clipping
 - [ ] Add info about code changes that were not assembled while the cpu is running
 
-Settings
-- [ ] Make autosave work
-- [ ] Add overlay for settings
-- [ ] Add shortcuts to settings (exit)
+Other Functionality
+- [ ] Add Project rename
 
 
 Bugs

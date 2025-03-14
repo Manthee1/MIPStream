@@ -13,7 +13,6 @@ export interface Project {
     size: number;
 }
 
-
 export const createProject = (name: string): Project => {
     const id = Date.now().toString();
     const project: Project = {
@@ -34,6 +33,26 @@ export const createProject = (name: string): Project => {
     if (projects.some((p: Project) => p.name === name))
         throw new Error('Project with the same name already exists');
 
+    projects.push(project);
+    saveToStorage(PROJECTS_KEY, projects);
+
+    return project;
+}
+
+export const addProject = (project: Project): Project => {
+    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    // Veryfy that the project has all the required fields
+    const defaultProject: Project = {
+        id: Date.now().toString(),
+        name: 'Untitled',
+        code: '',
+        data: [],
+        layoutGridConfig: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        size: 0
+    };
+    project = { ...defaultProject, ...project };
     projects.push(project);
     saveToStorage(PROJECTS_KEY, projects);
 

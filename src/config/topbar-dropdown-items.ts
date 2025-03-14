@@ -27,11 +27,17 @@ export function createConfig() {
                 context.$router.push({ name: 'Workspace', params: { id: project.id } });
             }
         },
-        openItem:
+        importItem:
         {
-            label: 'Open',
-            action: (context) => {
-
+            label: 'Import',
+            action: async (context) => {
+                const project = await viewStore.handleProjectUpload();
+                if (!project) return;
+                // Make the router update even if its the same route
+                context.$router.push({ name: 'Workspace', params: { id: 0 } });
+                setTimeout(() => {
+                    context.$router.push({ name: 'Workspace', params: { id: project.id } });
+                }, 0);
             }
         },
         openRecentItem:
@@ -45,7 +51,6 @@ export function createConfig() {
                 return {
                     label: project.name,
                     action: (context) => {
-                        console.log('Open Recent clicked');
                         context.$router.push({ name: 'Workspace', params: { id: project.id } });
                     }
                 }
@@ -118,7 +123,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
         case 'Home':
             return [
                 dropdownItemsConfig.newItem,
-                dropdownItemsConfig.openItem,
+                dropdownItemsConfig.importItem,
                 dropdownItemsConfig.openRecentItem,
 
                 dropdownItemsConfig.seperatorItem,
@@ -136,7 +141,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
             return [
                 dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.newItem,
-                dropdownItemsConfig.openItem,
+                dropdownItemsConfig.importItem,
                 dropdownItemsConfig.openRecentItem,
                 dropdownItemsConfig.saveItem,
                 dropdownItemsConfig.saveAsItem,

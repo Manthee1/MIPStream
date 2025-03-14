@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
-import { createProject, removeProject } from '../storage/projectsStorage';
+import { addProject, createProject, existsProject, Project, removeProject, saveProject } from '../storage/projectsStorage';
 import { useRouter } from 'vue-router';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { useNotification } from '@kyvg/vue3-notification';
@@ -171,7 +171,77 @@ export const useViewStore = defineStore('view', {
             };
         },
 
+        async handleProjectUpload() {
+            return new Promise<Project | null>((resolve) => {
+                // Add file input field to the dom and open it
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.mipstream';
+
+                input.onchange = async () => {
+                    const file = input.files?.item(0);
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async () => {
+                        const data = reader.result;
+                        console.log(data);
+
+                        let project: Project;
+                        try {
+                            project = JSON.parse(data as string);
+                        }
+                        catch (error) {
+                            useNotification().notify({
+                                type: 'error',
+                                title: 'Error',
+                                text: "Invalid project file: " + error.message,
+                            });
+                            resolve(null);
+                            return;
+                        }
+
+                        // If exists, ask to overwrite or create new
+                        if (existsProject(project.id)) {
+                            const overwrite = await this.confirm({
+                                title: 'Project Exists',
+                                message: 'A project with the same id already exists. Do you want to overwrite it?',
+                                confirmText: 'Overwrite',
+                                confirmButtonType: 'error',
+                                cancelText: 'Create New',
+                                cancelButtonType: 'default',
+                            });
+                            if (overwrite) {
+                                saveProject(project);
+                                useNotification().notify({
+                                    type: 'success',
+                                    title: 'Project Updated',
+                                    text: 'The project has been updated successfully',
+                                });
+                                resolve(project);
+                                return;
+                            }
+                            delete project.id;
+                        }
+
+                        project = addProject(project);
+                        useNotification().notify({
+                            type: 'success',
+                            title: 'Project Uploaded',
+                            text: 'The project has been uploaded successfully',
+                        });
+                        resolve(project);
+                        return;
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            });
+
+        }
     },
+
+
+
 
 
 
