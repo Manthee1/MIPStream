@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
-import { addProject, createProject, existsProject, Project, removeProject, saveProject } from '../storage/projectsStorage';
+import { addProject, createProject, existsProject, loadProject, Project, removeProject, saveProject } from '../storage/projectsStorage';
 import { useRouter } from 'vue-router';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { useNotification } from '@kyvg/vue3-notification';
@@ -162,6 +162,44 @@ export const useViewStore = defineStore('view', {
             }
             return false;
         },
+
+        async renameProject(projectId: string) {
+            const project = loadProject(projectId);
+            if (!project) {
+                useNotification().notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'Project not found',
+                });
+                return;
+            }
+            const name = await this.prompt({
+                title: 'Rename Project',
+                message: 'Enter the new name of the project',
+                inputPlaceholder: 'Project Name',
+                input: project.name,
+                verifyInput: (input?: string) => {
+                    if (!input) throw 'Project name is required';
+                    if (input.length < 3)
+                        throw 'Project name must be at least 3 characters long';
+
+                    return true;
+                },
+                confirmText: 'Rename Project',
+            })
+
+            if (!name || typeof name !== 'string') return;
+
+            saveProject({ ...project, name });
+            useNotification().notify({
+                type: 'success',
+                title: 'Project Renamed',
+                text: 'The project has been renamed successfully',
+            });
+
+            return true;
+        },
+
 
         setTopBar(title: string, dropdownItems: DropdownItem[]) {
 

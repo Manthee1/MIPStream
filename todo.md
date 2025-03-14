@@ -52,7 +52,7 @@ Other Visuals
 - [ ] Add info about code changes that were not assembled while the cpu is running
 
 Other Functionality
-- [ ] Add Project rename
+- [x] Add Project rename
 
 
 Bugs
