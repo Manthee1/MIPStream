@@ -41,7 +41,7 @@ import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vu
 import Registers from "../components/features/Registers.vue";
 import Stages from "../components/features/Stages.vue";
 import Memory from "../components/features/Memory.vue";
-import { defaultLayoutGridConfig, panels } from "../config/layout";
+import { defaultLayoutGridConfig, panelsConfig } from "../config/layout";
 
 let confirmSaveBeforeLeave = async () => true;
 let codeUpdate = (code) => { };
@@ -184,7 +184,7 @@ export default defineComponent({
 
 			const layoutGridConfig = (Object.keys(this?.project?.layoutGridConfig ?? {}).length > 0) ? this.project.layoutGridConfig : defaultLayoutGridConfig;
 
-			const panelConfig = panels;
+			const panelConfig = panelsConfig;
 			panelConfig['editor'].params = {
 				"id": this.project.id,
 				"code": this.project.code,

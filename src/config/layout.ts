@@ -66,12 +66,13 @@ export const defaultLayoutGridConfig = {
 
 
 
-export const panels: Record<string, GroupviewPanelState> = {
+export const panelsConfig: Record<string, GroupviewPanelState> = {
     "stages": {
         "id": "stages",
         "contentComponent": "Stages",
         "title": "Stages",
         "tabComponent": "DockviewTab",
+
 
     },
     "registers": {
