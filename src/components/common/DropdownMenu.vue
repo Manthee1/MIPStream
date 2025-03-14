@@ -1,5 +1,5 @@
 <template>
-    <ul class="dropdown-menu" @mousemove="handleMouseMove">
+    <ul ref="dropdown-menu" class="dropdown-menu" @mousemove="handleMouseMove">
         <template v-for="(item, index) in items" :key="item.label">
             <li class="dropdown-item" @click="itemClicked(item)" v-if="item.type == 'item'">
                 <vue-feather v-if="item.icon" :type="item.icon" class="icon item-icon" />
@@ -54,11 +54,9 @@ export default defineComponent({
             item.action && item.action(this.$context as unknown as ComponentCustomProperties);
         },
         handleMouseMove(event: MouseEvent) {
-            console.log('mouse move');
-
 
             // If the mouse is moving, get the dropdown item that is being hovered and set it as the last hovered item
-            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            const dropdownItems = (this.$refs['dropdown-menu'] as HTMLElement).children;
             const hoveredItemIndex = Array.from(dropdownItems).findIndex((item: Element) => item.contains(event.target as Node));
             if (hoveredItemIndex == this.lastHoveredItemIndex) return;
             this.lastHoveredItemIndex = hoveredItemIndex;
@@ -66,9 +64,9 @@ export default defineComponent({
 
             if (this.activeItemTimeout) clearTimeout(this.activeItemTimeout);
             // If the hovered item is unchanged for 500ms, set it as the active item
-            this.activeItemTimeout = setTimeout(() => {
-                this.hoverItemActiveIndex = hoveredItemIndex;
-            }, 200);
+            // this.activeItemTimeout = setTimeout(() => {
+            this.hoverItemActiveIndex = hoveredItemIndex;
+            // }, 200);
 
 
 
