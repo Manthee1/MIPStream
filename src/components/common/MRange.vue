@@ -1,15 +1,28 @@
 <template>
     <div class="range-container">
         <input type="range" :value="value" @input="updateValue" step="1" min="0" max="100" :style="gradientStyle" />
-        <span>{{ value }}</span>
     </div>
 </template>
 
 <script lang="ts">
-export default {
+import { defineComponent } from 'vue';
+
+export default defineComponent({
     name: 'MRange',
     props: {
-        modelValue: Number
+        modelValue: Number,
+        min: {
+            type: Number,
+            default: 0,
+        },
+        max: {
+            type: Number,
+            default: 100,
+        },
+        step: {
+            type: Number,
+            default: 1,
+        }
     },
     data() {
         return {
@@ -32,7 +45,7 @@ export default {
             this.$emit('update:modelValue', this.value);
         }
     }
-};
+});
 </script>
 
 <style scoped lang="scss">

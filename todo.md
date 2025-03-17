@@ -16,12 +16,12 @@ Menu
 Simulator
 - [x] Add instruction documentation
 - [x] Add more instructions
-- [ ] Add Speed control
+- [x] Add Speed control
 - [ ] Add shortcuts simulation control
 - [ ] Add hex and binary number support
 - [ ] Add advance register convention support
 - [ ] Add ability to change register and memory values
-- [ ] Disable control buttons when not possible to use
+- [x] Disable control buttons when not possible to use
 - [ ] Add multi cpu support
 
 Project Settings

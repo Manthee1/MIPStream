@@ -3,7 +3,7 @@
 </script>
 
 <template>
-	<div>
+	<div class="flex flex-row flex-wrap">
 		<div class="controls">
 			<MButton v-if="status == 'stopped'" outlined small icon="play" @click="run" title="Run">
 			</MButton>
@@ -14,11 +14,11 @@
 			</MButton>
 			<MButton outlined small icon="refresh-cw" @click="reloadProgram" title="Reload Program"></MButton>
 			<span class="status-circle my-auto" :title="status" :class="'status-' + status"></span>
+
 		</div>
-		<div class="controls">
-			<!-- <span>Speed:</span> -->
+		<div class="flex gap-1 ml-3">
 			<MRange v-model="$programExecutionStore.speed"></MRange>
-			ins/s
+			<span style="width:7ch" class="m-auto">{{ $programExecutionStore.speed }} ins/s</span>
 		</div>
 	</div>
 </template>
