@@ -12,7 +12,7 @@
   "dependencies": {
     "@kyvg/vue3-notification": "^3.4.1",
     "@tauri-apps/api": "^2.3.0",
-    "dockview-vue": "^3.2.0",
+    "dockview-vue": "^3.8.2",
     "feather-icons": "4",
     "monaco-editor-vue3": "^0.1.10",
     "monaco-themes": "^0.4.4",
@@ -29,7 +29,7 @@
     "sass-embedded": "^1.83.4",
     "sass-migrator": "^2.2.1",
     "typescript": "^5.0.2",
-    "vite": "^6.2.1",
+    "vite": "^6.2.2",
     "vue-tsc": "^2.2.8"
   }
 }
