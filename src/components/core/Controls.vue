@@ -5,12 +5,14 @@
 <template>
 	<div class="flex flex-row flex-wrap">
 		<div class="controls">
-			<MButton v-if="status == 'stopped'" outlined small icon="play" @click="run" title="Run">
+			<MButton v-if="status == 'stopped'" outlined small icon="play" @click="run" title="Run (F5)">
 			</MButton>
-			<MButton v-else-if="status == 'running'" outlined small icon="pause" @click="pause" title="Pause" />
-			<MButton v-else-if="status == 'paused'" outlined small icon="play-circle" @click="resume" title="Resume" />
-			<MButton outlined small icon="square" :disabled="status == 'stopped'" @click="stop" title="Stop"></MButton>
-			<MButton outlined small icon="skip-forward" :disabled="status == 'stopped'" @click="step" title="Step">
+			<MButton v-else-if="status == 'running'" outlined small icon="pause" @click="pause" title="Pause (F8)" />
+			<MButton v-else-if="status == 'paused'" outlined small icon="play-circle" @click="resume"
+				title="Resume (F8)" />
+			<MButton outlined small icon="square" :disabled="status == 'stopped'" @click="stop"
+				title="Stop (Shift + F5)"></MButton>
+			<MButton outlined small icon="skip-forward" :disabled="status == 'stopped'" @click="step" title="Step(F9)">
 			</MButton>
 			<MButton outlined small icon="refresh-cw" @click="reloadProgram" title="Reload Program"></MButton>
 			<span class="status-circle my-auto" :title="status" :class="'status-' + status"></span>

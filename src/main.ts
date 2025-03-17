@@ -11,6 +11,7 @@ import Notifications from '@kyvg/vue3-notification';
 import { initRouter } from './router'
 
 import 'dockview-core/dist/styles/dockview.css'
+import { initKeyboardHandler } from "./keyboardHandler";
 
 const pinia = createPinia()
 
@@ -44,6 +45,8 @@ app.config.globalProperties.$settings = settings;
 app.config.globalProperties.$viewStore = viewStore;
 app.config.globalProperties.$confirm = viewStore.confirm;
 app.config.globalProperties.$prompt = viewStore.prompt;
+
+initKeyboardHandler();
 
 
 const router = initRouter();
