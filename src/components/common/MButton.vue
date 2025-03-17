@@ -82,6 +82,9 @@ export default defineComponent({
     cursor: pointer
     gap: 0.5em
     transition: background-color 0.3s, color 0.3s, filter 0.3s, scale 0.1s
+    &:disabled
+        opacity: 0.5
+        cursor: not-allowed
     &.type-accent
         --color-text: var(--color-accent)
         --color-background: var(--color-accent)
