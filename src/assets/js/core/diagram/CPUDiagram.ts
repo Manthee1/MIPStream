@@ -240,18 +240,81 @@ export class CPUDiagram {
 
 
     drawComponent(componentLayout: ComponentLayout) {
-        // Get the component layout
-
-
         // Draw the component
         let [x, y] = [componentLayout.pos.x, componentLayout.pos.y];
         // [x, y] = [x + componentLayout.dimensions.width, y + componentLayout.dimensions.height];
         const width = componentLayout.dimensions.width;
         const height = componentLayout.dimensions.height;
 
+        console.log(componentLayout.type);
 
-        // Draw the component
-        this.drawRect(x, y, width, height, 'white', 'black');
+
+        switch (componentLayout.type) {
+            case "and":
+
+                console.log('Drawing component and');
+
+
+                // Draw the and gate
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y);
+                this.ctx.lineTo(x + width * (3 / 4), y);
+                // make a rectangle with right hlaf rounded to a circle
+                this.ctx.arcTo(x + width, y, x + width, y + height, height / 2);
+                this.ctx.arcTo(x + width, y + height, x + width * (3 / 4), y + height, height / 2);
+
+                this.ctx.lineTo(x, y + height);
+                this.ctx.lineTo(x, y);
+
+                this.ctx.closePath();
+                this.ctx.stroke();
+                break;
+            case 'adder':
+            case 'alu':
+                // Draw the standard ALU 'carret' chape
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y);
+
+                const cutSize = width / 1.5
+
+                this.ctx.lineTo(x + width, y + height / 2 - width / 3);
+                this.ctx.lineTo(x + width, y + height / 2 + width / 3);
+                this.ctx.lineTo(x, y + height);
+
+                this.ctx.lineTo(x, y + height - cutSize);
+                this.ctx.lineTo(x + width - cutSize, y + height / 2);
+                this.ctx.lineTo(x, y + cutSize);
+
+
+
+                this.ctx.closePath();
+                this.ctx.stroke();
+                break;
+            case 'shift':
+            case 'sign_extend':
+                // Draw A ellipse with dashed borders
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.beginPath();
+                this.ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                break;
+            case 'mux':
+                // Draw a rectanlge with rounded corners
+                this.ctx.roundRect(x, y, width, height, 10);
+                this.ctx.stroke();
+                break;
+            case 'const':
+                // this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
+                break;
+
+            default:
+                // Draw the component
+                this.drawRect(x, y, width, height, 'white', 'black');
+                break;
+        }
+
+
 
         // Add the name to the center of the component
         this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
@@ -318,7 +381,7 @@ export class CPUDiagram {
         const width = 20;
         const height = 12;
 
-        this.drawRectCenter(x, y, width, height, 'white', 'black');
+        // this.drawRectCenter(x, y, width, height, 'white', 'black');
 
         // Add the name to the center of the component
 
