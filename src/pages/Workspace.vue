@@ -41,6 +41,7 @@ import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vu
 import Registers from "../components/features/Registers.vue";
 import Stages from "../components/features/Stages.vue";
 import Memory from "../components/features/Memory.vue";
+import Instructions from "../components/features/Instructions.vue";
 import { defaultLayoutGridConfig, panelsConfig } from "../config/layout";
 
 let confirmSaveBeforeLeave = async () => true;
@@ -58,6 +59,7 @@ export default defineComponent({
 		Accordion,
 		Stages,
 		Memory,
+		Instructions,
 		DockviewVue,
 		DockviewTab,
 	},
@@ -172,7 +174,7 @@ export default defineComponent({
 		onReady(event: DockviewReadyEvent) {
 			console.log('Dockview ready', event);
 			const api = event.api;
-
+			this.$viewStore.dockviewApi = api;
 
 			event.api.onDidLayoutChange(() => {
 				const layout = api.toJSON();

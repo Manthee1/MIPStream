@@ -1,4 +1,4 @@
-import { GroupviewPanelState } from "dockview-vue";
+import { GroupPanelViewState, GroupviewPanelState, SerializedGridObject } from "dockview-vue";
 
 export const defaultLayoutGridConfig = {
     "root": {
@@ -10,7 +10,8 @@ export const defaultLayoutGridConfig = {
                     "views": [
                         "stages",
                         "registers",
-                        "memory"
+                        "memory",
+                        "instructions"
                     ],
                     "activeView": "memory",
                     "id": "2"
@@ -58,7 +59,7 @@ export const defaultLayoutGridConfig = {
             }
         ],
         "size": 903
-    },
+    } as SerializedGridObject<GroupPanelViewState>,
     "width": 1920,
     "height": 903,
     "orientation": "HORIZONTAL"
@@ -72,8 +73,6 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "contentComponent": "Stages",
         "title": "Stages",
         "tabComponent": "DockviewTab",
-
-
     },
     "registers": {
         "id": "registers",
@@ -85,6 +84,12 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "id": "memory",
         "contentComponent": "Memory",
         "title": "Memory",
+        "tabComponent": "DockviewTab",
+    },
+    "instructions": {
+        "id": "instructions",
+        "contentComponent": "Instructions",
+        "title": "Instructions",
         "tabComponent": "DockviewTab",
     },
     "editor": {
