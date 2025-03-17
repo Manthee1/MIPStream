@@ -1,4 +1,4 @@
-import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, } from "../utils"
+import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, } from "../utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
 
 export class Assembler {
@@ -84,7 +84,7 @@ export class Assembler {
             }
             else if (operandType === 'IMMEDIATE') {
                 if (!isValue(operand)) throw new Error(`Invalid immediate value: ${operand}.`);
-                if (isXBit(parseInt(operand), 16)) throw new Error(`Immediate value must be a 16-bit number: ${operand}.`);
+                if (isXBitSigned(parseInt(operand), 16)) throw new Error(`Immediate value must be a 16-bit signed intiger: ${operand}.`);
                 imm = parseInt(operand);
             } else if (operandType === "LABEL") {
                 if (!isLabel(operand)) throw new Error(`Invalid label: ${operand}.`);

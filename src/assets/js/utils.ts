@@ -57,6 +57,10 @@ export function isXBit(value: number, x: number): boolean {
     return value < 0 || value >= 2 ** x;
 }
 
+export function isXBitSigned(value: number, x: number): boolean {
+    return value < -(2 ** (x - 1)) || value >= 2 ** (x - 1);
+}
+
 export function isEffectiveAddress(value: string): boolean {
     // imm(reg) or imm
     const effectiveAddressPattern = /^-?\d+\(R\d+\)$|^(-?\d+)$/;
