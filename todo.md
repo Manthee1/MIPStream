@@ -50,6 +50,7 @@ Other Visuals
 - [x] Remove CPU window title
 - [ ] Fix editor popover clipping
 - [ ] Add info about code changes that were not assembled while the cpu is running
+- [x] Improve memory view
 
 Other Functionality
 - [x] Add Project rename
