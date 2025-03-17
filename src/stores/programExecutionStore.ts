@@ -136,8 +136,8 @@ export const useProgramExecutionStore = defineStore('programexec', {
                 await wait(1000 / this.speed);
 
             }
-
-            this.status = 'stopped';
+            if (this.core.halted)
+                this.status = 'stopped';
         }
 
     }
