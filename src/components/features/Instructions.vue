@@ -1,17 +1,17 @@
 <template>
     <div class="instructions">
         <input v-model="searchQuery" placeholder="Search instructions..." />
-        <div v-if="filteredInstructions.length === 0">
-            No instructions match the search query.
+        <div class="text-center" v-if="filteredInstructions.length === 0">
+            No instructions match the search query
         </div>
-        <ul class="flex flex-column gap-2">
+        <ul class="flex flex-column flex-nowrap gap-2">
             <li v-for="instruction in filteredInstructions" :key="instruction.opcode">
                 <div class="flex flex-row flex-top-left gap-3">
-                    <!-- Custom icon depending on isntruction type -->
+                    <!-- Custom icon depending on instruction type -->
 
                     <vue-feather :type="getIcon(instruction)"></vue-feather>
                     <div class="flex flex-column flex-left gap-2">
-                        <div class="flex flex-row flex-left gap-2">
+                        <div class="flex flex-row flex-left width-full gap-2">
 
                             <label for="">{{ instruction.mnemonic }}</label> - <span>{{
                                 getInstructionSyntax(instruction) }}</span>
@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { getInstructionSyntax } from '../../assets/js/utils';
+import { getDefaultInstructionDefOperands, getInstructionSyntax } from '../../assets/js/utils';
 import { get } from 'http';
 import { ALUOperationstoSigns, getAluControl } from '../../assets/js/core/config/alu';
 
@@ -72,21 +72,25 @@ export default defineComponent({
             let out = ''
             const cs = instructionConfig.controlSignals;
             let ALUOPSign = ALUOperationstoSigns[getAluControl(cs['ALUOp'], instructionConfig.funct)] ?? '???'
+            const operands = instructionConfig.operands ?? getDefaultInstructionDefOperands(instructionConfig);
 
-            const ALUIn2 = cs['ALUSrc'] ? 'imm' : 'Rt;';
+            const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : ''
+            const Rt = (operands.includes('REG_TARGET')) ? 'Rt' : ''
+
+            const ALUIn2 = cs['ALUSrc'] ? 'imm' : 'Rt';
 
             if (cs['RegWrite']) {
-                const memOut = cs['MemRead'] ? `MEM[${ALUIn2} ${ALUOPSign} Rs]` : '0'
+                const memOut = cs['MemRead'] ? `MEM[${Rs} ${ALUOPSign} ${ALUIn2}]` : '0'
                 out += `Rd = `
-                out += (cs['MemtoReg']) ? memOut : `${ALUIn2} ${ALUOPSign} Rs`;
+                out += (cs['MemtoReg']) ? memOut : `${Rs} ${ALUOPSign} ${ALUIn2}`;
             }
 
             if (cs['MemWrite']) {
-                out += `MEM[${ALUIn2} ${ALUOPSign} Rs] = Rd;`
+                out += `MEM[${Rs} ${ALUOPSign} ${ALUIn2}] = Rd;`
             }
 
             if (cs['Branch']) {
-                out += `if (Rs ${ALUOPSign} Rt) PC = PC + 4 + (imm << 2);`
+                out += `if (${Rs} ${ALUOPSign} Rt == 0) PC = label`
             }
             console.log(instructionConfig.mnemonic, cs, out)
             return out;
@@ -99,19 +103,22 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .instructions {
-    padding: 2rem;
+    padding: 1rem;
+    height: 100%;
 
     input {
+        margin: 0 1rem;
         margin-bottom: 10px;
         padding: 5px;
-        width: 100%;
+        width: calc(100% - 2rem);
     }
 
     ul {
         list-style-type: none;
-        padding: 0;
-
-
+        padding: 0 1rem;
+        overflow-y: auto;
+        max-height: 100%;
+        padding-bottom: 6rem;
 
         li {
             border: 1px solid var(--color-regular);

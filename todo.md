@@ -14,8 +14,8 @@ Menu
 - [x] Make "Open" work - Renamed to "Import Project"
 
 Simulator
-- [ ] Add instruction documentation
-- [ ] Add more instructions
+- [x] Add instruction documentation
+- [x] Add more instructions
 - [ ] Add Speed control
 - [ ] Add shortcuts simulation control
 - [ ] Add hex and binary number support
