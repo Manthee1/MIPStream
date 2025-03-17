@@ -5,8 +5,7 @@ import { decToHex } from '../../assets/js/utils';
 
 <template>
     <!-- Print individual bytes of memory -->
-    <div class="memory-list" @onmouseover="showMemoryAddress"
-        :style="`grid-template-columns: repeat(${rowWidth + 1}, 1fr)`">
+    <div class="memory-list" @click="editMemoryAddress" :style="`grid-template-columns: repeat(${rowWidth + 1}, 1fr)`">
         <span class="memory-address"></span>
         <span class="text-center memory-address column-label" v-for="index in rowWidth" :key="index">0x{{ decToHex(index
             -
@@ -36,6 +35,9 @@ export default defineComponent({
         };
     },
 
+    mounted() {
+    },
+
     computed: {
         memoryRows(): Uint8Array[] {
             const data = this.$programExecutionStore.core.dataMemory as Uint8Array;
@@ -49,9 +51,44 @@ export default defineComponent({
         }
     },
     methods: {
-        showMemoryAddress(e: MouseEvent) {
-            // Check which element is being hovered
+        editMemoryAddress(e: MouseEvent) {
+            // Check which element is being clicked
             console.log(e);
+            const target = e.target as HTMLElement
+            if (target.classList.contains('memory-item')) {
+                const address = target.dataset.address;
+                console.log('Editing memory address:', address);
+
+                // Change the field to an input
+                const input = document.createElement('input');
+                input.value = target.textContent;
+
+
+                const saveMemoryAddress = () => {
+                    console.log('Saving memory address:', address);
+                    this.$programExecutionStore.core.dataMemory[parseInt(address, 16)] = parseInt(input.value, 16);
+                    // Force update
+                    this.$forceUpdate();
+                    target.innerHTML = decToHex(parseInt(input.value, 16), 8);
+                }
+
+                // Replace the element with the input
+
+                target.innerHTML = '';
+                target.appendChild(input);
+                setTimeout(() => {
+                    input.focus();
+                    input.select();
+                    input.onkeyup = function (e) {
+                        if (e.key === 'Enter' || e.key === 'Escape') {
+                            saveMemoryAddress()
+                        }
+                    }
+                    input.onblur = function () {
+                        saveMemoryAddress()
+                    }
+                }, 0);
+            }
         }
     },
 });
