@@ -120,7 +120,7 @@ export const instructionConfig: InstructionConfig[] = [
             ALUOp: 1,
             Branch: 1,
         },
-        operands: ['REG_SOURCE', 'REG_SOURCE', 'LABEL'],
+        operands: ['REG_SOURCE', 'REG_TARGET', 'LABEL'],
         description: "Branch if equal",
     },
     {

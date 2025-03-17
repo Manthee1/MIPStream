@@ -128,19 +128,20 @@ export class CPUDiagram {
             if (!component.ports) return;
             for (let port of component.ports) {
                 const newPortId = `${componentId}.${port.id}`;
+                const newPort = { ...port, id: newPortId };
                 if (this.ports.get(newPortId)) throw new Error(`Port ${newPortId} already in layout`);
 
                 // Make sure the position is smaller or equal to 1
-                if (port.relPos > 1) {
+                if (newPort.relPos > 1) {
                     console.warn(`Port position for ${port.id} in ${componentId} is greater than 1. Setting to 1`);
-                    port.relPos = 1;
+                    newPort.relPos = 1;
                 }
 
                 // Set an absolute position for the port
-                const { x, y } = this.getAbsolutePortPosition(port, component);
-                port.pos = { x, y };
-                port.id = newPortId;
-                this.ports.set(newPortId, port);
+                const { x, y } = this.getAbsolutePortPosition(newPort, component);
+                newPort.pos = { x, y };
+                newPort.id = newPortId;
+                this.ports.set(newPortId, newPort);
 
             }
         });
@@ -359,6 +360,7 @@ export class CPUDiagram {
     }
 
     draw() {
+        console.log('Drawing diagram');
 
         // Clear the canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

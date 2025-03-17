@@ -43,11 +43,8 @@ export default defineComponent({
         }
     },
     mounted() {
-        const cpu = new MIPSBase();
-        console.log(cpu);
-
-
-        this.$viewStore.cpuDiagram = new CPUDiagram('#cpu-diagram', clone(cpu.cpuLayout), [DiagramInteraction]);
+        const cpu = this.$programExecutionStore.core;
+        this.$viewStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
     },
 
     methods: {
