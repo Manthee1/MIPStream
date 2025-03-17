@@ -11,7 +11,7 @@ export function initKeyboardHandler() {
             (e.metaKey ? "META" : ''),
             e.key.toUpperCase()].join(" ").trim().replace(/\s+/g, ' ');
 
-        console.log(e, keyString);
+        // console.log(e, keyString);
         if (keyboardShortcuts.hasOwnProperty(keyString)) {
             keyboardShortcuts[keyString]();
 

@@ -1,4 +1,6 @@
+import { downloadProject } from "../storage/projectsStorage";
 import { useProgramExecutionStore } from "../stores/programExecutionStore";
+import { useViewStore } from "../stores/viewStore";
 
 export const keyboardShortcuts = {
     "F5": () => {
@@ -16,6 +18,16 @@ export const keyboardShortcuts = {
             return;
         } useProgramExecutionStore().resume();
     },
+    "CTRL O": () => {
+        useViewStore().handleProjectUpload();
+    },
+    "CTRL SHIFT N": () => {
+        useViewStore().setupProject();
+    },
+    "CTRL SHIFT S": () => {
+        // downloadProject(useViewStore());
+    },
+
 
 
 };

@@ -46,14 +46,14 @@ export class DiagramInteraction extends CPUDiagramPlugin {
             this.mouseUp();
         });
 
-        document.addEventListener('keydown', (e) => {
-            this.keyboard.keys[e.key] = true;
-            this.keyDownHandler(e);
-        });
+        // document.addEventListener('keydown', (e) => {
+        //     this.keyboard.keys[e.key] = true;
+        //     this.keyDownHandler(e);
+        // });
 
-        document.addEventListener('keyup', (e) => {
-            this.keyboard.keys[e.key] = false;
-        });
+        // document.addEventListener('keyup', (e) => {
+        //     this.keyboard.keys[e.key] = false;
+        // });
     }
 
 

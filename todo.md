@@ -17,7 +17,7 @@ Simulator
 - [x] Add instruction documentation
 - [x] Add more instructions
 - [x] Add Speed control
-- [ ] Add shortcuts simulation control
+- [x] Add shortcuts simulation control
 - [ ] Add hex and binary number support
 - [ ] Add advance register convention support
 - [ ] Add ability to change register and memory values
@@ -63,7 +63,10 @@ Bugs
 - [x] Fix project delete
 - [x] Assembler errors persisting after leaving project and ignoring unsaved changes and opening the project again
 - [x] Fix loading project the second time breaks diagram
+- [ ] Fix instructions loaded after halt
 
 
 
+Maintanance
+- [ ] Rework storages. split view storage into project storage and ui storage
 
