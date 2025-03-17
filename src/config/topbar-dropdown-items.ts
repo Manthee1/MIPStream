@@ -81,6 +81,28 @@ export function createConfig() {
                 viewStore.toggleSettings();
             }
         },
+
+        viewsItem:
+        {
+            label: 'Views',
+            action: () => {
+            },
+            type: 'submenu',
+            items: [
+                {
+                    label: 'Instruction List',
+                    action: () => {
+                        viewStore.togglePanel('instructionList');
+                    }
+                }, {
+                    label: 'CPU',
+                    action: () => {
+                        viewStore.togglePanel('cpuView');
+                    }
+                },
+            ]
+        },
+
         helpItem:
         {
             label: 'Help',
@@ -151,6 +173,10 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
                 dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.helpItem,
                 dropdownItemsConfig.aboutItem,
+
+                dropdownItemsConfig.seperatorItem,
+
+                dropdownItemsConfig.viewsItem,
 
                 dropdownItemsConfig.seperatorItem,
 

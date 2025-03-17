@@ -4,6 +4,8 @@ import { addProject, createProject, existsProject, loadProject, Project, removeP
 import { useRouter } from 'vue-router';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { useNotification } from '@kyvg/vue3-notification';
+import { DockviewApi, GroupviewPanelState, IDockviewPanel } from 'dockview-vue';
+import { panelsConfig } from '../config/layout';
 
 
 const theme = settings.theme;
@@ -22,6 +24,7 @@ export const useViewStore = defineStore('view', {
             title: '',
             dropdownItems: [] as DropdownItem[]
         },
+        dockviewApi: {} as DockviewApi,
     }),
     getters: {
 
@@ -102,6 +105,25 @@ export const useViewStore = defineStore('view', {
                     resolve(false);
                 };
             });
+
+        },
+
+        togglePanel(panelId: string) {
+            const panelConfig = panelsConfig[panelId];
+            if (!panelConfig) return;
+            console.log('Toggle Panel', panelConfig, this.dockviewApi);
+
+            const panelState: IDockviewPanel = this.dockviewApi.getPanel(panelId);
+            console.log('Panel State', panelState);
+            if (!panelState) return;
+            // panelState.api.set
+            // if (panelState.api.isVisible) {
+            //     panelState.api.maximize();
+            //     setTimeout(() => {
+            //         panelState.api.exitMaximized();
+            //     }, 10);
+
+            // }
 
         },
 
