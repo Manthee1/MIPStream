@@ -88,8 +88,6 @@ export default defineComponent({
 		});
 
 		editor.onMouseDown((e) => {
-			console.log('Mouse Down', e);
-
 			if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
 				const lineNumber = e.target.position.lineNumber;
 				this.toggleBreakpoint(lineNumber);
@@ -120,7 +118,6 @@ export default defineComponent({
 				const stageName = "stage-" + index;
 				const line = this.$programExecutionStore.PCToLineMap[this.$programExecutionStore.stagePCs[index]];
 
-				console.log('Stage:', stageName, line, this.$programExecutionStore.stagePCs[index]);
 				return [
 					{
 						range: new monaco.Range(+line, 1, +line, 1),
@@ -184,7 +181,6 @@ export default defineComponent({
 			} else {
 				this.addBreakpoint(line);
 			}
-			console.log('Breakpoints:', this.$programExecutionStore.breakpoints);
 
 		},
 		addBreakpoint(line: number) {

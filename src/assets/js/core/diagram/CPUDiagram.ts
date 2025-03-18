@@ -246,14 +246,9 @@ export class CPUDiagram {
         const width = componentLayout.dimensions.width;
         const height = componentLayout.dimensions.height;
 
-        console.log(componentLayout.type);
-
 
         switch (componentLayout.type) {
             case "and":
-
-                console.log('Drawing component and');
-
 
                 // Draw the and gate
                 this.ctx.beginPath();
@@ -423,7 +418,6 @@ export class CPUDiagram {
     }
 
     draw() {
-        console.log('Drawing diagram');
 
         // Clear the canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

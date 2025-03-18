@@ -131,7 +131,6 @@ export default class MIPSBase {
 
     resetStages() {
         for (let stage in this.stageRegisters) {
-            console.log(stage);
             let stageData = this.stageRegisters[stage];
             for (let key in stageData) {
                 this.stageRegisters[stage][key].value = 0;
@@ -386,7 +385,6 @@ export default class MIPSBase {
         if (currStage.RegWrite.value) {
             const value = currStage.MemtoReg.value ? currStage.MemReadResult.value : currStage.ALUResult.value;
             this.registerFile[currStage.WriteRegister.value] = value;
-            console.log(this.registerFile);
 
             console.log(`Writeback: ${currStage.WriteRegister.value} = ${value}`);
 

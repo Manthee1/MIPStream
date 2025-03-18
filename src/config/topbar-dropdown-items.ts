@@ -47,14 +47,19 @@ export function createConfig() {
                 console.log('Open clicked');
             },
             type: 'submenu',
-            items: loadProjects(true).map((project) => {
-                return {
-                    label: project.name,
-                    action: (context) => {
-                        context.$router.push({ name: 'Workspace', params: { id: project.id } });
+            // TODO: Rework this to actually observe if recent projects change. Probobly will need a rework of the storage system
+            get items() {
+                const items: DropdownItem[] = loadProjects(true, 10).map((project) => {
+                    return {
+                        label: project.name,
+                        type: 'item',
+                        action: (context) => {
+                            context.$router.push({ name: 'Workspace', params: { id: project.id } });
+                        }
                     }
-                }
-            })
+                });
+                return items;
+            }
         },
         saveItem:
         {

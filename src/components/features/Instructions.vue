@@ -92,7 +92,6 @@ export default defineComponent({
             if (cs['Branch']) {
                 out += `if (${Rs} ${ALUOPSign} Rt == 0) PC = label`
             }
-            console.log(instructionConfig.mnemonic, cs, out)
             return out;
 
         },
