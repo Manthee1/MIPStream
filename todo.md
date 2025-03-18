@@ -68,7 +68,7 @@ Bugs
 - [x] Assembler errors persisting after leaving project and ignoring unsaved changes and opening the project again
 - [x] Fix loading project the second time breaks diagram
 - [ ] Fix instructions loaded after halt
-- [ ] Fix stages line display not handeling long lines
+- [x] Fix stages line display not handling long lines
 
 
 Maintanance

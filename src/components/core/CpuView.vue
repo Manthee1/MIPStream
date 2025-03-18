@@ -1,20 +1,23 @@
 <template>
     <div>
-        <div class="stages">
+        <div class="stages" ref="stages">
             <!-- render stage and the instruction of that stage -->
             <div class="stage" :class="'stage-' + index" v-for="(stagePC, index) in stagePCs" :key="index">
                 <span v-if="stagePC == -1"> nop</span>
-                <span v-else>{{ program[$programExecutionStore.PCToLineMap[stagePC] - 1] }}</span>
+                <span v-else
+                    :style="{ fontSize: getFontSize(program[$programExecutionStore.PCToLineMap[stagePC] - 1]) }">
+                    {{ program[$programExecutionStore.PCToLineMap[stagePC] - 1] }}
+                </span>
                 <!-- <span>{{ $programExecutionStore.core.instructions[index] }}</span> -->
             </div>
         </div>
-        <div class="cpu-view">
+        <div class=" cpu-view">
             <canvas id="cpu-diagram"></canvas>
         </div>
     </div>
 </template>
 
-<script>
+<script lang="ts">
 import Window from '@/components/common/Window.vue';
 import { defineComponent } from 'vue';
 // import { cpuConfig, cpuLayout } from '../../assets/js/core/cpus/simple';
@@ -55,6 +58,17 @@ export default defineComponent({
             return this.stageColors[(pc) % this.stageColors.length];
         },
 
+        getFontSize(text) {
+            // get stages element and find the first stage's width
+            const stages = this.$refs.stages as HTMLElement;
+            const stageWidth = stages.querySelector('.stage')?.clientWidth || 100;
+            // get the text width
+            const textWidth = text.length * 10;
+            // return the font size
+            return Math.min(1.5, (stageWidth / textWidth) * 2) + 'rem';
+
+        }
+
     }
 });
 </script>
@@ -69,11 +83,13 @@ export default defineComponent({
     background-color: var(--color-light)
     border: 1px solid var(--color-regular)
     border-bottom: 0
-    color: var(--color-regular)
+    color: var(--color-regular)    
     & .stage
         border-right: 1px solid var(--color-regular)
         flex: 1
         text-align: center
+        line-height: 2rem
+
         &.stage-0
             border-color: #FFD70030
             background-color: #FFD70030
