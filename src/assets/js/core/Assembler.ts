@@ -85,7 +85,10 @@ export class Assembler {
             else if (operandType === 'IMMEDIATE') {
                 if (!isValue(operand)) throw new Error(`Invalid immediate value: ${operand}.`);
                 if (isXBitSigned(parseInt(operand), 16)) throw new Error(`Immediate value must be a 16-bit signed intiger: ${operand}.`);
-                imm = parseInt(operand);
+                // CHeck if the immediate value is binary
+                if (operand.startsWith('0b')) imm = parseInt(operand.slice(2), 2);
+                // else if (operand.startsWith('0x')) imm = parseInt(operand.slice(2), 16);
+                else imm = parseInt(operand);
             } else if (operandType === "LABEL") {
                 if (!isLabel(operand)) throw new Error(`Invalid label: ${operand}.`);
                 if (!labels.has(operand)) throw new Error(`Invalid label: ${operand}.`);

@@ -22,7 +22,7 @@ Simulator
 - [x] Add more instructions
 - [x] Add Speed control
 - [x] Add shortcuts simulation control
-- [ ] Add hex and binary number support
+- [x] Add hex and binary number support
 - [ ] Add advance register convention support
 - [ ] Add ability to change register and memory values
 - [x] Disable control buttons when not possible to use
@@ -45,7 +45,7 @@ Diagram
 - [ ] Add ability to change in what format the data is shown (hex, binary, decimal)
 - [ ] Add proper dark mode support
 - [ ] Add bit-range display
-- [ ] Add custom icons for components
+- [x] Add custom icons for components
 - [ ] Connect Reg1Data to the ALU
 - [ ] Add the ability to pan and zoom the diagram (very low priority)
 
@@ -68,9 +68,9 @@ Bugs
 - [x] Assembler errors persisting after leaving project and ignoring unsaved changes and opening the project again
 - [x] Fix loading project the second time breaks diagram
 - [ ] Fix instructions loaded after halt
-
+- [ ] Fix stages line display not handeling long lines
 
 
 Maintanance
-- [ ] Rework storages. split view storage into project storage and ui storage
-- [ ] Add caching system for the most recent projects
+- [ ] Rework stores. split view storage into project storage and ui storage
+- [ ] Rework the storage system to be more efficient. Use IndexedDB
