@@ -29,7 +29,7 @@ export const createProject = (name: string): Project => {
     console.log('Creating project', project);
 
 
-    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    const projects = (loadFromStorage(PROJECTS_KEY) || []) as Project[];
     if (projects.some((p: Project) => p.name === name))
         throw new Error('Project with the same name already exists');
 
@@ -40,7 +40,7 @@ export const createProject = (name: string): Project => {
 }
 
 export const addProject = (project: Project): Project => {
-    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    const projects = (loadFromStorage(PROJECTS_KEY) || []) as Project[];
     // Veryfy that the project has all the required fields
     const defaultProject: Project = {
         id: Date.now().toString(),
@@ -60,7 +60,7 @@ export const addProject = (project: Project): Project => {
 }
 
 export const saveProject = (project: Project) => {
-    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    const projects = (loadFromStorage(PROJECTS_KEY) || []) as Project[];
     const existingProjectIndex = projects.findIndex((p: Project) => p.id === project.id);
 
     if (existingProjectIndex === -1)
@@ -74,13 +74,16 @@ export const saveProject = (project: Project) => {
 };
 
 export const loadProjects = (loadOnlyMetadata: boolean = false, limit = 10): Project[] => {
-    let projects = loadFromStorage(PROJECTS_KEY) || [];
+    let projects = (loadFromStorage(PROJECTS_KEY) || []) as Project[];
     projects = projects.slice(0, limit);
     // Remove empty projects
     if (loadOnlyMetadata) {
         return projects.map((project: Project) => ({
             id: project.id,
             name: project.name,
+            code: null,
+            data: null,
+            layoutGridConfig: null,
             createdAt: project.createdAt,
             updatedAt: project.updatedAt,
             size: project.size
@@ -104,7 +107,7 @@ export const loadProject = (id: string): Project | null => {
 };
 
 export const removeProject = (id: string) => {
-    const projects = loadFromStorage(PROJECTS_KEY) || [];
+    const projects = (loadFromStorage(PROJECTS_KEY) || []) as Project[];
     const existingProjectIndex = projects.findIndex((p: Project) => p.id === id);
 
     if (existingProjectIndex === -1)

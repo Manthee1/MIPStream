@@ -8,6 +8,10 @@
 
 - [x] Change the project's root directory's name
 
+Home
+- [x] Make projects sorted by last opened
+
+
 Menu
 - [x] Fix Open Recent
 - [x] Make "New" work
@@ -69,4 +73,4 @@ Bugs
 
 Maintanance
 - [ ] Rework storages. split view storage into project storage and ui storage
-
+- [ ] Add caching system for the most recent projects

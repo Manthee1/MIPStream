@@ -56,7 +56,9 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.projects = loadProjects(true);
+    this.projects = loadProjects(true).sort((a, b) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
   },
   methods: {
