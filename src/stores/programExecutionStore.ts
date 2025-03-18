@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 // import MIPSCore from '../assets/js/core/MIPSCore'
-import { wait } from '../assets/js/utils'
+import { clone, wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
 import { Assembler } from '../assets/js/core/Assembler';
 import { AssemblerError } from '../assets/js/errors';
@@ -22,6 +22,7 @@ export const useProgramExecutionStore = defineStore('programexec', {
         speed: 10 as number, // cycles per second
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
+        instructionCount: 0 as number,
         stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
         errors: [] as string[],
         errorsUpdateTimeout: null as any,
@@ -51,8 +52,18 @@ export const useProgramExecutionStore = defineStore('programexec', {
 
         },
 
+        shiftStagePCs() {
+            const pc = this.core.PC.value / 4;
+
+            this.stagePCs.unshift(pc < this.instructionCount ? pc : -1);
+            this.stagePCs.pop();
+
+            if (pc > this.instructionCount + 2)
+                this.core.halt();
+
+        },
+
         loadProgram() {
-            this.status = 'paused';
             let instructionMemory: Uint32Array;
             if (this.program === '') {
                 notify({
@@ -74,13 +85,15 @@ export const useProgramExecutionStore = defineStore('programexec', {
             }
 
             try {
+                this.status = 'paused';
                 this.errors = [];
                 const data = this.assembler.assemble(this.program);
                 instructionMemory = data.instructions;
                 this.PCToLineMap = data.pcLineMap;
+                this.instructionCount = data.instructions.length;
             } catch (errors: any) {
                 const errorMessage = 'Error/s occurred while loading the program';
-                this.errors = errors;
+                this.updateErrors();
                 notify({
                     type: 'error',
                     title: 'Error',
@@ -100,9 +113,10 @@ export const useProgramExecutionStore = defineStore('programexec', {
             if (this.status != 'paused') return;
             // Add current pc to stagePCs and remove the oldest one
             this.core.runCycle();
-            this.stagePCs.unshift(this.core.PC.value / 4);
-            this.stagePCs.pop();
+            this.shiftStagePCs();
             useViewStore().cpuDiagram.draw();
+            console.log(clone(this.stagePCs));
+
             if (this.core.halted) this.status = 'stopped'
         },
         pause() {
@@ -125,8 +139,7 @@ export const useProgramExecutionStore = defineStore('programexec', {
             while (this.status == 'running' && !this.core.halted) {
                 // Add current pc to stagePCs and remove the oldest one
                 this.core.runCycle();
-                this.stagePCs.unshift(this.core.PC.value / 4);
-                this.stagePCs.pop();
+                this.shiftStagePCs();
                 useViewStore().cpuDiagram.draw();
                 console.log(this.breakpoints, this.PCToLineMap[this.core.PC.value / 4]);
                 if (this.breakpoints.includes(this.PCToLineMap[this.core.PC.value / 4])) {

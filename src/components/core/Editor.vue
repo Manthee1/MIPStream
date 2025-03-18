@@ -104,7 +104,7 @@ export default defineComponent({
 	computed: {
 		currentPC(): number {
 			// return 0;
-			return this.$programExecutionStore.stagePCs[0];
+			return this.$programExecutionStore.stagePCs[0] + this.$programExecutionStore.core.PC.value;
 		}
 	},
 	watch: {

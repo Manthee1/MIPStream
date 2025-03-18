@@ -59,6 +59,7 @@ export default defineComponent({
         },
 
         getFontSize(text) {
+            if (!text) return '1.5rem';
             // get stages element and find the first stage's width
             const stages = this.$refs.stages as HTMLElement;
             const stageWidth = stages.querySelector('.stage')?.clientWidth || 100;
