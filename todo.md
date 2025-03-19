@@ -1,21 +1,19 @@
-- [x] Make editor resizable
-- [x] Add settings
-- [x] Fix dark theme
-- [x] Trim lines before sending to assembler
-- [x] Add jump label completion
 
-
-
-- [x] Change the project's root directory's name
+General
+- [ ] Rework stores. Split view storage into project storage and UI storage
+- [ ] Add project settings
+- [ ] Add options to each workspace panel
+- [ ] Rework the storage system to be more efficient. Use IndexedDB
 
 Home
 - [x] Make projects sorted by last opened
-
 
 Menu
 - [x] Fix Open Recent
 - [x] Make "New" work
 - [x] Make "Open" work - Renamed to "Import Project"
+- [ ] Make open recent reactivity fetch recent projects (After storage rework)
+
 
 Simulator
 - [x] Add instruction documentation
@@ -23,13 +21,12 @@ Simulator
 - [x] Add Speed control
 - [x] Add shortcuts simulation control
 - [x] Add hex and binary number support
+- [x] Disable control buttons when not possible to use
 - [ ] Add advance register convention support
 - [ ] Add ability to change register and memory values
-- [x] Disable control buttons when not possible to use
 - [ ] Add multi cpu support
 
 Project Settings
-- [ ] Add project settings 
 - [ ] Add ability to change the memory size
 - [ ] Add ability to change current cpu
 
@@ -40,21 +37,21 @@ Settings
 
 
 Diagram
+- [x] Add custom icons for components
 - [ ] Add more hover information
 - [ ] Add highlighting of components
 - [ ] Add ability to change in what format the data is shown (hex, binary, decimal)
 - [ ] Add proper dark mode support
 - [ ] Add bit-range display
-- [x] Add custom icons for components
 - [ ] Connect Reg1Data to the ALU
 - [ ] Add the ability to pan and zoom the diagram (very low priority)
 
 Other Visuals
-- [ ] Add the ability to show what data is going to be changed/used in the next instruction
 - [x] Remove CPU window title
+- [x] Improve memory view
+- [ ] Add the ability to show what data is going to be changed/used in the next instruction
 - [ ] Fix editor popover clipping
 - [ ] Add info about code changes that were not assembled while the cpu is running
-- [x] Improve memory view
 
 Other Functionality
 - [x] Add Project rename
@@ -70,7 +67,3 @@ Bugs
 - [x] Fix instructions loaded after halt
 - [x] Fix stages line display not handling long lines
 
-
-Maintanance
-- [ ] Rework stores. split view storage into project storage and ui storage
-- [ ] Rework the storage system to be more efficient. Use IndexedDB
