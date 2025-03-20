@@ -2,7 +2,8 @@ import { RouteRecordRaw } from 'vue-router';
 import Workspace from '@/pages/Workspace.vue';
 import Home from '@/pages/Home.vue';
 import CpuView from '@/components/core/CpuView.vue';
-import { existsProject } from './storage/projectsStorage';
+import { loadProject } from './storage/projectsStorage';
+import { useProjectStore } from './stores/projectStore';
 
 
 const routes: RouteRecordRaw[] = [
@@ -21,9 +22,13 @@ const routes: RouteRecordRaw[] = [
         beforeEnter: (to, from, next) => {
 
             const id = to.params.id.toString();
-            const project = existsProject(id);
-            if (!project) next({ name: 'Home' });
+            const project = loadProject(id);
+            if (!project) {
+                next({ name: 'Home' });
+                return;
+            }
 
+            useProjectStore().setCurrentProject(project);
             next();
         }
     }, {

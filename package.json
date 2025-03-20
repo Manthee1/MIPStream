@@ -12,7 +12,8 @@
   "dependencies": {
     "@kyvg/vue3-notification": "^3.4.1",
     "@tauri-apps/api": "^2.3.0",
-    "dockview-vue": "^3.8.2",
+    "db.js": "^0.15.0",
+    "dockview-vue": "^3.2.0",
     "feather-icons": "4",
     "monaco-editor-vue3": "^0.1.10",
     "monaco-themes": "^0.4.4",

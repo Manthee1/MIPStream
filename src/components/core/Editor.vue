@@ -6,7 +6,7 @@
 	<!-- <div id="editor-wrapper"> -->
 	<Controls />
 	<div ref="editor" class="editor-container">
-		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$programExecutionStore.loadedProgram" </div> -->
+		<!-- <div id="editor" ref="editor" theme="vs" :options="options" v-model:value="$simulationStore.loadedProgram" </div> -->
 		<!-- <div id="editor" ref="editor"> </div> -->
 	</div>
 	<!-- </div> -->
@@ -19,6 +19,7 @@ import { defineComponent } from 'vue';
 // import { getStageName } from '../../assets/js/utils';
 import { default as monaco, validate } from "../../config/monaco";
 import Controls from './Controls.vue';
+import { useProjectStore } from '../../stores/projectStore';
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 export default defineComponent({
@@ -30,10 +31,6 @@ export default defineComponent({
 			decorations: [] as string[],
 			hoverDecorations: [] as string[],
 			stageDecorations: [] as string[],
-
-			onUpdate: (code: string) => {
-				console.log('Code Updated:', code);
-			}
 		}
 	},
 	props: {
@@ -44,7 +41,6 @@ export default defineComponent({
 
 		console.log('Editor Mounted', this.params);
 		let code = this.params?.params.code
-		this.onUpdate = this.params?.params.onUpdate;
 
 		const editorEl = this.$refs.editor as HTMLElement;
 		editor = monaco.editor.create(editorEl, {
@@ -53,7 +49,7 @@ export default defineComponent({
 				enabled: true
 			},
 			automaticLayout: true,
-			theme: this.$viewStore.theme,
+			theme: this.$UIStore.theme,
 			padding: {
 				top: 10,
 				bottom: 10
@@ -76,14 +72,14 @@ export default defineComponent({
 		validate(model);
 
 		// Listener for changes in the editor
-		this.$programExecutionStore.program = monaco.editor.getModels()[0].getValue();
+		this.$simulationStore.program = monaco.editor.getModels()[0].getValue();
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
 			const code = monaco.editor.getModels()[0].getValue();
-			this.$programExecutionStore.program = code;
+			this.$simulationStore.program = code;
 			// this.$emit('update:modelValue', code);
 			this.onUpdate(code);
 			validate(model);
-			this.$programExecutionStore.updateErrors();
+			this.$simulationStore.updateErrors();
 
 		});
 
@@ -104,7 +100,7 @@ export default defineComponent({
 	computed: {
 		currentPC(): number {
 			// return 0;
-			return this.$programExecutionStore.stagePCs[0] + this.$programExecutionStore.core.PC.value;
+			return this.$simulationStore.stagePCs[0] + this.$simulationStore.core.PC.value;
 		}
 	},
 	watch: {
@@ -113,10 +109,10 @@ export default defineComponent({
 			if (!model) return;
 			this.stageDecorations = model.deltaDecorations(this.stageDecorations, [0, 1, 2, 3, 4].map(index => {
 
-				if (this.$programExecutionStore.stagePCs[index] == -1) return [];
+				if (this.$simulationStore.stagePCs[index] == -1) return [];
 
 				const stageName = "stage-" + index;
-				const line = this.$programExecutionStore.PCToLineMap[this.$programExecutionStore.stagePCs[index]];
+				const line = this.$simulationStore.PCToLineMap[this.$simulationStore.stagePCs[index]];
 
 				return [
 					{
@@ -130,11 +126,11 @@ export default defineComponent({
 			}).flat());
 
 		},
-		'$viewStore.theme': {
+		'$UIStore.theme': {
 			handler() {
 				if (!editor) return;
 				editor.updateOptions({
-					theme: this.$viewStore.theme
+					theme: this.$UIStore.theme
 				});
 			},
 			immediate: true
@@ -142,6 +138,11 @@ export default defineComponent({
 
 	},
 	methods: {
+
+		onUpdate(code: string) {
+			useProjectStore().updateProjectCode(code);
+		},
+
 		handleMouseMove(e: monaco.editor.IEditorMouseEvent) {
 			const model = editor.getModel();
 			if (!model) return;
@@ -165,7 +166,7 @@ export default defineComponent({
 		updateBreakpoints() {
 			const model = editor.getModel();
 			if (!model) return;
-			const decorations = model.deltaDecorations(this.decorations, this.$programExecutionStore.breakpoints.map(line => ({
+			const decorations = model.deltaDecorations(this.decorations, this.$simulationStore.breakpoints.map(line => ({
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
 					isWholeLine: true,
@@ -176,7 +177,7 @@ export default defineComponent({
 		},
 
 		toggleBreakpoint(line: number) {
-			if (this.$programExecutionStore.breakpoints.includes(line)) {
+			if (this.$simulationStore.breakpoints.includes(line)) {
 				this.removeBreakpoint(line);
 			} else {
 				this.addBreakpoint(line);
@@ -184,11 +185,11 @@ export default defineComponent({
 
 		},
 		addBreakpoint(line: number) {
-			this.$programExecutionStore.breakpoints.push(line);
+			this.$simulationStore.breakpoints.push(line);
 			this.updateBreakpoints();
 		},
 		removeBreakpoint(line: number) {
-			this.$programExecutionStore.breakpoints = this.$programExecutionStore.breakpoints.filter(b => b !== line);
+			this.$simulationStore.breakpoints = this.$simulationStore.breakpoints.filter(b => b !== line);
 			this.updateBreakpoints();
 		}
 	}

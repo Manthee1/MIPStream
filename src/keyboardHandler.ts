@@ -1,5 +1,5 @@
 import { keyboardShortcuts } from "./config/keyboard-shortcuts";
-import { useProgramExecutionStore } from "./stores/programExecutionStore";
+import { useSimulationStore } from "./stores/simulationStore";
 
 export function initKeyboardHandler() {
     document.addEventListener("keydown", e => {

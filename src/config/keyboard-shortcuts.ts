@@ -1,31 +1,35 @@
 import { downloadProject } from "../storage/projectsStorage";
-import { useProgramExecutionStore } from "../stores/programExecutionStore";
-import { useViewStore } from "../stores/viewStore";
+import { useProjectStore } from "../stores/projectStore";
+import { useSimulationStore } from "../stores/simulationStore";
+import { useUIStore } from "../stores/UIStore";
 
 export const keyboardShortcuts = {
     "F5": () => {
-        useProgramExecutionStore().run();
+        useSimulationStore().run();
     },
     "SHIFT F5": () => {
-        useProgramExecutionStore().stop();
+        useSimulationStore().stop();
     },
     "F9": () => {
-        useProgramExecutionStore().step();
+        useSimulationStore().step();
     },
     "F10": () => {
-        if (useProgramExecutionStore().status === 'running') {
-            useProgramExecutionStore().pause();
+        if (useSimulationStore().status === 'running') {
+            useSimulationStore().pause();
             return;
-        } useProgramExecutionStore().resume();
+        } useSimulationStore().resume();
     },
     "CTRL O": () => {
-        useViewStore().handleProjectUpload();
+        useProjectStore().invokeProjectUpload();
     },
     "CTRL SHIFT N": () => {
-        useViewStore().setupProject();
+        useProjectStore().invokeProjectSetup();
+    },
+    "CTRL S": () => {
+        useProjectStore().saveProject();
     },
     "CTRL SHIFT S": () => {
-        // downloadProject(useViewStore());
+        // downloadProject(useUIStore());
     },
 
 

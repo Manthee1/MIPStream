@@ -75,14 +75,14 @@ export default defineComponent({
 	},
 	methods: {
 		close() {
-			this.$viewStore.toggleSettings();
+			this.$UIStore.toggleSettings();
 		},
 		setActiveTab(index: number) {
 			this.currentTabIndex = index;
 		},
 		setSetting(key: string, value: any) {
 			console.log(key, value);
-			if (key === 'theme') this.$viewStore.setTheme(value);
+			if (key === 'theme') this.$UIStore.setTheme(value);
 
 			this.$settings.setSetting(key, value);
 		},

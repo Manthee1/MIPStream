@@ -30,8 +30,8 @@ export default defineComponent({
         };
     },
     computed: {
-        stages(): typeof this.$programExecutionStore.core.stageRegisters {
-            return this.$programExecutionStore.core.stageRegisters;
+        stages(): typeof this.$simulationStore.core.stageRegisters {
+            return this.$simulationStore.core.stageRegisters;
         },
     },
 });

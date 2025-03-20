@@ -1,8 +1,8 @@
 <template>
     <div class="problems-container">
-        <template v-if="this.$programExecutionStore.errors.length > 0">
+        <template v-if="this.$simulationStore.errors.length > 0">
             <ul class="error-list">
-                <li class='error-item flex flex-left' v-for="error in this.$programExecutionStore.errors" :key="error">
+                <li class='error-item flex flex-left' v-for="error in this.$simulationStore.errors" :key="error">
                     <vue-feather class="icon" type="alert-triangle" />
                     <span class="my-auto">{{ error }}</span>
                 </li>

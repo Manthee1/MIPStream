@@ -19,8 +19,8 @@
 
 		</div>
 		<div class="flex gap-1 ml-3">
-			<MRange v-model="$programExecutionStore.speed"></MRange>
-			<span style="width:7ch" class="m-auto">{{ $programExecutionStore.speed }} ins/s</span>
+			<MRange v-model="$simulationStore.speed"></MRange>
+			<span style="width:7ch" class="m-auto">{{ $simulationStore.speed }} ins/s</span>
 		</div>
 	</div>
 </template>
@@ -40,27 +40,27 @@ export default defineComponent({
 	},
 	computed: {
 		status() {
-			return this.$programExecutionStore.status
+			return this.$simulationStore.status
 		}
 	},
 	methods: {
 		resume() {
-			this.$programExecutionStore.resume();
+			this.$simulationStore.resume();
 		},
 		run() {
-			this.$programExecutionStore.run();
+			this.$simulationStore.run();
 		},
 		pause() {
-			this.$programExecutionStore.pause();
+			this.$simulationStore.pause();
 		},
 		stop() {
-			this.$programExecutionStore.stop();
+			this.$simulationStore.stop();
 		},
 		step() {
-			this.$programExecutionStore.step();
+			this.$simulationStore.step();
 		},
 		reloadProgram() {
-			this.$programExecutionStore.loadProgram();
+			this.$simulationStore.loadProgram();
 		}
 	}
 });

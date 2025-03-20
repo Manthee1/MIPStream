@@ -40,7 +40,7 @@ export default defineComponent({
 
     computed: {
         memoryRows(): Uint8Array[] {
-            const data = this.$programExecutionStore.core.dataMemory as Uint8Array;
+            const data = this.$simulationStore.core.dataMemory as Uint8Array;
             // Split the data memory into rows of rowWidth bytes
             const rows = [];
             for (let i = 0; i < data.length; i += this.rowWidth) {
@@ -66,7 +66,7 @@ export default defineComponent({
 
                 const saveMemoryAddress = () => {
                     console.log('Saving memory address:', address);
-                    this.$programExecutionStore.core.dataMemory[parseInt(address, 16)] = parseInt(input.value, 16);
+                    this.$simulationStore.core.dataMemory[parseInt(address, 16)] = parseInt(input.value, 16);
                     // Force update
                     this.$forceUpdate();
                     target.innerHTML = decToHex(parseInt(input.value, 16), 8);

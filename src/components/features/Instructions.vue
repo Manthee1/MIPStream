@@ -43,7 +43,7 @@ export default defineComponent({
     },
     computed: {
         instructions() {
-            return this.$programExecutionStore.core.instructionConfig;
+            return this.$simulationStore.core.instructionConfig;
         },
         filteredInstructions() {
             return this.instructions.filter(instruction =>

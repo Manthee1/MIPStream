@@ -9,7 +9,7 @@
                 <div class="modal-body">
                     <p>{{ modalData.message }}</p>
                     <div v-if="modalData.type=='prompt'" class="input-wrapper">
-                        <input v-model="$viewStore.modalData.input" :placeholder="modalData.inputPlaceholder" type="text" @keydown.enter="confirmAction" />
+                        <input v-model="$UIStore.modalData.input" :placeholder="modalData.inputPlaceholder" type="text" @keydown.enter="confirmAction" />
                         <span class="error" v-if="error?.trim()?.length > 0">{{ error }}</span>
                     </div>
                 </div>
@@ -38,13 +38,13 @@ export default defineComponent({
 	},
 	computed: {
 		modalData() {
-            return this.$viewStore.modalData;
+            return this.$UIStore.modalData;
         },
 	},
 	methods: {
 		confirmAction() {
 
-			console.log('confirmAction', this.$viewStore.modalData);
+			console.log('confirmAction', this.$UIStore.modalData);
 
 			if (this.modalData.type == 'prompt') {
 				try {

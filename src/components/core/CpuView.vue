@@ -4,11 +4,10 @@
             <!-- render stage and the instruction of that stage -->
             <div class="stage" :class="'stage-' + index" v-for="(stagePC, index) in stagePCs" :key="index">
                 <span v-if="stagePC == -1"> nop</span>
-                <span v-else
-                    :style="{ fontSize: getFontSize(program[$programExecutionStore.PCToLineMap[stagePC] - 1]) }">
-                    {{ program[$programExecutionStore.PCToLineMap[stagePC] - 1] }}
+                <span v-else :style="{ fontSize: getFontSize(program[$simulationStore.PCToLineMap[stagePC] - 1]) }">
+                    {{ program[$simulationStore.PCToLineMap[stagePC] - 1] }}
                 </span>
-                <!-- <span>{{ $programExecutionStore.core.instructions[index] }}</span> -->
+                <!-- <span>{{ $simulationStore.core.instructions[index] }}</span> -->
             </div>
         </div>
         <div class=" cpu-view">
@@ -39,26 +38,26 @@ export default defineComponent({
     },
     computed: {
         program() {
-            return getProgramLines(this.$programExecutionStore.loadedProgram);
+            return getProgramLines(this.$simulationStore.loadedProgram);
         },
         stagePCs() {
-            return this.$programExecutionStore.stagePCs;
+            return this.$simulationStore.stagePCs;
         }
     },
     mounted() {
-        const cpu = this.$programExecutionStore.core;
-        this.$viewStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
+        const cpu = this.$simulationStore.core;
+        this.$simulationStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
     },
 
     methods: {
-        getColor(pc) {
+        getColor(pc: number) {
             // If the isntruction is a nop, return a different color
             if (pc == -1) return '#888';
-            if (this.program[this.$programExecutionStore.PCToLineMap[pc] - 1] == 'nop') return '#888';
+            if (this.program[this.$simulationStore.PCToLineMap[pc] - 1] == 'nop') return '#888';
             return this.stageColors[(pc) % this.stageColors.length];
         },
 
-        getFontSize(text) {
+        getFontSize(text: string) {
             if (!text) return '1.5rem';
             // get stages element and find the first stage's width
             const stages = this.$refs.stages as HTMLElement;

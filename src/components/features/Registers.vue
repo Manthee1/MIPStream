@@ -7,8 +7,8 @@ import { decToHex } from '../../assets/js/utils';
     <div>
         <div class="pc">
             <span>PC</span>
-            <span>0x{{ decToHex($programExecutionStore.core.PC.value, 8) }}</span>
-            <span>{{ $programExecutionStore.core.PC.value }} ({{ $programExecutionStore.core.PC.value / 4 }})</span>
+            <span>0x{{ decToHex($simulationStore.core.PC.value, 8) }}</span>
+            <span>{{ $simulationStore.core.PC.value }} ({{ $simulationStore.core.PC.value / 4 }})</span>
         </div>
         <div class="registers-container">
             <ul class="register-list">
@@ -43,7 +43,7 @@ export default defineComponent({
     computed: {
         registers(): number[] {
             // @ts-ignore
-            return this.$programExecutionStore.core.registerFile as number[]
+            return this.$simulationStore.core.registerFile as number[]
         }
     }
 });

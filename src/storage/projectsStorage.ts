@@ -75,14 +75,17 @@ export const saveProject = (project: Project) => {
 
 export const loadProjects = (loadOnlyMetadata: boolean = false, limit = 10): Project[] => {
     let projects = (loadFromStorage(PROJECTS_KEY) || []) as Project[];
+    projects = projects.sort((a, b) => {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
     projects = projects.slice(0, limit);
     // Remove empty projects
     if (loadOnlyMetadata) {
         return projects.map((project: Project) => ({
             id: project.id,
             name: project.name,
-            code: null,
-            data: null,
+            code: '',
+            data: [],
             layoutGridConfig: null,
             createdAt: project.createdAt,
             updatedAt: project.updatedAt,

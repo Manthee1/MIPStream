@@ -24,7 +24,7 @@ export default {
                         if (!link) return;
                         link.addEventListener('click', (e) => {
                             console.log('clicked');
-                            // useViewStore().showInstructionDocs(instruction);
+                            // useUIStore().showInstructionDocs(instruction);
                         });
                     }, 1000);
 

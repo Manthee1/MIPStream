@@ -1,11 +1,12 @@
 import { loadProjects } from "../storage/projectsStorage";
-import { useViewStore } from "../stores/viewStore";
+import { useProjectStore } from "../stores/projectStore";
+import { useUIStore } from "../stores/UIStore";
 
 export let dropdownItemsConfig: Record<string, DropdownItem>;
 
 export function createConfig() {
 
-    const viewStore = useViewStore();
+    const UIStore = useUIStore();
 
     dropdownItemsConfig =
     {
@@ -22,7 +23,7 @@ export function createConfig() {
             label: 'New',
             action: async (context) => {
                 console.log('New clicked');
-                const project = await viewStore.setupProject();
+                const project = await useProjectStore().invokeProjectSetup();
                 if (!project) return;
                 context.$router.push({ name: 'Workspace', params: { id: project.id } });
             }
@@ -31,7 +32,7 @@ export function createConfig() {
         {
             label: 'Import',
             action: async (context) => {
-                const project = await viewStore.handleProjectUpload();
+                const project = await useProjectStore().invokeProjectUpload();
                 if (!project) return;
                 // Make the router update even if its the same route
                 context.$router.push({ name: 'Workspace', params: { id: 0 } });
@@ -83,7 +84,7 @@ export function createConfig() {
         {
             label: 'Settings',
             action: () => {
-                viewStore.toggleSettings();
+                UIStore.toggleSettings();
             }
         },
 
@@ -97,12 +98,12 @@ export function createConfig() {
                 {
                     label: 'Instruction List',
                     action: () => {
-                        viewStore.togglePanel('instructionList');
+                        UIStore.togglePanel('instructionList');
                     }
                 }, {
                     label: 'CPU',
                     action: () => {
-                        viewStore.togglePanel('cpuView');
+                        UIStore.togglePanel('cpuView');
                     }
                 },
             ]
@@ -128,7 +129,7 @@ export function createConfig() {
             label: 'Exit',
             action: async () => {
                 console.log('Exit clicked');
-                const confirmed = await viewStore.confirm({
+                const confirmed = await UIStore.confirm({
                     title: 'Exit',
                     message: 'Are you sure you want to exit?',
                     confirmText: 'Exit',

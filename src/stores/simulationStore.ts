@@ -7,12 +7,14 @@ import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
 import MIPSBase from '../assets/js/core/MIPSBase';
 import { instructionConfig } from '../assets/js/core/config/instructions';
-import { useViewStore } from './viewStore';
+import { useUIStore } from './UIStore';
+import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 
 
-export const useProgramExecutionStore = defineStore('programexec', {
+export const useSimulationStore = defineStore('simulation', {
     state: () => ({
         core: new MIPSBase(),
+        cpuDiagram: {} as CPUDiagram,
         assembler: new Assembler(instructionConfig),
         // Program is the currently running program that had no assembly errors
         loadedProgram: '' as string,
@@ -107,14 +109,14 @@ export const useProgramExecutionStore = defineStore('programexec', {
             this.stagePCs = [0, -1, -1, -1, -1];
             this.loadedProgram = this.program;
             this.core.loadProgram(instructionMemory);
-            useViewStore().cpuDiagram.draw();
+            this.cpuDiagram.draw();
         },
         step() {
             if (this.status != 'paused') return;
             // Add current pc to stagePCs and remove the oldest one
             this.core.runCycle();
             this.shiftStagePCs();
-            useViewStore().cpuDiagram.draw();
+            this.cpuDiagram.draw();
             console.log(clone(this.stagePCs));
 
             if (this.core.halted) this.status = 'stopped'
@@ -140,7 +142,7 @@ export const useProgramExecutionStore = defineStore('programexec', {
                 // Add current pc to stagePCs and remove the oldest one
                 this.core.runCycle();
                 this.shiftStagePCs();
-                useViewStore().cpuDiagram.draw();
+                this.cpuDiagram.draw();
                 console.log(this.breakpoints, this.PCToLineMap[this.core.PC.value / 4]);
                 if (this.breakpoints.includes(this.PCToLineMap[this.core.PC.value / 4])) {
                     this.status = 'paused';
@@ -151,6 +153,14 @@ export const useProgramExecutionStore = defineStore('programexec', {
             }
             if (this.core.halted)
                 this.status = 'stopped';
+        },
+
+
+        reset() {
+            this.stop();
+            this.program = '';
+            this.loadedProgram = '';
+            this.errors = [];
         }
 
     }
