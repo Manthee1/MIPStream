@@ -11,7 +11,7 @@ import DockviewTab from "../components/layout/DockviewTab.vue";
 </script>
 
 <template>
-	<DockviewVue @ready="onReady" :key="$projectStore.currentProject?.id"
+	<DockviewVue @ready="onReady" :key="id"
 		:class="{ 'dockview-theme-light': $UIStore.theme == 'light', 'dockview-theme-dark': $UIStore.theme == 'dark' }"
 		style="height: 100%">
 	</DockviewVue>
@@ -88,14 +88,14 @@ export default defineComponent({
 			const projectStore = this.$projectStore;
 
 			const currentProject = projectStore.currentProject;
+
 			if (!currentProject) {
 				return;
 			}
 
 			event.api.onDidLayoutChange(() => {
 				const layout = api.toJSON();
-				currentProject.layoutGridConfig = layout.grid;
-				projectStore.saveProject();
+				projectStore.updateProjectLayout(layout.grid);
 			});
 
 			console.log(currentProject?.layoutGridConfig);

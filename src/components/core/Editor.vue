@@ -71,6 +71,8 @@ export default defineComponent({
 		if (!model) return;
 		validate(model);
 
+		this.$simulationStore.program = code;
+
 		// Listener for changes in the editor
 		this.$simulationStore.program = monaco.editor.getModels()[0].getValue();
 		monaco.editor.getModels()[0].onDidChangeContent(() => {

@@ -4,6 +4,7 @@ import Home from '@/pages/Home.vue';
 import CpuView from '@/components/core/CpuView.vue';
 import { loadProject } from './storage/projectsStorage';
 import { useProjectStore } from './stores/projectStore';
+import { getProject } from './db/projectsTable';
 
 
 const routes: RouteRecordRaw[] = [
@@ -18,19 +19,7 @@ const routes: RouteRecordRaw[] = [
         path: '/workspace/:id',
         name: 'Workspace',
         props: true,
-        component: Workspace,
-        beforeEnter: (to, from, next) => {
-
-            const id = to.params.id.toString();
-            const project = loadProject(id);
-            if (!project) {
-                next({ name: 'Home' });
-                return;
-            }
-
-            useProjectStore().setCurrentProject(project);
-            next();
-        }
+        component: Workspace
     }, {
         path: '/cpu',
         name: 'CPU',
