@@ -14,13 +14,18 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="projects.length === 0">
+            <td colspan=5>
+              <p class="text-center mt-3">No projects found</p>
+            </td>
+          </tr>
           <tr v-for="project in projects" :key="project.id">
             <td>
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name
-                }}</router-link>
+              }}</router-link>
             </td>
             <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td>
-            <td>{{ formatDateRecent(new Date(project.updatedAt)) }}</td>
+            <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
             <td>{{ formatSize(project.size) }}</td>
             <td class="flex">
               <!-- <MButton type="error" filled class="delete-button" @click="deleteProject(project.id)" icon="trash" /> -->
@@ -41,7 +46,7 @@
 import { defineComponent } from 'vue';
 import { formatDateRecent, formatSize } from '../assets/js/utils';
 import MButton from '../components/common/MButton.vue';
-import { Project, loadProjects } from '../storage/projectsStorage';
+import { Project, getProjects } from '../db/projectsTable';
 import Dropdown from '../components/common/Dropdown.vue';
 
 export default defineComponent({
@@ -55,17 +60,17 @@ export default defineComponent({
       projects: [] as Project[],
     };
   },
-  mounted() {
-    this.projects = loadProjects(true)
+  async mounted() {
+    this.projects = await getProjects()
 
   },
   methods: {
 
-    async deleteProject(id: string) {
+    async deleteProject(id: number) {
 
       const success = await this.$projectStore.invokeProjectDeletion(id);
       if (!success) return;
-      this.projects = loadProjects(true);
+      this.projects = await getProjects();
     },
 
     async setupProject() {
@@ -74,10 +79,12 @@ export default defineComponent({
       this.$router.push({ name: 'Workspace', params: { id: project.id } });
     },
 
-    async renameProject(id: string) {
+    async renameProject(id: number) {
       const success = await this.$projectStore.invokeProjectRename(id);
       if (!success) return;
-      this.projects = loadProjects(true);
+      console.log(await getProjects());
+
+      this.projects = await getProjects();
     },
 
     formatDateRecent,
