@@ -1,5 +1,5 @@
 interface Ref<T> {
     key: string;
-    value: T | null;
-    _value: T | null;
+    value: T;
+    _value: T;
 }

@@ -1,4 +1,4 @@
-const cpuVariables = {
+const cpuVariables: Record<string, Ref<number>> = {
     PC: {} as Ref<number>,
     IR_IF: {} as Ref<number>,
     CONST4: {} as Ref<number>,

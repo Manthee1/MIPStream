@@ -1,6 +1,6 @@
 import _ from "./cpu-variables";
 
-export const stageRegisters = {
+export const stageRegisters: Record<string, Record<string, Ref<number>>> = {
     IFtoID: {
         IR: _.IR_IF,
         NPC: _.NPC_IF,

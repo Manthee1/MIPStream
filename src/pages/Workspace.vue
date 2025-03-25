@@ -11,7 +11,7 @@ import DockviewTab from "../components/layout/DockviewTab.vue";
 </script>
 
 <template>
-	<DockviewVue @ready="onReady" :key="project.id"
+	<DockviewVue @ready="onReady" :key="$projectStore.currentProject?.id"
 		:class="{ 'dockview-theme-light': $UIStore.theme == 'light', 'dockview-theme-dark': $UIStore.theme == 'dark' }"
 		style="height: 100%">
 	</DockviewVue>
@@ -66,7 +66,7 @@ export default defineComponent({
 	},
 	mounted() {
 		confirmSaveBeforeLeave = async () => {
-			if (this.projectSaved) return true;
+			if (this.$projectStore.projectSaved) return true;
 			// Stop the user from navigating away without saving
 			const confirm = await this.$confirm({
 				title: "Unsaved Changes",
@@ -87,20 +87,25 @@ export default defineComponent({
 			this.$UIStore.dockviewApi = api;
 			const projectStore = this.$projectStore;
 
+			const currentProject = projectStore.currentProject;
+			if (!currentProject) {
+				return;
+			}
+
 			event.api.onDidLayoutChange(() => {
 				const layout = api.toJSON();
-				projectStore.currentProject.layoutGridConfig = layout.grid;
-				projectStore.saveProject(this.project);
+				currentProject.layoutGridConfig = layout.grid;
+				projectStore.saveProject();
 			});
 
-			console.log(this?.project?.layoutGridConfig);
+			console.log(currentProject?.layoutGridConfig);
 
-			const layoutGridConfig = (Object.keys(this?.project?.layoutGridConfig ?? {}).length > 0) ? this.project.layoutGridConfig : defaultLayoutGridConfig;
+			const layoutGridConfig = (Object.keys(currentProject?.layoutGridConfig ?? {}).length > 0) ? currentProject.layoutGridConfig : defaultLayoutGridConfig;
 
 			const panelConfig = panelsConfig;
 			panelConfig['editor'].params = {
-				"id": this.project.id,
-				"code": this.project.code,
+				"id": currentProject.id,
+				"code": currentProject.code,
 			}
 
 			const conf: SerializedDockview = {

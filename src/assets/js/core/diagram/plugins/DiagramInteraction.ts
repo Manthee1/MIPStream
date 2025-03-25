@@ -97,7 +97,10 @@ export class DiagramInteraction extends CPUDiagramPlugin {
             return s == null || s.trim() == '';
         }
 
-        const height = (!isEmpty(title) && (titleHeight + padding)) + (!isEmpty(subtitle) && (subtitleHeight + padding)) + (!isEmpty(description) && (descriptionHeight + padding));
+        const height =
+            (isEmpty(title) ? 0 : (titleHeight + padding)) +
+            (isEmpty(subtitle) ? 0 : (subtitleHeight + padding)) +
+            (isEmpty(description) ? 0 : (descriptionHeight + padding));
 
 
 

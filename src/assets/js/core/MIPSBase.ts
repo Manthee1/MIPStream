@@ -130,12 +130,10 @@ export default class MIPSBase {
     stageRegisters = stageRegisters;
 
     resetStages() {
-        for (let stage in this.stageRegisters) {
-            let stageData = this.stageRegisters[stage];
-            for (let key in stageData) {
-                this.stageRegisters[stage][key].value = 0;
+        for (let stage of Object.values(this.stageRegisters)) {
+            for (let register of Object.values(stage)) {
+                register.value = 0;
             }
-
         }
     }
 
