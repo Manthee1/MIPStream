@@ -1,15 +1,19 @@
 import { useSimulationStore } from './simulationStore';
 import { defineStore } from 'pinia';
-import { addProject, createProject, downloadProject, existsProject, loadProject, Project, removeProject, saveProject } from '../storage/projectsStorage';
-import { promptProjectName, confirmAction, notify } from '../utils/projectActions';
+import { insertProject, existsProject, getProject, Project, deleteProject, updateProject, getProjects } from '../db/projectsTable';
+import { promptProjectName, confirmAction, notify, downloadProject } from '../utils/projectActions';
 import { useRouter } from 'vue-router';
 import { useUIStore } from './UIStore';
 import { useSettingsStore } from './settingsStore';
+import { rejects } from 'assert';
+import { clone } from '../assets/js/utils';
+import { toRaw } from 'vue';
 
 export const useProjectStore = defineStore('project', {
     state: () => ({
         currentProject: null as Project | null,
         projectSaved: true,
+        recentProjects: [] as Project[],
     }),
     getters: {
 
@@ -37,6 +41,7 @@ export const useProjectStore = defineStore('project', {
                 if (!this.currentProject) return;
                 downloadProject(this.currentProject);
             });
+            this.updateRecentProjects();
 
         },
 
@@ -44,7 +49,9 @@ export const useProjectStore = defineStore('project', {
         saveProject() {
             if (!this.currentProject) return;
             try {
-                saveProject(this.currentProject);
+                this.currentProject.savedAt = new Date();
+                updateProject(toRaw(this.currentProject));
+                this.projectSaved = true;
             }
             catch (error: any) {
                 notify('error', 'Error', error.message);
@@ -72,9 +79,10 @@ export const useProjectStore = defineStore('project', {
 
         updateProjectLayout(layout: any) {
             if (!layout || !this.currentProject) return;
-            this.currentProject.layoutGridConfig = layout;
-            this.projectSaved = false;
-            this.saveProject();
+            this.currentProject.layoutGridConfig = clone(layout);
+            console.log("Layout Updated", this.currentProject);
+            updateProject(toRaw(this.currentProject));
+
         },
 
 
@@ -85,9 +93,10 @@ export const useProjectStore = defineStore('project', {
             if (!name) return;
 
             try {
-                const project = createProject(name);
+                const project = await insertProject({ name } as Project);
                 this.currentProject = project;
                 notify('success', 'Project Created', 'The project has been created successfully');
+                this.updateRecentProjects();
                 return project;
             } catch (error: any) {
                 notify('error', 'Error', error.message);
@@ -95,16 +104,17 @@ export const useProjectStore = defineStore('project', {
             return null;
         },
 
-        async invokeProjectDeletion(projectId: string) {
+        async invokeProjectDeletion(projectId: number) {
             const confirm = await confirmAction('Delete Project', 'Are you sure you want to delete this project?', 'Delete', 'error');
             if (!confirm) return false;
 
             try {
-                removeProject(projectId);
+                deleteProject(projectId);
                 if (this.currentProject?.id === projectId) {
                     this.currentProject = null;
                 }
                 notify('success', 'Project Deleted', 'The project has been deleted successfully');
+                this.updateRecentProjects();
                 return true;
             } catch (error: any) {
                 notify('error', 'Error', error.message);
@@ -112,19 +122,25 @@ export const useProjectStore = defineStore('project', {
             }
         },
 
-        async invokeProjectRename(projectId: string) {
-            const project = loadProject(projectId);
-            if (!project) {
-                notify('error', 'Error', 'Project not found');
-                return false;
-            }
+        async invokeProjectRename(projectId: number) {
+            return new Promise<boolean>(async (resolve) => {
+                const project = await getProject(projectId);
+                if (!project) {
+                    notify('error', 'Error', 'Project not found');
+                    return false;
+                }
 
-            const name = await promptProjectName('Rename Project', 'Enter the new name of the project', project.name);
-            if (!name) return false;
+                const name = await promptProjectName('Rename Project', 'Enter the new name of the project', project.name);
+                if (!name) {
+                    resolve(false);
+                    return;
+                }
 
-            saveProject({ ...project, name });
-            notify('success', 'Project Renamed', 'The project has been renamed successfully');
-            return true;
+                updateProject({ ...project, name });
+                notify('success', 'Project Renamed', 'The project has been renamed successfully');
+                this.updateRecentProjects();
+                resolve(true);
+            });
         },
 
         async invokeProjectUpload() {
@@ -148,25 +164,41 @@ export const useProjectStore = defineStore('project', {
                             return;
                         }
 
-                        if (existsProject(project.id)) {
+                        if (await existsProject(project.id)) {
                             const overwrite = await confirmAction('Project Exists', 'A project with the same id already exists. Do you want to overwrite it?', 'Overwrite', 'error');
                             if (overwrite) {
-                                saveProject(project);
+                                updateProject(project);
                                 notify('success', 'Project Updated', 'The project has been updated successfully');
+                                this.updateRecentProjects();
                                 resolve(project);
                                 return;
                             }
-                            project.id = Date.now().toString();
                         }
 
-                        project = addProject(project);
-                        notify('success', 'Project Uploaded', 'The project has been uploaded successfully');
-                        resolve(project);
+                        try {
+
+                            // Convert date strings to Date objects
+                            project.createdAt = new Date(project.createdAt);
+                            project.updatedAt = new Date(project.updatedAt);
+
+                            project = await insertProject(project);
+                            notify('success', 'Project Uploaded', 'The project has been uploaded successfully');
+                            this.updateRecentProjects();
+                            resolve(project);
+                        } catch (error: any) {
+                            notify('error', 'Error', error.message);
+                            resolve(null);
+                        }
                     };
                     reader.readAsText(file);
                 };
                 input.click();
             });
+        },
+
+
+        async updateRecentProjects() {
+            this.recentProjects = await getProjects(10);
         }
     },
 });

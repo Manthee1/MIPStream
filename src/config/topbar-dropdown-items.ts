@@ -22,7 +22,6 @@ export function createConfig() {
         {
             label: 'New',
             action: async (context) => {
-                console.log('New clicked');
                 const project = await useProjectStore().invokeProjectSetup();
                 if (!project) return;
                 context.$router.push({ name: 'Workspace', params: { id: project.id } });
@@ -38,7 +37,7 @@ export function createConfig() {
                 context.$router.push({ name: 'Workspace', params: { id: 0 } });
                 setTimeout(() => {
                     context.$router.push({ name: 'Workspace', params: { id: project.id } });
-                }, 0);
+                }, 10);
             }
         },
         openRecentItem:
@@ -50,7 +49,7 @@ export function createConfig() {
             type: 'submenu',
             // TODO: Rework this to actually observe if recent projects change. Probobly will need a rework of the storage system
             get items() {
-                const items: DropdownItem[] = loadProjects(true, 10).map((project) => {
+                const items: DropdownItem[] = useProjectStore().recentProjects.map((project) => {
                     return {
                         label: project.name,
                         type: 'item',

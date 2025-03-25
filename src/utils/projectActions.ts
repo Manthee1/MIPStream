@@ -1,3 +1,4 @@
+import { Project } from '../db/projectsTable';
 import { useUIStore } from '../stores/UIStore';
 import { useNotification } from '@kyvg/vue3-notification';
 
@@ -36,3 +37,14 @@ export const notify = (type: 'success' | 'error', title: string, text: string) =
         text,
     });
 };
+
+
+export const downloadProject = (project: Project) => {
+    const element = document.createElement('a');
+    const file = new Blob([JSON.stringify(project)], { type: 'application/json' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${project.name}.mipstream`;
+    document.body.appendChild(element); // Required for this to work in FireFox
+    element.click();
+    document.body.removeChild(element);
+}
