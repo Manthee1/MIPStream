@@ -79,6 +79,15 @@ export function createConfig() {
         {
             type: 'separator'
         },
+
+        projectSettingsItem:
+        {
+            label: 'Project Settings',
+            action: () => {
+                UIStore.toggleProjectSettings();
+            }
+        },
+
         settingsItem:
         {
             label: 'Settings',
@@ -176,6 +185,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
                 dropdownItemsConfig.seperatorItem,
 
                 dropdownItemsConfig.settingsItem,
+                dropdownItemsConfig.projectSettingsItem,
                 dropdownItemsConfig.helpItem,
                 dropdownItemsConfig.aboutItem,
 

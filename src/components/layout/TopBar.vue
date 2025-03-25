@@ -5,7 +5,6 @@
         <!-- Theme -->
         <div class="flex gap-2">
             <MButton :icon="$UIStore.theme === 'light' ? 'sun' : 'moon'" @click="togleTheme()" />
-            <MButton small v-if="$route?.name && $route.name == 'Workspace'" icon="cpu" @click="toggleView" class="toggle-view" :class="{ active: showCpuView }" />
         </div>
     </div>
 </template>
@@ -22,27 +21,27 @@ export default defineComponent({
     },
     data() {
         return {
-            
+
         }
     },
     computed: {
-        dropdownItems(){
+        dropdownItems() {
             return this.$UIStore.topBar.dropdownItems;
         },
         title() {
             return this.$UIStore.topBar.title;
         },
         showCpuView() {
-            return this.$UIStore.showCpuView;
+            return this.$UIStore.showProjectSettings;
         }
     },
     methods: {
         toggleView() {
-            this.$UIStore.toggleCpuView();
+            this.$UIStore.toggleProjectSettings();
         },
         togleTheme() {
             const newTheme = this.$UIStore.theme === 'light' ? 'dark' : 'light';
-            this.$settings.setSetting('theme',newTheme);
+            this.$settings.setSetting('theme', newTheme);
             this.$UIStore.setTheme(newTheme);
         }
     }

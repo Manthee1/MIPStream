@@ -1,3 +1,9 @@
+<script setup lang="ts">
+import { generalSettingTabs } from './config/settings';
+
+</script>
+
+
 <template>
     <TopBar fileName="Test" />
     <main>
@@ -9,13 +15,18 @@
     </main>
     <div class="settings-wrapper" v-if="$UIStore.showSettings">
         <Window title="Settings" class="settings-window" closeable :onClose="$UIStore.toggleSettings">
-            <Settings />
+            <Settings :settings-tabs="generalSettingTabs" :set-setting="$settings.setSetting" />
         </Window>
     </div>
-    
+
+    <div class="project-settings-wrapper" v-if="$UIStore.showProjectSettings">
+        <Window title="Project Settings" class="project-settings-window" closeable
+            :onClose="$UIStore.toggleProjectSettings">
+        </Window>
+    </div>
     <!-- Modal -->
     <Modal />
-    
+
     <!-- Notifications -->
     <notifications position="bottom left" :pauseOnHover='true' />
 </template>
@@ -28,13 +39,13 @@ import Window from './components/common/Window.vue';
 import Modal from './components/singletons/Modal.vue';
 
 export default defineComponent({
-	name: 'App',
-	components: {
-		TopBar,
-		Settings,
-		Window,
-		Modal,
-	},
+    name: 'App',
+    components: {
+        TopBar,
+        Settings,
+        Window,
+        Modal,
+    },
 });
 </script>
 
@@ -42,7 +53,7 @@ export default defineComponent({
 <style lang="sass">
 @use './assets/sass/main'
 
-.settings-wrapper
+.settings-wrapper, .project-settings-wrapper
     position: absolute
     top: 0
     left: 0

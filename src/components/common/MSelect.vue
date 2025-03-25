@@ -1,12 +1,13 @@
 <template>
     <div class="m-select">
         <div class="select-box" @click="toggleDropdown">
-            
-            <span>{{ selectedOption?.label ?? placeholder ?? '' }}</span> 
+
+            <span>{{ selectedOption?.label ?? placeholder ?? '' }}</span>
             <vue-feather type="chevron-down" class="arrow" :class="{ 'open': isOpen }" />
         </div>
         <ul v-if="isOpen" class="options">
-            <li v-for="option in options" :key="option.value+'-'+option.value" @click="selectOption(option)" :class="{ 'selected': option.value === selectedOption.value }">
+            <li v-for="option in options" :key="option.value + '-' + option.value" @click="selectOption(option)"
+                :class="{ 'selected': option.value === selectedOption?.value }">
                 {{ option.label }}
             </li>
         </ul>

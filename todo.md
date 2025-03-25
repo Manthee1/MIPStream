@@ -1,7 +1,7 @@
 
 General
 - [x] Rework stores. Split view storage into project storage and UI storage
-- [ ] Rework the storage system to be more efficient. Use IndexedDB
+- [x] Rework the storage system to be more efficient. Use IndexDB
 - [ ] Add project settings
 - [ ] Add options to each workspace panel
 

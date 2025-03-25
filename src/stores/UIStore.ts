@@ -14,7 +14,7 @@ document.documentElement.classList.add(`theme-${theme}`);
 
 export const useUIStore = defineStore('ui', {
     state: () => ({
-        showCpuView: false,
+        showProjectSettings: false,
         showSettings: false,
         theme: theme,
         modalData: {} as ModalData,
@@ -28,8 +28,8 @@ export const useUIStore = defineStore('ui', {
 
     },
     actions: {
-        toggleCpuView() {
-            this.showCpuView = !this.showCpuView;
+        toggleProjectSettings() {
+            this.showProjectSettings = !this.showProjectSettings;
         },
         toggleSettings() {
             this.showSettings = !this.showSettings;

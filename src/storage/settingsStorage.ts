@@ -1,8 +1,8 @@
-import { settingTabs } from '../config/settings';
+import { generalSettingTabs } from '../config/settings';
 import { saveToStorage, loadFromStorage } from './storage';
 
 const defaultSettings: Record<string, any> = {};
-settingTabs.forEach(tab => {
+generalSettingTabs.forEach(tab => {
     tab.settings.forEach(setting => {
         defaultSettings[setting.key] = setting.default;
     });

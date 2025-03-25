@@ -8,14 +8,14 @@ interface Setting {
     icon?: string; // Added icon property
 }
 
-interface SettingTab {
+export interface SettingTab {
     name: string;
     icon?: string;
     description?: string;
     settings: Setting[];
 }
 
-const settingTabs: SettingTab[] = [
+const generalSettingTabs: SettingTab[] = [
     {
         name: 'General',
         icon: 'settings',
@@ -123,4 +123,9 @@ const settingTabs: SettingTab[] = [
     }
 ];
 
-export { settingTabs };
+
+const projectSettingTabs: SettingTab[] = [
+];
+
+
+export { generalSettingTabs as generalSettingTabs };

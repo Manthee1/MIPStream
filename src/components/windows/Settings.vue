@@ -8,8 +8,8 @@
             </div>
         </div>
         <div class="tab-content">
-            <div class="setting-item" :class="{'wrap':setting.type === 'radio'}" v-for="setting in currentTab.settings"
-                :key="setting.key">
+            <div class="setting-item" :class="{ 'wrap': setting.type === 'radio' }"
+                v-for="setting in currentTab.settings" :key="setting.key">
                 <div class="setting-info">
                     <div class='setting-icon-wrapper'>
                         <vue-feather v-if="setting?.icon" class="setting-icon" :type="setting.icon" />
@@ -24,19 +24,20 @@
                         @input="setSetting(setting.key, $event)" />
                     <input v-else-if="setting.type === 'number'" type="number" :value="$settings[setting.key]"
                         @input="setSetting(setting.key, $event)" />
-                    <Switch v-else-if="setting.type === 'checkbox'" :id="setting.key" :model-value="$settings[setting.key]"
+                    <Switch v-else-if="setting.type === 'checkbox'" :id="setting.key"
+                        :model-value="$settings[setting.key]" @update:model-value="setSetting(setting.key, $event)" />
+                    <Select v-else-if="setting.type === 'select'" :id="setting.key"
+                        :model-value="$settings[setting.key]" :options="setting?.options ?? []"
                         @update:model-value="setSetting(setting.key, $event)" />
-                    <Select v-else-if="setting.type === 'select'" :id="setting.key" :model-value="$settings[setting.key]"
-                        :options="setting.options" @update:model-value="setSetting(setting.key, $event)" />
                     <div v-else-if="setting.type === 'radio'">
                         <div class="radio-group flex flex-row flex-left gap-2" v-for="option in setting.options"
-                            :key="setting.key+'-'+option.value">
+                            :key="setting.key + '-' + option.value">
                             <input type='radio' :checked="$settings[setting.key] == option.value" :name="setting.key"
                                 :value="option.value" />
                             <div class="flex flex-column my-auto">
-                                <label>{{option.label}}</label>
-                                <p v-if="option.description">{{option.description}}</p>
-    
+                                <label>{{ option.label }}</label>
+                                <p v-if="option.description">{{ option.description }}</p>
+
                             </div>
                         </div>
                     </div>
@@ -48,51 +49,46 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { settingTabs } from '../../config/settings';
+import { SettingTab, generalSettingTabs } from '../../config/settings';
 import Window from '@/components/common/Window.vue';
 import Switch from '../common/Switch.vue';
 import Select from '../common/MSelect.vue';
 
 export default defineComponent({
-	name: 'Settings',
-	components: {
-		Window,
-		Switch,
-		Select,
-	},
-	data() {
-		return {
-			currentTabIndex: 0,
-		};
-	},
-	computed: {
-		settingsTabs() {
-			return settingTabs;
-		},
-		currentTab() {
-			return settingTabs[this.currentTabIndex];
-		},
-	},
-	methods: {
-		close() {
-			this.$UIStore.toggleSettings();
-		},
-		setActiveTab(index: number) {
-			this.currentTabIndex = index;
-		},
-		setSetting(key: string, value: any) {
-			console.log(key, value);
-			if (key === 'theme') this.$UIStore.setTheme(value);
+    name: 'Settings',
+    components: {
+        Window,
+        Switch,
+        Select,
+    },
+    props: {
+        settingsTabs: Object as () => SettingTab[],
+        setSetting: {
+            type: Function,
+            required: true,
+        }
+    },
+    data() {
+        return {
+            currentTabIndex: 0,
+        };
+    },
+    computed: {
+        currentTab() {
+            return generalSettingTabs[this.currentTabIndex];
+        },
+    },
+    methods: {
+        close() {
+            this.$UIStore.toggleSettings();
+        },
+        setActiveTab(index: number) {
+            this.currentTabIndex = index;
+        },
+    },
+    watch: {
 
-			this.$settings.setSetting(key, value);
-		},
-	},
-	watch: {
-		$settings() {
-			console.log('Settings changed');
-			// saveSetting();
-		},
-	},
+    },
 });
 </script>
 
