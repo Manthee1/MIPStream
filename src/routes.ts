@@ -25,5 +25,10 @@ const routes: RouteRecordRaw[] = [
         name: 'CPU',
         component: CpuView
     },
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: { name: 'Home' }
+    }
+    
 ];
 export default routes;
