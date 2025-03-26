@@ -403,7 +403,8 @@ input[type="radio"] {
 }
 
 input[type="radio"] {
-    border-radius: 50%;
+    border-radius: 0.5rem;
+    /* border-radius: 50%; */
 }
 
 input[type="checkbox"]:checked::after,

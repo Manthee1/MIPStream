@@ -192,4 +192,22 @@ export default defineComponent({
                 gap: 0.5rem
                 // flex: 0 0 0
                 max-width: 20rem
+                width: 100%
+                .radio-group 
+                    width: 100%
+                    border-radius: 5px
+                    padding: 0.5rem
+                    cursor: pointer
+                    &.active
+                        background-color: var(--color-light)
+                    &:hover
+                        background-color: var(--color-light)
+                    input
+                        margin: 0px 0.5rem 
+                        
+                    p
+                        margin: 0
+                        font-size: 1.2rem
+                        color: var(--color-subtext) 
+              
 </style>
