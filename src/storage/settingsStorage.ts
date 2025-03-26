@@ -1,4 +1,4 @@
-import { generalSettingTabs } from '../config/settings';
+import { generalSettingTabs } from '../config/settings/general-settings';
 import { saveToStorage, loadFromStorage } from './storage';
 
 const defaultSettings: Record<string, any> = {};

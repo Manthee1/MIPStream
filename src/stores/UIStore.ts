@@ -16,6 +16,7 @@ export const useUIStore = defineStore('ui', {
     state: () => ({
         showProjectSettings: false,
         showSettings: false,
+        settingsWindowConfig: {} as SettingWindowConfig,
         theme: theme,
         modalData: {} as ModalData,
         topBar: {
@@ -28,11 +29,12 @@ export const useUIStore = defineStore('ui', {
 
     },
     actions: {
-        toggleProjectSettings() {
-            this.showProjectSettings = !this.showProjectSettings;
+        openSettings(config: SettingWindowConfig) {
+            this.settingsWindowConfig = config;
+            this.showSettings = true;
         },
-        toggleSettings() {
-            this.showSettings = !this.showSettings;
+        closeSettings() {
+            this.showSettings = false;
         },
         setTitle(title: string) {
             this.topBar.title = title;

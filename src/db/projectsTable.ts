@@ -1,4 +1,4 @@
-import { projectSettingTabs } from "../config/settings";
+import { projectSettingTabs } from "../config/settings/project-settings";
 import { IOrderQuery, ITable } from "jsstore";
 import db from "./database";
 

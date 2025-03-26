@@ -1,9 +1,3 @@
-<script setup lang="ts">
-import { generalSettingTabs, projectSettingTabs } from './config/settings';
-
-</script>
-
-
 <template>
     <TopBar fileName="Test" />
     <main>
@@ -14,17 +8,13 @@ import { generalSettingTabs, projectSettingTabs } from './config/settings';
         </router-view>
     </main>
     <div class="settings-wrapper" v-if="$UIStore.showSettings">
-        <Window title="Settings" class="settings-window" closeable :onClose="$UIStore.toggleSettings">
-            <Settings :settings-tabs="generalSettingTabs" :set-setting="$settings.setSetting" />
+        <Window :title="$UIStore.settingsWindowConfig.title" class="settings-window" closeable
+            :onClose="$UIStore.closeSettings">
+            <Settings :settings-config="$UIStore.settingsWindowConfig"
+                :settings="$UIStore.settingsWindowConfig.settings" />
         </Window>
     </div>
 
-    <div class="project-settings-wrapper" v-if="$UIStore.showProjectSettings">
-        <Window title="Project Settings" class="project-settings-window" closeable
-            :onClose="$UIStore.toggleProjectSettings">
-            <Settings :settings-tabs="projectSettingTabs" :set-setting="$projectStore.setProjectSetting" />
-        </Window>
-    </div>
     <!-- Modal -->
     <Modal />
 
@@ -54,7 +44,7 @@ export default defineComponent({
 <style lang="sass">
 @use './assets/sass/main'
 
-.settings-wrapper, .project-settings-wrapper
+.settings-wrapper
     position: absolute
     top: 0
     left: 0

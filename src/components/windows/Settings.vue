@@ -1,7 +1,7 @@
 <template>
     <div class="settings-content">
         <div class="tabs">
-            <div class="tab-item" v-for="(tab, index) in settingsTabs" :key="'settings-tab-' + index"
+            <div class="tab-item" v-for="(tab, index) in settingsConfig.tabs" :key="'settings-tab-' + index"
                 @click="setActiveTab(index)" :class="{ active: currentTabIndex === index }">
                 <vue-feather class="tab-icon" :type="tab.icon" />
                 <span class='tab-name'> {{ tab.name }}</span>
@@ -20,26 +20,30 @@
                     </div>
                 </div>
                 <div class="setting-input">
-                    <input v-if="setting.type === 'text'" type="text" :value="$settings[setting.key]"
+                    <input v-if="setting.type === 'text'" type="text" :value="settings[setting.key]"
                         @input="setSetting(setting.key, $event)" />
-                    <input v-else-if="setting.type === 'number'" type="number" :value="$settings[setting.key]"
+                    <input v-else-if="setting.type === 'number'" type="number" :value="settings[setting.key]"
                         @input="setSetting(setting.key, $event)" />
                     <Switch v-else-if="setting.type === 'checkbox'" :id="setting.key"
-                        :model-value="$settings[setting.key]" @update:model-value="setSetting(setting.key, $event)" />
-                    <Select v-else-if="setting.type === 'select'" :id="setting.key"
-                        :model-value="$settings[setting.key]" :options="setting?.options ?? []"
-                        @update:model-value="setSetting(setting.key, $event)" />
-                    <div v-else-if="setting.type === 'radio'">
-                        <div class="radio-group flex flex-row flex-left gap-2" v-for="option in setting.options"
-                            :key="setting.key + '-' + option.value">
-                            <input type='radio' :checked="$settings[setting.key] == option.value" :name="setting.key"
-                                :value="option.value" />
-                            <div class="flex flex-column my-auto">
-                                <label>{{ option.label }}</label>
-                                <p v-if="option.description">{{ option.description }}</p>
+                        :model-value="settings[setting.key]" @update:model-value="setSetting(setting.key, $event)" />
+                    <Select v-else-if="setting.type === 'select'" :id="setting.key" :model-value="settings[setting.key]"
+                        :options="setting?.options ?? []" @update:model-value="setSetting(setting.key, $event)" />
+                    <div class="width-full" v-else-if="setting.type === 'radio'">
+                        <template v-for="option in setting.options" :key="setting.key + '-' + option.value">
+                            <label class="radio-group flex flex-row flex-nowrap flex-left gap-3"
+                                :for="setting.key + '-' + option.value"
+                                :class="{ 'active': settings[setting.key] == option.value }">
+                                <input class="" type='radio' :checked="settings[setting.key] == option.value"
+                                    :name="setting.key" :value="option.value" :id="setting.key + '-' + option.value"
+                                    @change="setSetting(setting.key, option.value)" />
+                                <div class="flex flex-column">
+                                    {{ option.label }}
+                                    <p v-if="option.description">{{ option.description }}</p>
 
-                            </div>
-                        </div>
+                                </div>
+
+                            </label>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -49,10 +53,10 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { SettingTab, generalSettingTabs } from '../../config/settings';
 import Window from '@/components/common/Window.vue';
 import Switch from '../common/Switch.vue';
 import Select from '../common/MSelect.vue';
+import { clone } from '../../assets/js/utils';
 
 export default defineComponent({
     name: 'Settings',
@@ -62,11 +66,11 @@ export default defineComponent({
         Select,
     },
     props: {
-        settingsTabs: Object as () => SettingTab[],
-        setSetting: {
-            type: Function,
+        settingsConfig: {
+            type: Object as () => SettingWindowConfig,
             required: true,
-        }
+        },
+
     },
     data() {
         return {
@@ -75,12 +79,21 @@ export default defineComponent({
     },
     computed: {
         currentTab() {
-            return generalSettingTabs[this.currentTabIndex];
+            return this.settingsConfig.tabs[this.currentTabIndex];
+        },
+        settings() {
+            return this.settingsConfig.settings;
         },
     },
     methods: {
         close() {
-            this.$UIStore.toggleSettings();
+            this.$UIStore.closeSettings();
+        },
+        setSetting(key: string, value: any) {
+            console.log('Setting', key, value);
+
+            this.settingsConfig.settings[key] = value;
+            this.settingsConfig.setSetting(key, value);
         },
         setActiveTab(index: number) {
             this.currentTabIndex = index;
@@ -153,15 +166,14 @@ export default defineComponent({
             background-color: var(--color-white)
             border: 1px solid var(--color-medium)
             transition: background-color 0.2s
-            &:hover
-                background-color: var(--color-background-dark)
+            // &:hover
+            //     background-color: var(--color-background-dark)
             &.wrap
                 flex-flow: column
                 justify-content: flex-start
                 align-content: flex-start
                 .setting-input
                     max-width: 100%
-                    margin-left: 3.5rem
             .setting-info
                 display: flex
                 flex-flow: row nowrap

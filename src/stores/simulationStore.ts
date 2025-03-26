@@ -9,6 +9,8 @@ import MIPSBase from '../assets/js/core/MIPSBase';
 import { instructionConfig } from '../assets/js/core/config/instructions';
 import { useUIStore } from './UIStore';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
+import { defaultProjectSettings } from '../db/projectsTable';
+import { useProjectStore } from './projectStore';
 
 
 export const useSimulationStore = defineStore('simulation', {
@@ -21,7 +23,8 @@ export const useSimulationStore = defineStore('simulation', {
         program: '' as string,
 
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
-        speed: 10 as number, // cycles per second
+        get speed() { return useProjectStore().currentProject?.settings.speed }, // cycles per second
+        set speed(value: number) { useProjectStore().setProjectSetting('speed', value) },
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
         instructionCount: 0 as number,

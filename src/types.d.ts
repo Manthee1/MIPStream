@@ -22,3 +22,28 @@ type ModalData = {
     verifyInput?: (input: string) => boolean | void
 }
 
+interface Setting {
+    label: string;
+    key: string;
+    type: 'checkbox' | 'text' | 'number' | 'select' | 'radio';
+    default: any;
+    options?: { value: string, label: string, description?: string }[];
+    description: string;
+    icon?: string; // Added icon property
+}
+
+interface SettingTab {
+    name: string;
+    icon?: string;
+    description?: string;
+    settings: Setting[];
+}
+
+interface SettingWindowConfig {
+    tabs: SettingTab[];
+    settings: Record<string, any>;
+    setSetting(key: string, value: any): void;
+    title: string;
+    icon: string;
+    description: string;
+}

@@ -1,6 +1,11 @@
+import { defaultProjectSettings } from "../db/projectsTable";
 import { loadProjects } from "../storage/projectsStorage";
+import { settings } from "../storage/settingsStorage";
 import { useProjectStore } from "../stores/projectStore";
+import { useSettingsStore } from "../stores/settingsStore";
 import { useUIStore } from "../stores/UIStore";
+import { generalSettingsConfig } from "./settings/general-settings";
+import { projectSettingsWindowConfig } from "./settings/project-settings";
 
 export let dropdownItemsConfig: Record<string, DropdownItem>;
 
@@ -84,7 +89,12 @@ export function createConfig() {
         {
             label: 'Project Settings',
             action: () => {
-                UIStore.toggleProjectSettings();
+                const projectStore = useProjectStore();
+                if (!projectStore.currentProject) return;
+                if (!projectStore.currentProject.settings) {
+                    projectStore.currentProject.settings = defaultProjectSettings;
+                }
+                UIStore.openSettings({ ...projectSettingsWindowConfig, settings: projectStore.currentProject.settings });
             }
         },
 
@@ -92,7 +102,7 @@ export function createConfig() {
         {
             label: 'Settings',
             action: () => {
-                UIStore.toggleSettings();
+                UIStore.openSettings({ ...generalSettingsConfig, settings });
             }
         },
 
