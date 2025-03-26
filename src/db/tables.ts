@@ -27,10 +27,10 @@ export const projectTableConfig: ITable = {
             notNull: true,
             default: 0,
         },
-        data: {
-            dataType: 'array',
+        settings: {
+            dataType: 'object',
             notNull: true,
-            default: '[]',
+            default: '{}',
         },
         savedAt: {
             dataType: 'date_time',

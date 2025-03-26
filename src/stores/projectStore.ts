@@ -1,6 +1,6 @@
 import { useSimulationStore } from './simulationStore';
 import { defineStore } from 'pinia';
-import { insertProject, existsProject, getProject, Project, deleteProject, updateProject, getProjects } from '../db/projectsTable';
+import { insertProject, existsProject, getProject, Project, deleteProject, updateProject, getProjects, defaultProjectSettings } from '../db/projectsTable';
 import { promptProjectName, confirmAction, notify, downloadProject } from '../utils/projectActions';
 import { useRouter } from 'vue-router';
 import { useUIStore } from './UIStore';
@@ -8,12 +8,14 @@ import { useSettingsStore } from './settingsStore';
 import { rejects } from 'assert';
 import { clone } from '../assets/js/utils';
 import { toRaw } from 'vue';
+import { settings } from '../storage/settingsStorage';
 
 export const useProjectStore = defineStore('project', {
     state: () => ({
         currentProject: null as Project | null,
         projectSaved: true,
         recentProjects: [] as Project[],
+        settings: settings
     }),
     getters: {
 
@@ -75,6 +77,13 @@ export const useProjectStore = defineStore('project', {
                     this.saveProject();
                 }, 2000);
             }
+        },
+
+        setProjectSetting(key: string, value: any) {
+            if (!this.currentProject) return;
+            this.currentProject.settings = { ...defaultProjectSettings, ...this.currentProject.settings, [key]: value };
+            console.log("Settings Updated", this.currentProject);
+            updateProject(toRaw(this.currentProject));
         },
 
         updateProjectLayout(layout: any) {

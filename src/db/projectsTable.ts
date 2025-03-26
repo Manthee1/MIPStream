@@ -1,3 +1,4 @@
+import { projectSettingTabs } from "../config/settings";
 import { IOrderQuery, ITable } from "jsstore";
 import db from "./database";
 
@@ -5,13 +6,22 @@ export interface Project {
     id: number;
     name: string;
     code: string;
-    data: number[];
+    settings: Record<string, any>;
     layoutGridConfig: any;
     savedAt: Date;
     createdAt: Date;
     updatedAt: Date;
     size: number;
 }
+
+
+export const defaultProjectSettings: Record<string, any> = {};
+projectSettingTabs.forEach(tab => {
+    tab.settings.forEach(setting => {
+        defaultProjectSettings[setting.key] = setting.default;
+    });
+});
+
 
 
 async function getProjectById(id: number) {
@@ -67,7 +77,7 @@ export const insertProject = async (project: Project) => {
         id: 0,
         name: 'Untitled',
         code: '',
-        data: [],
+        settings: defaultProjectSettings,
         layoutGridConfig: {},
         savedAt: new Date(),
         createdAt: new Date(),

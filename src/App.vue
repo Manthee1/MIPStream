@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { generalSettingTabs } from './config/settings';
+import { generalSettingTabs, projectSettingTabs } from './config/settings';
 
 </script>
 
@@ -22,6 +22,7 @@ import { generalSettingTabs } from './config/settings';
     <div class="project-settings-wrapper" v-if="$UIStore.showProjectSettings">
         <Window title="Project Settings" class="project-settings-window" closeable
             :onClose="$UIStore.toggleProjectSettings">
+            <Settings :settings-tabs="projectSettingTabs" :set-setting="$projectStore.setProjectSetting" />
         </Window>
     </div>
     <!-- Modal -->

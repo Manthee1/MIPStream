@@ -25,7 +25,7 @@ const generalSettingTabs: SettingTab[] = [
                 label: 'Auto Save',
                 type: 'checkbox',
                 default: false,
-                description: 'Enable or disable auto-saving of your work.',
+                description: 'Enable or disable auto-saving of your work after any code change.',
                 icon: 'save'
             }
         ]
@@ -49,28 +49,10 @@ const generalSettingTabs: SettingTab[] = [
         ]
     },
     {
-        name: 'Emulator',
+        name: 'Simulation',
         icon: 'cpu',
         settings: [
-            {
-                key: 'dataHazardResolution',
-                label: 'Data Hazard Resolution ',
-                type: 'radio',
-                default: 'none',
-                icon: 'corner-down-right',
-                description: "Detirmen how data hazards will be handeled",
-                options: [
-                    {
-                        label: "Don't handle data hazards",
-                        value: "none",
-                    },
-                    {
-                        label: "Use Forwarding",
-                        value: "forwarding",
-                        description: 'If enabled, the emulator will forward the value from the output of the previous instruction to the input of the next instruction if that instruction is dependent on it. Otherwise, the emulator will stall the pipeline until the value is available.',
-                    }]
 
-            },
             {
                 key: 'warnOnOverUnderflow',
                 label: 'Warn On Over/Underflow',
@@ -82,25 +64,9 @@ const generalSettingTabs: SettingTab[] = [
         ]
     },
     {
-        name: 'Editor',
+        name: 'Editing',
         icon: 'edit',
         settings: [
-            {
-                key: 'fontSize',
-                label: 'Font Size',
-                type: 'number',
-                default: 14,
-                description: 'The size of the font in the editor.',
-                icon: 'type'
-            },
-            {
-                key: 'tabSize',
-                label: 'Tab Size',
-                type: 'number',
-                default: 4,
-                description: 'The number of spaces to insert when pressing the tab key.',
-                icon: 'corner-up-right'
-            },
             {
                 key: 'smoothCursor',
                 label: 'Smooth Cursor',
@@ -120,12 +86,109 @@ const generalSettingTabs: SettingTab[] = [
             },
 
         ]
+    },
+    {
+        name: 'Notifications',
+        icon: 'bell',
+        settings: [
+            {
+                // Project save notification
+                key: 'projectSaveNotification',
+                description: 'Show a notification when the project is saved.',
+                label: 'Project Save Notification',
+                type: 'checkbox',
+                default: true,
+            },
+        ]
+    }
+];
+
+// General: performance mode, cpu type, memory size
+// Simulation: speed, 
+// Visualization: value representation(dec,hex,bin) for memory/diagram/registers all individually, register nameing convention, 
+export const projectSettingTabs: SettingTab[] = [
+    {
+        name: 'General',
+        icon: 'settings',
+        settings: [
+            {
+                key: 'performanceMode',
+                label: 'Performance Mode',
+                type: 'select',
+                default: 'balanced',
+                options: [
+                    { value: 'balanced', label: 'Balanced' },
+                    { value: 'speed', label: 'Speed' },
+                    { value: 'battery', label: 'Battery' },
+                ],
+                description: 'Choose the performance mode for the simulation.',
+                icon: 'cpu'
+            },
+            {
+                key: 'cpuType',
+                label: 'CPU Type',
+                type: 'select',
+                default: '8-bit',
+                options: [
+                    { value: '8-bit', label: '8-bit' },
+                    { value: '16-bit', label: '16-bit' },
+                    { value: '32-bit', label: '32-bit' },
+                ],
+                description: 'Choose the CPU type for the simulation.',
+                icon: 'cpu'
+            },
+            {
+                key: 'memorySize',
+                label: 'Memory Size',
+                type: 'number',
+                default: 256,
+                description: 'Choose the memory size for the simulation.',
+                icon: 'cpu'
+            },
+        ]
+    },
+    {
+        name: 'Simulation',
+        icon: 'cpu',
+        settings: [
+            {
+                key: 'speed',
+                label: 'Speed',
+                type: 'number',
+                default: 1,
+                description: 'Choose the speed of the simulation.',
+                icon: 'cpu'
+            },
+        ]
+    },
+    {
+        name: 'Visualization',
+        icon: 'eye',
+        settings: [
+            {
+                key: 'valueRepresentation',
+                label: 'Value Representation',
+                type: 'select',
+                default: 'dec',
+                options: [
+                    { value: 'dec', label: 'Decimal' },
+                    { value: 'hex', label: 'Hexadecimal' },
+                    { value: 'bin', label: 'Binary' },
+                ],
+                description: 'Choose the value representation for the memory, diagram, and registers.',
+                icon: 'cpu'
+            },
+            {
+                key: 'useAdvanceRegisterNaming',
+                label: 'Register Naming Convention',
+                description: 'Choose the register naming convention for the simulation.',
+                type: "checkbox",
+                default: false,
+                icon: 'cpu'
+            },
+        ]
     }
 ];
 
 
-const projectSettingTabs: SettingTab[] = [
-];
-
-
-export { generalSettingTabs as generalSettingTabs };
+export { generalSettingTabs };
