@@ -2,6 +2,7 @@ import { downloadProject } from "../storage/projectsStorage";
 import { useProjectStore } from "../stores/projectStore";
 import { useSimulationStore } from "../stores/simulationStore";
 import { useUIStore } from "../stores/UIStore";
+import { defaultLayoutGridConfig } from "./layout";
 
 export const keyboardShortcuts = {
     "F5": () => {
@@ -30,6 +31,12 @@ export const keyboardShortcuts = {
     },
     "CTRL SHIFT S": () => {
         // downloadProject(useUIStore());
+    },
+
+    "CTRL SHIFT L": () => {
+        // Reset layout
+        useProjectStore().updateProjectLayout(defaultLayoutGridConfig);
+        window.location.reload();
     },
 
 
