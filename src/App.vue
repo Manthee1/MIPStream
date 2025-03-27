@@ -7,8 +7,8 @@
             </transition>
         </router-view>
     </main>
-    <div class="settings-wrapper" v-if="$UIStore.showSettings">
-        <Window :title="$UIStore.settingsWindowConfig.title" class="settings-window" closeable
+    <div class="settings-wrapper" v-if="$UIStore.showSettings" @click="$UIStore.closeSettings">
+        <Window :title="$UIStore.settingsWindowConfig.title" @click.stop class="settings-window" closeable
             :onClose="$UIStore.closeSettings">
             <Settings :settings-config="$UIStore.settingsWindowConfig"
                 :settings="$UIStore.settingsWindowConfig.settings" />

@@ -89,11 +89,11 @@ export const useProjectStore = defineStore('project', {
             updateProject(toRaw(this.currentProject));
         },
 
-        updateProjectLayout(layout: any) {
+        async updateProjectLayout(layout: any) {
             if (!layout || !this.currentProject) return;
             this.currentProject.layoutGridConfig = clone(layout);
             console.log("Layout Updated", this.currentProject);
-            updateProject(toRaw(this.currentProject));
+            await updateProject(toRaw(this.currentProject));
 
         },
 

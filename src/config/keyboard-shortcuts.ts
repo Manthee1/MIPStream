@@ -1,10 +1,8 @@
-import { downloadProject } from "../storage/projectsStorage";
 import { useProjectStore } from "../stores/projectStore";
 import { useSimulationStore } from "../stores/simulationStore";
-import { useUIStore } from "../stores/UIStore";
 import { defaultLayoutGridConfig } from "./layout";
 
-export const keyboardShortcuts = {
+export const keyboardShortcuts: Record<string, () => void> = {
     "F5": () => {
         useSimulationStore().run();
     },
@@ -33,9 +31,9 @@ export const keyboardShortcuts = {
         // downloadProject(useUIStore());
     },
 
-    "CTRL SHIFT L": () => {
+    "CTRL SHIFT L": async () => {
         // Reset layout
-        useProjectStore().updateProjectLayout(defaultLayoutGridConfig);
+        await useProjectStore().updateProjectLayout(defaultLayoutGridConfig);
         window.location.reload();
     },
 
