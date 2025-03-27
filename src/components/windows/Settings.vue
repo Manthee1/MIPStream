@@ -56,7 +56,6 @@ import { defineComponent } from 'vue';
 import Window from '@/components/common/Window.vue';
 import Switch from '../common/Switch.vue';
 import Select from '../common/MSelect.vue';
-import { clone } from '../../assets/js/utils';
 
 export default defineComponent({
     name: 'Settings',

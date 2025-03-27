@@ -32,7 +32,7 @@ Project Settings
 
 Settings
 - [x] Make autosave work
-- [ ] Add overlay for settings
+- [x] Add overlay for settings
 - [ ] Add shortcuts to settings (exit)
 
 
