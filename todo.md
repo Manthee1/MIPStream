@@ -2,8 +2,8 @@
 General
 - [x] Rework stores. Split view storage into project storage and UI storage
 - [x] Rework the storage system to be more efficient. Use IndexDB
-- [ ] Add project settings
-- [ ] Add options to each workspace panel
+- [x] Add project settings
+- [x] Add options to each workspace panel
 
 Home
 - [x] Make projects sorted by last opened
@@ -12,7 +12,7 @@ Menu
 - [x] Fix Open Recent
 - [x] Make "New" work
 - [x] Make "Open" work - Renamed to "Import Project"
-- [ ] Make open recent reactivity fetch recent projects (After storage rework)
+- [x] Make open recent reactivity fetch recent projects (After storage rework)
 
 
 Simulator
@@ -22,7 +22,7 @@ Simulator
 - [x] Add shortcuts simulation control
 - [x] Add hex and binary number support
 - [x] Disable control buttons when not possible to use
-- [ ] Add advance register convention support
+- [x] Add advance register convention support
 - [ ] Add ability to change register and memory values
 - [ ] Add multi cpu support
 
