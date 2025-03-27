@@ -7,13 +7,13 @@ export const controlSignals = {
         bits: 1,
         name: "MemtoReg",
     },
-    MemWrite: {
-        bits: 1,
-        name: "MemWrite",
-    },
     MemRead: {
         bits: 1,
         name: "MemRead",
+    },
+    MemWrite: {
+        bits: 1,
+        name: "MemWrite",
     },
     Branch: {
         bits: 1,

@@ -38,12 +38,12 @@ Settings
 
 Diagram
 - [x] Add custom icons for components
-- [ ] Add more hover information
+- [x] Connect Reg1Data to the ALU
+- [x] Add more hover information
 - [ ] Add highlighting of components
 - [ ] Add ability to change in what format the data is shown (hex, binary, decimal)
 - [ ] Add proper dark mode support
 - [ ] Add bit-range display
-- [ ] Connect Reg1Data to the ALU
 - [ ] Add the ability to pan and zoom the diagram (very low priority)
 
 Other Visuals

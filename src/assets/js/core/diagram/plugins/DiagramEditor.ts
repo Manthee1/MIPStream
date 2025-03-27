@@ -35,19 +35,26 @@ export class DiagramEditor extends CPUDiagramPlugin {
         return this.keyboard.keys[key] || false;
     }
 
+    get scaleX() {
+        return this.cpuDiagram.canvas.width / this.cpuDiagram.canvas.clientWidth;
+    }
+
+    get scaleY() {
+        return this.cpuDiagram.canvas.height / this.cpuDiagram.canvas.clientHeight;
+    }
 
 
     initializeMouseEvents() {
 
         this.cpuDiagram.canvas.addEventListener('mousemove', (e) => {
-            this.mouse.x = e.offsetX
-            this.mouse.y = e.offsetY
+            this.mouse.x = e.offsetX * this.scaleX;
+            this.mouse.y = e.offsetY * this.scaleY;
             this.mouseMove();
         });
 
         this.cpuDiagram.canvas.addEventListener('mousedown', (e) => {
             this.mouse.isDown = true;
-            this.mouse.lastClick = { x: this.mouse.x, y: this.mouse.y };
+            this.mouse.lastClick = { x: this.mouse.x * this.scaleX, y: this.mouse.y * this.scaleY };
             this.mouseDown();
         });
 

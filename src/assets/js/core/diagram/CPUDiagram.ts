@@ -159,8 +159,16 @@ export class CPUDiagram {
                 throw new Error(`Port ${connection.to} not found`);
 
 
-            connection.fromPos = this.ports.get(connection.from)?.pos
-            connection.toPos = this.ports.get(connection.to)?.pos
+            const fromPort = this.ports.get(connection.from) as PortLayout;
+            const toPort = this.ports.get(connection.to) as PortLayout;
+
+            const bits = connection.bitRange[1] - connection.bitRange[0] + 1;
+            // Fix the from and to port bits
+            fromPort.bits = bits;
+            toPort.bits = bits;
+
+            connection.fromPos = fromPort?.pos
+            connection.toPos = toPort?.pos
             connection.id = index;
 
             // Add the connection
@@ -226,12 +234,35 @@ export class CPUDiagram {
         this.ctx.strokeRect(x - width / 2, y - height / 2, width, height);
     }
 
-    drawText(text: string, x: number, y: number, fillStyle: string, font: string, textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle') {
+    drawText(text: string, x: number, y: number, fillStyle: string, font: string, textAlign: CanvasTextAlign = 'center', textBaseline: CanvasTextBaseline = 'middle', width: number = -1) {
         this.ctx.fillStyle = fillStyle;
         this.ctx.font = font;
         this.ctx.textAlign = textAlign;
         this.ctx.textBaseline = textBaseline;
-        this.ctx.fillText(text, x, y);
+
+        if (width > 0) {
+            const words = text.split(' ');
+            let line = '';
+            let yOffset = 0;
+            const lineHeight = parseInt(font, 10) || 16; // Extract font size or default to 16px
+
+            for (let i = 0; i < words.length; i++) {
+                const testLine = line + words[i] + ' ';
+                const testWidth = this.ctx.measureText(testLine).width;
+
+                if (testWidth > width && i > 0) {
+                    this.ctx.fillText(line, x, y + yOffset);
+                    line = words[i] + ' ';
+                    yOffset += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+
+            this.ctx.fillText(line, x, y + yOffset);
+        } else {
+            this.ctx.fillText(text, x, y);
+        }
     }
 
 
@@ -246,10 +277,10 @@ export class CPUDiagram {
         const width = componentLayout.dimensions.width;
         const height = componentLayout.dimensions.height;
 
+        this.ctx.fillStyle = 'white';
 
         switch (componentLayout.type) {
             case "and":
-
                 // Draw the and gate
                 this.ctx.beginPath();
                 this.ctx.moveTo(x, y);
@@ -262,6 +293,7 @@ export class CPUDiagram {
                 this.ctx.lineTo(x, y);
 
                 this.ctx.closePath();
+                this.ctx.fill();
                 this.ctx.stroke();
                 break;
             case 'adder':
@@ -279,10 +311,8 @@ export class CPUDiagram {
                 this.ctx.lineTo(x, y + height - cutSize);
                 this.ctx.lineTo(x + width - cutSize, y + height / 2);
                 this.ctx.lineTo(x, y + cutSize);
-
-
-
                 this.ctx.closePath();
+                this.ctx.fill();
                 this.ctx.stroke();
                 break;
             case 'shift':
@@ -291,16 +321,32 @@ export class CPUDiagram {
                 this.ctx.setLineDash([5, 5]);
                 this.ctx.beginPath();
                 this.ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+                this.ctx.fill();
                 this.ctx.stroke();
                 this.ctx.setLineDash([]);
+                this.ctx.closePath();
                 break;
             case 'mux':
                 // Draw a rectanlge with rounded corners
+                this.ctx.beginPath();
                 this.ctx.roundRect(x, y, width, height, 10);
+                this.ctx.closePath();
+                this.ctx.fill();
                 this.ctx.stroke();
+
+                // Draw text (0 or 1) showing which input will be selected depending on the control signal
+                this.drawText('0', x + width / 2, y + height / 4, 'black', '12px Arial', 'center', 'middle');
+                this.drawText('1', x + width / 2, y + height * 3 / 4, 'black', '12px Arial', 'center', 'middle');
                 break;
             case 'const':
-                // this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
+                // Get the output port and draw a rectangle with the value
+                const inPort = (componentLayout?.ports ?? []).find(port => port.type === 'output');
+                if (!inPort) break;
+                const value = inPort.value as number;
+                this.drawRect(x, y, width, height, 'white', 'black');
+                this.drawText(value.toString(), x + width / 2, y + height / 2, 'black', '12px Arial', 'center', 'middle');
+
+                return;
                 break;
 
             default:
@@ -308,11 +354,21 @@ export class CPUDiagram {
                 this.drawRect(x, y, width, height, 'white', 'black');
                 break;
         }
-
-
-
+        this.ctx.closePath();
         // Add the name to the center of the component
         this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
+
+
+
+        // Draw the ports
+        if (!componentLayout.ports) return;
+        componentLayout.ports.forEach((portConfig) => {
+            const id = `${componentLayout.id}.${portConfig.id}`;
+            const port = this.ports.get(id) as PortLayout;
+            if (!port) return;
+            this.drawPort(port);
+        });
+
     }
 
     getAbsolutePortPosition(portLayout: PortLayout, componentLayout: ComponentLayout) {
@@ -431,10 +487,7 @@ export class CPUDiagram {
         this.connections.forEach((connection) => {
             this.drawConnection(connection);
         });
-        // Draw the ports
-        this.ports.forEach((port) => {
-            this.drawPort(port);
-        });
+
 
 
 

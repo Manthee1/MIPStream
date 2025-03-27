@@ -84,13 +84,15 @@ export class DiagramInteraction extends CPUDiagramPlugin {
 
 
 
-    drawInfoBox(x: number, y: number, title: string, subtitle: string, description: string, content: InfoBoxBodyContentConfig[] = []) {
+    drawInfoBox(x: number, y: number, title: string, subtitle: string, description: string, content?: InfoBoxBodyContentConfig) {
         const ctx = this.cpuDiagram.ctx;
         const padding = 10;
-        const titleHeight = 20;
+        const titleHeight = 18;
         const subtitleHeight = 15;
-        const descriptionHeight = 15;
+        const descriptionHeight = 12;
+        const contentItemHeight = 12;
         const width = 200;
+        const widthWithoutPadding = width - padding * 2;
 
 
         const isEmpty = function (s: string) {
@@ -100,7 +102,8 @@ export class DiagramInteraction extends CPUDiagramPlugin {
         const height =
             (isEmpty(title) ? 0 : (titleHeight + padding)) +
             (isEmpty(subtitle) ? 0 : (subtitleHeight + padding)) +
-            (isEmpty(description) ? 0 : (descriptionHeight + padding));
+            (isEmpty(description) ? 0 : ((descriptionHeight) * Math.ceil((description.length * 10) / (widthWithoutPadding))) + padding) +
+            (content ? (((content.data.length ?? (content.data.body ? (content.data.body.length) : undefined) ?? 0) * contentItemHeight) + padding * 2) : 0);
 
 
 
@@ -115,75 +118,111 @@ export class DiagramInteraction extends CPUDiagramPlugin {
         }
 
         ctx.textAlign = 'left';
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, 5)
+        ctx.closePath();
+        ctx.fill();
+
 
         let nextY = y + padding;
         let nextX = x + padding;
 
         if (!isEmpty(title)) {
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText(title, nextX, nextY);
+            this.cpuDiagram.drawText(title, nextX, nextY, 'white', `bold ${titleHeight}px Arial`, 'left', 'top', widthWithoutPadding);
             nextY += titleHeight + padding;
         }
         if (!isEmpty(subtitle)) {
             ctx.fillStyle = 'white';
-            ctx.font = '12px Arial';
-            ctx.fillText(subtitle, nextX, nextY);
+            this.cpuDiagram.drawText(subtitle, nextX, nextY, 'white', `${subtitleHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
             nextY += subtitleHeight + padding;
         }
 
         if (!isEmpty(description)) {
-            ctx.fillStyle = 'white';
-            ctx.font = '12px Arial';
-            ctx.fillText(description, nextX, nextY);
-            nextY += descriptionHeight + padding;
+            this.cpuDiagram.drawText(description, nextX, nextY, 'white', `${descriptionHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
+            nextY += descriptionHeight * Math.ceil((description.length * 10) / (widthWithoutPadding));
+        }
+        if (!content) return;
+
+        switch (content.type) {
+            case 'text':
+                for (let i = 0; i < content.data.length; i++) {
+                    const item = content.data[i];
+                    this.cpuDiagram.drawText(item, nextX, nextY, 'white', `${contentItemHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
+                    nextY += 12;
+                }
+                break;
+
+            case 'table':
+                const table = content.data;
+                const header = table.header;
+                const body = table.body;
+                const columnWidth = widthWithoutPadding / header.length;
+                const headerHeight = 12;
+                const bodyHeight = 12;
+                const headerY = nextY;
+                const bodyY = headerY// + headerHeight;
+                ctx.fillStyle = 'white';
+                // for (let i = 0; i < header.length; i++) {
+                //     ctx.fillText(header[i], nextX + i * columnWidth, headerY);
+                // }
+                for (let i = 0; i < body.length; i++) {
+                    const row = body[i];
+                    for (let j = 0; j < row.length; j++) {
+                        ctx.fillText(row[j], nextX + j * columnWidth, bodyY + i * bodyHeight);
+                    }
+                }
+                // nextY = bodyY + body.length * bodyHeight;
+                break;
+            case 'list':
+                break;
+            default:
+                break;
         }
 
-        for (let i = 0; i < content.length; i++) {
-            const item = content[i];
-            ctx.fillStyle = 'white';
-            ctx.font = '12px Arial';
-            switch (item.type) {
-                case 'text':
-                    ctx.fillText(item.data, nextX, nextY);
-                    break;
-                case 'table':
-                    for (let j = 0; j < item.data.length; j++) {
-                        ctx.fillText(item.data[j][0] + ': ' + item.data[j][1], nextX, nextY);
-                    }
-                    break;
-                case 'list':
-                    for (let j = 0; j < item.data.length; j++) {
-                        ctx.fillText('- ' + item.data[j], nextX, nextY);
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-        }
 
     }
 
     draw(): void {
         if (this.hoveringOver) {
             switch (this.hoveringOver.type) {
-                case 'component':
+                case 'component': {
                     const component = this.cpuDiagram.components.get(this.hoveringOver.id);
                     if (!component) return;
-                    this.drawInfoBox(this.mouse.x, this.mouse.y, component.label, component.type, component.description ?? '');
+                    const content = component.ports ? {
+                        type: 'table',
+                        data: {
+                            header: ['Port', 'Value'],
+                            body: component.ports.map((port) => [port.label, port.value instanceof Object ? port.value.value : port.value])
+                        }
+                    } as InfoBoxBodyContentConfig : undefined;
+
+                    this.drawInfoBox(this.mouse.x, this.mouse.y, component.label, component.type, component.description ?? '', content);
+
                     break;
-                case 'port':
+                }
+                case 'port': {
                     const port = this.cpuDiagram.ports.get(this.hoveringOver.id);
                     if (!port) return;
                     let value = port.value instanceof Object ? port.value.value : port.value;
+                    const content = port.value instanceof Object ? {
+                        type: 'text',
+                        data: [`Value: ${value}`, `Bits: ${port.bits}`]
+                    } as InfoBoxBodyContentConfig : undefined;
 
-                    this.drawInfoBox(this.mouse.x, this.mouse.y, port.label + ": " + (value).toString(), '', '');
+                    this.drawInfoBox(this.mouse.x, this.mouse.y, port.label, port.type ?? '', '', content);
                     break;
+                }
                 case 'connection':
-                    // this.drawInfoBox(this.hoveringOver.x, this.hoveringOver.y, 'Connection', 'Connection', 'This is a connection');
+                    // const connection = this.cpuDiagram.connections.get(parseInt(this.hoveringOver.id));
+                    // if (!connection) return;
+                    // this.drawInfoBox(this.mouse.x, this.mouse.y, 'Connection', connection.type, '', {
+                    //     type: 'text',
+                    //     data: [`From: ${connection.from}`, `To: ${connection.to}`, `Bits: ${connection.bitRange[0]}-${connection.bitRange[1]}`]
+                    // });
+
+
                     break;
                 default:
                     break;

@@ -140,20 +140,20 @@ export const connections: ConnectionLayout[] = [
         ],
         "bends": [
             {
-                "x": 258,
-                "y": 265
+                "x": 238,
+                "y": 200
             },
             {
-                "x": 275,
-                "y": 265
+                "x": 239.04761904761904,
+                "y": 200
             },
             {
-                "x": 275,
+                "x": 239.04761904761904,
                 "y": 265
             }
         ],
         "fromPos": {
-            "x": 243,
+            "x": 223,
             "y": 200
         },
         "toPos": {
@@ -264,7 +264,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            15
         ],
         "bends": [
             {
@@ -296,16 +296,16 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            6
         ],
         "bends": [
             {
                 "x": 635,
-                "y": 510
+                "y": 509
             },
             {
                 "x": 762,
-                "y": 510
+                "y": 509
             },
             {
                 "x": 762,
@@ -473,7 +473,7 @@ export const connections: ConnectionLayout[] = [
             }
         ],
         "fromPos": {
-            "x": 837,
+            "x": 817,
             "y": 251
         },
         "toPos": {
@@ -749,24 +749,24 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 575,
-                "y": 180
+                "y": 190
             },
             {
                 "x": 476,
-                "y": 180
+                "y": 190
             },
             {
                 "x": 476,
-                "y": 179
+                "y": 189
             }
         ],
         "fromPos": {
             "x": 590,
-            "y": 180
+            "y": 190
         },
         "toPos": {
             "x": 461,
-            "y": 179
+            "y": 189
         }
     },
     {
@@ -781,24 +781,24 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 476,
-                "y": 189
+                "y": 179
             },
             {
                 "x": 575,
-                "y": 189
+                "y": 179
             },
             {
                 "x": 575,
-                "y": 190
+                "y": 180
             }
         ],
         "fromPos": {
             "x": 461,
-            "y": 189
+            "y": 179
         },
         "toPos": {
             "x": 590,
-            "y": 190
+            "y": 180
         }
     },
     {
@@ -1005,24 +1005,24 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 635,
-                "y": 180
+                "y": 190
             },
             {
                 "x": 865,
-                "y": 180
+                "y": 190
             },
             {
                 "x": 865,
-                "y": 180
+                "y": 190
             }
         ],
         "fromPos": {
             "x": 620,
-            "y": 180
+            "y": 190
         },
         "toPos": {
             "x": 880,
-            "y": 180
+            "y": 190
         }
     },
     {
@@ -1037,24 +1037,24 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 635,
-                "y": 190
+                "y": 180
             },
             {
                 "x": 865,
-                "y": 190
+                "y": 180
             },
             {
                 "x": 865,
-                "y": 190
+                "y": 180
             }
         ],
         "fromPos": {
             "x": 620,
-            "y": 190
+            "y": 180
         },
         "toPos": {
             "x": 880,
-            "y": 190
+            "y": 180
         }
     },
     {
@@ -1278,7 +1278,7 @@ export const connections: ConnectionLayout[] = [
         },
         "toPos": {
             "x": 972.5,
-            "y": 260
+            "y": 261
         }
     },
     {
@@ -1293,15 +1293,15 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 925,
-                "y": 250
+                "y": 251
             },
             {
                 "x": 945,
-                "y": 250
+                "y": 251
             },
             {
                 "x": 945,
-                "y": 250
+                "y": 251
             }
         ],
         "fromPos": {
@@ -1310,7 +1310,7 @@ export const connections: ConnectionLayout[] = [
         },
         "toPos": {
             "x": 960,
-            "y": 250
+            "y": 251
         }
     },
     {
@@ -1324,25 +1324,25 @@ export const connections: ConnectionLayout[] = [
         ],
         "bends": [
             {
-                "x": 258,
-                "y": 141
+                "x": 238,
+                "y": 140.23569023569024
             },
             {
-                "x": 938,
-                "y": 141
+                "x": 945.3831041257367,
+                "y": 140.23569023569024
             },
             {
-                "x": 938,
+                "x": 945.3831041257367,
                 "y": 220
             }
         ],
         "fromPos": {
-            "x": 243,
+            "x": 223,
             "y": 200
         },
         "toPos": {
             "x": 960,
-            "y": 220
+            "y": 221
         }
     },
     {
@@ -1548,11 +1548,11 @@ export const connections: ConnectionLayout[] = [
         ],
         "bends": [
             {
-                "x": 1158.5,
+                "x": 1155.5,
                 "y": 495
             },
             {
-                "x": 1158.5,
+                "x": 1155.5,
                 "y": 170
             },
             {
@@ -1677,11 +1677,11 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 925,
-                "y": 353
+                "y": 180
             },
             {
                 "x": 1031,
-                "y": 353
+                "y": 180
             },
             {
                 "x": 1031,
@@ -1690,7 +1690,7 @@ export const connections: ConnectionLayout[] = [
         ],
         "fromPos": {
             "x": 910,
-            "y": 190
+            "y": 180
         },
         "toPos": {
             "x": 1031,
@@ -1722,7 +1722,7 @@ export const connections: ConnectionLayout[] = [
         ],
         "fromPos": {
             "x": 985,
-            "y": 235
+            "y": 236
         },
         "toPos": {
             "x": 44,
@@ -2029,11 +2029,11 @@ export const connections: ConnectionLayout[] = [
         "bends": [
             {
                 "x": 753,
-                "y": 411
+                "y": 410
             },
             {
                 "x": 761,
-                "y": 411
+                "y": 410
             },
             {
                 "x": 761,
@@ -2091,32 +2091,51 @@ export const connections: ConnectionLayout[] = [
         "id": 66,
         "from": "EXtoMEM.MemWriteInOut",
         "to": "DataMemory.MemWrite",
-        "type": "data",
+        "type": "control",
         "bitRange": [
             0,
             0
         ],
         "bends": [
             {
-                "x": 1032,
-                "y": 180
+                "x": 1020.9523809523808,
+                "y": 190
             },
             {
-                "x": 1032,
-                "y": 339
+                "x": 1020.9523809523808,
+                "y": 350
             },
             {
                 "x": 971,
-                "y": 339
+                "y": 350
             }
         ],
         "fromPos": {
             "x": 910,
-            "y": 180
+            "y": 190
         },
         "toPos": {
             "x": 971,
             "y": 365
+        }
+    },
+    {
+        "id": 67,
+        "from": "IDtoEX.reg1DataInOut",
+        "to": "ALU.in1",
+        "type": "data",
+        "bitRange": [
+            0,
+            31
+        ],
+        "bends": [],
+        "fromPos": {
+            "x": 620,
+            "y": 350
+        },
+        "toPos": {
+            "x": 776,
+            "y": 350
         }
     }
 ]

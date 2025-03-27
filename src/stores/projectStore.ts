@@ -31,7 +31,6 @@ export const useProjectStore = defineStore('project', {
 
             setTimeout(() => {
                 useUIStore().setTitle(project.name + " - MIPStream");
-                useSimulationStore().reset()
             }, 0);
 
             useUIStore().changeDropdownItemAction("Save", () => {
@@ -44,6 +43,7 @@ export const useProjectStore = defineStore('project', {
                 downloadProject(this.currentProject);
             });
 
+            useSimulationStore().reset()
             useSimulationStore().init(project);
 
             this.updateRecentProjects();

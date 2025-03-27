@@ -41,6 +41,8 @@ export const useSimulationStore = defineStore('simulation', {
             this.core = new MIPSBase({
                 dataMemorySize: project?.settings?.memorySize ?? defaultProjectSettings.memorySize,
             } as any);
+            this.program = project.code;
+
         },
 
         updateErrors() {
@@ -77,6 +79,7 @@ export const useSimulationStore = defineStore('simulation', {
 
         loadProgram() {
             let instructionMemory: Uint32Array;
+
             if (this.program === '') {
                 notify({
                     type: 'error',
