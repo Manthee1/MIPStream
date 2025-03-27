@@ -61,7 +61,7 @@ export const existsProject = async (id: number) => {
     return !!(await getProjectById(id));
 }
 
-export const getProjects = async (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'desc' }) => {
+export const getProjects = async (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'asc' }) => {
     let projects = (await db.select({
         from: 'projects',
         limit: limit,
@@ -90,6 +90,8 @@ export const insertProject = async (project: Project) => {
     delete newProject.id;
     newProject.size = JSON.stringify(newProject).length;
     // Add the project to the database
+    console.log('Inserting project', newProject);
+
     await db.insert({
         into: 'projects',
         values: [newProject]

@@ -10,7 +10,10 @@ import { defineComponent } from 'vue';
 export default defineComponent({
     name: 'MRange',
     props: {
-        modelValue: Number,
+        modelValue: {
+            type: Number,
+            required: true,
+        },
         min: {
             type: Number,
             default: 0,
@@ -40,8 +43,8 @@ export default defineComponent({
         }
     },
     methods: {
-        updateValue(event) {
-            this.value = event.target.value;
+        updateValue(event: Event) {
+            this.value = (event?.target as HTMLInputElement).valueAsNumber;
             this.$emit('update:modelValue', this.value);
         }
     }

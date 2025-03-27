@@ -19,7 +19,6 @@ import DockviewTab from "../components/layout/DockviewTab.vue";
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { downloadProject, loadProject, Project, saveProject } from "../storage/projectsStorage";
 import Problems from "../components/core/Problems.vue";
 import Accordion from "../components/common/Accordion.vue";
 import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vue";

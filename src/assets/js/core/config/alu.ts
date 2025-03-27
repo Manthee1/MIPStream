@@ -33,7 +33,7 @@ export const ALUOperationsSigns = {
     MFLO: 'MFLO'
 }
 
-export const ALUOperationstoSigns = {
+export const ALUOperationstoSigns: { [key: number]: string } = {
     0b0000: '+',
     0b0001: '-',
     0b0010: '&',

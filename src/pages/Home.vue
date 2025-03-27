@@ -22,12 +22,12 @@
           <tr v-for="project in projects" :key="project.id">
             <td>
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name
-              }}</router-link>
+                }}</router-link>
             </td>
             <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td>
             <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
             <td>{{ formatSize(project.size) }}</td>
-            <td class="flex">
+            <td>
               <!-- <MButton type="error" filled class="delete-button" @click="deleteProject(project.id)" icon="trash" /> -->
               <Dropdown :icon="'more-vertical'" :label="''" :items="[
                 { label: 'Rename', action: () => renameProject(project.id), type: 'item', icon: 'edit' },
@@ -61,8 +61,7 @@ export default defineComponent({
     };
   },
   async mounted() {
-    this.projects = await getProjects()
-
+    this.updateProjects();
   },
   methods: {
 
@@ -70,7 +69,7 @@ export default defineComponent({
 
       const success = await this.$projectStore.invokeProjectDeletion(id);
       if (!success) return;
-      this.projects = await getProjects();
+      this.updateProjects();
     },
 
     async setupProject() {
@@ -83,8 +82,13 @@ export default defineComponent({
       const success = await this.$projectStore.invokeProjectRename(id);
       if (!success) return;
       console.log(await getProjects());
+      this.updateProjects();
 
-      this.projects = await getProjects();
+    },
+
+    async updateProjects() {
+      this.projects = await getProjects(10, { by: 'savedAt', type: 'asc' });
+
     },
 
     formatDateRecent,

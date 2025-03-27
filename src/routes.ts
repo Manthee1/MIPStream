@@ -2,9 +2,6 @@ import { RouteRecordRaw } from 'vue-router';
 import Workspace from '@/pages/Workspace.vue';
 import Home from '@/pages/Home.vue';
 import CpuView from '@/components/core/CpuView.vue';
-import { loadProject } from './storage/projectsStorage';
-import { useProjectStore } from './stores/projectStore';
-import { getProject } from './db/projectsTable';
 
 
 const routes: RouteRecordRaw[] = [
@@ -29,6 +26,6 @@ const routes: RouteRecordRaw[] = [
         path: '/:pathMatch(.*)*',
         redirect: { name: 'Home' }
     }
-    
+
 ];
 export default routes;

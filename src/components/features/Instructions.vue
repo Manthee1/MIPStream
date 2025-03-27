@@ -58,7 +58,7 @@ export default defineComponent({
             if (instructionConfig.mnemonic == 'nop') return 'circle'
 
             if (instructionConfig.controlSignals) {
-                const cs = instructionConfig.controlSignals
+                const cs = instructionConfig.controlSignals as Record<string, number>;
                 if (cs['MemWrite'] || cs['MemRead']) return 'cpu'
                 if (cs['Branch']) return 'git-branch'
             }
@@ -70,8 +70,9 @@ export default defineComponent({
             if (instructionConfig.mnemonic == 'nop') return '-'
 
             let out = ''
-            const cs = instructionConfig.controlSignals;
-            let ALUOPSign = ALUOperationstoSigns[getAluControl(cs['ALUOp'], instructionConfig.funct)] ?? '???'
+            const cs = instructionConfig.controlSignals as Record<string, number>;
+            const ALUControl = getAluControl(cs['ALUOp'], instructionConfig?.funct ?? 0)
+            let ALUOPSign = ALUOperationstoSigns[ALUControl] ?? '???'
             const operands = instructionConfig.operands ?? getDefaultInstructionDefOperands(instructionConfig);
 
             const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : ''
