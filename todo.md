@@ -4,6 +4,7 @@ General
 - [x] Rework the storage system to be more efficient. Use IndexDB
 - [x] Add project settings
 - [x] Add options to each workspace panel
+- [ ] Add multi cpu support
 
 Home
 - [x] Make projects sorted by last opened
@@ -23,15 +24,14 @@ Simulator
 - [x] Add hex and binary number support
 - [x] Disable control buttons when not possible to use
 - [x] Add advance register convention support
-- [ ] Add ability to change register and memory values
-- [ ] Add multi cpu support
+- [x] Add ability to change register and memory values
 
 Project Settings
-- [ ] Add ability to change the memory size
-- [ ] Add ability to change current cpu
+- [x] Add ability to change the memory size
+- [x] Add ability to change current cpu
 
 Settings
-- [ ] Make autosave work
+- [x] Make autosave work
 - [ ] Add overlay for settings
 - [ ] Add shortcuts to settings (exit)
 
