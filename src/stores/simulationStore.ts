@@ -9,7 +9,7 @@ import MIPSBase from '../assets/js/core/MIPSBase';
 import { instructionConfig } from '../assets/js/core/config/instructions';
 import { useUIStore } from './UIStore';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
-import { defaultProjectSettings } from '../db/projectsTable';
+import { defaultProjectSettings, Project } from '../db/projectsTable';
 import { useProjectStore } from './projectStore';
 
 
@@ -23,7 +23,7 @@ export const useSimulationStore = defineStore('simulation', {
         program: '' as string,
 
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
-        get speed() { return useProjectStore().currentProject?.settings.speed }, // cycles per second
+        get speed() { return useProjectStore().currentProject?.settings.speed || 10 },
         set speed(value: number) { useProjectStore().setProjectSetting('speed', value) },
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
@@ -36,6 +36,13 @@ export const useSimulationStore = defineStore('simulation', {
 
     },
     actions: {
+
+        init(project: Project) {
+            this.core = new MIPSBase({
+                dataMemorySize: project?.settings?.memorySize ?? defaultProjectSettings.memorySize,
+            } as any);
+        },
+
         updateErrors() {
             let timeOut = 500;
             if (useSettingsStore().instantProblemListUpdate) {

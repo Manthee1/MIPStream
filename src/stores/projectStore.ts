@@ -43,6 +43,9 @@ export const useProjectStore = defineStore('project', {
                 if (!this.currentProject) return;
                 downloadProject(this.currentProject);
             });
+
+            useSimulationStore().init(project);
+
             this.updateRecentProjects();
 
         },
@@ -189,6 +192,7 @@ export const useProjectStore = defineStore('project', {
                             // Convert date strings to Date objects
                             project.createdAt = new Date(project.createdAt);
                             project.updatedAt = new Date(project.updatedAt);
+                            project.savedAt = new Date(project.savedAt);
 
                             project = await insertProject(project);
                             notify('success', 'Project Uploaded', 'The project has been uploaded successfully');
@@ -207,7 +211,7 @@ export const useProjectStore = defineStore('project', {
 
 
         async updateRecentProjects() {
-            this.recentProjects = await getProjects(10);
+            this.recentProjects = await getProjects(10, { by: 'updatedAt', type: 'desc' });
         }
     },
 });
