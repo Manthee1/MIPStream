@@ -97,6 +97,11 @@ export const useProjectStore = defineStore('project', {
 
         },
 
+        getProjectSetting(key: string) {
+            if (!this.currentProject) return defaultProjectSettings[key];
+            return this.currentProject.settings[key];
+        },
+
 
 
 

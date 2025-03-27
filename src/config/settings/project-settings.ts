@@ -67,16 +67,42 @@ export const projectSettingTabs: SettingTab[] = [
         icon: 'eye',
         settings: [
             {
-                key: 'valueRepresentation',
-                label: 'Value Representation',
-                type: 'select',
+                key: 'registerValueRepresentation',
+                label: 'Register Value Representation',
+                type: 'radio',
                 default: 'dec',
                 options: [
                     { value: 'dec', label: 'Decimal' },
                     { value: 'hex', label: 'Hexadecimal' },
                     { value: 'bin', label: 'Binary' },
                 ],
-                description: 'Choose the value representation for the memory, diagram, and registers.',
+                description: 'Choose the value representation for the registers.',
+                icon: 'cpu'
+            },
+            {
+                key: 'memoryValueRepresentation',
+                label: 'Memory Value Representation',
+                type: 'radio',
+                default: 'dec',
+                options: [
+                    { value: 'dec', label: 'Decimal' },
+                    { value: 'hex', label: 'Hexadecimal' },
+                    { value: 'bin', label: 'Binary' },
+                ],
+                description: 'Choose the value representation for the memory.',
+                icon: 'cpu'
+            },
+            {
+                key: 'diagramValueRepresentation',
+                label: 'Diagram Value Representation',
+                type: 'radio',
+                default: 'dec',
+                options: [
+                    { value: 'dec', label: 'Decimal' },
+                    { value: 'hex', label: 'Hexadecimal' },
+                    { value: 'bin', label: 'Binary' },
+                ],
+                description: 'Choose the value representation for the diagram.',
                 icon: 'cpu'
             },
             {
