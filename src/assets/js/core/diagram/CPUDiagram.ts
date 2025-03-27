@@ -1,3 +1,4 @@
+import { useProjectStore } from "../../../../stores/projectStore";
 import SpatialMap from "../../utils/SpatialMap";
 
 export class CPUDiagramPlugin {
@@ -277,6 +278,10 @@ export class CPUDiagram {
         const width = componentLayout.dimensions.width;
         const height = componentLayout.dimensions.height;
 
+
+
+
+
         this.ctx.fillStyle = 'white';
 
         switch (componentLayout.type) {
@@ -295,6 +300,8 @@ export class CPUDiagram {
                 this.ctx.closePath();
                 this.ctx.fill();
                 this.ctx.stroke();
+
+                this.drawText('AND', x + width / 2, y + height / 2, 'black', '8px Arial', 'center', 'middle');
                 break;
             case 'adder':
             case 'alu':
@@ -302,18 +309,25 @@ export class CPUDiagram {
                 this.ctx.beginPath();
                 this.ctx.moveTo(x, y);
 
-                const cutSize = width / 1.5
+                const ratio = 0.7;
+                const cutWidth = (width / 2) * ratio;
+                const cutHeight = (height / 3) * ratio;
 
                 this.ctx.lineTo(x + width, y + height / 2 - width / 3);
                 this.ctx.lineTo(x + width, y + height / 2 + width / 3);
                 this.ctx.lineTo(x, y + height);
 
-                this.ctx.lineTo(x, y + height - cutSize);
-                this.ctx.lineTo(x + width - cutSize, y + height / 2);
-                this.ctx.lineTo(x, y + cutSize);
+                this.ctx.lineTo(x, y + height / 2 + cutHeight / 2);
+                this.ctx.lineTo(x + cutWidth, y + height / 2);
+                this.ctx.lineTo(x, y + height / 2 - cutHeight / 2);
                 this.ctx.closePath();
                 this.ctx.fill();
                 this.ctx.stroke();
+
+                // Add the text
+                if (componentLayout.type == "alu")
+                    this.drawText('ALU', x + width / 2 + 7, y + height / 2, 'black', '12px Arial', 'center', 'middle');
+
                 break;
             case 'shift':
             case 'sign_extend':
@@ -322,9 +336,13 @@ export class CPUDiagram {
                 this.ctx.beginPath();
                 this.ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
                 this.ctx.fill();
+                this.ctx.lineWidth = 1.2;
                 this.ctx.stroke();
+                this.ctx.lineWidth = 1;
+
                 this.ctx.setLineDash([]);
                 this.ctx.closePath();
+                this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '10px Arial');
                 break;
             case 'mux':
                 // Draw a rectanlge with rounded corners
@@ -337,6 +355,7 @@ export class CPUDiagram {
                 // Draw text (0 or 1) showing which input will be selected depending on the control signal
                 this.drawText('0', x + width / 2, y + height / 4, 'black', '12px Arial', 'center', 'middle');
                 this.drawText('1', x + width / 2, y + height * 3 / 4, 'black', '12px Arial', 'center', 'middle');
+                this.drawText('MUX', x + width / 2, y + height / 2, 'black', '8px Arial', 'center', 'middle');
                 break;
             case 'const':
                 // Get the output port and draw a rectangle with the value
@@ -346,19 +365,23 @@ export class CPUDiagram {
                 this.drawRect(x, y, width, height, 'white', 'black');
                 this.drawText(value.toString(), x + width / 2, y + height / 2, 'black', '12px Arial', 'center', 'middle');
 
-                return;
+                break;
+            case 'stage_register':
+                this.drawRect(x, y, width, height, 'white', 'black');
+                // Draw the text but rotated
+                this.ctx.save();
+                this.ctx.translate(x + width / 2, y + height / 2);
+                this.ctx.rotate(Math.PI / 2);
+                this.drawText(componentLayout.label, 0, 0, 'black', '12px Arial', 'center', 'middle');
+                this.ctx.restore();
                 break;
 
             default:
                 // Draw the component
                 this.drawRect(x, y, width, height, 'white', 'black');
+                this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
                 break;
         }
-        this.ctx.closePath();
-        // Add the name to the center of the component
-        this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '12px Arial');
-
-
 
         // Draw the ports
         if (!componentLayout.ports) return;
@@ -368,6 +391,14 @@ export class CPUDiagram {
             if (!port) return;
             this.drawPort(port);
         });
+
+
+        this.ctx.closePath();
+        // Add the name to the center of the component
+
+
+
+
 
     }
 
@@ -436,7 +467,17 @@ export class CPUDiagram {
 
         // Add the name to the center of the component
 
-        const value = ((typeof port.value === 'object') ? port.value._value : port.value).toString() ?? '';
+
+        let value = ((typeof port.value === 'object') ? port.value._value : port.value).toString() ?? '';
+        const valueEnc = useProjectStore().getProjectSetting('diagramValueRepresentation');
+
+        if (valueEnc === 'hex') {
+            value = '0x' + parseInt(value).toString(16);
+        } else if (valueEnc === 'bin') {
+            value = '0b' + parseInt(value).toString(2);
+        }
+
+
         this.drawText(value, x, y, 'black', '12px Arial', 'center', 'middle');
     }
 

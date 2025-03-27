@@ -39,7 +39,7 @@ export const components: ComponentLayout[] = [
         id: "PC",
         label: "PC",
         description: "Program Counter (PC) that holds the address of the next instruction to be executed.",
-        type: "stage_register",
+        type: "register",
         dimensions: { width: 50, height: 50 }, pos: { x: 44, y: 345 },
         ports: oneToOnePorts(_.NPC_MEM, _.PC)
     },

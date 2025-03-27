@@ -137,6 +137,9 @@ export default class MIPSBase {
         this.halted = false;
         // Reset all stage data
         this.resetStages()
+        Object.values(_).forEach((variable) => {
+            variable.value = 0;
+        });
 
         _.NPC_MEM.value = 4;
         _.NPC_IF.value = 4;

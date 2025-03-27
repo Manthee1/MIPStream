@@ -118,29 +118,30 @@ export class DiagramInteraction extends CPUDiagramPlugin {
         }
 
         ctx.textAlign = 'left';
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 5)
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = 'black';
+        ctx.stroke();
 
+        ctx.fillStyle = 'black';
 
         let nextY = y + padding;
         let nextX = x + padding;
 
         if (!isEmpty(title)) {
-            ctx.fillStyle = 'white';
-            this.cpuDiagram.drawText(title, nextX, nextY, 'white', `bold ${titleHeight}px Arial`, 'left', 'top', widthWithoutPadding);
+            this.cpuDiagram.drawText(title, nextX, nextY, 'black', `bold ${titleHeight}px Arial`, 'left', 'top', widthWithoutPadding);
             nextY += titleHeight + padding;
         }
         if (!isEmpty(subtitle)) {
-            ctx.fillStyle = 'white';
-            this.cpuDiagram.drawText(subtitle, nextX, nextY, 'white', `${subtitleHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
+            this.cpuDiagram.drawText(subtitle, nextX, nextY, 'black', `${subtitleHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
             nextY += subtitleHeight + padding;
         }
 
         if (!isEmpty(description)) {
-            this.cpuDiagram.drawText(description, nextX, nextY, 'white', `${descriptionHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
+            this.cpuDiagram.drawText(description, nextX, nextY, 'black', `${descriptionHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
             nextY += descriptionHeight * Math.ceil((description.length * 10) / (widthWithoutPadding));
         }
         if (!content) return;
@@ -149,7 +150,7 @@ export class DiagramInteraction extends CPUDiagramPlugin {
             case 'text':
                 for (let i = 0; i < content.data.length; i++) {
                     const item = content.data[i];
-                    this.cpuDiagram.drawText(item, nextX, nextY, 'white', `${contentItemHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
+                    this.cpuDiagram.drawText(item, nextX, nextY, 'black', `${contentItemHeight}px Arial`, 'left', 'middle', widthWithoutPadding);
                     nextY += 12;
                 }
                 break;
@@ -163,7 +164,6 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                 const bodyHeight = 12;
                 const headerY = nextY;
                 const bodyY = headerY// + headerHeight;
-                ctx.fillStyle = 'white';
                 // for (let i = 0; i < header.length; i++) {
                 //     ctx.fillText(header[i], nextX + i * columnWidth, headerY);
                 // }
@@ -198,7 +198,7 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                         }
                     } as InfoBoxBodyContentConfig : undefined;
 
-                    this.drawInfoBox(this.mouse.x, this.mouse.y, component.label, component.type, component.description ?? '', content);
+                    this.drawInfoBox(component.pos.x + component.dimensions.width + 5, component.pos.y, component.label, component.type, component.description ?? '', content);
 
                     break;
                 }
