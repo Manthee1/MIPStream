@@ -1,3 +1,4 @@
+import { useProjectStore } from "../../../../../stores/projectStore";
 import { SpatialItem } from "../../../utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
@@ -211,7 +212,12 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                         type: 'table',
                         data: {
                             header: ['Type', 'Port', 'Value'],
-                            body: component.ports.map((port) => [port.type == 'input' ? 'in' : 'out', port.label, port.value instanceof Object ? port.value.value : port.value])
+                            body: component.ports.map((port) => {
+                                let value: string | number = port.value instanceof Object ? port.value.value : port.value;
+                                if (useProjectStore().getProjectSetting('diagramValueRepresentation') == 'hex') value = '0x' + value.toString(16);
+                                else if (useProjectStore().getProjectSetting('diagramValueRepresentation') == 'bin') value = '0b' + value.toString(2);
+                                return [port.type == 'input' ? 'in' : 'out', port.label, value]
+                            })
                         }
                     } as InfoBoxBodyContentConfig : undefined;
 
@@ -222,11 +228,18 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                 case 'port': {
                     const port = this.cpuDiagram.ports.get(this.hoveringOver.id);
                     if (!port) return;
-                    let value = port.value instanceof Object ? port.value.value : port.value;
-                    const content = port.value instanceof Object ? {
+                    let value: string | number = port.value instanceof Object ? port.value.value : port.value;
+
+                    if (useProjectStore().getProjectSetting('diagramValueRepresentation') == 'hex') {
+                        value = '0x' + value.toString(16);
+                    } else if (useProjectStore().getProjectSetting('diagramValueRepresentation') == 'bin') {
+                        value = '0b' + value.toString(2);
+                    }
+
+                    const content: InfoBoxBodyContentConfig = {
                         type: 'text',
                         data: [`Value: ${value}`, `Bits: ${port.bits}`]
-                    } as InfoBoxBodyContentConfig : undefined;
+                    }
 
                     this.drawInfoBox(this.mouse.x, this.mouse.y, port.label, port.type ?? '', '', content);
                     break;
