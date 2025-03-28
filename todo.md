@@ -5,6 +5,8 @@ General
 - [x] Add project settings
 - [x] Add options to each workspace panel
 - [ ] Add multi cpu support
+- [ ] Add custom instructions
+- [ ] Add help
 
 Home
 - [x] Make projects sorted by last opened
@@ -40,8 +42,9 @@ Diagram
 - [x] Add custom icons for components
 - [x] Connect Reg1Data to the ALU
 - [x] Add more hover information
+- [x] Add ability to change in what format the data is shown (hex, binary, decimal)
+- [ ] Add keyboard shortucts to the diagram (show port names...) 
 - [ ] Add highlighting of components
-- [ ] Add ability to change in what format the data is shown (hex, binary, decimal)
 - [ ] Add proper dark mode support
 - [ ] Add bit-range display
 - [ ] Add the ability to pan and zoom the diagram (very low priority)
@@ -55,7 +58,7 @@ Other Visuals
 
 Other Functionality
 - [x] Add Project rename
-
+- [ ] Add name and description to keyboard shortcuts( for future addition into a help screen)
 
 Bugs
 - [x] Fix editing the code while running the simulation directly changing cpuview stage instruction info

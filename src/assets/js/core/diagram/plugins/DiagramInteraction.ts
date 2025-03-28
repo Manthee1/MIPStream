@@ -159,7 +159,6 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                 const table = content.data;
                 const header = table.header;
                 const body = table.body;
-                const columnWidth = widthWithoutPadding / header.length;
                 const headerHeight = 12;
                 const bodyHeight = 12;
                 const headerY = nextY;
@@ -167,10 +166,28 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                 // for (let i = 0; i < header.length; i++) {
                 //     ctx.fillText(header[i], nextX + i * columnWidth, headerY);
                 // }
+
+
+                // find the column widths for each column
+                const columnWidths = [0, 0, 0, 0, 0,]
                 for (let i = 0; i < body.length; i++) {
                     const row = body[i];
                     for (let j = 0; j < row.length; j++) {
-                        ctx.fillText(row[j], nextX + j * columnWidth, bodyY + i * bodyHeight);
+                        columnWidths[j] = Math.max(columnWidths[j], ctx.measureText((row[j]).toString()).width);
+                    }
+                }
+
+                console.log(columnWidths);
+
+
+                for (let i = 0; i < body.length; i++) {
+                    // Find the longest row and use it as the column width
+                    const row = body[i];
+
+                    let nextX = x + padding;
+                    for (let j = 0; j < row.length; j++) {
+                        ctx.fillText(row[j], nextX, bodyY + i * bodyHeight);
+                        nextX += columnWidths[j] + padding;
                     }
                 }
                 // nextY = bodyY + body.length * bodyHeight;
@@ -193,8 +210,8 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                     const content = component.ports ? {
                         type: 'table',
                         data: {
-                            header: ['Port', 'Value'],
-                            body: component.ports.map((port) => [port.label, port.value instanceof Object ? port.value.value : port.value])
+                            header: ['Type', 'Port', 'Value'],
+                            body: component.ports.map((port) => [port.type == 'input' ? 'in' : 'out', port.label, port.value instanceof Object ? port.value.value : port.value])
                         }
                     } as InfoBoxBodyContentConfig : undefined;
 
