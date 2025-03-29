@@ -11,6 +11,11 @@ export class CPUDiagramPlugin {
     draw() {
 
     }
+
+    destroy() {
+    }
+
+
 }
 
 
@@ -543,6 +548,25 @@ export class CPUDiagram {
 
     destroy() {
         clearInterval(this.drawIntervalRefence);
+        this.pluginInstances.forEach((plugin) => {
+            plugin.destroy();
+        });
+        // Remove all event listeners from the canvas
+        const canvas = this.canvas;
+        if (!canvas) return;
+        const clone = canvas.cloneNode(true) as HTMLCanvasElement;
+        const parent = canvas.parentNode;
+        if (!parent) return;
+        parent.replaceChild(clone, canvas);
+        this.canvas = clone;
+        this.ctx = clone.getContext('2d') as CanvasRenderingContext2D;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        this.canvas.style.width = this.width + 'px';
+        this.canvas.style.height = this.height + 'px';
+        this.components.clear();
+        this.ports.clear();
+        this.connections.clear();
     }
 
 }
