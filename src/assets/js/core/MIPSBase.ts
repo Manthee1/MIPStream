@@ -1,7 +1,7 @@
 /** @format */
 
 import { clone } from "../utils";
-import { connections } from "./config/connections";
+import { connections } from "./config/connections/base-connections";
 import { baseControlSignals } from "./config/controlSignals";
 import { baseInstructionConfig } from "./config/instructions";
 import { stageRegisters } from "./config/stages-registers";
