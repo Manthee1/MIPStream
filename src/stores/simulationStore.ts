@@ -19,6 +19,7 @@ import { validate } from '../config/monaco/validationProvider';
 export const useSimulationStore = defineStore('simulation', {
     state: () => ({
         core: new MIPSBase(),
+        cpuType: 'basic' as string,
         cpuDiagram: {} as CPUDiagram,
         assembler: new Assembler(baseInstructionConfig),
         // Program is the currently running program that had no assembly errors
@@ -61,6 +62,8 @@ export const useSimulationStore = defineStore('simulation', {
             else this.core = new cpuConfig.cpu(cpuOptions);
 
             this.assembler = new Assembler(this.core.instructionConfig);
+
+            this.cpuType = cpuType;
 
             this.program = project.code;
             initLSP(this.core.instructionConfig);

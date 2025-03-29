@@ -42,14 +42,31 @@ export default defineComponent({
         },
         stagePCs() {
             return this.$simulationStore.stagePCs;
-        }
+        },
+        cpuType() {
+            return this.$simulationStore.cpuType;
+        },
     },
     mounted() {
-        const cpu = this.$simulationStore.core;
-        this.$simulationStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
+        this.mountDiagram();
+    },
+
+    watch: {
+        cpuType(value) {
+            console.log('CPU Type changed', value);
+
+            this.$simulationStore.cpuDiagram?.destroy();
+            this.mountDiagram();
+        },
     },
 
     methods: {
+
+        mountDiagram() {
+            const cpu = this.$simulationStore.core;
+            this.$simulationStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
+        },
+
         getColor(pc: number) {
             // If the isntruction is a nop, return a different color
             if (pc == -1) return '#888';
