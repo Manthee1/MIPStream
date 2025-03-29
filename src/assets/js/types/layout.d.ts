@@ -23,7 +23,7 @@ interface ComponentLayout {
     id: string;
     label: string;
     description?: string;
-    type: 'register' | 'stage_register' | 'and' | 'or' | 'mux' | 'adder' | 'control_unit' | 'alu' | 'shift' | 'sign_extend' | 'register_unit' | 'const' | 'instruction_memory' | 'data_memory';
+    type: 'register' | 'stage_register' | 'and' | 'or' | 'mux' | 'mux_reverse' | 'adder' | 'control_unit' | 'alu' | 'shift' | 'sign_extend' | 'register_unit' | 'const' | 'instruction_memory' | 'data_memory';
     dimensions: Dimensions;
     pos: Position;
     ports?: Array<PortLayout>;

@@ -289,7 +289,6 @@ export class CPUDiagram {
                 // Draw the and gate
                 this.ctx.beginPath();
                 this.ctx.moveTo(x, y);
-                this.ctx.lineTo(x + width * (3 / 4), y);
                 // make a rectangle with right hlaf rounded to a circle
                 this.ctx.arcTo(x + width, y, x + width, y + height, height / 2);
                 this.ctx.arcTo(x + width, y + height, x + width * (3 / 4), y + height, height / 2);
@@ -345,6 +344,7 @@ export class CPUDiagram {
                 this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '10px Arial');
                 break;
             case 'mux':
+            case 'mux_reversed':
                 // Draw a rectanlge with rounded corners
                 this.ctx.beginPath();
                 this.ctx.roundRect(x, y, width, height, 10);
@@ -352,9 +352,11 @@ export class CPUDiagram {
                 this.ctx.fill();
                 this.ctx.stroke();
 
+                const selectValues = componentLayout.type == 'mux_reversed' ? ['0', '1'] : ['1', '0'];
+
                 // Draw text (0 or 1) showing which input will be selected depending on the control signal
-                this.drawText('0', x + width / 2, y + height / 4, 'black', '12px Arial', 'center', 'middle');
-                this.drawText('1', x + width / 2, y + height * 3 / 4, 'black', '12px Arial', 'center', 'middle');
+                this.drawText(selectValues[0], x + width / 2, y + height / 4, 'black', '12px Arial', 'center', 'middle');
+                this.drawText(selectValues[1], x + width / 2, y + height * 3 / 4, 'black', '12px Arial', 'center', 'middle');
                 this.drawText('MUX', x + width / 2, y + height / 2, 'black', '8px Arial', 'center', 'middle');
                 break;
             case 'const':
