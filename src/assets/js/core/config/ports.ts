@@ -71,7 +71,7 @@ export const muxPorts = (valueIn1: number | Ref<number>, valueIn2: number | Ref<
     },
 ]
 
-const controlInput = (value: number | Ref<number>, label: string, location: 'top' | 'bottom' = 'top'): PortLayout[] => [{
+export const controlInputPort = (value: number | Ref<number>, label: string, location: 'top' | 'bottom' = 'top'): PortLayout[] => [{
     id: "control",
     label: label,
     type: 'input',
@@ -88,19 +88,19 @@ const muxControlSignals = ['ALUSrc', 'MemtoReg', 'Branch', 'RegDst'];
 export const muxesPorts = {
     ALUSrcMUX: [
         ...twoToOnePorts(_.Reg2Data_EX, _.SignedImm_EX, _.ALUIn2_EX),
-        ...controlInput(_.ALUSrc_EX, "ALUSrc"),
+        ...controlInputPort(_.ALUSrc_EX, "ALUSrc"),
     ],
     MemtoRegMUX: [
         ...twoToOnePorts(_.ALUResult_MEM, _.MemReadResult_MEM, _.WriteRegisterData_WB),
-        ...controlInput(_.MemtoReg_MEM, "MemtoReg"),
+        ...controlInputPort(_.MemtoReg_MEM, "MemtoReg"),
     ],
     BranchMUX: [
         ...twoToOnePorts(_.NPC_IF, _.TargetPC_MEM, _.NPC_MEM),
-        ...controlInput(_.Branch_MEM, "Branch", 'bottom'),
+        ...controlInputPort(_.Branch_MEM, "Branch", 'bottom'),
     ],
     RegDstMUX: [
         ...twoToOnePorts(_.Rt_EX, _.Rd_EX, _.WriteRegister_EX),
-        ...controlInput(_.RegDst_EX, "RegDst"),
+        ...controlInputPort(_.RegDst_EX, "RegDst"),
     ],
 }
 
@@ -166,6 +166,36 @@ for (let i = 0; i < controlSignalsValues.length; i++) {
         value: _[controlSignal.name + '_ID'],
         relPos: (i + 1) / (controlSignalsValues.length + 2),
     });
+
+}
+
+
+export const getControlUnitPorts = (controlSignals: Record<string, ControlSignal>): Array<PortLayout> => {
+    const ports: Array<PortLayout> = [
+        {
+            id: "opcode",
+            label: "opcode",
+            type: 'input',
+            location: 'left',
+            bits: 6,
+            value: _.OPCODE_ID,
+            relPos: 0.5,
+        }
+    ];
+    const controlSignalsValues = Object.values(controlSignals);
+    for (let i = 0; i < controlSignalsValues.length; i++) {
+        const controlSignal = controlSignalsValues[i];
+        ports.push({
+            id: controlSignal.name,
+            label: controlSignal.name,
+            type: 'output',
+            location: 'right',
+            bits: controlSignal.bits,
+            value: _[controlSignal.name + '_ID'],
+            relPos: (i + 1) / (controlSignalsValues.length + 1),
+        });
+    }
+    return ports;
 
 }
 

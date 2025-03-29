@@ -34,9 +34,9 @@ export const baseControlSignals = {
 };
 
 export const controlSignalsWithJump = {
-    ...baseControlSignals,
     Jump: {
         bits: 1,
         name: "Jump",
     },
+    ...baseControlSignals,
 };
