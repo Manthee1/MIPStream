@@ -17,9 +17,10 @@
 
 import { defineComponent } from 'vue';
 // import { getStageName } from '../../assets/js/utils';
-import { default as monaco, validate } from "../../config/monaco";
+import { initLSP, default as monaco } from "../../config/monaco";
 import Controls from './Controls.vue';
 import { useProjectStore } from '../../stores/projectStore';
+import { validate } from '../../config/monaco/validationProvider';
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 export default defineComponent({
@@ -41,7 +42,6 @@ export default defineComponent({
 
 		console.log('Editor Mounted', this.params);
 		let code = this.params?.params.code
-
 		const editorEl = this.$refs.editor as HTMLElement;
 		editor = monaco.editor.create(editorEl, {
 			language: 'asm',
@@ -70,14 +70,14 @@ export default defineComponent({
 		const model = editor.getModel();
 		if (!model) return;
 		validate(model);
+		// initLSP(this.$simulationStore.core.instructionMemory);
+
 
 		// Listener for changes in the editor
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
 			const code = monaco.editor.getModels()[0].getValue();
 			this.$simulationStore.program = code;
-			// this.$emit('update:modelValue', code);
 			this.onUpdate(code);
-			validate(model);
 			this.$simulationStore.updateErrors();
 
 		});

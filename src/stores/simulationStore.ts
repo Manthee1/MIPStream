@@ -12,6 +12,8 @@ import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { defaultProjectSettings, Project } from '../db/projectsTable';
 import { useProjectStore } from './projectStore';
 import { CPUS } from '../assets/js/core/config/cpus';
+import monaco, { initLSP } from '../config/monaco';
+import { validate } from '../config/monaco/validationProvider';
 
 
 export const useSimulationStore = defineStore('simulation', {
@@ -61,6 +63,9 @@ export const useSimulationStore = defineStore('simulation', {
             this.assembler = new Assembler(this.core.instructionConfig);
 
             this.program = project.code;
+            initLSP(this.core.instructionConfig);
+
+            this.updateErrors();
 
         },
 
@@ -81,6 +86,10 @@ export const useSimulationStore = defineStore('simulation', {
                         // errorList = errorList as AssemblerErrorList
                         this.errors = errorList.errors.map((error: AssemblerError) => error.toString());
                     }
+
+                    const monacoEditorModel = monaco.editor.getModels()[0];
+                    validate(monacoEditorModel);
+
                 }, timeOut);
 
         },

@@ -9,6 +9,7 @@ import { rejects } from 'assert';
 import { clone } from '../assets/js/utils';
 import { toRaw } from 'vue';
 import { settings } from '../storage/settingsStorage';
+import { CPUS } from '../assets/js/core/config/cpus';
 
 export const useProjectStore = defineStore('project', {
     state: () => ({
@@ -86,6 +87,20 @@ export const useProjectStore = defineStore('project', {
             if (!this.currentProject) return;
             this.currentProject.settings = { ...defaultProjectSettings, ...this.currentProject.settings, [key]: value };
             console.log("Settings Updated", this.currentProject);
+
+            // If the setting is cpuType, update the cpu
+            if (key === 'cpuType') {
+                const cpuType = value;
+                const cpuConfig = CPUS[cpuType];
+                if (!cpuConfig) {
+                    notify('error', 'Error', 'CPU type ${cpuType} not found. Using default CPU.');
+                    this.currentProject.settings.cpuType = 'basic';
+                    return;
+                }
+                useSimulationStore().reset();
+                useSimulationStore().init(this.currentProject);
+            }
+
             updateProject(toRaw(this.currentProject));
         },
 
