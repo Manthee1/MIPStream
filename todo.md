@@ -4,7 +4,7 @@ General
 - [x] Rework the storage system to be more efficient. Use IndexDB
 - [x] Add project settings
 - [x] Add options to each workspace panel
-- [ ] Add multi cpu support
+- [x] Add multi cpu support
 - [ ] Add custom instructions
 - [ ] Add help
 
@@ -43,11 +43,12 @@ Diagram
 - [x] Connect Reg1Data to the ALU
 - [x] Add more hover information
 - [x] Add ability to change in what format the data is shown (hex, binary, decimal)
-- [ ] Add keyboard shortucts to the diagram (show port names...) 
+- [x] Add keyboard shortcuts to the diagram (show port names...) 
 - [ ] Add highlighting of components
 - [ ] Add proper dark mode support
 - [ ] Add bit-range display
 - [ ] Add the ability to pan and zoom the diagram (very low priority)
+- [ ] Fix the bits display in the diagram
 
 Other Visuals
 - [x] Remove CPU window title
