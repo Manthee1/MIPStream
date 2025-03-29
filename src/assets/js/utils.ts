@@ -2,10 +2,10 @@
 
 // utils.ts
 
-import { instructionConfig } from "./core/config/instructions";
+import { baseInstructionConfig } from "./core/config/instructions";
 
 
-const mnemonics = new Set(instructionConfig.map((instruction) => instruction.mnemonic));
+const mnemonics = new Set(baseInstructionConfig.map((instruction) => instruction.mnemonic));
 
 /**
  * Checks if the given string is a register.

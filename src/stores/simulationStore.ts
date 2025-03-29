@@ -6,18 +6,19 @@ import { Assembler } from '../assets/js/core/Assembler';
 import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
 import MIPSBase from '../assets/js/core/MIPSBase';
-import { instructionConfig } from '../assets/js/core/config/instructions';
+import { baseInstructionConfig } from '../assets/js/core/config/instructions';
 import { useUIStore } from './UIStore';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { defaultProjectSettings, Project } from '../db/projectsTable';
 import { useProjectStore } from './projectStore';
+import { CPUS } from '../assets/js/core/config/cpus';
 
 
 export const useSimulationStore = defineStore('simulation', {
     state: () => ({
         core: new MIPSBase(),
         cpuDiagram: {} as CPUDiagram,
-        assembler: new Assembler(instructionConfig),
+        assembler: new Assembler(baseInstructionConfig),
         // Program is the currently running program that had no assembly errors
         loadedProgram: '' as string,
         program: '' as string,
@@ -38,9 +39,27 @@ export const useSimulationStore = defineStore('simulation', {
     actions: {
 
         init(project: Project) {
-            this.core = new MIPSBase({
+            const cpuOptions = {
                 dataMemorySize: project?.settings?.memorySize ?? defaultProjectSettings.memorySize,
-            } as any);
+            } as any
+
+            // Get cpu type
+            const cpuType = project?.settings?.cpuType ?? defaultProjectSettings.cpuType;
+            const cpuConfig = CPUS[cpuType];
+            if (!cpuConfig) {
+                notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'CPU type ${cpuType} not found. Using default CPU.',
+                });
+                this.core = new MIPSBase(cpuOptions);
+                // Save the default CPU type
+                useProjectStore().setProjectSetting('cpuType', 'basic');
+            }
+            else this.core = new cpuConfig.cpu(cpuOptions);
+
+            this.assembler = new Assembler(this.core.instructionConfig);
+
             this.program = project.code;
 
         },

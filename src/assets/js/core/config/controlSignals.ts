@@ -1,4 +1,4 @@
-export const controlSignals = {
+export const baseControlSignals = {
     RegWrite: {
         bits: 1,
         name: "RegWrite",
@@ -30,5 +30,13 @@ export const controlSignals = {
     RegDst: {
         bits: 1,
         name: "RegDst",
+    },
+};
+
+export const controlSignalsWithJump = {
+    ...baseControlSignals,
+    Jump: {
+        bits: 1,
+        name: "Jump",
     },
 };

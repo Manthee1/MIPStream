@@ -3,6 +3,7 @@
 // General: performance mode, cpu type, memory size
 // Simulation: speed, 
 
+import { CPUS } from "../../assets/js/core/config/cpus";
 import { useProjectStore } from "../../stores/projectStore";
 
 // Visualization: value representation(dec,hex,bin) for memory/diagram/registers all individually, register nameing convention, 
@@ -29,12 +30,11 @@ export const projectSettingTabs: SettingTab[] = [
                 label: 'CPU Type',
                 type: 'radio',
                 default: 'basic',
-                options: [
-                    { value: 'basic', label: 'Basic', description: 'Basic MIPS CPU without unconditional jumps, data hazard detection, and forwarding.' },
-                    { value: 'basic-jump', label: 'Basic with Jump', description: 'Basic MIPS CPU with unconditional jumps.' },
-                    { value: 'data-hazard', label: 'Data Hazard', description: 'Basic MIPS CPU with data hazard detection.' },
-                    { value: 'forwarding', label: 'Forwarding', description: 'Basic MIPS CPU with forwarding.' },
-                ],
+                options: Object.entries(CPUS).map(([key, cpu]) => ({
+                    value: key,
+                    label: cpu.name,
+                    description: cpu.description,
+                })),
                 description: 'Choose the CPU type for the simulation.',
                 icon: 'cpu'
             },

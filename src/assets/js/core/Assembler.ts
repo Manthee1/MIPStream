@@ -3,9 +3,10 @@ import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
 
 export class Assembler {
     INSTRUCTION_SET: InstructionConfig[];
-
+    mnemonics: Set<string>;
     constructor(INSTRUCTION_SET: InstructionConfig[]) {
         this.INSTRUCTION_SET = INSTRUCTION_SET;
+        this.mnemonics = new Set(INSTRUCTION_SET.map((instruction) => instruction.mnemonic));
     }
 
     getOperands(instruction: string): string[] {
@@ -59,7 +60,7 @@ export class Assembler {
         let rt = 0;
         let rd = 0;
         let imm = 0;
-        let offset = 0;
+        let addr = 0;
         let shamt = 0;
         let funct = 0;
 
@@ -94,7 +95,8 @@ export class Assembler {
                 if (!isLabel(operand)) throw new Error(`Invalid label: ${operand}.`);
                 if (!labels.has(operand)) throw new Error(`Invalid label: ${operand}.`);
                 const value = labels.get(operand) as number;
-                offset = imm = value - pc - 1;
+                addr = value;
+                imm = value - pc - 1;
             } else if (operandType === "MEM_ADDRESS") {
                 if (!isEffectiveAddress(operand)) throw new Error(`Invalid effective address: ${operand}.`);
                 [rs, imm] = [getEffectiveAddressRegister(operand), getEffectiveAddressImm(operand)];
@@ -110,7 +112,7 @@ export class Assembler {
             if (instructionDef.controlSignals.RegWrite == 1) rt = rd;
             encodedInstruction = (instructionOpcode << 26) | (rs << 21) | (rt << 16) | (imm & 0xFFFF);
         } else if (instructionDef.type === 'J') {
-            encodedInstruction = (instructionOpcode << 26) | (offset & 0x3FFFFFF);
+            encodedInstruction = (instructionOpcode << 26) | (addr & 0x3FFFFFF);
         } else throw new Error(`Invalid instruction type: ${instructionDef.type}.`);
 
 
@@ -129,7 +131,7 @@ export class Assembler {
         let labels = new Map<string, number>();
         let pc = 0;
         programLines.forEach((lineContent, line) => {
-            if (isMnemonic(lineContent.split(" ")[0])) {
+            if (this.mnemonics.has(lineContent.split(" ")[0])) {
                 pc++
                 return;
             }
@@ -149,6 +151,9 @@ export class Assembler {
 
             labels.set(label, pc);
         });
+
+        console.log(labels);
+
 
 
         // Encode instructions

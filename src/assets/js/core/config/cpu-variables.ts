@@ -70,7 +70,15 @@ const cpuVariables: Record<string, Ref<number>> = {
     ALUResult_WB: {} as Ref<number>,
     MemReadResult_WB: {} as Ref<number>,
     WriteRegister_WB: {} as Ref<number>,
-    WriteRegisterData_WB: {} as Ref<number>
+    WriteRegisterData_WB: {} as Ref<number>,
+
+    // -- Additional variables
+    // Jump cpu
+    Jump_ID: {} as Ref<number>,
+    JumpAddress: {} as Ref<number>,
+    JumpAddressShifted: {} as Ref<number>,
+    PreNPC_MEM: {} as Ref<number>,
+
 }
 
 // Make sure all the values are proxied

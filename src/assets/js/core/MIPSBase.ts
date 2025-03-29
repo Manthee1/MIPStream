@@ -2,8 +2,8 @@
 
 import { clone } from "../utils";
 import { connections } from "./config/connections";
-import { controlSignals } from "./config/controlSignals";
-import { instructionConfig } from "./config/instructions";
+import { baseControlSignals } from "./config/controlSignals";
+import { baseInstructionConfig } from "./config/instructions";
 import { stageRegisters } from "./config/stages-registers";
 import { default as _ } from "./config/cpu-variables";
 import { ALUOperations, getAluControl } from "./config/alu";
@@ -30,8 +30,8 @@ export default class MIPSBase {
         },
     ];
 
-    controlSignals: { [name: string]: ControlSignal } = controlSignals;
-    instructionConfig: InstructionConfig[] = instructionConfig;
+    controlSignals: { [name: string]: ControlSignal } = baseControlSignals;
+    instructionConfig: InstructionConfig[] = baseInstructionConfig;
 
     public cpuLayout: CPULayout = {
         width: 1200,

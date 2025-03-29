@@ -10,7 +10,7 @@ const RType: InstructionConfig = {
 }
 
 
-export const instructionConfig: InstructionConfig[] = [
+export const baseInstructionConfig: InstructionConfig[] = [
     {
         ...RType,
         mnemonic: "nop",
@@ -132,4 +132,22 @@ export const instructionConfig: InstructionConfig[] = [
 
     }
 ];
+
+
+
+export const instructionConfigWithJump: InstructionConfig[] = [
+    ...baseInstructionConfig,
+    {
+        opcode: 0x02,
+        mnemonic: "j",
+        description: "Jump to address",
+        type: 'J',
+        controlSignals: {
+            "Jump": 1,
+        },
+        operands: [
+            'LABEL',
+        ],
+    }
+]
 

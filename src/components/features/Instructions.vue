@@ -71,7 +71,7 @@ export default defineComponent({
 
             let out = ''
             const cs = instructionConfig.controlSignals as Record<string, number>;
-            const ALUControl = getAluControl(cs['ALUOp'], instructionConfig?.funct ?? 0)
+            const ALUControl = getAluControl(cs['ALUOp'] ?? 0, instructionConfig?.funct ?? 0)
             let ALUOPSign = ALUOperationstoSigns[ALUControl] ?? '???'
             const operands = instructionConfig.operands ?? getDefaultInstructionDefOperands(instructionConfig);
 

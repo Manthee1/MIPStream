@@ -1,5 +1,5 @@
 import { clone } from "../../utils"
-import { controlSignals } from "./controlSignals"
+import { baseControlSignals } from "./controlSignals"
 import _ from "./cpu-variables"
 
 export const singleInput = (value: number | Ref<number>): Array<PortLayout> => [
@@ -141,7 +141,7 @@ export const controlUnitPorts: Array<PortLayout> = [
 ]
 
 export let controlSignalPorts: { [value: string]: PortLayout } = {};
-const controlSignalsValues = Object.values(controlSignals);
+const controlSignalsValues = Object.values(baseControlSignals);
 
 for (let i = 0; i < controlSignalsValues.length; i++) {
     const controlSignal = controlSignalsValues[i];
