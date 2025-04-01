@@ -83,6 +83,13 @@ export function createConfig() {
             type: 'separator'
         },
 
+        instructionConfig: {
+            label: 'Instructions Config',
+            action: (context) => {
+                context.$router.push({ name: 'InstructionsConfig' });
+            }
+        },
+
         projectSettingsItem:
         {
             label: 'Project Settings',
@@ -172,6 +179,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
 
                 dropdownItemsConfig.seperatorItem,
 
+                dropdownItemsConfig.instructionConfig,
                 dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.helpItem,
                 dropdownItemsConfig.aboutItem,
@@ -193,6 +201,7 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
                 dropdownItemsConfig.seperatorItem,
 
                 dropdownItemsConfig.settingsItem,
+                dropdownItemsConfig.instructionConfig,
                 dropdownItemsConfig.projectSettingsItem,
                 dropdownItemsConfig.helpItem,
                 dropdownItemsConfig.aboutItem,
@@ -203,6 +212,19 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
 
                 dropdownItemsConfig.seperatorItem,
 
+                dropdownItemsConfig.backHomeItem,
+                dropdownItemsConfig.exitItem
+            ]
+
+        case 'InstructionsConfig':
+            return [
+                dropdownItemsConfig.newItem,
+                dropdownItemsConfig.openRecentItem,
+                dropdownItemsConfig.seperatorItem,
+                dropdownItemsConfig.settingsItem,
+                dropdownItemsConfig.helpItem,
+                dropdownItemsConfig.aboutItem,
+                dropdownItemsConfig.seperatorItem,
                 dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.exitItem
             ]

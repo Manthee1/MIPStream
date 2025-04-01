@@ -2,7 +2,11 @@
   <div class="content-wrapper">
     <div class="content-container">
       <h1>Projects</h1>
-      <MButton accent filled icon="plus" @click="setupProject()">Create Project</MButton>
+      <MButton filled accent icon="plus" @click="setupProject()">Create Project</MButton>
+      <MButton filled accent class="instruction-config-button" icon="server"
+        @click="$router.push({ name: 'InstructionsConfig' })">
+        <span class="button-text">Instruction Config</span>
+      </MButton>
       <table class="projects-table">
         <thead>
           <tr>
@@ -28,7 +32,6 @@
             <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
             <td>{{ formatSize(project.size) }}</td>
             <td>
-              <!-- <MButton type="error" filled class="delete-button" @click="deleteProject(project.id)" icon="trash" /> -->
               <Dropdown :icon="'more-vertical'" :label="''" :items="[
                 { label: 'Rename', action: () => renameProject(project.id), type: 'item', icon: 'edit' },
                 { label: 'Delete', action: () => deleteProject(project.id), type: 'item', icon: 'trash' },
@@ -119,4 +122,14 @@ export default defineComponent({
     .projects-table
       width: 100%
       margin-top: 20px
+
+.instruction-config-button
+  position: absolute
+  top: 7rem
+  left: 100%;
+  transition: translate 0.3s ease
+  translate: -4.75rem 0 
+  width: max-content
+  &:hover
+    translate: -99% 0
 </style>
