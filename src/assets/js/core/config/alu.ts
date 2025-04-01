@@ -64,6 +64,9 @@ export function getAluControl(ALUOp: number, funct: number): number {
             // Map the funct field to the ALU operation
             ALUControl = funct;
             break;
+        case 0b11:
+            // This is a special case for the ALUOp 11, which is used for immediate operations
+            return ALUOperations.AND;
         default:
             throw new Error("Unknown ALU operation");
     }
