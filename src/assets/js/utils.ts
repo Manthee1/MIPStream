@@ -2,6 +2,7 @@
 
 // utils.ts
 
+import { ALUOperationstoSigns, getAluControl } from "./core/config/alu";
 import { baseInstructionConfig } from "./core/config/instructions";
 
 
@@ -83,25 +84,37 @@ export function isMnemonic(mnemonic: string): boolean {
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
     const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
-    const operandExamples = operands.map((operand) => {
-        switch (operand) {
-            case 'REG_DESTINATION':
-                return 'Rd';
-            case 'REG_SOURCE':
-                return 'Rs';
-            case 'REG_TARGET':
-                return 'Rt';
-            case 'IMMEDIATE':
-                return 'imm';
-            case 'MEM_ADDRESS':
-                return 'imm(Rs)';
-            case 'LABEL':
-                return 'label';
-            default:
-                return '';
-        }
-    });
-    return `${instruction.mnemonic} ${operandExamples.join(', ')}`;
+    let operandExamples = '';
+    for (let i = 0; i < operands.length; i++) {
+        if (operands[i] == "NONE") continue;
+        if (i > 0) operandExamples += ', ';
+        operandExamples += getOperandSyntax(operands[i]);
+    }
+
+    return `${instruction.mnemonic} ${operandExamples}`;
+
+}
+
+export function getOperandSyntax(operand: OperandType) {
+    switch (operand) {
+        case 'REG_DESTINATION':
+            return 'Rd';
+        case 'REG_SOURCE':
+            return 'Rs';
+        case 'REG_TARGET':
+            return 'Rt';
+        case 'IMMEDIATE':
+            return 'imm';
+        case 'MEM_ADDRESS':
+            return 'imm(Rs)';
+        case 'LABEL':
+            return 'label';
+        case 'NONE':
+            return '-';
+        default:
+            return '';
+    }
+
 
 }
 
@@ -208,6 +221,39 @@ export function getDefaultInstructionDefOperands(instruction: InstructionConfig)
         default:
             throw new Error(`Invalid instruction type: ${instruction.type}.`);
     }
+
+}
+
+export function getPseudoCode(instructionConfig: InstructionConfig) {
+    // Construct the pseudo code based on the instruction config
+    if (instructionConfig.mnemonic == 'halt') return '-'
+    if (instructionConfig.mnemonic == 'nop') return '-'
+
+    let out = ''
+    const cs = instructionConfig.controlSignals as Record<string, number>;
+    const ALUControl = getAluControl(cs['ALUOp'] ?? 0, instructionConfig?.funct ?? 0)
+    let ALUOPSign = ALUOperationstoSigns[ALUControl] ?? '???'
+    const operands = instructionConfig.operands ?? getDefaultInstructionDefOperands(instructionConfig);
+
+    const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : ''
+    const Rt = (operands.includes('REG_TARGET')) ? 'Rt' : ''
+
+    const ALUIn2 = cs['ALUSrc'] ? 'imm' : 'Rt';
+
+    if (cs['RegWrite']) {
+        const memOut = cs['MemRead'] ? `MEM[${Rs} ${ALUOPSign} ${ALUIn2}];\n` : '0'
+        out += `Rd = `
+        out += (cs['MemtoReg']) ? memOut : `${Rs} ${ALUOPSign} ${ALUIn2};\n`;
+    }
+
+    if (cs['MemWrite']) {
+        out += `MEM[${Rs} ${ALUOPSign} ${ALUIn2}] = Rd;\n`
+    }
+
+    if (cs['Branch']) {
+        out += `if (${Rs} ${ALUOPSign} Rt == 0) PC = label;\n`
+    }
+    return out;
 
 }
 

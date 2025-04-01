@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { getDefaultInstructionDefOperands, getInstructionSyntax } from '../../assets/js/utils';
+import { getDefaultInstructionDefOperands, getInstructionSyntax, getPseudoCode } from '../../assets/js/utils';
 import { get } from 'http';
 import { ALUOperationstoSigns, getAluControl } from '../../assets/js/core/config/alu';
 
@@ -64,38 +64,7 @@ export default defineComponent({
             }
             return 'grid'
         },
-        getPseudoCode(instructionConfig: InstructionConfig) {
-            // Construct the pseudo code based on the instruction config
-            if (instructionConfig.mnemonic == 'halt') return '-'
-            if (instructionConfig.mnemonic == 'nop') return '-'
-
-            let out = ''
-            const cs = instructionConfig.controlSignals as Record<string, number>;
-            const ALUControl = getAluControl(cs['ALUOp'] ?? 0, instructionConfig?.funct ?? 0)
-            let ALUOPSign = ALUOperationstoSigns[ALUControl] ?? '???'
-            const operands = instructionConfig.operands ?? getDefaultInstructionDefOperands(instructionConfig);
-
-            const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : ''
-            const Rt = (operands.includes('REG_TARGET')) ? 'Rt' : ''
-
-            const ALUIn2 = cs['ALUSrc'] ? 'imm' : 'Rt';
-
-            if (cs['RegWrite']) {
-                const memOut = cs['MemRead'] ? `MEM[${Rs} ${ALUOPSign} ${ALUIn2}]` : '0'
-                out += `Rd = `
-                out += (cs['MemtoReg']) ? memOut : `${Rs} ${ALUOPSign} ${ALUIn2}`;
-            }
-
-            if (cs['MemWrite']) {
-                out += `MEM[${Rs} ${ALUOPSign} ${ALUIn2}] = Rd;`
-            }
-
-            if (cs['Branch']) {
-                out += `if (${Rs} ${ALUOPSign} Rt == 0) PC = label`
-            }
-            return out;
-
-        },
+        getPseudoCode,
         getInstructionSyntax,
     },
 });

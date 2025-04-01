@@ -50,9 +50,11 @@ export class Assembler {
         //     operands.push(imm.toString());
         // }
 
+        const expoectedOperandsLength = instructionDef.operands.filter((operand) => operand !== 'NONE').length;
+
         // Check if the number of operands is correct
-        if (operands.length !== instructionDef.operands.length) {
-            throw new Error(`Invalid number of operands for instruction ${mnemonic}.`);
+        if (operands.length !== expoectedOperandsLength) {
+            throw new Error(`Invalid number of operands for instruction ${mnemonic}. Expected ${expoectedOperandsLength}, got ${operands.length}.`);
         }
 
 
