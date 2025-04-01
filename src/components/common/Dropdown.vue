@@ -1,6 +1,6 @@
 <template>
     <div class="dropdown" :class="{ compact }" @click="toggleDropdown" ref="dropdown">
-        <MButton class="dropdown-toggle" :icon="icon">{{ label }}</MButton>
+        <MButton class="dropdown-toggle" circle :icon="icon" />
 
         <DropdownMenu v-if="isOpen" :class="{ show: isOpen }" :items="items" />
     </div>

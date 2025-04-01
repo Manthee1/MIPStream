@@ -10,7 +10,7 @@
                 <vue-feather v-if="item.icon" :type="item.icon" class="icon item-icon" />
                 {{ item.label }}
                 <vue-feather type="chevron-right" class="icon icon-chevron" />
-                <DropdownMenu :items="item.items" v-show="index == hoverItemActiveIndex" />
+                <DropdownMenu :items="item?.items ?? []" v-show="index == hoverItemActiveIndex" />
             </li>
         </template>
     </ul>
