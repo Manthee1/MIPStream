@@ -1,4 +1,4 @@
-import { defaultProjectSettings } from "../db/projectsTable";
+import { defaultProjectSettings } from "../services/projectsService";
 import { settings } from "../storage/settingsStorage";
 import { useProjectStore } from "../stores/projectStore";
 import { useUIStore } from "../stores/UIStore";

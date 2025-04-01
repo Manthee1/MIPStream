@@ -8,7 +8,7 @@ import { useSettingsStore } from './settingsStore';
 import MIPSBase from '../assets/js/core/MIPSBase';
 import { baseInstructionConfig } from '../assets/js/core/config/instructions';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
-import { defaultProjectSettings, Project } from '../db/projectsTable';
+import { defaultProjectSettings, Project } from '../services/projectsService';
 import { CPUS } from '../assets/js/core/config/cpus';
 import monaco, { initLSP } from '../config/monaco';
 import { validate } from '../config/monaco/validationProvider';

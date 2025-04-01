@@ -1,4 +1,4 @@
-import { Project } from '../db/projectsTable';
+import { Project } from '../services/projectsService';
 import { useUIStore } from '../stores/UIStore';
 import { useNotification } from '@kyvg/vue3-notification';
 

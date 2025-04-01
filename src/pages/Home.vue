@@ -26,7 +26,7 @@
           <tr v-for="project in projects" :key="project.id">
             <td>
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name
-                }}</router-link>
+              }}</router-link>
             </td>
             <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td>
             <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
@@ -49,7 +49,7 @@
 import { defineComponent } from 'vue';
 import { formatDateRecent, formatSize } from '../assets/js/utils';
 import MButton from '../components/common/MButton.vue';
-import { Project, getProjects } from '../db/projectsTable';
+import { Project, getProjects } from '../services/projectsService';
 import Dropdown from '../components/common/Dropdown.vue';
 
 export default defineComponent({

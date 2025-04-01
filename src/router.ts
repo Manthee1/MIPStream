@@ -4,7 +4,7 @@ import routes from './routes.ts'
 import { getRouteDropdownItems } from './config/topbar-dropdown-items.ts';
 import { useUIStore } from './stores/UIStore.ts';
 import { useProjectStore } from './stores/projectStore.ts';
-import { getProject } from './db/projectsTable.ts';
+import { getProject } from './services/projectsService.ts';
 
 export function initRouter() {
     const router = createRouter({

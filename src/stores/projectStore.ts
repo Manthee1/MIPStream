@@ -1,6 +1,6 @@
 import { useSimulationStore } from './simulationStore';
 import { defineStore } from 'pinia';
-import { insertProject, existsProject, getProject, Project, deleteProject, updateProject, getProjects, defaultProjectSettings } from '../db/projectsTable';
+import { insertProject, existsProject, getProject, Project, deleteProject, updateProject, getProjects, defaultProjectSettings } from '../services/projectsService';
 import { promptProjectName, confirmAction, notify, downloadProject } from '../utils/projectActions';
 import { useRouter } from 'vue-router';
 import { useUIStore } from './UIStore';

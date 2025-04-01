@@ -1,6 +1,6 @@
 import { projectSettingTabs } from "../config/settings/project-settings";
 import { IOrderQuery, ITable } from "jsstore";
-import db from "./database";
+import db from "../db/database";
 
 export interface Project {
     id: number;
