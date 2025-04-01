@@ -15,18 +15,40 @@
             <h6>Instructions</h6>
             <input type="text" v-model="searchQuery" placeholder="Search instructions" />
             <ul>
-                <li v-for="instruction in filteredInstructions" :key="instruction.mnemonic"
-                    @click="selectInstruction(instruction)"
+
+                <label class="instruction-list-title text-center">Custom Instructions</label>
+                <li v-if="filteredCustomInstructions.length" v-for="instruction in filteredCustomInstructions"
+                    :key="instruction.mnemonic" @click="selectInstruction(instruction)"
                     :class="{ 'selected': selectedInstruction && selectedInstruction.mnemonic === instruction.mnemonic }">
                     <div class="flex">
                         <span class="my-auto">{{ instruction.mnemonic }} ({{ instruction.type }})</span>
                         <Dropdown :icon="'more-vertical'" :label="''" :items="[
-                            { label: 'Rename', action: () => duplicateInstruction(instruction), type: 'item', icon: 'edit' },
-                            { label: 'Delete', action: () => deleteInstruction(instruction.mnemonic), type: 'item', icon: 'trash' },
+                            { label: 'Duplicate', action: () => duplicateInstruction(instruction), type: 'item', icon: 'edit' },
                         ]">
                         </Dropdown>
                     </div>
                 </li>
+                <div class="flex" v-else>
+                    <span class="text-medium text-center mt-4 mx-auto">No custom instructions found</span>
+                </div>
+                <br>
+                <hr>
+                <br>
+                <label class="instruction-list-title">Default Instruction</label>
+                <li v-if="filteredInstructions.length" v-for="instruction in filteredInstructions"
+                    :key="instruction.mnemonic" @click="selectInstruction(instruction)"
+                    :class="{ 'selected': selectedInstruction && selectedInstruction.mnemonic === instruction.mnemonic }">
+                    <div class="flex">
+                        <span class="my-auto">{{ instruction.mnemonic }} ({{ instruction.type }})</span>
+                        <Dropdown :icon="'more-vertical'" :label="''" :items="[
+                            { label: 'Duplicate', action: () => duplicateInstruction(instruction), type: 'item', icon: 'edit' },
+                        ]">
+                        </Dropdown>
+                    </div>
+                </li>
+                <div class="flex" v-else>
+                    <span class="text-medium text-center mt-4 mx-auto">No default instructions found</span>
+                </div>
             </ul>
             <MButton accent filled icon="plus" @click="createInstruction" class="add-instruction-button">
                 Add Instruction
@@ -164,6 +186,13 @@ export default defineComponent({
     computed: {
         filteredInstructions() {
             return this.instructions.filter(instruction =>
+                // Search both mnemonic and description
+                instruction.mnemonic.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                instruction.type.toLowerCase().includes(this.searchQuery.toLowerCase())
+            );
+        },
+        filteredCustomInstructions() {
+            return this.customInstructions.filter(instruction =>
                 // Search both mnemonic and description
                 instruction.mnemonic.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
                 instruction.type.toLowerCase().includes(this.searchQuery.toLowerCase())
@@ -340,6 +369,33 @@ export default defineComponent({
             flex-grow: 1;
             margin: 2rem 0px;
 
+            .instruction-list-title {
+                position: sticky;
+                top: 0;
+                background-color: var(--color-background);
+                font-weight: 600;
+                margin: auto;
+                padding: 0px;
+                text-align: center;
+                width: 100%;
+                border-bottom: 1px solid var(--color-regular);
+
+                // Add lines coming from left and right
+                &::before,
+                &::after {
+                    content: '';
+                    display: inline-block;
+                    width: 30px;
+                    height: 1px;
+                    background-color: var(--color-regular);
+                    margin: 0 10px;
+                    vertical-align: middle;
+                }
+
+                &::before {
+                    margin-right: 10px;
+                }
+            }
 
             li {
                 cursor: pointer;
