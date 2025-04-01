@@ -18,12 +18,14 @@
 
                 <label class="instruction-list-title text-center">Custom Instructions</label>
                 <li v-if="filteredCustomInstructions.length" v-for="instruction in filteredCustomInstructions"
-                    :key="instruction.mnemonic" @click="selectInstruction(instruction)"
+                    :key="instruction.mnemonic" @click="selectInstruction(instruction, true)"
                     :class="{ 'selected': selectedInstruction && selectedInstruction.mnemonic === instruction.mnemonic }">
                     <div class="flex">
                         <span class="my-auto">{{ instruction.mnemonic }} ({{ instruction.type }})</span>
                         <Dropdown :icon="'more-vertical'" :label="''" :items="[
                             { label: 'Duplicate', action: () => duplicateInstruction(instruction), type: 'item', icon: 'edit' },
+                            { label: 'Delete', action: () => deleteInstruction(instruction.mnemonic), type: 'item', icon: 'trash' },
+                            { label: 'Rename', action: () => invokeRename(instruction), type: 'item', icon: 'edit' },
                         ]">
                         </Dropdown>
                     </div>
@@ -60,10 +62,12 @@
 
                 <div class="flex flex-left flex-nowrap gap-2 mb-2">
                     <h5 class="font-bold my-auto">
-                        {{ selectedInstruction.mnemonic }} -
+                        {{ selectedInstruction.mnemonic }}
                     </h5>
-                    <span class="text-large my-auto">{{ exampleInstruction }}
+                    <span class="text-large my-auto">- {{ exampleInstruction }}
                     </span>
+                    <MButton class="ml-auto" icon="edit" :disabled="!isCurrentInstructionCustom"
+                        @click="invokeRename(selectedInstruction)" />
                 </div>
 
                 <textarea style="max-height: 200px; resize: vertical;" :disabled="!isCurrentInstructionCustom"
@@ -235,7 +239,7 @@ export default defineComponent({
     watch: {
         selectedInstruction() {
             if (!this.selectedInstruction) return;
-            this.selectInstruction(this.selectedInstruction);
+            // this.selectInstruction(this.selectedInstruction
         }
     },
     methods: {
@@ -251,9 +255,9 @@ export default defineComponent({
             this.instructions = this.cpuInstance.instructionConfig;
 
         },
-        selectInstruction(instruction: InstructionConfig) {
+        selectInstruction(instruction: InstructionConfig, isCustom = false) {
             this.selectedInstruction = instruction;
-
+            this.isCurrentInstructionCustom = isCustom;
             // Make sure the operand list is at least 4 long
             instruction.operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
             for (let i = instruction.operands.length; i < 4; i++) {
@@ -262,7 +266,7 @@ export default defineComponent({
             // Simulate 5 cycles of the instruction
             const instructionLine = getInstructionSyntax(instruction).replace('imm(Rs)', '4(R2)').replace('Rd', 'R1').replace('Rs', 'R2').replace('Rt', 'R3').replace('imm', '4').replace('-', '');
             const code = `${instructionLine}\n${instructionLine}\n${instructionLine}\n${instructionLine}\n${instructionLine}\nlabel:`
-            const assembler = new Assembler(this.instructions);
+            const assembler = new Assembler([...this.instructions, ...this.customInstructions]);
             const program = assembler.assemble(code).instructions;
             this.cpuInstance.reset();
             this.cpuInstance.loadProgram(program);
@@ -276,22 +280,56 @@ export default defineComponent({
         createInstruction() {
             const newInstruction: InstructionConfig = {
                 opcode: 0,
-                mnemonic: `newinst${this.instructions.length + 1}`,
+                mnemonic: `newinst${this.customInstructions.length + 1}`,
                 type: 'R',
                 description: 'New instruction',
                 funct: 0,
                 controlSignals: {},
+                operands: getDefaultInstructionDefOperands({ type: 'R', } as InstructionConfig),
 
             };
-            this.instructions.push(newInstruction);
+            this.customInstructions.push(newInstruction);
+            this.selectInstruction(newInstruction, true);
         },
         deleteInstruction(mnemonic: string) {
 
-            this.instructions = this.instructions.filter(instruction => instruction.mnemonic !== mnemonic);
+            this.customInstructions = this.customInstructions.filter(instruction => instruction.mnemonic !== mnemonic);
         },
         duplicateInstruction(instruction: InstructionConfig) {
             const newInstruction = { ...instruction, id: Date.now() };
-            this.instructions.push(newInstruction);
+            this.customInstructions.push(newInstruction);
+        },
+        async invokeRename(instruction: InstructionConfig) {
+            // Open a prompt to rename the instruction
+            const newMnemonic = await this.$prompt({
+                title: 'Rename Instruction',
+                message: 'Enter new mnemonic for instruction',
+                input: instruction.mnemonic,
+                inputPlaceholder: 'New mnemonic',
+                verifyInput: (input) => {
+                    if (!input) {
+                        throw 'Mnemonic cannot be empty';
+                    }
+
+                    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input)) {
+                        throw 'Mnemonic must start with a letter or underscore and can only contain letters, numbers, and underscores';
+                    }
+
+                    if (input == instruction.mnemonic) {
+                        return true;
+                    }
+
+                    if (this.instructions.find(inst => inst.mnemonic === input) || this.customInstructions.find(inst => inst.mnemonic === input)) {
+                        throw 'Mnemonic already exists';
+                    }
+                    return true;
+                },
+            })
+
+            if (newMnemonic) {
+                instruction.mnemonic = newMnemonic as string;
+            }
+
         },
         getAvailableOperands(instruction: InstructionConfig, currentOperand: OperandType) {
             const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);

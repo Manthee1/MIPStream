@@ -8,14 +8,16 @@
                 </div>
                 <div class="modal-body">
                     <p>{{ modalData.message }}</p>
-                    <div v-if="modalData.type=='prompt'" class="input-wrapper">
-                        <input v-model="$UIStore.modalData.input" :placeholder="modalData.inputPlaceholder" type="text" @keydown.enter="confirmAction" />
+                    <div v-if="modalData.type == 'prompt'" class="input-wrapper">
+                        <input v-model="$UIStore.modalData.input" :placeholder="modalData.inputPlaceholder" type="text"
+                            @keydown.enter="confirmAction" @keyup="verifyInput($UIStore.modalData.input ?? '')" />
                         <span class="error" v-if="error?.trim()?.length > 0">{{ error }}</span>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <MButton outlined @click="cancelAction">{{ modalData.cancelText }}</MButton>
-                    <MButton :key='modalData.confirmButtonType' :type='modalData.confirmButtonType' filled @click="confirmAction">{{ modalData.confirmText }}</MButton>
+                    <MButton :key='modalData.confirmButtonType' :type='modalData.confirmButtonType' filled
+                        @click="confirmAction">{{ modalData.confirmText }}</MButton>
                 </div>
             </div>
         </div>
@@ -27,44 +29,51 @@ import { defineComponent } from 'vue';
 import MButton from '@/components/common/MButton.vue';
 
 export default defineComponent({
-	name: 'Modal',
-	components: {
-		MButton
-	},
-	data() {
-		return {
-			error: '',
-		};
-	},
-	computed: {
-		modalData() {
+    name: 'Modal',
+    components: {
+        MButton
+    },
+    data() {
+        return {
+            error: '',
+        };
+    },
+    computed: {
+        modalData() {
             return this.$UIStore.modalData;
         },
-	},
-	methods: {
-		confirmAction() {
+    },
+    methods: {
+        confirmAction() {
 
-			console.log('confirmAction', this.$UIStore.modalData);
+            console.log('confirmAction', this.$UIStore.modalData);
 
-			if (this.modalData.type == 'prompt') {
-				try {
-                    if(this.modalData.verifyInput)
-					    this.modalData.verifyInput(this.modalData.input ?? '');
-				} catch (error: any) {
-					this.error = error;
-					return;
-				}
-				this.error = '';
+            if (this.modalData.type == 'prompt') {
+                if (!this.verifyInput(this.$UIStore.modalData.input ?? '')) {
+                    return;
+                }
+            }
+            if (this.modalData.onConfirm)
+                this.modalData.onConfirm();
+        },
+        cancelAction() {
+            if (this.modalData.onCancel)
+                this.modalData.onCancel();
+        },
 
-			}
-            if(this.modalData.onConfirm)
-			    this.modalData.onConfirm();
-		},
-		cancelAction() {
-            if(this.modalData.onCancel)
-			    this.modalData.onCancel();
-		}
-	}
+        verifyInput(input: string) {
+            if (this.modalData.verifyInput) {
+                try {
+                    this.modalData.verifyInput(input);
+                } catch (error: any) {
+                    this.error = error;
+                    return false;
+                }
+            }
+            this.error = '';
+            return true;
+        },
+    }
 });
 </script>
 
