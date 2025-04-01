@@ -55,24 +55,40 @@
             </MButton>
         </div>
 
-        <div class="panel flex-auto">
+        <div class="panel flex-auto gap-3">
             <template v-if="selectedInstruction">
-                <div class="cpu-diagram-container flex-auto">
+
+                <div class="flex flex-left flex-nowrap gap-2 mb-2">
+                    <h5 class="font-bold my-auto">
+                        {{ selectedInstruction.mnemonic }} -
+                    </h5>
+                    <span class="text-large my-auto">{{ exampleInstruction }}
+                    </span>
+                </div>
+
+                <textarea style="max-height: 200px; resize: vertical;" :disabled="!isCurrentInstructionCustom"
+                    resize="none" v-model="selectedInstruction.description" placeholder="No Description"></textarea>
+                <div class="cpu-diagram-container box flex-auto">
                     <CpuDiagram class="cpu-diagram" :cpu="cpuInstance" :key="'cpu-' + selectedCpu.name"
                         @diagramLoaded="cpuDiagramInstance = $event" />
+
                 </div>
-                <div class="instruction-config flex-auto">
-                    <h5 class="font-bold">{{ selectedInstruction.mnemonic }}</h5>
-                    {{ selectedInstruction.description }}
+
+                <div class="flex-auto box flex flex-left gap-2">
+                    <label class="m-0">Pseudo Code: </label>
+                    <span>{{ getPseudoCode(selectedInstruction) }}</span>
+                </div>
+
+                <div class="instruction-config flex-auto box">
                     <div class="flex flex-row flex-nowrap gap-5 flex-top-left">
                         <div class="flex flex-row gap-2 flex-6 flex-top-left">
-                            <div class="form-group flex-6">
+                            <div class="form-group flex-4">
                                 <label>Opcode:</label>
                                 <input type="number" class="input-small"
                                     :disabled="selectedInstruction.type == 'R' || !isCurrentInstructionCustom"
                                     v-model="selectedInstruction.opcode" />
                             </div>
-                            <div class="form-group flex-2">
+                            <div class="form-group flex-4">
                                 <label>Type:</label>
                                 <MSelect compact :disabled="!isCurrentInstructionCustom" :options="[
                                     { label: 'R', value: 'R' },
@@ -87,7 +103,7 @@
                                         selectedInstruction.operands = getDefaultInstructionDefOperands(selectedInstruction);
                                     }" />
                             </div>
-                            <div class="form-group flex-2">
+                            <div class="form-group flex-4">
                                 <label>Function:</label>
                                 <MSelect compact class="flex-auto" :options="functValues"
                                     :disabled="selectedInstruction.type != 'R' || !isCurrentInstructionCustom"
@@ -106,10 +122,7 @@
                                     </template>
                                 </div>
                             </div>
-                            <div class="form-group flex-12">
-                                <span>{{ exampleInstruction }}</span>
-                                <span>{{ getPseudoCode(selectedInstruction) }}</span>
-                            </div>
+
                         </div>
                         <div class="flex flex-row gap-2 flex-6">
                             <div class="form-group flex flex-3 flex-grow-0"
@@ -248,12 +261,11 @@ export default defineComponent({
             }
             // Simulate 5 cycles of the instruction
             const instructionLine = getInstructionSyntax(instruction).replace('imm(Rs)', '4(R2)').replace('Rd', 'R1').replace('Rs', 'R2').replace('Rt', 'R3').replace('imm', '4').replace('-', '');
-            const code = `${instructionLine}\n${instructionLine}\n${instructionLine}\n${instructionLine}\nlabel:`
+            const code = `${instructionLine}\n${instructionLine}\n${instructionLine}\n${instructionLine}\n${instructionLine}\nlabel:`
             const assembler = new Assembler(this.instructions);
             const program = assembler.assemble(code).instructions;
             this.cpuInstance.reset();
             this.cpuInstance.loadProgram(program);
-            this.cpuInstance.runCycle();
             this.cpuInstance.runCycle();
             this.cpuInstance.runCycle();
             this.cpuInstance.runCycle();
@@ -360,7 +372,23 @@ export default defineComponent({
         padding: 10px;
         border-radius: 5px;
         height: 100%;
+        min-width: 200px;
 
+        &.instructions {
+            min-width: 400px;
+            width: 25%
+        }
+
+        &.cpu-types {
+            min-width: 200px;
+            width: 20%;
+        }
+
+        .box {
+            background-color: var(--color-light);
+            padding: 10px;
+            border-radius: 5px;
+        }
 
         ul {
             list-style-type: none;
@@ -447,11 +475,7 @@ export default defineComponent({
 
 
 
-
 .instruction-config {
-    background-color: var(--color-light);
-    padding: 10px;
-    border-radius: 5px;
 
     .form-group {
         display: flex;
@@ -468,11 +492,7 @@ export default defineComponent({
 }
 
 .cpu-diagram-container {
-    background-color: var(--color-light);
     display: flex;
-    padding: 10px;
-    border-radius: 5px;
-    // max-height: 50%;
     overflow: hidden;
 
     .cpu-diagram {
