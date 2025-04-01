@@ -1,6 +1,6 @@
 <template>
     <button class="m-button"
-        :class="[{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly }, buttonType]">
+        :class="[{ 'filled': isFilled, 'outlined': isOutlined, 'small': small, 'icon-only': iconOnly, 'circle': circle }, buttonType]">
         <vue-feather :type="icon" class="icon" v-if="icon" />
         <span v-if="!iconOnly">
             <slot></slot>
@@ -39,6 +39,10 @@ export default defineComponent({
             type: Boolean,
             default: false,
         },
+        circle: {
+            type: Boolean,
+            default: false,
+        },
         accent: {
             type: Boolean,
             default: false,
@@ -59,7 +63,7 @@ export default defineComponent({
         },
 
         iconOnly() {
-            return ((!this.$slots.default) && this.icon != undefined);
+            return (((!this.$slots.default)) && this.icon != undefined);
         }
     },
     mounted() {
@@ -98,6 +102,15 @@ export default defineComponent({
 
     &:active
         scale: 0.95
+    
+    &.circle
+        border-radius: 50%
+        
+    &:hover
+        background-color: rgba(0, 0, 0,0.05)
+        // color: var(--color-text)
+        filter: brightness(1.0)
+        scale: 1.05
 
     &.outlined
         border: 2px solid var(--color-text)
