@@ -46,3 +46,50 @@ export const projectTableConfig: ITable = {
         },
     },
 }
+
+
+export const instructionTableConfig: ITable = {
+    name: 'instructions',
+    columns: {
+        id: {
+            dataType: 'number',
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        opcode: {
+            dataType: 'number',
+            notNull: true,
+        },
+        mnemonic: {
+            dataType: 'string',
+            notNull: true,
+        },
+        type: {
+            dataType: 'string',
+            notNull: true,
+        },
+        description: {
+            dataType: 'string',
+            notNull: true,
+            default: '',
+        },
+        controlSignals: {
+            dataType: 'object',
+            notNull: true,
+        },
+        funct: {
+            dataType: 'number',
+            notNull: false,
+            default: null,
+        },
+        operands: {
+            dataType: 'array',
+            notNull: true,
+        },
+        cpuType: {
+            dataType: 'string',
+            notNull: true,
+        },
+
+    },
+}

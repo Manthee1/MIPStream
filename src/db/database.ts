@@ -1,6 +1,6 @@
 import { Connection, IDataBase } from "jsstore";
 import workerInjector from "jsstore/dist/worker_injector";
-import { projectTableConfig } from "./tables";
+import { instructionTableConfig, projectTableConfig } from "./tables";
 
 export const connection = new Connection();
 connection.addPlugin(workerInjector);
@@ -8,8 +8,8 @@ connection.addPlugin(workerInjector);
 
 const database: IDataBase = {
     name: 'mipstream',
-    tables: [projectTableConfig],
-    version: 1
+    tables: [projectTableConfig, instructionTableConfig],
+    version: 2
 }
 let isDbCreated = false;
 
