@@ -30,22 +30,11 @@ export class DiagramInteraction extends CPUDiagramPlugin {
 
     initializeMouseEvents() {
 
-        this.cpuDiagram.canvas.addEventListener('mousemove', (e) => {
-            this.mouse.x = e.offsetX * this.scaleX;
-            this.mouse.y = e.offsetY * this.scaleY;
-            this.mouseMove();
-        });
+        this.cpuDiagram.canvas.addEventListener('mousemove', this.mouseMove);
 
-        this.cpuDiagram.canvas.addEventListener('mousedown', (e) => {
-            this.mouse.isDown = true;
-            this.mouse.lastClick = { x: this.mouse.x * this.scaleX, y: this.mouse.y * this.scaleY };
-            this.mouseDown();
-        });
+        this.cpuDiagram.canvas.addEventListener('mousedown', this.mouseDown);
 
-        this.cpuDiagram.canvas.addEventListener('mouseup', (e) => {
-            this.mouse.isDown = false;
-            this.mouseUp();
-        });
+        this.cpuDiagram.canvas.addEventListener('mouseup', this.mouseUp);
 
         // document.addEventListener('keydown', (e) => {
         //     this.keyboard.keys[e.key] = true;
@@ -60,7 +49,9 @@ export class DiagramInteraction extends CPUDiagramPlugin {
 
 
 
-    mouseMove() {
+    mouseMove = (e: MouseEvent) => {
+        this.mouse.x = e.offsetX * this.scaleX;
+        this.mouse.y = e.offsetY * this.scaleY;
 
 
         if (this.hoveringOver != this.cpuDiagram.spatialMap.query(this.mouse.x, this.mouse.y)) {
@@ -69,10 +60,13 @@ export class DiagramInteraction extends CPUDiagramPlugin {
         }
     }
 
-    mouseDown() {
+    mouseDown = (e: MouseEvent) => {
+        this.mouse.isDown = true;
+        this.mouse.lastClick = { x: this.mouse.x * this.scaleX, y: this.mouse.y * this.scaleY };
     }
 
-    mouseUp() {
+    mouseUp = (e: MouseEvent) => {
+        this.mouse.isDown = false;
     }
 
     keyDownHandler(e: KeyboardEvent) {
@@ -265,8 +259,8 @@ export class DiagramInteraction extends CPUDiagramPlugin {
         this.cpuDiagram.canvas.removeEventListener('mousemove', this.mouseMove);
         this.cpuDiagram.canvas.removeEventListener('mousedown', this.mouseDown);
         this.cpuDiagram.canvas.removeEventListener('mouseup', this.mouseUp);
-        document.removeEventListener('keydown', this.keyDownHandler);
-        document.removeEventListener('keyup', this.keyUpHandler);
+        // document.removeEventListener('keydown', this.keyDownHandler);
+        // document.removeEventListener('keyup', this.keyUpHandler);
     }
 
 }

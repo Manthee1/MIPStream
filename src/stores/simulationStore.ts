@@ -7,10 +7,8 @@ import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
 import MIPSBase from '../assets/js/core/MIPSBase';
 import { baseInstructionConfig } from '../assets/js/core/config/instructions';
-import { useUIStore } from './UIStore';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { defaultProjectSettings, Project } from '../db/projectsTable';
-import { useProjectStore } from './projectStore';
 import { CPUS } from '../assets/js/core/config/cpus';
 import monaco, { initLSP } from '../config/monaco';
 import { validate } from '../config/monaco/validationProvider';
@@ -27,8 +25,7 @@ export const useSimulationStore = defineStore('simulation', {
         program: '' as string,
 
         status: 'stopped' as ('running' | 'stopped' | 'paused'),
-        get speed() { return useProjectStore().currentProject?.settings.speed || 10 },
-        set speed(value: number) { useProjectStore().setProjectSetting('speed', value) },
+        speed: 10 as number,
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
         instructionCount: 0 as number,
@@ -56,8 +53,6 @@ export const useSimulationStore = defineStore('simulation', {
                     text: 'CPU type ${cpuType} not found. Using default CPU.',
                 });
                 this.core = new MIPSBase(cpuOptions);
-                // Save the default CPU type
-                useProjectStore().setProjectSetting('cpuType', 'basic');
             }
             else this.core = new cpuConfig.cpu(cpuOptions);
 

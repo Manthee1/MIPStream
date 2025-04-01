@@ -10,9 +10,10 @@
                 <!-- <span>{{ $simulationStore.core.instructions[index] }}</span> -->
             </div>
         </div>
-        <div class=" cpu-view">
-            <canvas id="cpu-diagram"></canvas>
-        </div>
+        <CpuDiagram :cpu="$simulationStore.core" :key="'cpud-' + cpuType"
+            @diagramLoaded="console.log('diag', $event);; $simulationStore.cpuDiagram = $event" />
+
+
     </div>
 </template>
 
@@ -25,8 +26,9 @@ import { DiagramEditor } from '../../assets/js/core/diagram/plugins/DiagramEdito
 import MIPSBase from '../../assets/js/core/MIPSBase';
 import { DiagramInteraction } from '../../assets/js/core/diagram/plugins/DiagramInteraction';
 import { clone, getProgramLines } from '../../assets/js/utils';
+import CpuDiagram from '../features/CpuDiagram.vue';
 export default defineComponent({
-    components: { Window },
+    components: { Window, CpuDiagram },
     name: 'CpuView',
     data() {
         return {
@@ -48,24 +50,18 @@ export default defineComponent({
         },
     },
     mounted() {
-        this.mountDiagram();
     },
 
     watch: {
         cpuType(value) {
             console.log('CPU Type changed', value);
-
             this.$simulationStore.cpuDiagram?.destroy();
-            this.mountDiagram();
         },
     },
 
     methods: {
 
-        mountDiagram() {
-            const cpu = this.$simulationStore.core;
-            this.$simulationStore.cpuDiagram = new CPUDiagram('#cpu-diagram', cpu.cpuLayout, [DiagramInteraction]);
-        },
+
 
         getColor(pc: number) {
             // If the isntruction is a nop, return a different color
@@ -123,19 +119,11 @@ export default defineComponent({
             border-color: #ff69b430
             background-color: #ff69b430
     
-
-.theme-dark
-    #cpu-diagram 
-        filter: invert(1)
 .cpu-view 
     display: flex
     justify-content: center
     align-items: center
     height: 100%
     min-width: 300px
-
-    #cpu-diagram 
-        border: 1px solid var(--color-regular)
-        width: 100%
 
 </style>
