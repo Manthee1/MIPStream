@@ -39,7 +39,6 @@ export default defineComponent({
     },
     data() {
         return {
-            isOpen: false
         };
     },
 
@@ -50,9 +49,9 @@ export default defineComponent({
     },
     methods: {
         toggleDropdown() {
-            this.isOpen = (this.$UIStore.dropdownData.id == this.id) ? !this.isOpen : true;
+            const isOpen = (this.$UIStore.dropdownData.id == this.id) ? !this.$UIStore.dropdownData.show : true;
             this.$UIStore.dropdownData.id = this.id;
-            this.$UIStore.dropdownData.show = this.isOpen;
+            this.$UIStore.dropdownData.show = isOpen;
             this.$UIStore.dropdownData.items = this.items;
             this.$UIStore.dropdownData.compact = this.compact;
             // Calculate x and y position of the dropdown

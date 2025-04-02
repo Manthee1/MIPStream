@@ -112,6 +112,11 @@ export default defineComponent({
     list-style: none
     &.show
         display: block
+    &.compact
+        padding: 0.5em 0em
+        // box-shadow: none
+        .dropdown-item
+            padding: 0.2em 1em
 
     .dropdown-item
         display: flex
@@ -155,9 +160,4 @@ export default defineComponent({
         z-index: 1000
         list-style: none
 
-.dropdown-menu.compact
-    padding: 0.5em 0em
-    // box-shadow: none
-    .dropdown-item
-        padding: 0.2em 1em
 </style>

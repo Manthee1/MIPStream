@@ -1,6 +1,7 @@
 <template>
-    <div ref="dropdown-menu" :class="{ compact: $UIStore.dropdownData.compact }">
-        <DropdownItems :items="items" :style="position" :class="{ show: $UIStore.dropdownData.show, }" />
+    <div ref="dropdown-menu">
+        <DropdownItems :items="items" :style="position"
+            :class="{ show: $UIStore.dropdownData.show, compact: $UIStore.dropdownData.compact }" />
     </div>
 </template>
 
