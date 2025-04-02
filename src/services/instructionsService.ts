@@ -15,7 +15,7 @@ async function getInstructionById(id: number) {
     }))[0] as Instruction | undefined;
 }
 
-async function getInstructionByMnemonic(mnemonic: string, cpuType: string) {
+export async function getInstructionByMnemonic(mnemonic: string, cpuType: string) {
     return (await db.select({
         from: 'instructions',
         where: {
@@ -43,7 +43,7 @@ export const existsInstruction = async (id: number) => {
     return !!(await getInstructionById(id));
 }
 
-export const getInstructions = async (limit = 10, where: IWhereQuery = {}, order: IOrderQuery = { by: 'updatedAt', type: 'asc' }) => {
+export const getInstructions = async (limit = 10, where: IWhereQuery = {}, order: IOrderQuery = { by: 'mnemonic', type: 'asc' }) => {
     let instructions = (await db.select({
         from: 'instructions',
         limit: limit,

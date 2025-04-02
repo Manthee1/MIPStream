@@ -24,7 +24,7 @@
                         <span class="my-auto">{{ instruction.mnemonic }} ({{ instruction.type }})</span>
                         <Dropdown :icon="'more-vertical'" :label="''" :items="[
                             { label: 'Duplicate', action: () => duplicateInstruction(instruction), type: 'item', icon: 'edit' },
-                            { label: 'Delete', action: () => deleteInstruction(instruction.mnemonic), type: 'item', icon: 'trash' },
+                            { label: 'Delete', action: () => invokeDelete(instruction.mnemonic), type: 'item', icon: 'trash' },
                             { label: 'Rename', action: () => invokeRename(instruction), type: 'item', icon: 'edit' },
                         ]">
                         </Dropdown>
@@ -159,12 +159,12 @@
 
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, markRaw, toRaw } from 'vue';
 import { CPUS } from '../assets/js/core/config/cpus';
 import MIPSBase from '../assets/js/core/MIPSBase';
 import MButton from '../components/common/MButton.vue';
 import Dropdown from '../components/common/Dropdown.vue';
-import { getDefaultInstructionDefOperands, getInstructionSyntax, getOperandSyntax, getPseudoCode } from '../assets/js/utils';
+import { clone, getDefaultInstructionDefOperands, getInstructionSyntax, getOperandSyntax, getPseudoCode } from '../assets/js/utils';
 import MSelect from '../components/common/MSelect.vue';
 import { ALUOperations, ALUOperationsSigns } from '../assets/js/core/config/alu';
 import CpuView from '../components/core/CpuView.vue';
@@ -173,6 +173,7 @@ import CpuDiagram from '../components/features/CpuDiagram.vue';
 import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { Assembler } from '../assets/js/core/Assembler';
 import { watch } from 'fs';
+import { deleteInstruction, getInstruction, getInstructionByMnemonic, getInstructions, insertInstruction, Instruction, updateInstruction } from '../services/instructionsService';
 
 
 export default defineComponent({
@@ -186,18 +187,22 @@ export default defineComponent({
     data() {
         return {
             cpuTypes: CPUS,
-            instructions: [] as InstructionConfig[],
-            customInstructions: [] as InstructionConfig[],
+            instructions: [] as Instruction[],
+            customInstructions: [] as Instruction[],
             selectedCpu: CPUS.basic,
+            selectedCpuKey: 'basic',
             cpuInstance: new MIPSBase(),
             cpuDiagramInstance: null as CPUDiagram | null,
-            selectedInstruction: null as InstructionConfig | null,
+            selectedInstruction: null as Instruction | null,
             searchQuery: '',
             isCurrentInstructionCustom: false,
+
+            updateTimeout: null as NodeJS.Timeout | null,
         };
     },
-    mounted() {
+    async mounted() {
         this.selectCpu('basic');
+
     },
 
     computed: {
@@ -237,25 +242,61 @@ export default defineComponent({
         },
     },
     watch: {
-        selectedInstruction() {
-            if (!this.selectedInstruction) return;
-            // this.selectInstruction(this.selectedInstruction
-        }
+        "selectedInstruction": {
+            handler(newValue, oldValue) {
+                if (oldValue?.mnemonic == newValue?.mnemonic && this.isCurrentInstructionCustom) {
+                    // Save the instruction to the instructions table
+                    const instruction = this.customInstructions.find(inst => inst.mnemonic === newValue?.mnemonic);
+                    console.log('Updating instruction:', instruction);
+
+                    if (!instruction) return;
+                    // Clear the previous timeout
+                    if (this.updateTimeout) {
+                        clearTimeout(this.updateTimeout);
+                    }
+                    // Set a new timeout to update the instruction
+                    this.updateTimeout = setTimeout(() => {
+                        // Update the instruction in the database
+                        updateInstruction(toRaw(instruction));
+                        this.$notify({
+                            title: 'Instruction Updated',
+                            text: `Instruction ${instruction.mnemonic} updated successfully`,
+                            type: 'success',
+                        })
+                    }, 1000);
+
+
+                }
+            },
+            immediate: true,
+            deep: true,
+        },
+
     },
     methods: {
-        selectCpu(cpu: string) {
+        async selectCpu(cpu: string) {
             if (!this.cpuTypes[cpu]) {
                 console.error(`CPU type ${cpu} not found`);
                 return;
             }
 
             this.selectedCpu = this.cpuTypes[cpu];
+            this.selectedCpuKey = cpu;
             this.cpuDiagramInstance?.destroy();
             this.cpuInstance = new this.selectedCpu.cpu()
-            this.instructions = this.cpuInstance.instructionConfig;
+            this.instructions = this.cpuInstance.instructionConfig.map(instruction => {
+                return {
+                    ...instruction,
+                    cpuType: this.selectedCpu.name,
+                    id: 0,
+                };
+            });
+            this.customInstructions = await getInstructions(999, {
+                cpuType: this.selectedCpu.name,
+            });
 
         },
-        selectInstruction(instruction: InstructionConfig, isCustom = false) {
+        selectInstruction(instruction: Instruction, isCustom = false) {
             this.selectedInstruction = instruction;
             this.isCurrentInstructionCustom = isCustom;
             // Make sure the operand list is at least 4 long
@@ -277,10 +318,19 @@ export default defineComponent({
             this.cpuDiagramInstance?.draw();
         },
 
-        createInstruction() {
-            const newInstruction: InstructionConfig = {
+        async createInstruction() {
+            let newMnemonic = `newinst1`;
+            let i = 1;
+            while (this.customInstructions.find(inst => inst.mnemonic === newMnemonic)) {
+                newMnemonic = `newinst${i}`;
+                i++;
+            }
+
+            let newInstruction: Instruction = {
+                id: 0, // Auto incremented by the database
+                cpuType: this.selectedCpu.name,
                 opcode: 0,
-                mnemonic: `newinst${this.customInstructions.length + 1}`,
+                mnemonic: newMnemonic,
                 type: 'R',
                 description: 'New instruction',
                 funct: 0,
@@ -288,18 +338,40 @@ export default defineComponent({
                 operands: getDefaultInstructionDefOperands({ type: 'R', } as InstructionConfig),
 
             };
+            newInstruction = await insertInstruction(newInstruction);
             this.customInstructions.push(newInstruction);
             this.selectInstruction(newInstruction, true);
+            this.isCurrentInstructionCustom = true;
         },
-        deleteInstruction(mnemonic: string) {
+        async deleteInstruction(mnemonic: string) {
 
+            const instruction = this.customInstructions.find(instruction => instruction.mnemonic === mnemonic);
+            if (!instruction) return;
+            await deleteInstruction(instruction.id);
             this.customInstructions = this.customInstructions.filter(instruction => instruction.mnemonic !== mnemonic);
         },
-        duplicateInstruction(instruction: InstructionConfig) {
-            const newInstruction = { ...instruction, id: Date.now() };
+        async duplicateInstruction(instruction: Instruction) {
+            let newMnemonic = `${instruction.mnemonic}_copy`;
+            let i = 1;
+            while (this.customInstructions.find(inst => inst.mnemonic === newMnemonic)) {
+                newMnemonic = `${instruction.mnemonic}_copy${i}`;
+                i++;
+            }
+            // Create a new instruction with the same properties as the original
+            let newInstruction: Instruction = {
+                ...instruction,
+                mnemonic: newMnemonic,
+                id: 0, // Auto incremented by the database
+                cpuType: this.selectedCpu.name,
+            };
+
+            newInstruction = await insertInstruction(clone(newInstruction));
+
             this.customInstructions.push(newInstruction);
+            this.selectInstruction(newInstruction, true);
+
         },
-        async invokeRename(instruction: InstructionConfig) {
+        async invokeRename(instruction: Instruction) {
             // Open a prompt to rename the instruction
             const newMnemonic = await this.$prompt({
                 title: 'Rename Instruction',
@@ -326,10 +398,25 @@ export default defineComponent({
                 },
             })
 
-            if (newMnemonic) {
-                instruction.mnemonic = newMnemonic as string;
+            if (!newMnemonic) return;
+            instruction.mnemonic = newMnemonic as string;
+            if (instruction) {
+                updateInstruction(toRaw(instruction));
             }
 
+        },
+        async invokeDelete(mnemonic: string) {
+            // Open a confirmation dialog
+            const confirmed = await this.$confirm({
+                title: 'Delete Instruction',
+                message: `Are you sure you want to delete the instruction "${mnemonic}"?`,
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+            });
+
+            if (confirmed) {
+                this.deleteInstruction(mnemonic);
+            }
         },
         getAvailableOperands(instruction: InstructionConfig, currentOperand: OperandType) {
             const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
@@ -441,6 +528,7 @@ export default defineComponent({
                 background-color: var(--color-background);
                 font-weight: 600;
                 margin: auto;
+                margin-bottom: 1rem;
                 padding: 0px;
                 text-align: center;
                 width: 100%;
