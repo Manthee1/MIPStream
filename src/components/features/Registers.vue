@@ -98,11 +98,11 @@ export default defineComponent({
         flex: 1 1 auto
         &:first-child
             padding-right: 1rem
-            border-right: 1px solid var(--color-medium)
+            border-right: 1px solid var(--color-surface-3)
         .register-item
             display: flex
             flex-flow: row nowrap
-            border-bottom: 1px solid var(--color-medium)
+            border-bottom: 1px solid var(--color-surface-3)
             cursor: pointer
             padding: 0.3rem 0.8rem
             gap: 0.5rem
@@ -112,7 +112,7 @@ export default defineComponent({
                 width: 100%
                 text-align: center
             &:hover
-                background-color: var(--color-light)
+                background-color: var(--color-surface-1)
             &:last-child
                 border-bottom: none
             &.editing
@@ -122,7 +122,7 @@ export default defineComponent({
                     text-align: right
             input
                 padding: 0.2rem
-                border: 1px solid var(--color-medium)
+                border: 1px solid var(--color-surface-3)
                 border-radius: 2px
                 text-align: center
                 font-size: 1rem

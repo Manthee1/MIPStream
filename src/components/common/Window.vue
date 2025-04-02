@@ -112,17 +112,17 @@ export default defineComponent({
 
 <style scoped lang="sass">
 .window 
-    border: 1px solid var(--color-light)
+    border: 1px solid var(--color-surface-0)
     border-radius: 5px
     overflow: hidden
-    background-color: var(--color-background)
+    background-color: var(--color-surface-1)
 
 .window-header 
     display: flex
     align-items: center
-    background-color: var(--color-background-dark)
+    background-color: var(--color-surface-0)
     padding: 10px
-    border-bottom: 1px solid var(--color-light)
+    border-bottom: 1px solid var(--color-surface-0)
     .close-button 
         margin-left: auto
 .window-icon 

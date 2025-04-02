@@ -53,7 +53,7 @@ export default defineComponent({
     display: flex
     justify-content: space-between
     align-items: center
-    background-color: var(--color-background)
+    background-color: var(--color-surface-0)
     color: var(--color-text)
     padding: 0em 0.4em
     height: var(--topbar-height)
@@ -70,7 +70,7 @@ export default defineComponent({
         &.active
             color: var(--color-accent)
         &:hover
-            background-color: var(--color-light)
+            background-color: var(--color-surface-1)
     
 
     .file-name 

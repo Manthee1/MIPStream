@@ -91,13 +91,13 @@ export default defineComponent({
         cursor: not-allowed
     &.type-accent
         --color-text: var(--color-accent)
-        --color-background: var(--color-accent)
-        --color-black: var(--color-accent-dark)
+        --color-surface-0: var(--color-accent)
+        --color-base-1: var(--color-accent-dark)
         --color-regular: var(--color-accent)
     &.type-error
         --color-text: var(--color-system-error)
-        --color-background: var(--color-system-error)
-        --color-black: var(--color-system-error-dark)
+        --color-surface-0: var(--color-system-error)
+        --color-base-1: var(--color-system-error-dark)
         --color-regular: var(--color-system-error)
 
     &:active
@@ -117,17 +117,17 @@ export default defineComponent({
         background-color: transparent
 
         &:hover
-            background-color: var(--color-medium)
+            background-color: var(--color-surface-3)
             color: var(--color-text)
 
 
     &.filled
         background-color: var(--color-regular)
-        color: var(--color-light)
+        color: var(--color-surface-1)
 
         &:hover
-            background-color: var(--color-black)
-            color: var(--color-light)
+            background-color: var(--color-base-1)
+            color: var(--color-surface-1)
 
 
 

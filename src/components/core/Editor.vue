@@ -207,7 +207,7 @@ export default defineComponent({
 	height: 100%
 	overflow: auto
 	.monaco-editor
-		border: 1px var(--color-light) solid
+		border: 1px var(--color-surface-1) solid
 		.overflow-guard
 			overflow-y: visible
 
@@ -219,7 +219,7 @@ export default defineComponent({
 		width: 10px
 		height: 10px
 		border: 1px solid var(--color-system-error)
-		background-color: color-mix(in srgb, var(--color-system-error), var(--color-white) 90%)
+		background-color: color-mix(in srgb, var(--color-system-error), var(--color-surface-0) 90%)
 		border-radius: 50%
 		display: inline-block
 		cursor: pointer

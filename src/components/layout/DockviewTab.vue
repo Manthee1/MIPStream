@@ -31,7 +31,7 @@ export default defineComponent({
 
 <style scoped lang="sass">
 .dv-default-tab-icon
-    color: var(--color-intermediate)
+    color: var(--color-surface-4)
     margin: 10px 0px;
     cursor: pointer
     transition: color 0.2s
@@ -39,6 +39,6 @@ export default defineComponent({
     border-radius: 50%
     &:hover
         color: var(--color-intermedium)
-        background-color: var(--color-light)
+        background-color: var(--color-surface-1)
         
 </style>

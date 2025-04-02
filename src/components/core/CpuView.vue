@@ -93,7 +93,7 @@ export default defineComponent({
     align-items: center
     height: 100%
     min-width: 300px
-    background-color: var(--color-light)
+    background-color: var(--color-surface-1)
     border: 1px solid var(--color-regular)
     border-bottom: 0
     color: var(--color-regular)    

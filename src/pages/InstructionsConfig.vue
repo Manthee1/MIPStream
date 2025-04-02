@@ -506,7 +506,7 @@ export default defineComponent({
     .panel {
         display: flex;
         flex-direction: column;
-        border: 1px solid var(--color-medium);
+        border: 1px solid var(--color-surface-3);
         padding: 10px;
         border-radius: 5px;
         height: 100%;
@@ -523,7 +523,7 @@ export default defineComponent({
         }
 
         .box {
-            background-color: var(--color-light);
+            background-color: var(--color-surface-1);
             padding: 10px;
             border-radius: 5px;
         }
@@ -538,7 +538,7 @@ export default defineComponent({
             .instruction-list-title {
                 position: sticky;
                 top: 0;
-                background-color: var(--color-background);
+                background-color: var(--color-surface-0);
                 font-weight: 600;
                 margin: auto;
                 margin-bottom: 1rem;
@@ -567,10 +567,10 @@ export default defineComponent({
             li {
                 cursor: pointer;
                 padding: 0.5rem 1rem;
-                // background-color: var(--color-light);
+                // background-color: var(--color-surface-1);
                 font-weight: 600;
 
-                border: 2px solid var(--color-light);
+                border: 2px solid var(--color-surface-1);
 
                 border-radius: 5px;
                 margin-bottom: 5px;
@@ -584,7 +584,7 @@ export default defineComponent({
                 }
 
                 &:hover {
-                    background-color: var(--color-light);
+                    background-color: var(--color-surface-1);
                 }
 
                 &.selected {

@@ -55,7 +55,7 @@ export default defineComponent({
         gap: 0.5em
         padding: 0.2em 0.5em
         cursor: pointer
-        background-color: var(--color-background-dark)
+        background-color: var(--color-surface-1)
         transition: background-color 0.3s, color 0.3s
         border: 1px solid transparent
         .icon
@@ -69,10 +69,10 @@ export default defineComponent({
             margin: auto 0
             margin-right: auto
         &:hover
-            background-color: var(--color-light)
+            background-color: var(--color-surface-1)
             border-color: var(--color-accent)
     .accordion-content
-        background-color: var(--color-background)
+        background-color: var(--color-surface-0)
         // border-top: 1px solid var(--color-regular)
         max-height: 500px
         transition: max-height 0.3s
@@ -88,8 +88,8 @@ export default defineComponent({
 
     &.open
         .accordion-header
-            // background-color: var(--color-medium)
-            // color: var(--color-light)
+            // background-color: var(--color-surface-3)
+            // color: var(--color-surface-1)
             .icon-cheveron
                 transform: rotate(90deg)
 </style>

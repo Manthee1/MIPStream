@@ -125,7 +125,7 @@ export default defineComponent({
         height: 100%
         min-width: 25rem
         padding: 1rem
-        background-color: var(--color-white)
+        background-color: var(--color-surface-0)
         border-right: 1px solid var(--color-medium)
 
         .tab-item
@@ -141,9 +141,9 @@ export default defineComponent({
             cursor: pointer
             // color: var(--color-subtext)
             &:hover
-                background-color: var(--color-light)
+                background-color: var(--color-surface-1)
             &.active
-                background-color: var(--color-light)
+                background-color: var(--color-surface-1)
                 color: var(--color-text)
 
     .tab-content
@@ -162,7 +162,7 @@ export default defineComponent({
             gap: 2rem
             padding: 1rem 2rem
             border-radius: 5px
-            background-color: var(--color-white)
+            background-color: var(--color-surface-0)
             border: 1px solid var(--color-medium)
             transition: background-color 0.2s
             // &:hover
@@ -210,9 +210,9 @@ export default defineComponent({
                     padding: 0.5rem
                     cursor: pointer
                     &.active
-                        background-color: var(--color-light)
+                        background-color: var(--color-surface-1)
                     &:hover
-                        background-color: var(--color-light)
+                        background-color: var(--color-surface-1)
                     input
                         margin: 0px 0.5rem 
                         

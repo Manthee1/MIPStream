@@ -97,7 +97,7 @@ export default defineComponent({
     font-size: 1rem
     padding: 0.5rem
     gap: 0.2rem
-    background-color: var(--color-background)
+    background-color: var(--color-surface-0)
     width: 100%;
     overflow: auto;
     ol,ul,li
@@ -109,10 +109,10 @@ export default defineComponent({
         display: flex
         justify-content: center
         align-items: center
-        background-color: var(--color-medium)
+        background-color: var(--color-surface-3)
         text-align: center
         padding: 0px 0.2rem
-        border: 1px solid var(--color-light)
+        border: 1px solid var(--color-surface-1)
         &.column-label
             position: sticky
             top: -5px
@@ -124,16 +124,16 @@ export default defineComponent({
         display: flex
         justify-content: center
         align-items: center
-        border: 1px solid var(--color-light)
+        border: 1px solid var(--color-surface-1)
         text-align: center
         vertical-align: middle
         
         &.non-zero
-            background-color: var(--color-light)
+            background-color: var(--color-surface-1)
         // Make memory itme on hover show a tooltip with the memory address
         &:hover
             position: relative
-            background-color: var(--color-light)
+            background-color: var(--color-surface-1)
             cursor: pointer
             &:after
                 content: attr(data-address)
@@ -141,14 +141,14 @@ export default defineComponent({
                 top: 100%
                 left: 50%
                 transform: translateX(-50%)
-                background-color: var(--color-background-dark)
+                background-color: var(--color-surface-1)
                 padding: 0.2rem
-                border: 1px solid var(--color-light)
+                border: 1px solid var(--color-surface-1)
                 border-radius: 5px
                 z-index: 100
         input
             padding: 0.4rem 0.2rem
-            border: 1px solid var(--color-medium)
+            border: 1px solid var(--color-surface-3)
             border-radius: 2px
             text-align: center
             font-size: 1rem

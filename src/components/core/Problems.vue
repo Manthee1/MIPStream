@@ -9,8 +9,8 @@
             </ul>
         </template>
         <p v-else>No errors</p>
-    
-    
+
+
     </div>
 </template>
 
@@ -29,9 +29,9 @@ export default {
         padding: 0
         margin: 0
     .error-item
-        background-color: var(--color-background)
+        background-color: var(--color-surface-0)
         color: var(--color-system-error)
-        border: 1px solid var(--color-background)
+        border: 1px solid var(--color-surface-0)
         border-radius: 5px
         overflow: hidden
         text-overflow: ellipsis

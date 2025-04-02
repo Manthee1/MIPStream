@@ -26,7 +26,7 @@ export default {
 
 <style scoped>
 .sidebar {
-    background-color: var(--color-background-dark);
+    background-color: var(--color-surface-1);
     height: 100%;
     width: 300px;
     min-width: 300px;

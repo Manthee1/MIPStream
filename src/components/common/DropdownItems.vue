@@ -106,7 +106,7 @@ export default defineComponent({
     display: none
     min-width: 12em
     padding: 0.5em 0.5em
-    background-color: var(--color-background-dark)
+    background-color: var(--color-surface-1)
     box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
     z-index: 1000
     list-style: none
@@ -135,12 +135,12 @@ export default defineComponent({
             margin: auto 0px
         &:hover,
         &:focus
-            background-color: var(--color-medium)
+            background-color: var(--color-surface-3)
 
 .dropdown-separator
     height: 1px
     margin: 0.5em 0
-    background-color: var(--color-light)
+    background-color: var(--color-surface-1)
 
 .dropdown-submenu
     position: relative
@@ -155,7 +155,7 @@ export default defineComponent({
         top: -0.5rem
         left: 100%
         padding: 0.5em 0em
-        background-color: var(--color-background-dark)
+        background-color: var(--color-surface-1)
         box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
         z-index: 1000
         list-style: none

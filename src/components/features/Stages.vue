@@ -47,7 +47,7 @@ export default defineComponent({
     margin: 0
     
     .stage-item
-        border-bottom: 1px solid var(--color-medium)
+        border-bottom: 1px solid var(--color-surface-3)
         padding: 0.5rem
         flex: 1 1 auto
 

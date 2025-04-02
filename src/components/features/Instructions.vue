@@ -103,7 +103,7 @@ export default defineComponent({
             }
 
             &:hover {
-                background-color: var(--color-light);
+                background-color: var(--color-surface-1);
             }
         }
     }

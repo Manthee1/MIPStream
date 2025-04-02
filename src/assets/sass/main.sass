@@ -11,25 +11,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap')
 
 :root
-
     --color-accent-dark: #3d4f72
     --color-accent: #5a82d8
-    --color-accent-light: #809ddb
+    --color-accent-light: #6283cf
     --color-accent-background: #e8edff
 
-    --color-white: #FFFFFF
-    --color-light: #f1f1f1
-    --color-pale: #eaeaea
-    --color-medium: #d6d6d6
-    --color-intermediate: #b6b6b6
-    --color-regular: #303030
-    --color-soft-black: #1B1B1B
-    --color-middle-black: #0B0B0B
-    --color-thick-black: #040404
-    --color-black: #000000
+    /** Base colors */
+    --color-base-0: #ffffff
+    --color-base-1: #000000
 
-    --color-background: #fcfcfc
-    --color-background-dark: #F5F6F8
+    /** Theme surface colors */
+    --color-surface-0: #fcfcfc
+    --color-surface-1: #ededed
+    --color-surface-2: #dfdfdf
+    --color-surface-3: #d1d1d1
+    --color-surface-4: #c3c3c3
+    --color-surface-5: #b5b5b5
+
     --color-shadow-light: #0000001A
     --color-shadow-dark: #0000003D
 
@@ -43,6 +41,7 @@
     --color-system-info-dark: #0D5CA1
 
     --color-text: #3d4050
+    --color-regular: #303030
     --color-subtext: #9A9A9A
     --color-paragraph: #292929
 
@@ -86,19 +85,16 @@ html
         --color-accent-dark: #4A5F8A
         --color-accent-background: #DDE4F9
 
-        --color-white: #000000
-        --color-light: #141414
-        --color-pale: #1f1f1f
-        --color-medium: #292929
-        --color-intermediate: #494949
-        --color-regular: #cfcfcf
-        --color-soft-black: #e4e4e4
-        --color-middle-black: #f4f4f4
-        --color-thick-black: #fbfbfb
-        --color-black: #ffffff
+        --color-surface-0: #141517
+        --color-surface-1: #292a2c
+        --color-surface-2: #404143
+        --color-surface-3: #58595b
+        --color-surface-4: #727274
+        --color-surface-5: #8c8d8e
 
-        --color-background: #141414
-        --color-background-dark: #07080a
+        --color-regular: #cfcfcf
+        --color-soft-black: #e4e3e4
+
         --color-shadow-light: #FFFFFF1A
         --color-shadow-dark: #FFFFFF3D
 
@@ -124,7 +120,7 @@ body
     height: 100vh
     overflow: auto
     overflow-x: hidden
-    background-color: var(--color-background)
+    background-color: var(--color-surface-0)
 
 #app
     height: 100%
@@ -142,8 +138,8 @@ main
 
 /* Custom user selection */
 ::selection
-    background-color: var(--color-soft-black)
-    color: var(--color-white)
+    background-color: var(--color-regular)
+    color: var(--color-surface-0)
 
 @media (max-width: variables.$size-screen-xs)
     .hidden-xs

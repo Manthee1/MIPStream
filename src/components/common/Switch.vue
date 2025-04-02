@@ -25,7 +25,7 @@ export default {
 .switch {
     width: 50px;
     height: 25px;
-    background-color: var(--color-medium);
+    background-color: var(--color-surface-3);
     border-radius: 25px;
     position: relative;
     cursor: pointer;
@@ -39,7 +39,7 @@ export default {
 .switch__toggle {
     width: 23px;
     height: 23px;
-    background-color: var(--color-background);
+    background-color: var(--color-surface-0);
     border-radius: 50%;
     position: absolute;
     top: 1px;

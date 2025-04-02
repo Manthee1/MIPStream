@@ -95,7 +95,7 @@ export default defineComponent({
 
     .modal-content
         position: relative
-        background-color: var(--color-background)
+        background-color: var(--color-surface-0)
         padding: 4rem 5rem
         border: 2px solid var(--color-regular)
         border-radius: 5px

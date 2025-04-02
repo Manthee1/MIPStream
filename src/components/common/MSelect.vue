@@ -149,8 +149,8 @@ export default defineComponent({
         justify-content: space-between
         align-items: center
         padding: 10px
-        border: 1px solid var(--color-medium)
-        background: var(--color-white)
+        border: 1px solid var(--color-surface-3)
+        background: var(--color-surface-0)
         cursor: pointer
         border-radius: 5px
         .arrow
@@ -163,8 +163,8 @@ export default defineComponent({
         position: absolute
         left: 0
         width: 100%
-        border: 1px solid var(--color-medium)
-        background: var(--color-white)
+        border: 1px solid var(--color-surface-3)
+        background: var(--color-surface-0)
         list-style: none
         padding: 0
         margin: 0
@@ -176,7 +176,7 @@ export default defineComponent({
             cursor: pointer
 
             &:hover
-                background: var(--color-light)
+                background: var(--color-surface-1)
             &.selected
-                background: var(--color-medium)
+                background: var(--color-surface-3)
 </style>

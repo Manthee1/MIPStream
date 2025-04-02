@@ -38,7 +38,7 @@ export default defineComponent({
     computed: {
         gradientStyle() {
             return {
-                background: `linear-gradient(to right, var(--color-accent) ${this.value}%, var(--color-light) ${this.value}%)`
+                background: `linear-gradient(to right, var(--color-accent) ${this.value}%, var(--color-surface-1) ${this.value}%)`
             };
         }
     },
@@ -62,7 +62,7 @@ input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
     height: 3px;
-    background: var(--color-intermediate);
+    background: var(--color-surface-4);
     outline: none;
     opacity: 0.7;
     transition: opacity .2s;
