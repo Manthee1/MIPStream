@@ -1,8 +1,6 @@
 <template>
-    <div class="dropdown" :class="{ compact }" @click="toggleDropdown" ref="dropdown">
+    <div class="dropdown" :class="{ compact }" @click.stop="toggleDropdown" ref="dropdown">
         <MButton class="dropdown-toggle" circle :icon="icon" />
-
-        <DropdownMenu v-if="isOpen" :class="{ show: isOpen }" :items="items" />
     </div>
 </template>
 
@@ -44,23 +42,32 @@ export default defineComponent({
             isOpen: false
         };
     },
+
+    computed: {
+        id() {
+            return this.label.replace(/\s+/g, '-').toLowerCase();
+        },
+    },
     methods: {
         toggleDropdown() {
-            this.isOpen = !this.isOpen;
-        },
-        handleClickOutside(event: MouseEvent) {
+            this.isOpen = (this.$UIStore.dropdownData.id == this.id) ? !this.isOpen : true;
+            this.$UIStore.dropdownData.id = this.id;
+            this.$UIStore.dropdownData.show = this.isOpen;
+            this.$UIStore.dropdownData.items = this.items;
+            this.$UIStore.dropdownData.compact = this.compact;
+            // Calculate x and y position of the dropdown
             const dropdown = this.$refs.dropdown as HTMLElement;
-            if (dropdown && !dropdown.contains(event.target as Node)) {
-                this.isOpen = false;
-            }
-        }
+            const rect = dropdown.getBoundingClientRect();
+            const x = rect.left + window.scrollX;
+            const y = rect.top + window.scrollY + rect.height;
+            this.$UIStore.dropdownData.x = x;
+            this.$UIStore.dropdownData.y = y;
+
+            console.log(`Dropdown conf`, this.$UIStore.dropdownData);
+
+
+        },
     },
-    mounted() {
-        document.addEventListener('click', this.handleClickOutside);
-    },
-    beforeUnmount() {
-        document.removeEventListener('click', this.handleClickOutside);
-    }
 });
 </script>
 
@@ -73,66 +80,5 @@ export default defineComponent({
         border: none
         cursor: pointer
 
-    .dropdown-menu
-        position: absolute
-        top: 100%
-        left: 0
-        display: none
-        min-width: 12em
-        padding: 0.5em 0.5em
-        background-color: var(--color-background-dark)
-        box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
-        z-index: 1000
-        list-style: none
-        &.show
-            display: block
-
-        .dropdown-item
-            display: flex
-            padding: 0.5em 0.5em
-            color: var(--color-text)
-            cursor: pointer
-            text-decoration: none
-            transition: background-color 0.3s
-            gap: 0.2em
-            .item-icon
-                margin: auto 0
-                width: 1em
-                height: 1em
-                margin-right: 0.3em
-            >*
-                margin: auto 0px
-            &:hover,
-            &:focus
-                background-color: var(--color-medium)
-
-        .dropdown-separator
-            height: 1px
-            margin: 0.5em 0
-            background-color: var(--color-light)
-
-        .dropdown-submenu
-            position: relative
-            >.icon
-                margin: auto 0
-                margin-left: auto
-                width: 1em
-                height: 1em
-            .dropdown-menu
-                position: absolute
-                display: block
-                top: -0.5rem
-                left: 100%
-                padding: 0.5em 0em
-                background-color: var(--color-background-dark)
-                box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
-                z-index: 1000
-                list-style: none
-.dropdown.compact
-    .dropdown-menu
-        padding: 0.5em 0em
-        // box-shadow: none
-        .dropdown-item
-            padding: 0.2em 1em
 
 </style>

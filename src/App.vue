@@ -18,6 +18,9 @@
     <!-- Modal -->
     <Modal />
 
+    <!-- DropdownMenu -->
+    <DropdownMenu />
+
     <!-- Notifications -->
     <notifications position="bottom left" :pauseOnHover='true' />
 </template>
@@ -28,6 +31,7 @@ import TopBar from '@/components/layout/TopBar.vue';
 import Settings from './components/windows/Settings.vue';
 import Window from './components/common/Window.vue';
 import Modal from './components/singletons/Modal.vue';
+import DropdownMenu from './components/common/DropdownMenu.vue';
 
 export default defineComponent({
     name: 'App',
@@ -36,6 +40,7 @@ export default defineComponent({
         Settings,
         Window,
         Modal,
+        DropdownMenu
     },
 });
 </script>

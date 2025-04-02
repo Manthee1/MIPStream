@@ -7,6 +7,7 @@ import { useUIStore } from './stores/UIStore'
 import { useSettingsStore } from './stores/settingsStore'
 import VueFeather from 'vue-feather';
 import Notifications from '@kyvg/vue3-notification';
+import { notify } from '@kyvg/vue3-notification';
 
 import { initRouter } from './router'
 
@@ -36,7 +37,7 @@ declare module '@vue/runtime-core' {
         $prompt: (data: ModalData) => Promise<boolean | string>
         $router: typeof router
         $route: typeof router.currentRoute
-        $notify: (options: NotificationOptions | string) => void
+        $notify: typeof notify
     }
 }
 // @ts-ignore
@@ -49,6 +50,7 @@ app.config.globalProperties.$UIStore = UIStore;
 app.config.globalProperties.$confirm = UIStore.confirm;
 app.config.globalProperties.$prompt = UIStore.prompt;
 app.config.globalProperties.$projectStore = projectStore;
+// app.config.globalProperties.$notify = notify;
 
 initKeyboardHandler();
 

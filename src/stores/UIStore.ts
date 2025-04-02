@@ -19,6 +19,7 @@ export const useUIStore = defineStore('ui', {
         settingsWindowConfig: {} as SettingWindowConfig,
         theme: theme,
         modalData: {} as ModalData,
+        dropdownData: { id: '', show: false, items: [] as DropdownItem[], compact: false, y: 0, x: 0 },
         topBar: {
             title: '',
             dropdownItems: [] as DropdownItem[]
