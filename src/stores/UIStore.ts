@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
-import { addProject, createProject, existsProject, loadProject, Project, removeProject, saveProject } from '../storage/projectsStorage';
 import { useRouter } from 'vue-router';
 import { useNotification } from '@kyvg/vue3-notification';
 import { DockviewApi, GroupviewPanelState, IDockviewPanel } from 'dockview-vue';

@@ -78,7 +78,8 @@ export default defineComponent({
     },
     computed: {
         currentTab() {
-            return this.settingsConfig.tabs[this.currentTabIndex];
+            if (!this.settingsConfig?.tabs) return { name: '', settings: [], icon: '', };
+            return this.settingsConfig?.tabs[this.currentTabIndex];
         },
         settings() {
             return this.settingsConfig.settings;
