@@ -51,7 +51,7 @@ type CPUOptionsConfig = Array<{
     label: string;
     key: string;
     default: any;
-    type: 'number' | 'string' | 'boolean';
+    type: 'number' | 'string' | 'boolean' | 'array';
     min?: number;
     max?: number;
     verify?: (value: any) => boolean | never;

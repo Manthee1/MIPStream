@@ -54,7 +54,7 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
                 });
                 return;
             }
-            const expectedOperandTypes = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
+            const expectedOperandTypes = instruction.operands?.filter(op => op != 'NONE') ?? getDefaultInstructionDefOperands(instruction);
 
             const operands = line.split(/,|\s/).slice(1).filter((operand) => operand !== '');
 

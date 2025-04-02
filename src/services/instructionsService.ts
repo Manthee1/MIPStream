@@ -71,7 +71,6 @@ export const insertInstruction = async (instruction: Instruction) => {
     const newInstruction = { ...defaultInstruction, ...instruction } as { [key: string]: any };
 
     delete newInstruction.id;
-    newInstruction.size = JSON.stringify(newInstruction).length;
     // Add the instruction to the database
     console.log('Inserting instruction', newInstruction);
 

@@ -12,6 +12,7 @@ import { defaultProjectSettings, Project } from '../services/projectsService';
 import { CPUS } from '../assets/js/core/config/cpus';
 import monaco, { initLSP } from '../config/monaco';
 import { validate } from '../config/monaco/validationProvider';
+import { getInstructions } from '../services/instructionsService';
 
 
 export const useSimulationStore = defineStore('simulation', {
@@ -38,7 +39,7 @@ export const useSimulationStore = defineStore('simulation', {
     },
     actions: {
 
-        init(project: Project) {
+        async init(project: Project) {
             const cpuOptions = {
                 dataMemorySize: project?.settings?.memorySize ?? defaultProjectSettings.memorySize,
             } as any
@@ -46,6 +47,14 @@ export const useSimulationStore = defineStore('simulation', {
             // Get cpu type
             const cpuType = project?.settings?.cpuType ?? defaultProjectSettings.cpuType;
             const cpuConfig = CPUS[cpuType];
+
+            const customInstructions = await getInstructions(999, { cpuType: cpuType });
+            console.log('customInstructions', customInstructions);
+
+            if (customInstructions) {
+                cpuOptions.customInstructions = customInstructions;
+            }
+
             if (!cpuConfig) {
                 notify({
                     type: 'error',

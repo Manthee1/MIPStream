@@ -28,6 +28,12 @@ export default class MIPSBase {
             min: 128,
             max: 2097152,
         },
+        {
+            label: "Custom Instructions",
+            key: "customInstructions",
+            default: [],
+            type: "array",
+        }
     ];
 
     controlSignals: { [name: string]: ControlSignal } = baseControlSignals;
@@ -51,7 +57,7 @@ export default class MIPSBase {
     instructionMemory: Uint32Array;
     dataMemory: number[];
 
-    verifyOptions(options: Array<{ [name: string]: any }>) {
+    verifyOptions(options: Record<string, any>) {
         // Covert options to array
         Object.entries(options).forEach((option) => {
             let [key, value] = option;
@@ -59,7 +65,7 @@ export default class MIPSBase {
             if (!config) {
                 throw new Error(`Invalid option: ${value}`);
             }
-            if (config.type !== typeof value) {
+            if ((config.type === "array") ? (!Array.isArray(value)) : (config.type !== typeof value)) {
                 throw new Error(`Invalid type for option: ${value}`);
             }
             if (typeof value === "number") {
@@ -76,10 +82,10 @@ export default class MIPSBase {
         });
     }
 
-    constructor(options?: Array<{ [name: string]: any }>) {
+    constructor(options?: Record<string, any>) {
         if (!options) options = [];
 
-        let defaultOptions: { [name: string]: any } = {};
+        let defaultOptions: Record<string, any> = {};
         this.cpuOptionsConfig.forEach((config) => {
             defaultOptions[config.key] = config.default;
         });
@@ -96,6 +102,9 @@ export default class MIPSBase {
         this.registerFile = [];
         this.instructionMemory = new Uint32Array();
         this.dataMemory = [];
+        if (options.customInstructions.length) {
+            this.instructionConfig = [...baseInstructionConfig, ...(options.customInstructions ?? [])];
+        }
         this.reset();
 
     }

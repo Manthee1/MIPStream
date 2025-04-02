@@ -4,7 +4,7 @@
             <h6>CPU Types</h6>
             <ul>
                 <li v-for="(cpu, cpuKey) in cpuTypes" :key="cpuKey" @click="selectCpu(cpuKey)"
-                    :class="{ 'selected': selectedCpu.name === cpu.name }">
+                    :class="{ 'selected': selectedCpuKey === cpuKey }">
                     <span>{{ cpu.name }}</span>
                     <p class="text-medium">{{ cpu.description }}</p>
                 </li>
@@ -87,10 +87,21 @@
                     <div class="flex flex-row flex-nowrap gap-5 flex-top-left">
                         <div class="flex flex-row gap-2 flex-6 flex-top-left">
                             <div class="form-group flex-4">
-                                <label>Opcode:</label>
-                                <input type="number" class="input-small"
-                                    :disabled="selectedInstruction.type == 'R' || !isCurrentInstructionCustom"
-                                    v-model="selectedInstruction.opcode" />
+
+                                <label class="flex gap-2">
+                                    <span>Opcode:</span>
+                                    <span class="my-auto mr-auto"
+                                        v-if="customInstructions.find(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic) || instructions.find(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic)"
+                                        title="Opcode already exists">
+                                        <vue-feather :size="18" style="color: var(--color-system-warning);"
+                                            type="alert-triangle" />
+                                    </span>
+                                </label>
+                                <div class="flex flex-row flex-nowrap gap-2">
+                                    <input type="number" class="input-small"
+                                        :disabled="selectedInstruction.type == 'R' || !isCurrentInstructionCustom"
+                                        v-model="selectedInstruction.opcode" />
+                                </div>
                             </div>
                             <div class="form-group flex-4">
                                 <label>Type:</label>
@@ -282,17 +293,19 @@ export default defineComponent({
 
             this.selectedCpu = this.cpuTypes[cpu];
             this.selectedCpuKey = cpu;
+            console.log('Selected CPU:', this.selectedCpuKey);
+
             this.cpuDiagramInstance?.destroy();
             this.cpuInstance = new this.selectedCpu.cpu()
             this.instructions = this.cpuInstance.instructionConfig.map(instruction => {
                 return {
                     ...instruction,
-                    cpuType: this.selectedCpu.name,
+                    cpuType: cpu,
                     id: 0,
                 };
             });
             this.customInstructions = await getInstructions(999, {
-                cpuType: this.selectedCpu.name,
+                cpuType: cpu,
             });
 
         },
@@ -328,7 +341,7 @@ export default defineComponent({
 
             let newInstruction: Instruction = {
                 id: 0, // Auto incremented by the database
-                cpuType: this.selectedCpu.name,
+                cpuType: this.selectedCpuKey,
                 opcode: 0,
                 mnemonic: newMnemonic,
                 type: 'R',
@@ -362,7 +375,7 @@ export default defineComponent({
                 ...instruction,
                 mnemonic: newMnemonic,
                 id: 0, // Auto incremented by the database
-                cpuType: this.selectedCpu.name,
+                cpuType: this.selectedCpuKey,
             };
 
             newInstruction = await insertInstruction(clone(newInstruction));
