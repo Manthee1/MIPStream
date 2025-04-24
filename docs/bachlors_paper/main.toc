@@ -50,11 +50,28 @@
 \contentsline {subsection}{\numberline {2.5.5}User Interface}{39}{subsection.2.5.5}%
 \contentsline {subsection}{\numberline {2.5.6}Accessibility}{39}{subsection.2.5.6}%
 \contentsline {section}{\numberline {2.6}Analysis Conclusion}{39}{section.2.6}%
-\contentsline {chapter}{\numberline {3}Solution Proposal}{1}{chapter.3}%
-\contentsline {chapter}{\numberline {4}Implementation}{3}{chapter.4}%
-\contentsline {chapter}{\numberline {5}Solution Verification}{5}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{7}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Summary}{7}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Future Work}{7}{section.6.2}%
-\contentsline {chapter}{\numberline {A}First Appendix }{15}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Contents of Included CD–ROM }{17}{appendix.B}%
+\contentsline {chapter}{\numberline {3}Solution Proposal}{41}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Goals and Requirements}{41}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Functional Requirements}{41}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Non-Functional Requirements}{42}{subsection.3.1.2}%
+\contentsline {section}{\numberline {3.2}System Architecture}{43}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}User Interface Layer}{44}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Logic Layer}{45}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Assembler}{45}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}CPU Model}{45}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Storage Layer}{46}{subsection.3.2.5}%
+\contentsline {section}{\numberline {3.3}Pipeline Simulation Model}{46}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Instruction Set Model}{47}{section.3.4}%
+\contentsline {section}{\numberline {3.5}User Interface \& Interaction}{48}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Editor}{48}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Pipeline Diagram}{48}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}Memory and Register Display}{49}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Error Handling}{50}{subsection.3.5.4}%
+\contentsline {subsection}{\numberline {3.5.5}Settings}{50}{subsection.3.5.5}%
+\contentsline {chapter}{\numberline {4}Implementation}{51}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Solution Verification}{53}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{55}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Summary}{55}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Future Work}{55}{section.6.2}%
+\contentsline {chapter}{\numberline {A}First Appendix }{63}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Contents of Included CD–ROM }{65}{appendix.B}%
