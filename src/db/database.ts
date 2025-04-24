@@ -13,7 +13,7 @@ const database: IDataBase = {
 }
 let isDbCreated = false;
 
-isDbCreated = await connection.initDb(database);
+connection.initDb(database);
 
 const db = connection;
 export default db;
