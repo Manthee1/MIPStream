@@ -57,7 +57,7 @@
             </MButton>
         </div>
 
-        <div class="panel flex-auto gap-3">
+        <div class="panel flex-auto gap-3" style="width: 0px;">
             <template v-if="selectedInstruction">
 
                 <div class="flex flex-left flex-nowrap gap-2 mb-2">
@@ -72,10 +72,14 @@
 
                 <textarea style="max-height: 200px; resize: vertical;" :disabled="!isCurrentInstructionCustom"
                     resize="none" v-model="selectedInstruction.description" placeholder="No Description"></textarea>
-                <div class="cpu-diagram-container box flex-auto">
+                <div class="cpu-diagram-container box flex-auto" :class="{ maximized: diagramMaximized }"
+                    @keydown.esc="diagramMaximized = false" @click="(diagramMaximized) && (diagramMaximized = false)">
                     <CpuDiagram class="cpu-diagram" :cpu="cpuInstance" :key="'cpu-' + selectedCpu.name"
-                        @diagramLoaded="cpuDiagramInstance = $event" />
-
+                        @diagramLoaded="cpuDiagramInstance = $event" @click.stop="" />
+                    <div class="maximize-diagram">
+                        <MButton :icon="diagramMaximized ? 'minimize' : 'maximize'"
+                            @click.stop="diagramMaximized = !diagramMaximized" />
+                    </div>
                 </div>
 
                 <div class="flex-auto box flex flex-left gap-2">
@@ -84,65 +88,85 @@
                 </div>
 
                 <div class="instruction-config flex-auto box">
-                    <div class="flex flex-row flex-nowrap gap-5 flex-top-left">
-                        <div class="flex flex-row gap-2 flex-6 flex-top-left">
-                            <div class="form-group flex-4">
+                    <div class="flex flex-row flex-wrap gap-2 flex-top-left">
+                        <div class="form-group flex-2">
 
-                                <label class="flex gap-2">
-                                    <span>Opcode:</span>
-                                    <span class="my-auto mr-auto"
-                                        v-if="customInstructions.find(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic) || instructions.find(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic)"
-                                        title="Opcode already exists">
-                                        <vue-feather :size="18" style="color: var(--color-system-warning);"
-                                            type="alert-triangle" />
-                                    </span>
-                                </label>
-                                <div class="flex flex-row flex-nowrap gap-2">
-                                    <input type="number" class="input-small"
-                                        :disabled="selectedInstruction.type == 'R' || !isCurrentInstructionCustom"
-                                        v-model="selectedInstruction.opcode" />
-                                </div>
+                            <label class="flex gap-2">
+                                <span>Opcode</span>
+                                <span class="my-auto mr-auto flex"
+                                    v-if="selectedInstruction.type != 'R' && (customInstructions.some(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic) || instructions.find(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic))"
+                                    title="Opcode already exists">
+                                    <vue-feather :size="18" style="color: var(--color-system-warning);"
+                                        type="alert-triangle" />
+                                </span>
+                            </label>
+                            <div class="flex flex-row flex-nowrap gap-2">
+                                <input type="number" class="input-small width-full"
+                                    :disabled="selectedInstruction.type == 'R' || !isCurrentInstructionCustom"
+                                    v-model="selectedInstruction.opcode" />
                             </div>
-                            <div class="form-group flex-4">
-                                <label>Type:</label>
-                                <MSelect compact :disabled="!isCurrentInstructionCustom" :options="[
-                                    { label: 'R', value: 'R' },
-                                    { label: 'I', value: 'I' },
-                                    { label: 'J', value: 'J' },
-                                ]" :value="selectedInstruction.type" v-model="selectedInstruction.type"
-                                    @update:modelValue="(value) => {
-                                        console.log('Selected Type:', value);
-
-                                        if (!selectedInstruction) return;
-                                        selectedInstruction.type = value;
-                                        selectedInstruction.operands = getDefaultInstructionDefOperands(selectedInstruction);
-                                    }" />
-                            </div>
-                            <div class="form-group flex-4">
-                                <label>Function:</label>
-                                <MSelect compact class="flex-auto" :options="functValues"
-                                    :disabled="selectedInstruction.type != 'R' || !isCurrentInstructionCustom"
-                                    :value="selectedInstruction.funct" v-model="selectedInstruction.funct" />
-                            </div>
-
-                            <div class="form-group flex-12">
-                                <label>Operands:</label>
-                                <div class="flex flex-row flex-nowrap gap-2 flex-left">
-                                    <template v-for="(operand, operandIndex) in selectedInstruction?.operands"
-                                        :key="operandIndex">
-                                        <MSelect compact class="flex-auto" :disabled="!isCurrentInstructionCustom"
-                                            v-if="selectedInstruction?.operands && (operandIndex < (selectedInstruction.type === 'R' ? 3 : selectedInstruction.type === 'I' ? 4 : 1))"
-                                            :options="getAvailableOperands(selectedInstruction, selectedInstruction?.operands[operandIndex])"
-                                            v-model="selectedInstruction.operands[operandIndex]" />
-                                    </template>
-                                </div>
-                            </div>
-
                         </div>
-                        <div class="flex flex-row gap-2 flex-6">
-                            <div class="form-group flex flex-3 flex-grow-0"
+                        <div class="form-group flex-4">
+                            <label>Type</label>
+                            <MSelect compact :disabled="!isCurrentInstructionCustom" :options="[
+                                { label: 'R', value: 'R' },
+                                { label: 'I', value: 'I' },
+                                { label: 'J', value: 'J' },
+                            ]" :value="selectedInstruction.type" v-model="selectedInstruction.type" @update:modelValue="(value) => {
+                                console.log('Selected Type:', value);
+
+                                if (!selectedInstruction) return;
+                                selectedInstruction.type = value;
+                                selectedInstruction.operands = getDefaultInstructionDefOperands(selectedInstruction);
+
+                                if (value === 'R') {
+                                    console.log('Changing to R type');
+                                    selectedInstruction.opcode = 0;
+                                    selectedInstruction.funct = 0;
+                                    selectedInstruction.controlSignals = {
+                                        RegDst: 1,
+                                        RegWrite: 1,
+                                        ALUOp: 2,
+                                    }
+                                } else {
+                                    selectedInstruction.funct = 0;
+                                    selectedInstruction.controlSignals = {
+                                        ALUOp: 0,
+                                        ALUSrc: 0,
+                                        MemRead: 0,
+                                        MemWrite: 0,
+                                        RegWrite: 0,
+                                        MemToReg: 0,
+                                        Branch: 0,
+                                        Jump: 0,
+                                    };
+                                }
+                            }" />
+                        </div>
+                        <div class="form-group flex flex-3 flex-grow-0" v-if="selectedInstruction.type == 'R'">
+                            <label>Function</label>
+                            <MSelect compact class="flex-auto" :options="functValues"
+                                :disabled="selectedInstruction.type != 'R' || !isCurrentInstructionCustom"
+                                :value="selectedInstruction.funct" v-model="selectedInstruction.funct" />
+                        </div>
+
+
+                        <div class="form-group flex-12">
+                            <label>Operands</label>
+                            <div class="flex flex-row flex-nowrap gap-2 flex-left">
+                                <template v-for="(operand, operandIndex) in selectedInstruction?.operands"
+                                    :key="operandIndex">
+                                    <MSelect compact class="flex-auto" :disabled="!isCurrentInstructionCustom"
+                                        v-if="selectedInstruction?.operands && (operandIndex < (selectedInstruction.type === 'R' ? 3 : selectedInstruction.type === 'I' ? 4 : 1))"
+                                        :options="getAvailableOperands(selectedInstruction, selectedInstruction?.operands[operandIndex])"
+                                        v-model="selectedInstruction.operands[operandIndex]" />
+                                </template>
+                            </div>
+                        </div>
+                        <div class="flex flex-row gap-2 flex-6 flex-left">
+                            <div class="form-group flex flex-2 flex-grow-0" v-if="selectedInstruction.type != 'R'"
                                 v-for="(value, key) in cpuInstance.controlSignals" :key="key">
-                                <label>{{ key }}:</label>
+                                <label>{{ key }}</label>
                                 <MSelect :disabled="!isCurrentInstructionCustom" compact :options="new Array((2 ** value.bits)).fill(0).map((_, i) => {
                                     return {
                                         label: i.toString(2),
@@ -152,6 +176,7 @@
                                     v-model="selectedInstruction.controlSignals[key]" />
                             </div>
                         </div>
+
                     </div>
                 </div>
             </template>
@@ -185,6 +210,7 @@ import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
 import { Assembler } from '../assets/js/core/Assembler';
 import { watch } from 'fs';
 import { deleteInstruction, getInstruction, getInstructionByMnemonic, getInstructions, insertInstruction, Instruction, updateInstruction } from '../services/instructionsService';
+import Instructions from '../components/features/Instructions.vue';
 
 
 export default defineComponent({
@@ -207,6 +233,8 @@ export default defineComponent({
             selectedInstruction: null as Instruction | null,
             searchQuery: '',
             isCurrentInstructionCustom: false,
+
+            diagramMaximized: false,
 
             updateTimeout: null as NodeJS.Timeout | null,
         };
@@ -362,6 +390,15 @@ export default defineComponent({
             if (!instruction) return;
             await deleteInstruction(instruction.id);
             this.customInstructions = this.customInstructions.filter(instruction => instruction.mnemonic !== mnemonic);
+            // set the selected instruction to null if it was deleted
+            if (this.selectedInstruction && this.selectedInstruction.mnemonic === mnemonic) {
+                this.selectedInstruction = null;
+            }
+            this.$notify({
+                title: 'Instruction Deleted',
+                text: `Instruction ${mnemonic} deleted successfully`,
+                type: 'success',
+            })
         },
         async duplicateInstruction(instruction: Instruction) {
             let newMnemonic = `${instruction.mnemonic}_copy`;
@@ -514,7 +551,7 @@ export default defineComponent({
 
         &.instructions {
             min-width: 400px;
-            width: 25%
+            width: 30%
         }
 
         &.cpu-types {
@@ -630,17 +667,65 @@ export default defineComponent({
     }
 }
 
-.cpu-diagram-container {
+.instructions-config .cpu-diagram-container {
     display: flex;
     overflow: hidden;
+    position: relative;
+
+    &.maximized {
+        // background-color: var(--color-surface-0);
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        background-color: var(--color-overlay);
+        top: 0;
+        left: 0;
+        z-index: 10;
+        padding: 2rem;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: calc(100% - 4rem);
+            height: calc(100% - 4rem);
+            border-radius: 5px;
+            z-index: 9;
+            margin: 2rem;
+            background-color: var(--color-surface-0);
+            border: 2px solid var(--color-regular) !important;
+        }
+
+        .cpu-diagram {
+            z-index: 10;
+        }
+
+        .maximize-diagram {
+            right: 4rem;
+            top: 4rem;
+        }
+
+    }
+
+    .maximize-diagram {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+    }
 
     .cpu-diagram {
         height: 100%;
         width: unset !important;
         margin: auto;
         border-radius: 5px;
-        border: 1px solid var(--color-regular);
+        // border: 1px solid var(--color-regular);
+        border: none !important;
+
+
         // aspect-ratio: 1;
+
     }
 }
 </style>

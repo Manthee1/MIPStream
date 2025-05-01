@@ -105,9 +105,10 @@ export default defineComponent({
     position: absolute
     display: none
     min-width: 12em
-    padding: 0.5em 0.5em
-    background-color: var(--color-surface-1)
+    padding: 0.5em 0.2em
+    background-color: var(--color-surface-0)
     box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.1)
+    border: 1px solid var(--color-surface-2)
     z-index: 1000
     list-style: none
     &.show

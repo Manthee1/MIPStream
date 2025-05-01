@@ -130,9 +130,11 @@ export default defineComponent({
         text-decoration: line-through;
     &.compact
         width: 100%
+
         .select-box
-            padding: 5px
-            // font-size: 0.8rem
+            padding: 0.5rem 1rem
+            font-size: 1.4rem
+            line-height: 1.5;
             .arrow
                 width: 1.2rem
                 height: 1.2rem
@@ -149,7 +151,7 @@ export default defineComponent({
         justify-content: space-between
         align-items: center
         padding: 10px
-        border: 1px solid var(--color-surface-3)
+        border: 2px solid var(--color-surface-3)
         background: var(--color-surface-0)
         cursor: pointer
         border-radius: 5px
