@@ -69,11 +69,11 @@ export default class MIPSBase {
                 throw new Error(`Invalid type for option: ${value}`);
             }
             if (typeof value === "number") {
-                if (!Number.isInteger(value)) throw new Error(`Invalid value for option: ${value}`);
+                if (!Number.isInteger(value)) throw new Error(`${config.key} must be an integer: ${value}`);
 
-                if (config.min && value < config.min) throw new Error(`Invalid value for option: ${value}`);
+                if (config.min && value < config.min) throw new Error(`${config.key} must be greater than ${config.min}: ${value}`);
 
-                if (config.max && value > config.max) throw new Error(`Invalid value for option: ${value}`);
+                if (config.max && value > config.max) throw new Error(`${config.key} must be less than ${config.max}: ${value}`);
             }
 
             if (config.verify && !config.verify(value)) {

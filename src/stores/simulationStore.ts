@@ -42,6 +42,7 @@ export const useSimulationStore = defineStore('simulation', {
         async init(project: Project) {
             const cpuOptions = {
                 dataMemorySize: project?.settings?.memorySize ?? defaultProjectSettings.memorySize,
+                instructionMemorySize: project?.settings?.instructionMemorySize ?? defaultProjectSettings.instructionMemorySize,
             } as any
 
             // Get cpu type
@@ -55,15 +56,25 @@ export const useSimulationStore = defineStore('simulation', {
                 cpuOptions.customInstructions = customInstructions;
             }
 
-            if (!cpuConfig) {
+            try {
+                if (!cpuConfig) {
+                    notify({
+                        type: 'error',
+                        title: 'Error',
+                        text: 'CPU type ${cpuType} not found. Using default CPU.',
+                    });
+                    this.core = new MIPSBase(cpuOptions);
+                }
+                else this.core = new cpuConfig.cpu(cpuOptions);
+
+            } catch (error: any) {
                 notify({
                     type: 'error',
                     title: 'Error',
-                    text: 'CPU type ${cpuType} not found. Using default CPU.',
+                    text: 'Error loading CPU: ' + error.message,
                 });
-                this.core = new MIPSBase(cpuOptions);
+                return;
             }
-            else this.core = new cpuConfig.cpu(cpuOptions);
 
             this.assembler = new Assembler(this.core.instructionConfig);
 
@@ -156,7 +167,19 @@ export const useSimulationStore = defineStore('simulation', {
             }
             this.stagePCs = [0, -1, -1, -1, -1];
             this.loadedProgram = this.program;
-            this.core.loadProgram(instructionMemory);
+            try {
+                this.core.loadProgram(instructionMemory);
+            }
+            catch (error: any) {
+                notify({
+                    type: 'error',
+                    title: 'Error loading program',
+                    text: error.message,
+                });
+                console.error(error);
+                this.status = 'stopped';
+                return;
+            }
             this.cpuDiagram.draw();
         },
         step() {
