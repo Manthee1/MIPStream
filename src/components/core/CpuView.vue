@@ -3,7 +3,7 @@
         <div class="stages" ref="stages">
             <!-- render stage and the instruction of that stage -->
             <div class="stage" :class="'stage-' + index" v-for="(stagePC, index) in stagePCs" :key="index">
-                <span v-if="stagePC == -1"> nop</span>
+                <span v-if="stagePC == -1 || stagePC > $simulationStore.instructionCount"> nop</span>
                 <span v-else :style="{ fontSize: getFontSize(program[$simulationStore.PCToLineMap[stagePC] - 1]) }">
                     {{ program[$simulationStore.PCToLineMap[stagePC] - 1] }}
                 </span>

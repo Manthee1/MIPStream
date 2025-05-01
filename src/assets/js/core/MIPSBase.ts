@@ -100,7 +100,7 @@ export default class MIPSBase {
 
         this.options = options;
         this.registerFile = [];
-        this.instructionMemory = new Uint32Array();
+        this.instructionMemory = new Uint32Array(this.options.instructionMemorySize);
         this.dataMemory = [];
         if (options.customInstructions.length) {
             this.instructionConfig = [...baseInstructionConfig, ...(options.customInstructions ?? [])];

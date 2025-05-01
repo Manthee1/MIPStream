@@ -182,6 +182,9 @@ export class Assembler {
             throw errors;
         }
 
+        // Resize the array to the number of instructions
+        encodedInstructions = encodedInstructions.slice(0, pc);
+
         return { instructions: encodedInstructions, pcLineMap, labels: labels };
     }
 
