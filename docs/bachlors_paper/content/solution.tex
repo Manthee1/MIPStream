@@ -1,4 +1,5 @@
 \chapter{Solution Proposal}
+\label{chap:solution}
 \section{Goals and Requirements}\label{sec:solution}
 % Restate the main goals based on the problems found in the **Analysis**.  
 To restate, the goal of this project is to create a modern instruction pipelining simulator that can be used to teach students about the concepts of pipelining and instruction execution in a CPU.
@@ -160,6 +161,43 @@ Before the pipeline can be simulated, instructions need to be assembled into mac
 These fields will be used to define each instruction in the instruction set and will be stored in a JSON object. Each CPU should have their own default instruction set, which can be extended by the user. The instruction set will be stored in the CPU model and will be used by the assembler to assemble the instructions into machine code.
 
 \section{User Interface \& Interaction}
+
+As mentioned before. The entirety of the simulator will be implemented as a single-page application (SPA) using Vue.js. The individual pages or views will be implemented as Vue components, which will be responsible for rendering the UI and handling user interactions. 
+
+\section{Project Lists Page}
+
+The projects list will be the home page of the application, which will display a list of projects that the user has created. The user can create a new project, open an existing project, or delete a project from this page. The projects will be shown as a simple table with the project name, last modified date, and a button to open the project. The user can also search for projects by name or filter them by date.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/images/projects_list_wireframe.png}
+    \caption{Wireframe of the Projects List Page}
+    \label{fig:projects_list_wireframe}
+\end{figure}
+
+\section{Instruction Configuration Page}
+The instruction configuration page enables users to define custom instructions for the simulator. Users can add, edit, or delete instructions directly from this page. Since each processor architecture has its own unique instruction set, users must first select the architecture they wish to configure. Once selected, a list of default instructions for the chosen architecture, along with any custom instructions previously defined by the user, will be displayed. Further on that will be a section for editing the selected instruction, which will include all the fields defined in Table \ref{tab:instruction_config}. 
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/images/instruction_config_wireframe.png}
+    \caption{Wireframe of the Instruction Configuration Page}
+    \label{fig:instruction_config_wireframe}
+\end{figure}
+
+\section{Simulator Page}
+The simulator page serves as the primary interface of the application, showcasing the pipeline diagram, memory, registers, and controls for managing the simulation (start, pause, step, and reset). Each component, including the pipeline diagram, editor, memory, and registers, will be movable and resizable, allowing users to customize the layout to their preference. The pipeline diagram will take center stage, providing a visual representation of the pipeline's current state and the instructions being executed. Memory and registers will be displayed in a straightforward table format, reflecting their current states. Controls for managing the simulation will be positioned above the editor. The problems tab will display any errors or warnings, and additionally, a searchable instruction list will be available, showing all instructions currently loaded into the simulator.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{assets/images/simulator_wireframe.png}
+    \caption{Wireframe of the Simulator Page}
+    \label{fig:simulator_wireframe}
+\end{figure}
+
+
 \subsection{Editor}
 For a simple and feature-full implementation of an editor for the assembly code, the Monaco Editor will be used. It is a powerful code editor that is based on Visual Studio Code's editor. It supports syntax highlighting, code completion, error checking, and many other features that are essential for a code editor. The Monaco Editor is also highly customizable, allowing for the addition of custom themes, keybindings, and other features. It is also lightweight and fast, making it ideal for a web-based application.
 
@@ -184,12 +222,6 @@ The memory and register display should both be implemented as a simple table tha
 Error handling is an important part of any application, and the simulator is no exception. The simulator should be able to handle errors gracefully and provide feedback to the user in case of errors. This includes syntax errors in the assembly code, invalid instructions, and other errors that may occur during the simulation or assembly. The error handling should be implemented in a way that allows for easy debugging and troubleshooting. The error should be shown both in the editor at the line where the error occurred and in a separate error log that shows all errors.
 
 \subsection{Settings}
-The settings should be implemented as a simple form that allows the user to modify the settings of the simulator. This includes the default CPU model, UI themes, and other settings that may be relevant to the user. The settings should be stored in the local storage of the browser, so that they can be persisted across sessions. This will allow the user to customize the simulator to their liking and have a consistent experience across sessions.
-
-
-
-
-
-
+The settings will be accessible through the top-left hamburger menu of the application. They should be presented as a straightforward form, enabling users to customize various aspects of the simulator. This includes selecting the default CPU model, adjusting UI themes, and configuring other relevant preferences. The settings will be saved in the browser's local storage, ensuring they persist across sessions and provide a consistent user experience.
 
 
