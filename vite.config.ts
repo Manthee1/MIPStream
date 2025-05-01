@@ -4,7 +4,8 @@ import path from 'path';
 const __dirname = path.resolve();
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig({
+  base: '',
   plugins: [vue()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
