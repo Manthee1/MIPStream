@@ -11,10 +11,10 @@
         <thead>
           <tr>
             <th>Name</th>
-            <th>Created At</th>
-            <th>Last Saved</th>
+            <!-- <th>Created At</th> -->
+            <th>Last Modified</th>
             <th>Size</th>
-            <th></th>
+            <th width="50px"></th>
           </tr>
         </thead>
         <tbody>
@@ -28,7 +28,7 @@
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name
               }}</router-link>
             </td>
-            <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td>
+            <!-- <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td> -->
             <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
             <td>{{ formatSize(project.size) }}</td>
             <td>

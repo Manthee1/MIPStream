@@ -486,7 +486,7 @@ td {
 }
 
 td {
-    border-bottom: 1px solid #E1E1E1;
+    border-bottom: 1px solid var(--color-surface-1);
 }
 
 th:first-child,
