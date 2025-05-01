@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload the build output directory
-          path: './build' # Replace './build' with your actual build output directory if different
+          path: './dist' # Replace './build' with your actual build output directory if different
 
       - name: Deploy to GitHub Pages
         id: deployment
