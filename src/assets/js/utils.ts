@@ -235,8 +235,8 @@ export function getPseudoCode(instructionConfig: InstructionConfig) {
     let ALUOPSign = ALUOperationstoSigns[ALUControl] ?? '???'
     const operands = instructionConfig.operands ?? getDefaultInstructionDefOperands(instructionConfig);
 
-    const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : ''
-    const Rt = (operands.includes('REG_TARGET')) ? 'Rt' : ''
+    const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : '0'
+    const Rt = (operands.includes('REG_TARGET')) ? 'Rt' : '0'
 
     const ALUIn2 = cs['ALUSrc'] ? 'imm' : 'Rt';
 
