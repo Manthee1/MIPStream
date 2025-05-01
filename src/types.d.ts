@@ -28,6 +28,9 @@ interface Setting {
     type: 'checkbox' | 'text' | 'number' | 'select' | 'radio';
     default: any;
     options?: { value: string, label: string, description?: string }[];
+    min?: number;
+    max?: number;
+    step?: number;
     description: string;
     icon?: string; // Added icon property
 }

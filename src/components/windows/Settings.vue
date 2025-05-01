@@ -8,22 +8,23 @@
             </div>
         </div>
         <div class="tab-content">
-            <div class="setting-item" :class="{ 'wrap': setting.type === 'radio' }"
+            <div class="setting-item" :class="{ 'wrap': setting.type === 'radio', 'error': errors[setting.key] }"
                 v-for="setting in currentTab.settings" :key="setting.key">
                 <div class="setting-info">
                     <div class='setting-icon-wrapper'>
                         <vue-feather v-if="setting?.icon" class="setting-icon" :type="setting.icon" />
                     </div>
                     <div class="setting-text">
-                        <label class='setting-name'>{{ setting.label }}</label>
+                        <label class="setting-name">{{ setting.label }}</label>
                         <p class=" setting-description">{{ setting.description }}</p>
                     </div>
                 </div>
                 <div class="setting-input">
                     <input v-if="setting.type === 'text'" type="text" :value="settings[setting.key]"
-                        @input="setSetting(setting.key, $event)" />
+                        @input="setSetting(setting.key, ($event.target as HTMLInputElement)?.value)" />
                     <input v-else-if="setting.type === 'number'" type="number" :value="settings[setting.key]"
-                        @input="setSetting(setting.key, $event)" />
+                        :min="setting.min ?? 0" :max="setting.max ?? 100" :step="setting.step ?? 1" :id="setting.key"
+                        @input="setSetting(setting.key, parseInt(($event.target as HTMLInputElement)?.value))" />
                     <Switch v-else-if="setting.type === 'checkbox'" :id="setting.key"
                         :model-value="settings[setting.key]" @update:model-value="setSetting(setting.key, $event)" />
                     <Select v-else-if="setting.type === 'select'" :id="setting.key" :model-value="settings[setting.key]"
@@ -46,16 +47,21 @@
                         </template>
                     </div>
                 </div>
+                <!-- Error icon -->
+                <div v-show="errors[setting.key]" class="setting-error">
+                    <vue-feather type="alert-triangle" class="icon" :title="errors[setting.key]" />
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, toRef } from 'vue';
 import Window from '@/components/common/Window.vue';
 import Switch from '../common/Switch.vue';
 import Select from '../common/MSelect.vue';
+import { clone } from '../../assets/js/utils';
 
 export default defineComponent({
     name: 'Settings',
@@ -74,15 +80,14 @@ export default defineComponent({
     data() {
         return {
             currentTabIndex: 0,
+            errors: {} as { [key: string]: string; },
+            settings: clone(this.settingsConfig.settings)
         };
     },
     computed: {
         currentTab() {
             if (!this.settingsConfig?.tabs) return { name: '', settings: [], icon: '', };
             return this.settingsConfig?.tabs[this.currentTabIndex];
-        },
-        settings() {
-            return this.settingsConfig.settings;
         },
     },
     methods: {
@@ -91,7 +96,28 @@ export default defineComponent({
         },
         setSetting(key: string, value: any) {
             console.log('Setting', key, value);
+            this.settings[key] = value
+            // Find the settingsConfig for the key
+            // If the key is not in the settingsConfig, return
 
+            let settingConfig = this.settingsConfig.tabs
+                .flatMap((tab) => tab.settings)
+                .find((setting) => setting.key === key);
+
+            if (!settingConfig) {
+                this.errors[key] = `Setting "${key}" not found in settingsConfig.`;
+                return;
+            }
+
+            // If its a number, Make sure its within its min, max and step
+            if (settingConfig.type === 'number') {
+                if ((settingConfig.min && settingConfig.max && settingConfig.step) && (value < settingConfig?.min || value > settingConfig?.max || (value - settingConfig?.min) % settingConfig?.step != 0)) {
+                    this.errors[key] = `Invalid value for setting "${key}". Value must be between ${settingConfig.min} and ${settingConfig.max}, and follow the step of ${settingConfig.step}.`;
+                    return;
+                }
+            }
+
+            delete this.errors[key];
             this.settingsConfig.settings[key] = value;
             this.settingsConfig.setSetting(key, value);
         },
@@ -156,6 +182,7 @@ export default defineComponent({
         height: 100%
 
         .setting-item
+            position: relative
             display: flex
             flex-flow: row nowrap
             align-items: center
@@ -164,8 +191,18 @@ export default defineComponent({
             padding: 1rem 2rem
             border-radius: 5px
             background-color: var(--color-surface-0)
-            border: 1px solid var(--color-medium)
+            border: 2px solid var(--color-surface-2)
             transition: background-color 0.2s
+            &.error
+                border: 2px solid var(--color-system-error)
+                // color: var(--color-surface-0)
+                .setting-error
+                    position: absolute
+                    right: 2rem
+                    color: var(--color-system-error)
+                    flex-flow: column
+                    justify-content: flex-start
+                    align-content: flex-start
             // &:hover
             //     background-color: var(--color-background-dark)
             &.wrap

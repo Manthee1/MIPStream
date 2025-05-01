@@ -40,10 +40,24 @@ export const projectSettingTabs: SettingTab[] = [
             },
             {
                 key: 'memorySize',
-                label: 'Memory Size',
+                label: 'Memory Size (Bytes)',
                 type: 'number',
                 default: 256,
+                min: 128,
+                max: 1024,
+                step: 1,
                 description: 'Choose the memory size for the simulation.',
+                icon: 'cpu'
+            },
+            {
+                key: 'instructionMemorySize',
+                label: 'Instruction Memory Size (Instructions)',
+                type: 'number',
+                default: 256,
+                min: 128,
+                max: 1024,
+                step: 1,
+                description: 'Choose the instruction memory size for the simulation.',
                 icon: 'cpu'
             },
         ]
