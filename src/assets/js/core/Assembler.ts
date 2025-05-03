@@ -4,9 +4,13 @@ import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
 export class Assembler {
     INSTRUCTION_SET: InstructionConfig[];
     mnemonics: Set<string>;
-    constructor(INSTRUCTION_SET: InstructionConfig[]) {
+    options: any = {
+        registerPrefix: '$',
+    };
+    constructor(INSTRUCTION_SET: InstructionConfig[], options: any = {}) {
         this.INSTRUCTION_SET = INSTRUCTION_SET;
         this.mnemonics = new Set(INSTRUCTION_SET.map((instruction) => instruction.mnemonic));
+        this.options = { ...this.options, ...options };
     }
 
     getOperands(instruction: string): string[] {
@@ -75,7 +79,7 @@ export class Assembler {
             const operandType = instructionDef.operands[i];
 
             if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION' || operandType === 'REG_TARGET') {
-                if (!isRegister(operand)) throw new Error(`Invalid register: ${operand}.`);
+                if (!isRegister(operand, this.options.registerPrefix)) throw new Error(`Invalid register: ${operand}.`);
                 if (!isValidRegister(getRegisterNumber(operand))) throw new Error(`Invalid register: ${operand}.`);
                 const value = getRegisterNumber(operand);
                 switch (operandType) {

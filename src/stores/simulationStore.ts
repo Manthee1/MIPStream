@@ -76,7 +76,9 @@ export const useSimulationStore = defineStore('simulation', {
                 return;
             }
 
-            this.assembler = new Assembler(this.core.instructionConfig);
+            this.assembler = new Assembler(this.core.instructionConfig, {
+                registerPrefix: project?.settings?.registerPrefix ?? defaultProjectSettings.registerPrefix,
+            });
 
             this.cpuType = cpuType;
 

@@ -88,8 +88,8 @@ export const useProjectStore = defineStore('project', {
             this.currentProject.settings = { ...defaultProjectSettings, ...this.currentProject.settings, [key]: value };
             console.log("Settings Updated", this.currentProject);
 
-            // If the setting is cpuType, update the cpu
-            if (key === 'cpuType') {
+
+            if (key == 'cpuType') {
                 const cpuType = value;
                 const cpuConfig = CPUS[cpuType];
                 if (!cpuConfig) {
@@ -97,6 +97,12 @@ export const useProjectStore = defineStore('project', {
                     this.currentProject.settings.cpuType = 'basic';
                     return;
                 }
+            }
+
+            // If the setting in
+            const settingsRequiringReinit = ['cpuType', 'memorySize', 'instructionMemorySize', 'registerPrefix'];
+            if (settingsRequiringReinit.includes(key)) {
+
                 useSimulationStore().reset();
                 useSimulationStore().init(this.currentProject);
             }

@@ -13,9 +13,13 @@ const mnemonics = new Set(baseInstructionConfig.map((instruction) => instruction
  * @param str - The string to check.
  * @returns True if the string is a register, false otherwise.
  */
-export function isRegister(str: string): boolean {
-    const registerPattern = /^R\d+$/;
+export function isRegister(str: string, registerPrefix = 'R'): boolean {
+    console.log('registerPrefix', registerPrefix);
+
+    const registerPattern = new RegExp(`^${registerPrefix}\\d+$`);
+    console.log('isRegister', str, registerPattern, registerPattern.test(str));
     return registerPattern.test(str);
+
 }
 
 // Get the register number from a register string

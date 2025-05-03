@@ -77,6 +77,24 @@ export const projectSettingTabs: SettingTab[] = [
         ]
     },
     {
+        name: 'Assembler',
+        icon: 'code',
+        settings: [
+            {
+                key: 'registerPrefix',
+                label: 'Register Accessor Symbol',
+                type: 'radio',
+                default: 'R',
+                options: [
+                    { value: '$', label: '$' },
+                    { value: 'R', label: 'R' },
+                ],
+                description: 'Choose the symbol used to access registers in the assembler.',
+                icon: 'code'
+            },
+        ]
+    },
+    {
         name: 'Visualization',
         icon: 'eye',
         settings: [
