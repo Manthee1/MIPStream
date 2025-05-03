@@ -4,7 +4,7 @@ import { decToHex } from '../../assets/js/utils';
 </script>
 
 <template>
-    <div>
+    <div class="registers">
         <div class="pc">
             <span>PC</span>
             <span>0x{{ decToHex($simulationStore.core.PC.value, 8) }}</span>
@@ -68,7 +68,9 @@ export default defineComponent({
 </script>
 
 <style lang="sass" scoped>
-// Simmple compact code like style for the register list
+div.registers
+    overflow: auto
+    height: 100%
 
 .pc
     display: flex

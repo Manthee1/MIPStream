@@ -45,10 +45,12 @@ export default defineComponent({
     font-size: 1.1rem
     padding: 0
     margin: 0
+    overflow: auto
+    height: 100%
+
     
     .stage-item
         border-bottom: 1px solid var(--color-surface-3)
         padding: 0.5rem
-        flex: 1 1 auto
 
 </style>

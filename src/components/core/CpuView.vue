@@ -11,7 +11,7 @@
             </div>
         </div>
         <CpuDiagram :cpu="$simulationStore.core" :key="'cpud-' + cpuType"
-            @diagramLoaded="console.log('diag', $event);; $simulationStore.cpuDiagram = $event" />
+            @diagramLoaded="$simulationStore.cpuDiagram = $event" />
 
 
     </div>
