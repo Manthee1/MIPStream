@@ -13,19 +13,6 @@ export const projectSettingTabs: SettingTab[] = [
         icon: 'settings',
         settings: [
             {
-                key: 'performanceMode',
-                label: 'Performance Mode',
-                type: 'select',
-                default: 'balanced',
-                options: [
-                    { value: 'balanced', label: 'Balanced' },
-                    { value: 'speed', label: 'Speed' },
-                    { value: 'battery', label: 'Battery' },
-                ],
-                description: 'Choose the performance mode for the simulation.',
-                icon: 'cpu'
-            },
-            {
                 key: 'cpuType',
                 label: 'CPU Type',
                 type: 'radio',
@@ -99,16 +86,31 @@ export const projectSettingTabs: SettingTab[] = [
         icon: 'eye',
         settings: [
             {
-                key: 'registerValueRepresentation',
-                label: 'Register Value Representation',
+                key: 'registerValueRepresentationColumn1',
+                label: 'Register Value Representation (Column 1)',
                 type: 'radio',
-                default: 'dec',
+                default: 'hex',
                 options: [
                     { value: 'dec', label: 'Decimal' },
+                    { value: 'unsignedDec', label: 'Unsigned Decimal' },
                     { value: 'hex', label: 'Hexadecimal' },
                     { value: 'bin', label: 'Binary' },
                 ],
-                description: 'Choose the value representation for the registers.',
+                description: 'Choose the value representation for the first column of the registers.',
+                icon: 'cpu'
+            },
+            {
+                key: 'registerValueRepresentationColumn2',
+                label: 'Register Value Representation (Column 2)',
+                type: 'radio',
+                default: 'unsignedDec',
+                options: [
+                    { value: 'dec', label: 'Decimal' },
+                    { value: 'unsignedDec', label: 'Unsigned Decimal' },
+                    { value: 'hex', label: 'Hexadecimal' },
+                    { value: 'bin', label: 'Binary' },
+                ],
+                description: 'Choose the value representation for the second column of the registers.',
                 icon: 'cpu'
             },
             {

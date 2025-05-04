@@ -125,11 +125,13 @@ export function getOperandSyntax(operand: OperandType) {
 
 // dec to binary, hex
 export function decToBinary(dec: number, bits: number): string {
-    return dec.toString(2).padStart(bits, '0');
+    const unsignedDec = dec >>> 0; // Convert to unsigned
+    return unsignedDec.toString(2).padStart(bits, '0');
 }
 
 export function decToHex(dec: number, bits: number): string {
-    return dec.toString(16).padStart(bits / 4, '0');
+    const unsignedDec = dec >>> 0; // Convert to unsigned
+    return unsignedDec.toString(16).padStart(bits / 4, '0');
 }
 
 

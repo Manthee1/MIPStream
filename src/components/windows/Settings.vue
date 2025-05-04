@@ -176,6 +176,7 @@ export default defineComponent({
     .tab-content
         display: flex
         flex-flow: column nowrap
+        overflow: auto
         gap: 1rem
         padding: 1rem
         width: 100%

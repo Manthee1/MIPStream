@@ -309,6 +309,8 @@ export default class MIPSBase {
             default: throw new Error("Unknown ALU operation");
         }
 
+        ALUResult = ALUResult | 0; // Ensure ALUResult is a 32-bit integer
+
         // Forward ALUResult
         this.stageRegisters.EXtoMEM.ALUResult.value = ALUResult;
         this.stageRegisters.EXtoMEM.Zero.value = _.Zero_EX.value = ALUResult === 0 ? 1 : 0;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import { decToHex } from '../../assets/js/utils';
+import { decToBinary, decToHex } from '../../assets/js/utils';
 </script>
 
 <template>
@@ -15,15 +15,19 @@ import { decToHex } from '../../assets/js/utils';
                 <li class="register-item" @click="editRegister(column * 16 + index)"
                     :class="{ 'editing': editRegisterIndex == column * 16 + index }"
                     v-for="(value, index) in registers.slice(column * 16, (column + 1) * 16)" :key="index">
-                    <span class="flex-0 register-name">R{{ column * 16 + index }}</span>
+                    <span class="flex-0 register-name">{{ $projectStore.getProjectSetting('registerPrefix') }}{{ column
+                        * 16 + index
+                        }}</span>
                     <!-- Binary value -->
                     <template v-if="editRegisterIndex == column * 16 + index">
                         <input class="input-small" type="number" v-model="registers[column * 16 + index]"
                             @keyup.enter="editRegisterIndex = -1" @blur="editRegisterIndex = -1" />
                     </template>
                     <template v-else>
-                        <span>0x{{ decToHex(value, 8) }}</span>
-                        <span>{{ value }}</span>
+                        <span>{{ parseValue(value,
+                            $projectStore.getProjectSetting('registerValueRepresentationColumn1')) }}</span>
+                        <span>{{ parseValue(value,
+                            $projectStore.getProjectSetting('registerValueRepresentationColumn2')) }}</span>
                     </template>
                 </li>
             </ul>
@@ -62,6 +66,20 @@ export default defineComponent({
                 input.focus();
                 input.select();
             });
+        },
+        parseValue(value: number, type: string) {
+            switch (type) {
+                case 'hex':
+                    return '0x' + decToHex(value, 8);
+                case 'dec':
+                    return value;
+                case 'unsignedDec':
+                    return value >>> 0;
+                case 'bin':
+                    return decToBinary(value, 32);
+                default:
+                    return value;
+            }
         },
     },
 });
