@@ -29,11 +29,6 @@ import { decToHex } from '../../assets/js/utils';
                 </span>
             </template>
         </div>
-        <div>
-            <p class="small">
-                size: {{ $simulationStore.core.dataMemory.length }} bytes
-            </p>
-        </div>
     </div>
 </template>
 
