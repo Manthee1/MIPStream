@@ -133,6 +133,16 @@ export default class MIPSBase {
 
     }
 
+    loadMemory(data: number[]) {
+        if (data.length > this.options.dataMemorySize) {
+            throw new Error(`Data size exceeds data memory size`);
+        }
+        this.dataMemory = new Array(this.options.dataMemorySize).fill(0);
+        for (let i = 0; i < data.length; i++) {
+            this.dataMemory[i] = data[i];
+        }
+    }
+
 
 
 
@@ -361,11 +371,14 @@ export default class MIPSBase {
 
         if (currStage.MemWrite.value) {
             // Check if address is valid, if not throw an error and halt the program
-            if (address < 0 || address >= this.options.dataMemorySize) {
+            if (address < 0 || address + 3 >= this.options.dataMemorySize) {
                 this.halt();
                 throw new Error(`Segmentation fault: Invalid memory access at address 0x${address.toString(16).toUpperCase()}`);
             }
-            this.dataMemory[address] = currStage.Reg2Data.value;
+            for (let i = 0; i < 4; i++) {
+                const byteAddress = address + i;
+                this.dataMemory[byteAddress] = (currStage.Reg2Data.value >> (i * 8)) & 0xFF;
+            }
         }
 
         if (currStage.MemRead.value)

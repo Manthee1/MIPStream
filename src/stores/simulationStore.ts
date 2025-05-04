@@ -147,7 +147,7 @@ export const useSimulationStore = defineStore('simulation', {
                 });
                 return;
             }
-
+            let memory: number[] = [];
             try {
                 this.status = 'paused';
                 this.errors = [];
@@ -156,6 +156,7 @@ export const useSimulationStore = defineStore('simulation', {
                 instructionMemory = data.instructions;
                 this.PCToLineMap = data.pcLineMap;
                 this.instructionCount = data.instructions.length;
+                memory = data.memory;
             } catch (errors: any) {
                 const errorMessage = 'Error/s occurred while loading the program';
                 this.updateErrors();
@@ -173,6 +174,7 @@ export const useSimulationStore = defineStore('simulation', {
             this.loadedProgram = this.program;
             try {
                 this.core.loadProgram(instructionMemory);
+                this.core.loadMemory(memory);
             }
             catch (error: any) {
                 notify({
