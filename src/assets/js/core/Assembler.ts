@@ -203,8 +203,8 @@ export class Assembler {
                 }
 
                 dataMemoryReferences.set(variableName, 0);
-                const dataType = lineContent.split(' ')[1];
-                const value = lineContent.split(' ')[2];
+                const dataType = lineContent.split(':')[1].trim().split(' ')[0];
+                const value = lineContent.split(':')[1].trim().split(' ')[1];
                 const dataTypeSizeMap: { [key: string]: number } = {
                     '.byte': 1,
                     '.half': 2,
