@@ -105,7 +105,13 @@ export class Assembler {
                 imm = value - pc - 1;
             } else if (operandType === "MEM_ADDRESS") {
                 if (!isEffectiveAddress(operand)) throw new Error(`Invalid effective address: ${operand}.`);
-                [rs, imm] = [getEffectiveAddressRegister(operand), getEffectiveAddressImm(operand)];
+                let temp;
+                [rs, temp] = [getEffectiveAddressRegister(operand), getEffectiveAddressImm(operand)];
+
+                if (operand.startsWith('0b')) temp = parseInt(operand.slice(2), 2);
+                if (isXBitSigned(temp, 16)) throw new Error(`Address immediate value must be a 16-bit signed integer: ${temp}.`);
+                else imm = temp;
+
             } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
 

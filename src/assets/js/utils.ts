@@ -14,10 +14,7 @@ const mnemonics = new Set(baseInstructionConfig.map((instruction) => instruction
  * @returns True if the string is a register, false otherwise.
  */
 export function isRegister(str: string, registerPrefix = 'R'): boolean {
-    console.log('registerPrefix', registerPrefix);
-
     const registerPattern = new RegExp(`^${registerPrefix}\\d+$`);
-    console.log('isRegister', str, registerPattern, registerPattern.test(str));
     return registerPattern.test(str);
 
 }
@@ -67,8 +64,8 @@ export function isXBitSigned(value: number, x: number): boolean {
 }
 
 export function isEffectiveAddress(value: string): boolean {
-    // imm(reg) or imm
-    const effectiveAddressPattern = /^-?\d+\(R\d+\)$|^(-?\d+)$/;
+    // imm(reg) or imm, where imm can be decimal, hex (0x), or binary (0b)
+    const effectiveAddressPattern = /^(-?\d+|0x[0-9A-Fa-f]+|0b[01]+)\(R\d+\)$|^(-?\d+|0x[0-9A-Fa-f]+|0b[01]+)$/;
     return effectiveAddressPattern.test(value);
 }
 
