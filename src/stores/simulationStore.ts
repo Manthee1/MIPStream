@@ -32,6 +32,7 @@ export const useSimulationStore = defineStore('simulation', {
         instructionCount: 0 as number,
         stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
         errors: [] as string[],
+        runtimeErrors: [] as string[],
         errorsUpdateTimeout: null as any,
     }),
     getters: {
@@ -150,6 +151,7 @@ export const useSimulationStore = defineStore('simulation', {
             try {
                 this.status = 'paused';
                 this.errors = [];
+                this.runtimeErrors = [];
                 const data = this.assembler.assemble(this.program);
                 instructionMemory = data.instructions;
                 this.PCToLineMap = data.pcLineMap;
@@ -187,7 +189,7 @@ export const useSimulationStore = defineStore('simulation', {
         step() {
             if (this.status != 'paused') return;
             // Add current pc to stagePCs and remove the oldest one
-            this.core.runCycle();
+            this.runCycle();
             this.shiftStagePCs();
             this.cpuDiagram.draw();
             console.log(clone(this.stagePCs));
@@ -213,7 +215,7 @@ export const useSimulationStore = defineStore('simulation', {
             // Run until the program is finished
             while (this.status == 'running' && !this.core.halted) {
                 // Add current pc to stagePCs and remove the oldest one
-                this.core.runCycle();
+                this.runCycle();
                 this.shiftStagePCs();
                 this.cpuDiagram.draw();
                 console.log(this.breakpoints, this.PCToLineMap[this.core.PC.value / 4]);
@@ -226,6 +228,21 @@ export const useSimulationStore = defineStore('simulation', {
             }
             if (this.core.halted)
                 this.status = 'stopped';
+        },
+
+        runCycle() {
+            try {
+                this.core.runCycle();
+            } catch (error: any) {
+                console.error(error);
+                this.status = 'stopped';
+                notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'Runtime Error: ' + error.message,
+                });
+                this.runtimeErrors.push(error.message);
+            }
         },
 
 

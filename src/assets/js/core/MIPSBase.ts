@@ -359,8 +359,14 @@ export default class MIPSBase {
         // Memory
         const address = currStage.ALUResult.value;
 
-        if (currStage.MemWrite.value)
+        if (currStage.MemWrite.value) {
+            // Check if address is valid, if not throw an error and halt the program
+            if (address < 0 || address >= this.options.dataMemorySize) {
+                this.halt();
+                throw new Error(`Segmentation fault: Invalid memory access at address 0x${address.toString(16).toUpperCase()}`);
+            }
             this.dataMemory[address] = currStage.Reg2Data.value;
+        }
 
         if (currStage.MemRead.value)
             this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value = this.dataMemory[address];
