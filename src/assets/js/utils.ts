@@ -64,8 +64,9 @@ export function isXBitSigned(value: number, x: number): boolean {
 }
 
 export function isEffectiveAddress(value: string): boolean {
+
     // imm(reg) or imm, where imm can be decimal, hex (0x), or binary (0b)
-    const effectiveAddressPattern = /^(-?\d+|0x[0-9A-Fa-f]+|0b[01]+)\(R\d+\)$|^(-?\d+|0x[0-9A-Fa-f]+|0b[01]+)$/;
+    const effectiveAddressPattern = /^(0x[0-9A-Fa-f]+|0b[01]+|\d+)\s*\(\s*[Rr]\d+\s*\)$/;
     return effectiveAddressPattern.test(value);
 }
 

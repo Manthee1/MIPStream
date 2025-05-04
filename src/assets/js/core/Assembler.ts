@@ -108,7 +108,11 @@ export class Assembler {
 
                 // Check if the operand is a variable in dataMemoryReferences or an effective address
                 const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+                console.log(operand);
+
                 const isEffectiveAddressEvaluated = isEffectiveAddress(operand);
+                console.log(isEffectiveAddressEvaluated, operand);
+
                 if (!variableRegex.test(operand) && !isEffectiveAddressEvaluated)
                     throw new Error(`Invalid address: ${operand}.`);
 
@@ -120,9 +124,9 @@ export class Assembler {
                     if (isXBitSigned(temp, 16)) throw new Error(`Address immediate value must be a 16-bit signed integer: ${temp}.`);
                     else imm = temp;
                 }
-                else if (dataMemoryReferences.has(operand)) {
-                    imm = dataMemoryReferences.get(operand) as number;
-                }
+                if (!dataMemoryReferences.has(operand))
+                    throw new Error(`Invalid address or variable: ${operand}.`);
+                imm = dataMemoryReferences.get(operand) as number;
             } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
 
