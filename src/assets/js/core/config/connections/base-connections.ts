@@ -264,7 +264,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            15
+            31
         ],
         "bends": [
             {
@@ -1736,7 +1736,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            15
         ],
         "bends": [
             {

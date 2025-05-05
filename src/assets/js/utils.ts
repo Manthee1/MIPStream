@@ -56,12 +56,32 @@ export function isValue(str: string): boolean {
 }
 
 export function isXBit(value: number, x: number): boolean {
-    return value < 0 || value >= 2 ** x;
+    return value >= -(2 ** (x - 1)) && value < 2 ** x;
 }
 
+// Check if the value is signed
 export function isXBitSigned(value: number, x: number): boolean {
-    return value < -(2 ** (x - 1)) || value >= 2 ** (x - 1);
+    return value >= -(2 ** (x - 1)) && value < 2 ** (x - 1);
 }
+
+export function isXBitUnsigned(value: number, x: number): boolean {
+    return value >= 0 && value < 2 ** x;
+}
+
+export function toSigned(value: number, x: number): number {
+    if (value >= 2 ** (x - 1)) {
+        // Convert to signed
+        return value - (1 << x);
+    }
+    return value;
+}
+
+
+export function toUnsigned(value: number): number {
+    return value >>> 0; // Convert to 32 bit unsigned
+}
+
+
 
 export function isEffectiveAddress(value: string): boolean {
 
@@ -83,6 +103,10 @@ export function isMnemonic(mnemonic: string): boolean {
     return mnemonics.has(mnemonic.trim());
 }
 
+export function extractOperands(line: string): string[] {
+    const operands = line.split(',').map(operand => operand.trim());
+    return operands;
+}
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
     const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
@@ -130,6 +154,14 @@ export function decToBinary(dec: number, bits: number): string {
 export function decToHex(dec: number, bits: number): string {
     const unsignedDec = dec >>> 0; // Convert to unsigned
     return unsignedDec.toString(16).padStart(bits / 4, '0');
+}
+
+export function decToUnsigned(value: number, bits: number): number {
+    if (value < 0) {
+        // Convert negative value to unsigned
+        return (1 << bits) + value;
+    }
+    return value;
 }
 
 

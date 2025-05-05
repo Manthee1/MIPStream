@@ -91,7 +91,7 @@ export const projectSettingTabs: SettingTab[] = [
                 type: 'radio',
                 default: 'hex',
                 options: [
-                    { value: 'dec', label: 'Decimal' },
+                    { value: 'dec', label: 'Signed Decimal' },
                     { value: 'unsignedDec', label: 'Unsigned Decimal' },
                     { value: 'hex', label: 'Hexadecimal' },
                     { value: 'bin', label: 'Binary' },
@@ -105,12 +105,25 @@ export const projectSettingTabs: SettingTab[] = [
                 type: 'radio',
                 default: 'unsignedDec',
                 options: [
-                    { value: 'dec', label: 'Decimal' },
+                    { value: 'dec', label: 'Signed Decimal' },
                     { value: 'unsignedDec', label: 'Unsigned Decimal' },
                     { value: 'hex', label: 'Hexadecimal' },
                     { value: 'bin', label: 'Binary' },
                 ],
                 description: 'Choose the value representation for the second column of the registers.',
+                icon: 'cpu'
+            },
+            // Show advace register nameing convention or simple
+            {
+                key: 'registerNamingConvention',
+                label: 'Register Naming Convention',
+                type: 'radio',
+                default: 'simple',
+                options: [
+                    { value: 'simple', label: 'Simple' },
+                    { value: 'advanced', label: 'Advanced' },
+                ],
+                description: 'Choose the register naming convention.',
                 icon: 'cpu'
             },
             {
@@ -140,13 +153,27 @@ export const projectSettingTabs: SettingTab[] = [
                 icon: 'cpu'
             },
             {
-                key: 'useAdvanceRegisterNaming',
-                label: 'Register Naming Convention',
-                description: 'Choose the register naming convention for the simulation.',
-                type: "checkbox",
+                key: 'diagramValueBoxes',
+                label: 'Value Boxes',
+                type: 'checkbox',
                 default: false,
+                description: 'Show values in a boxes in the diagram.',
                 icon: 'cpu'
             },
+            {
+                key: 'diagramShowValues',
+                label: 'Show Values',
+                description: 'Show values in the diagram.',
+                type: 'radio',
+                default: 'all',
+                options: [
+                    { value: 'none', label: 'None', description: 'Do not show any values' },
+                    { value: 'show', label: 'All', description: 'Show all values' },
+                    { value: 'boxed', label: 'Boxed', description: 'Show values in boxes' },
+                ],
+                icon: 'cpu'
+            },
+
         ]
     }
 ];

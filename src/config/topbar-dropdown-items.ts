@@ -200,17 +200,18 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
 
                 dropdownItemsConfig.seperatorItem,
 
-                dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.instructionConfig,
+                dropdownItemsConfig.seperatorItem,
+                dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.projectSettingsItem,
                 dropdownItemsConfig.helpItem,
                 dropdownItemsConfig.aboutItem,
 
                 dropdownItemsConfig.seperatorItem,
 
-                dropdownItemsConfig.viewsItem,
+                // dropdownItemsConfig.viewsItem,
 
-                dropdownItemsConfig.seperatorItem,
+                // dropdownItemsConfig.seperatorItem,
 
                 dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.exitItem

@@ -44,14 +44,14 @@ export const stageRegisters: Record<string, Record<string, Ref<number>>> = {
         WriteRegister: _.WriteRegister_EX,
     },
     MEMtoWB: {
-        IR: _.IR_WB,
+        IR: _.IR_MEM,
         // Control Signals
-        RegWrite: _.RegWrite_WB,
-        MemtoReg: _.MemtoReg_WB,
+        RegWrite: _.RegWrite_MEM,
+        MemtoReg: _.MemtoReg_MEM,
 
-        ALUResult: _.ALUResult_WB,
-        MemReadResult: _.MemReadResult_WB,
-        WriteRegister: _.WriteRegister_WB,
+        ALUResult: _.ALUResult_MEM,
+        MemReadResult: _.MemReadResult_MEM,
+        WriteRegister: _.WriteRegister_MEM,
 
     },
 }

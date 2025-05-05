@@ -1,4 +1,4 @@
-import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, } from "../utils"
+import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, toSigned, } from "../utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
 
 export class Assembler {
@@ -6,6 +6,11 @@ export class Assembler {
     mnemonics: Set<string>;
     options: any = {
         registerPrefix: '$',
+    };
+    public static dataDirectivesSizeMap: { [key: string]: number } = {
+        '.byte': 1,
+        '.half': 2,
+        '.word': 4,
     };
 
     constructor(INSTRUCTION_SET: InstructionConfig[], options: any = {}) {
@@ -94,8 +99,8 @@ export class Assembler {
                 if (!isValue(operand)) throw new Error(`Invalid immediate value: ${operand}.`);
                 let temp = parseInt(operand);
                 if (operand.startsWith('0b')) temp = parseInt(operand.slice(2), 2);
-                if (isXBitSigned(temp, 16)) throw new Error(`Immediate value must be a 16-bit signed integer: ${operand}.`);
-                // CHeck if the immediate value is binary
+                if (!isXBit(temp, 16)) throw new Error(`Immediate value must be a 16-bit integer: signed range(-32768 to 32767): ${temp}.`);
+                // Check if the immediate value is binary
                 // else if (operand.startsWith('0x')) imm = parseInt(operand.slice(2), 16);
                 else imm = temp;
             } else if (operandType === "LABEL") {
@@ -108,24 +113,26 @@ export class Assembler {
 
                 // Check if the operand is a variable in dataMemoryReferences or an effective address
                 const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
-                console.log(operand);
-
                 const isEffectiveAddressEvaluated = isEffectiveAddress(operand);
-                console.log(isEffectiveAddressEvaluated, operand);
+                console.log(`isEffectiveAddressEvaluated: ${isEffectiveAddressEvaluated}`);
+
 
                 if (!variableRegex.test(operand) && !isEffectiveAddressEvaluated)
-                    throw new Error(`Invalid address: ${operand}.`);
+                    throw new Error(`Invalid address or data label: ${operand}.`);
 
                 // If its a variable, get the address from dataMemoryReferences
-                let temp;
                 if (isEffectiveAddressEvaluated) {
+                    let temp;
                     [rs, temp] = [getEffectiveAddressRegister(operand), getEffectiveAddressImm(operand)];
                     if (operand.startsWith('0b')) temp = parseInt(operand.slice(2), 2);
-                    if (isXBitSigned(temp, 16)) throw new Error(`Address immediate value must be a 16-bit signed integer: ${temp}.`);
+                    if (!isXBit(temp, 16)) throw new Error(`Immediate value must be a 16-bit integer: signed range(-32768 to 32767): ${temp}.`);
                     else imm = temp;
+                    continue;
+
                 }
                 if (!dataMemoryReferences.has(operand))
-                    throw new Error(`Invalid address or variable: ${operand}.`);
+                    throw new Error(`Invalid address or data label: ${operand}.`);
+
                 imm = dataMemoryReferences.get(operand) as number;
             } else throw new Error(`Invalid operand type: ${operandType}.`);
         }
@@ -175,6 +182,12 @@ export class Assembler {
             throw errors;
         }
 
+        // Make sure that the text section is defined if the data section is defined
+        if (dataSectionLine !== -1 && textSectionLine === -1) {
+            errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, dataSectionLine, `Text section must be defined after data section.`));
+            throw errors;
+        }
+
         // Split the program into data and text sections.
         let dataSection = programLines.slice(dataSectionLine + 1, textSectionLine);
         let textSection = programLines.slice(textSectionLine + 1);
@@ -187,35 +200,31 @@ export class Assembler {
         if (dataSectionLine !== -1)
             dataSection.forEach((lineContent, line) => {
 
-                // Syntax: variableName: .dataType value
-                // Data types: .word, .byte, .half
+                // Syntax: variableName: .directive value
+                // Diresctives: .word, .byte, .half
                 // Ignore comments
                 if (lineContent.trim() === '') return;
                 if (lineContent.trim().startsWith(';')) return;
 
-                // The line must start with a valid unique variable name
+                // The line must start with a valid unique data label
                 const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*:/;
                 if (!variableRegex.test(lineContent)) {
-                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Invalid variable name: ${lineContent} on line ${line + 1}.`));
+                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Invalid data label: ${lineContent} on line ${line + 1}.`));
                     return;
                 }
 
-                const variableName = lineContent.split(':')[0].trim();
-                if (dataMemoryReferences.has(variableName)) {
-                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Duplicate variable name: ${variableName} on line ${line + 1}.`));
+                const dataLabel = lineContent.split(':')[0].trim();
+                if (dataMemoryReferences.has(dataLabel)) {
+                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Duplicate data label: ${dataLabel} on line ${line + 1}.`));
                     return;
                 }
 
-                dataMemoryReferences.set(variableName, 0);
-                const dataType = lineContent.split(':')[1].trim().split(' ')[0];
+                dataMemoryReferences.set(dataLabel, 0);
+                const directive = lineContent.split(':')[1].trim().split(' ')[0];
                 const value = lineContent.split(':')[1].trim().split(' ')[1];
-                const dataTypeSizeMap: { [key: string]: number } = {
-                    '.byte': 1,
-                    '.half': 2,
-                    '.word': 4,
-                };
-                if (!dataTypeSizeMap[dataType]) {
-                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Invalid data type: ${dataType} on line ${line + 1}.`));
+
+                if (!Assembler.dataDirectivesSizeMap[directive]) {
+                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Invalid driective: ${directive} on line ${line + 1}.`));
                     return;
                 }
                 if (!isValue(value)) {
@@ -225,21 +234,21 @@ export class Assembler {
 
                 let temp = parseInt(value);
                 if (value.startsWith('0b')) temp = parseInt(value.slice(2), 2);
-                if (isXBitSigned(temp, dataTypeSizeMap[dataType] * 8)) {
-                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Value must be a ${dataTypeSizeMap[dataType] * 8}-bit signed integer: ${value} on line ${line + 1}.`));
+                if (!isXBit(temp, Assembler.dataDirectivesSizeMap[directive] * 8)) {
+                    errors.push(new AssemblerError(ErrorType.SYNTAX_ERROR, line, `Value must be a ${Assembler.dataDirectivesSizeMap[directive] * 8}-bit signed integer: ${value} on line ${line + 1}.`));
                     return;
                 }
 
                 // Split value into bytes and add to the data section values
                 let bytes = [];
-                for (let i = 0; i < dataTypeSizeMap[dataType]; i++) {
+                for (let i = 0; i < Assembler.dataDirectivesSizeMap[directive]; i++) {
                     bytes.push((temp >> (i * 8)) & 0xFF);
                 }
 
                 // Add the bytes to the data section values
                 memory.push(...bytes);
                 // Add the variable name to the data memory references
-                dataMemoryReferences.set(variableName, memory.length - dataTypeSizeMap[dataType]);
+                dataMemoryReferences.set(dataLabel, memory.length - Assembler.dataDirectivesSizeMap[directive]);
             });
 
         console.log(memory, dataMemoryReferences);

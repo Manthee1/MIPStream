@@ -1,10 +1,15 @@
 import * as monaco from 'monaco-editor';
+import { useProjectStore } from '../../stores/projectStore';
+
+
+
 
 export function getDefinitionProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
     // Constants
+    const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
+    const registers = Array.from({ length: 32 }, (_, i) => `${registerPrefix}${i}`);
     const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
-    const registers = Array.from({ length: 32 }, (_, i) => `R${i}`);
     const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
     const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
 

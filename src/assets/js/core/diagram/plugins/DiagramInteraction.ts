@@ -1,4 +1,5 @@
 import { useProjectStore } from "../../../../../stores/projectStore";
+import { decToBinary, decToHex } from "../../../utils";
 import { SpatialItem } from "../../../utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
@@ -225,11 +226,10 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                     let value: string | number = port.value instanceof Object ? port.value.value : port.value;
 
                     if (useProjectStore().getProjectSetting('diagramValueRepresentation') == 'hex') {
-                        value = '0x' + value.toString(16);
+                        value = '0x' + decToHex(value, port.bits);
                     } else if (useProjectStore().getProjectSetting('diagramValueRepresentation') == 'bin') {
-                        value = '0b' + value.toString(2);
+                        value = '0b' + decToBinary(value, port.bits);
                     }
-
                     const content: InfoBoxBodyContentConfig = {
                         type: 'text',
                         data: [`Value: ${value}`, `Bits: ${port.bits}`]

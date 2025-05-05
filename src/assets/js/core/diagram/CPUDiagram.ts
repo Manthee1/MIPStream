@@ -382,6 +382,17 @@ export class CPUDiagram {
                 this.drawText(componentLayout.label, 0, 0, 'black', '12px Arial', 'center', 'middle');
                 this.ctx.restore();
                 break;
+            case 'control_unit':
+                // Draw a rectangle with rounded corners
+                this.ctx.beginPath();
+                this.ctx.roundRect(x, y, width, height, 10);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.stroke();
+
+                // Draw the text
+                this.drawText('CU', x + width / 2, y + height / 2, 'black', '12px Arial', 'center', 'middle');
+                break;
 
             default:
                 // Draw the component
@@ -392,20 +403,13 @@ export class CPUDiagram {
 
         // Draw the ports
         if (!componentLayout.ports) return;
+        if (useProjectStore().getProjectSetting('diagramShowValues') == 'none') return;
         componentLayout.ports.forEach((portConfig) => {
             const id = `${componentLayout.id}.${portConfig.id}`;
             const port = this.ports.get(id) as PortLayout;
             if (!port) return;
             this.drawPort(port);
         });
-
-
-        this.ctx.closePath();
-        // Add the name to the center of the component
-
-
-
-
 
     }
 
@@ -466,7 +470,7 @@ export class CPUDiagram {
     }
 
     drawPort(port: PortLayout) {
-        const { x, y } = port.pos as Position;
+        let { x, y } = port.pos as Position;
         const width = 20;
         const height = 12;
 
@@ -484,8 +488,28 @@ export class CPUDiagram {
             value = '0b' + parseInt(value).toString(2);
         }
 
+        const portWidth = this.ctx.measureText(value).width;
+        const portHeight = 12;
+        // Push the text depending on the port location
+        switch (port.location) {
+            case 'top':
+                y -= portHeight;
+                break;
+            case 'bottom':
+                y += portHeight;
+                break;
+            case 'left':
+                x -= portWidth / 2;
+                break;
+            case 'right':
+                x += portWidth / 2;
+                break;
+        }
+        // Add a rectangle with the port value
+        if (useProjectStore().getProjectSetting('diagramShowValues') == 'boxed')
+            this.drawRectCenter(x, y, portWidth + 3, portHeight + 3, 'rgba(255, 255, 255, 0.2)', 'black');
+        this.drawText(value, x, y, 'black', portHeight + 'px Arial', 'center', 'middle');
 
-        this.drawText(value, x, y, 'black', '12px Arial', 'center', 'middle');
     }
 
     drawConnection(connectionLayout: ConnectionLayout) {
@@ -526,15 +550,17 @@ export class CPUDiagram {
         // Clear the canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Draw the components
-        this.components.forEach((component) => {
-            this.drawComponent(component);
-        });
+
         // Draw the connections
         this.ctx.strokeStyle = 'black';
         this.connections.forEach((connection) => {
             this.drawConnection(connection);
         });
+        // Draw the components
+        this.components.forEach((component) => {
+            this.drawComponent(component);
+        });
+
 
 
 

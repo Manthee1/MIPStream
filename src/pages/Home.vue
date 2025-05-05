@@ -26,7 +26,7 @@
           <tr v-for="project in projects" :key="project.id">
             <td>
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name
-              }}</router-link>
+                }}</router-link>
             </td>
             <!-- <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td> -->
             <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
@@ -90,7 +90,7 @@ export default defineComponent({
     },
 
     async updateProjects() {
-      this.projects = await getProjects(10, { by: 'savedAt', type: 'asc' });
+      this.projects = await getProjects(10, { by: 'savedAt', type: 'desc' });
 
     },
 

@@ -20,12 +20,14 @@ export const defaultLayoutGridConfig = {
             },
             {
                 "type": "leaf",
+
                 "data": {
                     "views": [
                         "editor"
                     ],
                     "activeView": "editor",
-                    "id": "3"
+                    "id": "3",
+
                 },
                 "size": 688
             },
@@ -102,9 +104,7 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "id": "editor",
         "contentComponent": "Editor",
         "title": "Editor",
-        "params": {
 
-        },
         "tabComponent": "DockviewTab",
 
     },

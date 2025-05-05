@@ -13,6 +13,7 @@ import { CPUS } from '../assets/js/core/config/cpus';
 import monaco, { initLSP } from '../config/monaco';
 import { validate } from '../config/monaco/validationProvider';
 import { getInstructions } from '../services/instructionsService';
+import { useProjectStore } from './projectStore';
 
 
 export const useSimulationStore = defineStore('simulation', {
@@ -80,6 +81,8 @@ export const useSimulationStore = defineStore('simulation', {
             this.assembler = new Assembler(this.core.instructionConfig, {
                 registerPrefix: project?.settings?.registerPrefix ?? defaultProjectSettings.registerPrefix,
             });
+
+            this.speed = project?.settings?.speed ?? defaultProjectSettings.speed;
 
             this.cpuType = cpuType;
 
@@ -245,6 +248,11 @@ export const useSimulationStore = defineStore('simulation', {
                 });
                 this.runtimeErrors.push(error.message);
             }
+        },
+
+        setSpeed(speed: number) {
+            this.speed = speed;
+            useProjectStore().setProjectSetting('speed', speed);
         },
 
 

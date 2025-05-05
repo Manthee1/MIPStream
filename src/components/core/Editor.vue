@@ -40,6 +40,21 @@ export default defineComponent({
 
 	mounted() {
 
+		// Find the topmost dv-groupview and dv-view and set overflow to visible
+
+		const thisEl = this.$el.parentElement
+
+		const dvGroupView = thisEl.closest('.dv-groupview');
+		if (dvGroupView) {
+			dvGroupView.style.overflow = 'visible';
+		}
+		const dvView = thisEl.closest('.dv-view');
+		if (dvView) {
+			dvView.style.overflow = 'visible';
+		}
+
+
+
 		console.log('Editor Mounted', this.params);
 		let code = this.params?.params.code
 		const editorEl = this.$refs.editor as HTMLElement;
@@ -205,7 +220,6 @@ export default defineComponent({
 .editor-container
 	min-width: 300px
 	height: 100%
-	overflow: auto
 	.monaco-editor
 		border: 1px var(--color-surface-1) solid
 		.overflow-guard

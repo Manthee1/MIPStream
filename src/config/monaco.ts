@@ -45,6 +45,8 @@ export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
                 [/\b\d+\b/, 'immediate'],
                 [/\b\w+:/, 'label'],
                 [/;.*/, 'comment'],
+                [/\.(data|text)/, 'section'],
+                [/\.(byte|half|word)/, 'data-type'],
             ],
             label: [
                 [/\w+/, 'label', '@pop']
@@ -93,6 +95,8 @@ const rulesDark = [
     { token: 'immediate', foreground: 'CE9178' },
     { token: 'label', foreground: 'DCDCAA' },
     { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+    { token: 'section', foreground: '4EC9B0' },
+    { token: 'data-type', foreground: 'CE9178' },
     ...githubDarkTheme.rules,
 ] as monaco.editor.ITokenThemeRule[];
 
@@ -111,6 +115,8 @@ const rulesWhite = [
     { token: 'immediate', foreground: '3f3f3f' },
     { token: 'label', foreground: 'ab4264' },
     { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+    { token: 'section', foreground: '006000' },
+    { token: 'data-type', foreground: '3f3f3f' },
 ] as monaco.editor.ITokenThemeRule[];
 
 monaco.editor.defineTheme('light', {

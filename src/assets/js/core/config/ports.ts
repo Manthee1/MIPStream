@@ -91,7 +91,7 @@ export const muxesPorts = {
         ...controlInputPort(_.ALUSrc_EX, "ALUSrc"),
     ],
     MemtoRegMUX: [
-        ...twoToOnePorts(_.ALUResult_MEM, _.MemReadResult_MEM, _.WriteRegisterData_WB),
+        ...twoToOnePorts(_.MemReadResult_WB, _.ALUResult_WB, _.WriteRegisterData_WB),
         ...controlInputPort(_.MemtoReg_MEM, "MemtoReg"),
     ],
     BranchMUX: [

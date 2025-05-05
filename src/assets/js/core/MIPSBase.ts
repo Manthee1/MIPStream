@@ -381,18 +381,36 @@ export default class MIPSBase {
             }
         }
 
-        if (currStage.MemRead.value)
-            this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value = this.dataMemory[address];
+        if (currStage.MemRead.value) {
+            // Check if address is valid, if not throw an error and halt the program
+            if (address < 0 || address + 3 >= this.options.dataMemorySize) {
+                this.halt();
+                throw new Error(`Segmentation fault: Invalid memory access at address 0x${address.toString(16).toUpperCase()}`);
+            }
+            // Load 4 bytes from memory
+            this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value =
+                (this.dataMemory[address] |
+                    (this.dataMemory[address + 1] << 8) |
+                    (this.dataMemory[address + 2] << 16) |
+                    (this.dataMemory[address + 3] << 24)) >>> 0; // Ensure unsigned 32-bit integer
+        }
 
     }
 
     writeback() {
         let currStage = this.stageRegisters.MEMtoWB;
 
+        _.IR_WB.value = currStage.IR.value;
+        _.RegWrite_WB.value = currStage.RegWrite.value;
+        _.MemtoReg_WB.value = currStage.MemtoReg.value;
+        _.ALUResult_WB.value = currStage.ALUResult.value;
+        _.MemReadResult_WB.value = currStage.MemReadResult.value;
+
+
         // Writeback
         if (currStage.RegWrite.value) {
             const value = currStage.MemtoReg.value ? currStage.MemReadResult.value : currStage.ALUResult.value;
-            this.registerFile[currStage.WriteRegister.value] = value;
+            _.WriteRegisterData_WB.value = this.registerFile[currStage.WriteRegister.value] = value;
 
             console.log(`Writeback: ${currStage.WriteRegister.value} = ${value}`);
 
