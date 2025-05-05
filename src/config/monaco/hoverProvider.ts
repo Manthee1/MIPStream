@@ -1,15 +1,12 @@
 import * as monaco from 'monaco-editor';
 import { useProjectStore } from '../../stores/projectStore';
-import { decToBinary, decToHex, isValue, decToUnsigned } from '../../assets/js/utils';
+import { decToBinary, decToHex, isValue, decToUnsigned, isRegister, advanceRegisterNames, getRegisterNumber, registerDescriptions } from '../../assets/js/utils';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
 
 export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
     // Constants
     const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
-    const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
-    const registers = Array.from({ length: 32 }, (_, i) => `${registerPrefix}${i}`);
     const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
-    const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
 
     return {
         provideHover: function (model, position) {
@@ -44,15 +41,7 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
                     }
                 }
 
-                if (registerRegex.test(text)) {
-                    return {
-                        range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
-                        contents: [
-                            { value: `** Register ${text} ** ` },
-                            { value: 'General purpose register' }
-                        ]
-                    };
-                }
+
             }
 
             // Extract the value at position
@@ -61,10 +50,13 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
             // Search forward for the first non-alphanumeric character
             console.log('position.column', position.column, lineContent, lineContent[position.column]);
 
+
+            const allowedCharsRegex = /[\w-\$]/;
+
             let end = position.column - 1;
             for (; end < lineContent.length; end++) {
                 const char = lineContent[end];
-                if (!/[\w-]/.test(char)) {
+                if (!allowedCharsRegex.test(char)) {
                     break;
                 }
             }
@@ -72,7 +64,7 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
             let start = position.column - 1;
             for (; start >= 0; start--) {
                 const char = lineContent[start];
-                if (!/[\w-]/.test(char)) {
+                if (!allowedCharsRegex.test(char)) {
                     start++;
                     break;
                 }
@@ -105,6 +97,23 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
 | **Hex**        | 0x${decToHex(unsignedValue32, 32)} | 0x${decToHex(unsignedValue16, 16)} | 0x${decToHex(unsignedValue8, 8)} |
                             `
                         }
+                    ]
+                };
+            }
+
+
+            if (isRegister(wordValue)) {
+                const registerValue = getRegisterNumber(wordValue);
+                const prefix = wordValue[0];
+                let alt = prefix + registerValue;
+                if (!isNaN(Number(wordValue.slice(1)))) {
+                    alt = prefix + advanceRegisterNames[registerValue];
+                }
+                return {
+                    range: new monaco.Range(position.lineNumber, start + 1, position.lineNumber, end + 1),
+                    contents: [
+                        { value: `**Register ${wordValue} (${alt})**` },
+                        { value: registerDescriptions[registerValue].description },
                     ]
                 };
             }

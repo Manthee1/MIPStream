@@ -104,7 +104,7 @@ export default defineComponent({
         display: flex
         justify-content: center
         align-items: center
-        background-color: var(--color-surface-3)
+        background-color: var(--color-surface-1)
         text-align: center
         padding: 0px 0.2rem
         border: 1px solid var(--color-surface-1)

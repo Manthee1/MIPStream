@@ -58,33 +58,42 @@ export const projectSettingTabs: SettingTab[] = [
                 label: 'Speed',
                 type: 'number',
                 default: 10,
+                min: 1,
+                max: 100,
+                step: 1,
                 description: 'Choose the speed of the simulation.',
                 icon: 'cpu'
             },
         ]
     },
     {
-        name: 'Assembler',
-        icon: 'code',
+        name: 'Registers',
+        icon: 'cpu',
         settings: [
             {
                 key: 'registerPrefix',
-                label: 'Register Accessor Symbol',
+                label: 'Prefered Register Prefix',
                 type: 'radio',
                 default: 'R',
                 options: [
                     { value: '$', label: '$' },
                     { value: 'R', label: 'R' },
                 ],
-                description: 'Choose the symbol used to access registers in the assembler.',
+                description: 'Choose the prefered register prefix to show in the registers panel and use in code completions.',
                 icon: 'code'
             },
-        ]
-    },
-    {
-        name: 'Visualization',
-        icon: 'eye',
-        settings: [
+            {
+                key: 'registerNamingConvention',
+                label: 'Register Naming Convention',
+                type: 'radio',
+                default: 'simple',
+                options: [
+                    { value: 'simple', label: 'Simple', description: '0, 1, 2, ...' },
+                    { value: 'advanced', label: 'Advanced', description: 'zero, at, v0, ...' },
+                ],
+                description: 'Choose which register naming convention to show in the registers panel.',
+                icon: 'cpu'
+            },
             {
                 key: 'registerValueRepresentationColumn1',
                 label: 'Register Value Representation (Column 1)',
@@ -113,19 +122,14 @@ export const projectSettingTabs: SettingTab[] = [
                 description: 'Choose the value representation for the second column of the registers.',
                 icon: 'cpu'
             },
-            // Show advace register nameing convention or simple
-            {
-                key: 'registerNamingConvention',
-                label: 'Register Naming Convention',
-                type: 'radio',
-                default: 'simple',
-                options: [
-                    { value: 'simple', label: 'Simple' },
-                    { value: 'advanced', label: 'Advanced' },
-                ],
-                description: 'Choose the register naming convention.',
-                icon: 'cpu'
-            },
+        ]
+    },
+    {
+        name: 'Visualization',
+        icon: 'eye',
+        settings: [
+
+
             {
                 key: 'memoryValueRepresentation',
                 label: 'Memory Value Representation',

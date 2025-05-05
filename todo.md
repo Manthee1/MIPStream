@@ -5,7 +5,7 @@ General
 - [x] Add project settings
 - [x] Add options to each workspace panel
 - [x] Add multi cpu support
-- [ ] Add custom instructions
+- [x] Add custom instructions
 - [ ] Add help
 
 Home
@@ -25,7 +25,7 @@ Simulator
 - [x] Add shortcuts simulation control
 - [x] Add hex and binary number support
 - [x] Disable control buttons when not possible to use
-- [x] Add advance register convention support
+- [ ] Add advance register convention support
 - [x] Add ability to change register and memory values
 
 Project Settings
@@ -54,7 +54,7 @@ Other Visuals
 - [x] Remove CPU window title
 - [x] Improve memory view
 - [ ] Add the ability to show what data is going to be changed/used in the next instruction
-- [ ] Fix editor popover clipping
+- [x] Fix editor popover clipping
 - [ ] Add info about code changes that were not assembled while the cpu is running
 
 Other Functionality

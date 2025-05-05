@@ -4,10 +4,11 @@ import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
 // import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 import { getCompletionsProvider } from './monaco/completionsProvider';
 import { getDefinitionProvider } from './monaco/definitionProvider';
-import { getDefaultInstructionDefOperands, isLabel } from '../assets/js/utils';
+import { advanceRegisterNames, getDefaultInstructionDefOperands, isLabel } from '../assets/js/utils';
 import { baseInstructionConfig } from '../assets/js/core/config/instructions';
 import { getHoverProvider } from './monaco/hoverProvider';
 import { updateValidationProvider } from './monaco/validationProvider';
+import { useProjectStore } from '../stores/projectStore';
 
 
 let completionsProvider: any | null = null;
@@ -19,9 +20,11 @@ export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
 
     // Constants
     const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
-    const registers = Array.from({ length: 32 }, (_, i) => `R${i}`);
+    const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
+    const registers = Array.from({ length: 32 }, (_, i) => `${i}`);
     const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
-    const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
+    const registerRegex = new RegExp(`([R\\$](${registers.join('|')}|${advanceRegisterNames.join('|')}))\\b`, 'g');
+    console.log('regex', registerRegex);
 
 
     // Unregister all providers

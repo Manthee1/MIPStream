@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { getDefaultInstructionDefOperands, getInstructionSyntax, getProgramLines } from '../../assets/js/utils';
+import { advanceRegisterNames, getDefaultInstructionDefOperands, getInstructionSyntax, getProgramLines } from '../../assets/js/utils';
 import { useProjectStore } from '../../stores/projectStore';
 import { Assembler } from '../../assets/js/core/Assembler';
 
@@ -7,9 +7,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
     // Constants
     const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
     const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
-    const registers = Array.from({ length: 32 }, (_, i) => `${registerPrefix}${i}`);
-    const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
-    const registerRegex = new RegExp(`\\b(${registers.join('|')})\\b`, 'g');
+    const registers = [...Array.from({ length: 32 }, (_, i) => `${registerPrefix}${i}`), ...advanceRegisterNames.map(x => registerPrefix + x)]
 
 
     let dataSectionLineIndex = -1;

@@ -67,4 +67,20 @@ export default defineComponent({
     transition: opacity 0.2s
 .fade-enter, .fade-leave-to
     opacity: 0
+.vue-notification-group .vue-notification 
+    background: var(--color-system-info)
+    border-left: 5px solid var(--color-system-info-dark)
+    &.success 
+        background: var(--color-system-success)
+        border-left-color: var(--color-system-success-dark)
+
+    &.warn 
+        background: var(--color-system-warning)
+        border-left-color: var(--color-system-warning-dark)
+
+    &.error 
+        background: var(--color-system-error)
+        border-left-color: var(--color-system-error-dark)
+
+
 </style>

@@ -1,5 +1,5 @@
 import { Assembler } from "../../assets/js/core/Assembler";
-import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, isEffectiveAddress, isLabel, isValue, isXBit, isXBitSigned, isXBitUnsigned, toSigned } from "../../assets/js/utils";
+import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, isEffectiveAddress, isLabel, isRegister, isValue, isXBit, isXBitSigned, isXBitUnsigned, toSigned } from "../../assets/js/utils";
 import { useProjectStore } from "../../stores/projectStore";
 import monaco from "../monaco";
 
@@ -10,14 +10,12 @@ export let validate = function (model: monaco.editor.ITextModel) {
 
 export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
     const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
-    const registers = Array.from({ length: 32 }, (_, i) => `${registerPrefix}${i}`);
     validate = function (model: monaco.editor.ITextModel) {
 
         const lines = model.getLinesContent();
         const errors: monaco.editor.IMarkerData[] = [];
         let labels = new Set<string>();
         let dataLabels = new Set<string>();
-        console.log('Validating', lines);
 
         let currentSection = '.text';
 
@@ -195,7 +193,7 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
                 const operand = operands[i];
                 const operandType = expectedOperandTypes[i];
                 if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION') {
-                    if (!registers.includes(operand)) {
+                    if (!isRegister(operand)) {
                         errors.push({
                             startLineNumber: index + 1,
                             startColumn: line.indexOf(operand) + 1,
@@ -256,10 +254,9 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
                     if (isEffectiveAddressEvaluated) {
                         const [rs, value] = [registerPrefix + getEffectiveAddressRegister(operand).toString(), getEffectiveAddressImm(operand).toString()];
-                        console.log('rs', rs, 'value', value);
 
                         // Check if the register is valid
-                        if (!registers.includes(rs)) {
+                        if (!isRegister(rs)) {
                             errors.push({
                                 startLineNumber: index + 1,
                                 startColumn: line.indexOf(rs) + 1,

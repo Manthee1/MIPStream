@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import { decToBinary, decToHex } from '../../assets/js/utils';
+import { advanceRegisterNames, decToBinary, decToHex } from '../../assets/js/utils';
 </script>
 
 <template>
@@ -15,9 +15,7 @@ import { decToBinary, decToHex } from '../../assets/js/utils';
                 <li class="register-item" @click="editRegister(column * 16 + index)"
                     :class="{ 'editing': editRegisterIndex == column * 16 + index }"
                     v-for="(value, index) in registers.slice(column * 16, (column + 1) * 16)" :key="index">
-                    <span class="flex-0 register-name">{{ $projectStore.getProjectSetting('registerPrefix') }}{{ column
-                        * 16 + index
-                        }}</span>
+                    <span class="flex-0 register-name">{{ getRegisterName(column * 16 + index) }}</span>
                     <!-- Binary value -->
                     <template v-if="editRegisterIndex == column * 16 + index">
                         <input class="input-small" type="number" v-model="registers[column * 16 + index]"
@@ -66,6 +64,17 @@ export default defineComponent({
                 input.focus();
                 input.select();
             });
+        },
+        getRegisterName(registerNumber: number) {
+            const prefix = this.$projectStore.getProjectSetting('registerPrefix');
+            console.log('registerNumber', this.$projectStore.getProjectSetting('registerNamingConvention'));
+
+            if (this.$projectStore.getProjectSetting('registerNamingConvention') == 'advanced') {
+                return prefix + advanceRegisterNames[registerNumber];
+            }
+
+            return prefix + registerNumber;
+
         },
         parseValue(value: number, type: string) {
             switch (type) {

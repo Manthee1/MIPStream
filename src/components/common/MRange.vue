@@ -35,6 +35,11 @@ export default defineComponent({
     created() {
         this.value = this.modelValue;
     },
+    watch: {
+        modelValue(newValue) {
+            this.value = newValue;
+        }
+    },
     computed: {
         gradientStyle() {
             return {

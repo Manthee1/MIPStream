@@ -85,8 +85,7 @@ export class Assembler {
             const operandType = instructionDef.operands[i];
 
             if (operandType === 'REG_SOURCE' || operandType === 'REG_DESTINATION' || operandType === 'REG_TARGET') {
-                if (!isRegister(operand, this.options.registerPrefix)) throw new Error(`Invalid register: ${operand}.`);
-                if (!isValidRegister(getRegisterNumber(operand))) throw new Error(`Invalid register: ${operand}.`);
+                if (!isRegister(operand)) throw new Error(`Invalid register: ${operand}.`);
                 const value = getRegisterNumber(operand);
                 switch (operandType) {
                     case 'REG_SOURCE': rs = value; break;
@@ -114,7 +113,6 @@ export class Assembler {
                 // Check if the operand is a variable in dataMemoryReferences or an effective address
                 const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
                 const isEffectiveAddressEvaluated = isEffectiveAddress(operand);
-                console.log(`isEffectiveAddressEvaluated: ${isEffectiveAddressEvaluated}`);
 
 
                 if (!variableRegex.test(operand) && !isEffectiveAddressEvaluated)
@@ -250,8 +248,6 @@ export class Assembler {
                 // Add the variable name to the data memory references
                 dataMemoryReferences.set(dataLabel, memory.length - Assembler.dataDirectivesSizeMap[directive]);
             });
-
-        console.log(memory, dataMemoryReferences);
 
 
 

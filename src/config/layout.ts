@@ -81,12 +81,12 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "contentComponent": "Registers",
         "title": "Registers",
         "tabComponent": "DockviewTab",
-        "params": {
-            'tab': {
-                'options': [
-                ]
-            }
-        }
+        // "params": {
+        //     'tab': {
+        //         'options': [
+        //         ]
+        //     }
+        // }
     },
     "memory": {
         "id": "memory",
@@ -104,7 +104,6 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "id": "editor",
         "contentComponent": "Editor",
         "title": "Editor",
-
         "tabComponent": "DockviewTab",
 
     },
