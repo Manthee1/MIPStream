@@ -49,4 +49,5 @@ interface SettingWindowConfig {
     title: string;
     icon: string;
     description: string;
+    activeTabIndex: number;
 }

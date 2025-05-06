@@ -92,7 +92,7 @@ export default defineComponent({
     font-size: 1rem
     padding: 0.5rem
     gap: 0.2rem
-    background-color: var(--color-surface-0)
+    // background-color: var(--color-surface-0)
     width: 100%;
     overflow: auto;
     ol,ul,li

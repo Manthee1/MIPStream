@@ -12,7 +12,7 @@ export function initKeyboardHandler() {
             e.key.toUpperCase()].join(" ").trim().replace(/\s+/g, ' ');
 
         if (keyboardShortcuts.hasOwnProperty(keyString)) {
-            keyboardShortcuts[keyString]();
+            keyboardShortcuts[keyString].action();
 
             e.preventDefault();
             e.stopPropagation();
@@ -22,7 +22,7 @@ export function initKeyboardHandler() {
 
 
 export function setKeyboardShortcut(key: string, action: () => void) {
-    keyboardShortcuts[key] = action;
+    keyboardShortcuts[key].action = action;
 }
 export function removeKeyboardShortcut(key: string) {
     delete keyboardShortcuts[key];

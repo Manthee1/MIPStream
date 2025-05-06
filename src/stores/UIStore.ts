@@ -4,6 +4,10 @@ import { useRouter } from 'vue-router';
 import { useNotification } from '@kyvg/vue3-notification';
 import { DockviewApi, GroupviewPanelState, IDockviewPanel } from 'dockview-vue';
 import { panelsConfig } from '../config/layout';
+import { useProjectStore } from './projectStore';
+import { defaultProjectSettings } from '../services/projectsService';
+import { projectSettingsWindowConfig } from '../config/settings/project-settings';
+import { generalSettingsConfig } from '../config/settings/general-settings';
 
 
 const theme = settings.theme;
@@ -15,6 +19,7 @@ export const useUIStore = defineStore('ui', {
     state: () => ({
         showProjectSettings: false,
         showSettings: false,
+        showHelp: false,
         settingsWindowConfig: {} as SettingWindowConfig,
         theme: theme,
         modalData: {} as ModalData,
@@ -36,9 +41,33 @@ export const useUIStore = defineStore('ui', {
         closeSettings() {
             this.showSettings = false;
         },
+
+        openProjectSettings() {
+            const projectStore = useProjectStore();
+            if (!projectStore.currentProject) return;
+            if (!projectStore.currentProject.settings) {
+                projectStore.currentProject.settings = defaultProjectSettings;
+            }
+            projectSettingsWindowConfig.settings = projectStore.currentProject.settings;
+            this.openSettings(projectSettingsWindowConfig);
+        },
+
+        openGeneralSettings() {
+            generalSettingsConfig.settings = settings;
+            this.openSettings(generalSettingsConfig);
+        },
+
+        openHelp() {
+            this.showHelp = true;
+        },
+        closeHelp() {
+            this.showHelp = false;
+        },
+
         setTitle(title: string) {
             this.topBar.title = title;
         },
+
         setTheme(newTheme: string) {
             document.documentElement.classList.add('theme-transition');
             this.theme = newTheme;

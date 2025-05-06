@@ -68,7 +68,7 @@ export const projectSettingTabs: SettingTab[] = [
     },
     {
         name: 'Registers',
-        icon: 'cpu',
+        icon: 'columns',
         settings: [
             {
                 key: 'registerPrefix',
@@ -124,11 +124,11 @@ export const projectSettingTabs: SettingTab[] = [
             },
         ]
     },
+    // Memory
     {
-        name: 'Visualization',
-        icon: 'eye',
+        name: 'Memory',
+        icon: 'table',
         settings: [
-
 
             {
                 key: 'memoryValueRepresentation',
@@ -143,6 +143,14 @@ export const projectSettingTabs: SettingTab[] = [
                 description: 'Choose the value representation for the memory.',
                 icon: 'cpu'
             },
+        ]
+    },
+    {
+        name: 'Diagram',
+        icon: 'map',
+        settings: [
+
+
             {
                 key: 'diagramValueRepresentation',
                 label: 'Diagram Value Representation',
@@ -154,14 +162,6 @@ export const projectSettingTabs: SettingTab[] = [
                     { value: 'bin', label: 'Binary' },
                 ],
                 description: 'Choose the value representation for the diagram.',
-                icon: 'cpu'
-            },
-            {
-                key: 'diagramValueBoxes',
-                label: 'Value Boxes',
-                type: 'checkbox',
-                default: false,
-                description: 'Show values in a boxes in the diagram.',
                 icon: 'cpu'
             },
             {
@@ -189,7 +189,8 @@ export const projectSettingsWindowConfig: SettingWindowConfig = {
     setSetting: (key, value) => useProjectStore().setProjectSetting(key, value),
     title: 'Project Settings',
     icon: 'settings',
-    description: 'Configure the settings for the project.'
+    description: 'Configure the settings for the project.',
+    activeTabIndex: 0
 };
 
 

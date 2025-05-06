@@ -1,5 +1,5 @@
 import { Assembler } from "../../assets/js/core/Assembler";
-import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, isEffectiveAddress, isLabel, isRegister, isValue, isXBit, isXBitSigned, isXBitUnsigned, toSigned } from "../../assets/js/utils";
+import { extractOperands, getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, isEffectiveAddress, isLabel, isRegister, isValue, isXBit, isXBitSigned, isXBitUnsigned, toSigned } from "../../assets/js/utils";
 import { useProjectStore } from "../../stores/projectStore";
 import monaco from "../monaco";
 
@@ -20,6 +20,10 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
         let currentSection = '.text';
 
         lines.forEach((line: string, index: number) => {
+            // Remove comment if any
+            line = line.split(';')[0].trim();
+            // If the line is empty or a comment or empty, skip it
+            if (line.trim() === '' || line.trim()[0] === ';') return;
             const firstWord = line.trim().split(' ')[0].trim();
 
             if (firstWord.startsWith('.')) {
@@ -32,10 +36,6 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
             // If we are validating the .data section, we need to check for variable declarations
             if (currentSection === '.data') {
-
-                // If the line is empty or a comment or empty, skip it
-                if (line.trim() === '' || line.trim()[0] === ';') return;
-
                 // Syntax: <var_name>: .data <data_type> <value>
                 // Car name has to be alphanumeric and cannot contain spaces
                 const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
@@ -161,7 +161,7 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
             }
             const expectedOperandTypes = instruction.operands?.filter(op => op != 'NONE') ?? getDefaultInstructionDefOperands(instruction);
 
-            const operands = line.trim().split(/,|\s/).slice(1).filter((operand) => operand !== '');
+            const operands = extractOperands(line);
 
             if (operands.length !== expectedOperandTypes.length) {
                 errors.push({

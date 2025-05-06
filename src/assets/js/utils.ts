@@ -152,8 +152,7 @@ export function isMnemonic(mnemonic: string): boolean {
 }
 
 export function extractOperands(line: string): string[] {
-    const operands = line.split(',').map(operand => operand.trim());
-    return operands;
+    return line.split(';')[0].trim().split(/\s/).slice(1).map((operand) => operand.split(',')[0]).filter((operand) => operand !== '');
 }
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
@@ -342,5 +341,5 @@ export function getPseudoCode(instructionConfig: InstructionConfig) {
 }
 
 export function getProgramLines(program: string): string[] {
-    return program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.trim())
+    return program.replace(/\r/g, '').replace(/\r/g, '\n').split('\n').map(line => line.split(';')[0].trim())
 }

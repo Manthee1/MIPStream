@@ -15,6 +15,13 @@
         </Window>
     </div>
 
+    <div class="help-window-wrapper" v-if="$UIStore.showHelp" @click="$UIStore.closeHelp">
+        <Window title="Help" @click.stop closeable :onClose="$UIStore.closeHelp">
+            <HelpWindow />
+        </Window>
+    </div>
+
+
     <!-- Modal -->
     <Modal />
 
@@ -32,6 +39,7 @@ import Settings from './components/windows/Settings.vue';
 import Window from './components/common/Window.vue';
 import Modal from './components/singletons/Modal.vue';
 import DropdownMenu from './components/common/DropdownMenu.vue';
+import HelpWindow from './components/windows/HelpWindow.vue';
 
 export default defineComponent({
     name: 'App',
@@ -40,7 +48,8 @@ export default defineComponent({
         Settings,
         Window,
         Modal,
-        DropdownMenu
+        DropdownMenu,
+        HelpWindow
     },
 });
 </script>
@@ -49,7 +58,7 @@ export default defineComponent({
 <style lang="sass">
 @use './assets/sass/main'
 
-.settings-wrapper
+.settings-wrapper, .help-window-wrapper
     position: absolute
     top: 0
     left: 0

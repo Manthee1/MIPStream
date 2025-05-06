@@ -119,19 +119,25 @@ export default defineComponent({
 
 .window-header 
     display: flex
+    position: relative
     align-items: center
+    justify-content: center
     background-color: var(--color-surface-0)
-    padding: 10px
+    padding: 1.5rem  1rem
     border-bottom: 1px solid var(--color-surface-0)
-    .close-button 
-        margin-left: auto
-.window-icon 
-    width: 20px
-    height: 20px
-    margin-right: 10px
+    text-align: center
 
-.window-title 
-    font-weight: bold
+    .window-title 
+        font-weight: bold
+    .close-button 
+        position: absolute
+        right: 1rem
+.window-icon 
+    width: 2rem
+    height: 2rem
+    margin-right: 1rem
+
+
 
 
 </style>

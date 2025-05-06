@@ -1,4 +1,4 @@
-import { getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, toSigned, } from "../utils"
+import { extractOperands, getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, toSigned, } from "../utils"
 import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
 
 export class Assembler {
@@ -20,14 +20,13 @@ export class Assembler {
     }
 
     getOperands(instruction: string): string[] {
-        // split the string on a comma or space
-        return instruction.split(/,|\s/).slice(1).filter((operand) => operand !== '');
+        // split the string on a space, remove everything after a comma if exists
     }
 
 
     encodeInstruction(instruction: string, labels: Map<string, number>, dataMemoryReferences: Map<string, number>, pc: number): number {
         const mnemonic = instruction.split(" ")[0];
-        const operands = this.getOperands(instruction);
+        const operands = extractOperands(instruction);
         // If the instruction NOP, return a NOP instruction
         if (mnemonic === "NOP")
             return 0;
@@ -255,7 +254,7 @@ export class Assembler {
         let labels = new Map<string, number>();
         let pc = 0;
         for (let i = 0; i < textSection.length; i++) {
-            const lineContent = textSection[i];
+            const lineContent = textSection[i].trim();
             if (this.mnemonics.has(lineContent.split(" ")[0])) {
                 pc++;
                 continue;
@@ -284,7 +283,7 @@ export class Assembler {
         let line = textSectionLine + 1;
         pc = 0;
         for (let i = 0; i < textSection.length; i++) {
-            const instruction = textSection[i];
+            const instruction = textSection[i].trim();
             line++;
             if (instruction.trim() === '') continue;
             if (instruction.trim().startsWith(';')) continue;

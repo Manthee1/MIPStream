@@ -94,12 +94,7 @@ export function createConfig() {
         {
             label: 'Project Settings',
             action: () => {
-                const projectStore = useProjectStore();
-                if (!projectStore.currentProject) return;
-                if (!projectStore.currentProject.settings) {
-                    projectStore.currentProject.settings = defaultProjectSettings;
-                }
-                UIStore.openSettings({ ...projectSettingsWindowConfig, settings: projectStore.currentProject.settings });
+                UIStore.openProjectSettings();
             }
         },
 
@@ -107,7 +102,7 @@ export function createConfig() {
         {
             label: 'Settings',
             action: () => {
-                UIStore.openSettings({ ...generalSettingsConfig, settings });
+                UIStore.openGeneralSettings();
             }
         },
 
@@ -136,7 +131,7 @@ export function createConfig() {
         {
             label: 'Help',
             action: () => {
-                console.log('Help clicked');
+                UIStore.openHelp();
             }
         },
         aboutItem:

@@ -130,8 +130,35 @@ export const useProjectStore = defineStore('project', {
             const name = await promptProjectName('Create Project', 'Enter the name of the project');
             if (!name) return;
 
+            // Define the default project code as a template for new projects
+            const defaultProjectCode = `
+; Example program that multiples data1 and data2
+.data
+    data1: .word 4       ; Define a word(4bytes) in the data segment with value 4
+    data2: .word 5       ; Define another word in the data segment with value 5
+.text
+main:
+    lw $t0, data1        ; Load the value of data1 into register $t0
+    lw $t1, data2        ; Load the value of data2 into register $t1
+    nop                  ; No operation (used for pipeline delay)
+    nop                  ; No operation (used for pipeline delay)
+multiply:
+    addi $t1, $t1, -1    ; Decrement the value in $t1 by 1
+    add $t2, $t2, $t0    ; Add the value in $t0 to $t2
+    nop                  ; No operation (used for pipeline delay)
+    beq $t1, $zero, end  ; Branch to 'end' if $t1 equals zero
+    nop                  ; No operation (used for pipeline delay)
+    nop                  ; No operation (used for pipeline delay)
+    nop                  ; No operation (used for pipeline delay)
+    beq $zero, $zero, multiply ; Unconditional branch to 'multiply'
+    nop                  ; No operation (used for pipeline delay)
+    nop                  ; No operation (used for pipeline delay)
+    nop                  ; No operation (used for pipeline delay)
+end:
+
+`;
             try {
-                const project = await insertProject({ name } as Project);
+                const project = await insertProject({ name, code: defaultProjectCode } as Project);
                 this.currentProject = project;
                 notify('success', 'Project Created', 'The project has been created successfully');
                 this.updateRecentProjects();

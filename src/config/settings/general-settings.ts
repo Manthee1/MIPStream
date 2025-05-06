@@ -94,5 +94,6 @@ export const generalSettingsConfig: SettingWindowConfig = {
     setSetting: (key, value) => useSettingsStore().setSetting(key, value),
     title: 'General Settings',
     icon: 'settings',
-    description: 'Configure the settings for the application.'
+    description: 'Configure the settings for the application.',
+    activeTabIndex: 0
 };

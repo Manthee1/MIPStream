@@ -84,6 +84,9 @@ export default defineComponent({
             settings: clone(this.settingsConfig.settings)
         };
     },
+    mounted() {
+        this.currentTabIndex = this.settingsConfig.activeTabIndex;
+    },
     computed: {
         currentTab() {
             if (!this.settingsConfig?.tabs) return { name: '', settings: [], icon: '', };
@@ -122,6 +125,7 @@ export default defineComponent({
             this.settingsConfig.setSetting(key, value);
         },
         setActiveTab(index: number) {
+            this.settingsConfig.activeTabIndex = index;
             this.currentTabIndex = index;
         },
     },
