@@ -62,6 +62,7 @@ import Window from '@/components/common/Window.vue';
 import Switch from '../common/Switch.vue';
 import Select from '../common/MSelect.vue';
 import { clone } from '../../assets/js/utils';
+import '../../assets/sass/components/tab-window.scss'
 
 export default defineComponent({
     name: 'Settings',
@@ -146,45 +147,7 @@ export default defineComponent({
     height: 80vh
     width: 50vw
     max-width: 90vw
-
-    .tabs
-        display: flex
-        flex-direction: column
-        justify-content: flex-start
-        align-items: flex-start
-        margin-bottom: 10px
-        height: 100%
-        min-width: 25rem
-        padding: 1rem
-        background-color: var(--color-surface-0)
-        border-right: 1px solid var(--color-medium)
-
-        .tab-item
-            display: flex
-            flex-flow: row nowrap
-            align-items: center
-            gap: 1rem
-            height: auto
-            width: 100%
-            border-radius: 5px
-            margin: 0.5rem
-            padding: 0.8rem 2rem
-            cursor: pointer
-            // color: var(--color-subtext)
-            &:hover
-                background-color: var(--color-surface-1)
-            &.active
-                background-color: var(--color-surface-1)
-                color: var(--color-text)
-
     .tab-content
-        display: flex
-        flex-flow: column nowrap
-        overflow: auto
-        gap: 1rem
-        padding: 1rem
-        width: 100%
-        height: 100%
 
         .setting-item
             position: relative

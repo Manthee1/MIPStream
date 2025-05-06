@@ -507,7 +507,7 @@ export class CPUDiagram {
         }
         // Add a rectangle with the port value
         if (useProjectStore().getProjectSetting('diagramShowValues') == 'boxed')
-            this.drawRectCenter(x, y, portWidth + 3, portHeight + 3, 'rgba(255, 255, 255, 0.2)', 'black');
+            this.drawRectCenter(x, y, portWidth + 4, portHeight + 3, 'rgba(255, 255, 255, 0.5)', 'black');
         this.drawText(value, x, y, 'black', portHeight + 'px Arial', 'center', 'middle');
 
     }

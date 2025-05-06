@@ -35,6 +35,7 @@ export const useUIStore = defineStore('ui', {
     },
     actions: {
         openSettings(config: SettingWindowConfig) {
+            this.closeHelp();
             this.settingsWindowConfig = config;
             this.showSettings = true;
         },
@@ -58,6 +59,7 @@ export const useUIStore = defineStore('ui', {
         },
 
         openHelp() {
+            this.closeSettings();
             this.showHelp = true;
         },
         closeHelp() {
