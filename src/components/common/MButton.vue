@@ -100,8 +100,6 @@ export default defineComponent({
         --color-base-1: var(--color-system-error-dark)
         --color-regular: var(--color-system-error)
 
-    &:active
-        scale: 0.95
     
     &.circle
         border-radius: 50%
@@ -111,6 +109,9 @@ export default defineComponent({
         // color: var(--color-text)
         filter: brightness(1.0)
         scale: 1.05
+
+    &:active
+        scale: 0.95
 
     &.outlined
         border: 2px solid var(--color-text)

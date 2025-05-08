@@ -13,6 +13,36 @@ export const projectSettingTabs: SettingTab[] = [
         icon: 'settings',
         settings: [
             {
+                key: 'UIUpdateIntervalAtMaxSpeed',
+                label: 'Update Interval at Max Speed (ms)',
+                type: 'number',
+                default: 100,
+                min: -1,
+                max: 10000,
+                step: 1,
+                description: `Specify how often the UI should update (in milliseconds) when the simulation is running at maximum speed.
+Set to '-1' to disable updates during simulation, which will freeze the UI until the simulation is paused.`,
+                icon: 'clock'
+            },
+
+        ]
+    },
+    {
+        name: 'Simulation',
+        icon: 'cpu',
+        settings: [
+            {
+                key: 'speed',
+                label: 'Speed',
+                type: 'number',
+                default: 10,
+                min: 1,
+                max: 100,
+                step: 1,
+                description: 'Choose the speed of the simulation. Setting to 100 executes without delay.',
+                icon: 'cpu'
+            },
+            {
                 key: 'cpuType',
                 label: 'CPU Type',
                 type: 'radio',
@@ -45,23 +75,6 @@ export const projectSettingTabs: SettingTab[] = [
                 max: 1024,
                 step: 1,
                 description: 'Choose the instruction memory size for the simulation.',
-                icon: 'cpu'
-            },
-        ]
-    },
-    {
-        name: 'Simulation',
-        icon: 'cpu',
-        settings: [
-            {
-                key: 'speed',
-                label: 'Speed',
-                type: 'number',
-                default: 10,
-                min: 1,
-                max: 100,
-                step: 1,
-                description: 'Choose the speed of the simulation.',
                 icon: 'cpu'
             },
         ]
@@ -177,6 +190,8 @@ export const projectSettingTabs: SettingTab[] = [
                 ],
                 icon: 'cpu'
             },
+
+
 
         ]
     }

@@ -254,8 +254,9 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
                     if (isEffectiveAddressEvaluated) {
                         const [rs, value] = [registerPrefix + getEffectiveAddressRegister(operand).toString(), getEffectiveAddressImm(operand).toString()];
-
                         // Check if the register is valid
+                        console.log(`Register: ${rs}, Value: ${value}`);
+
                         if (!isRegister(rs)) {
                             errors.push({
                                 startLineNumber: index + 1,
@@ -282,9 +283,9 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
                         if (!isXBitSigned(valueNumber, 16) && isXBitUnsigned(valueNumber, 16)) {
                             errors.push({
                                 startLineNumber: index + 1,
-                                startColumn: line.indexOf(value) + 1,
+                                startColumn: line.indexOf(operand) + 1,
                                 endLineNumber: index + 1,
-                                endColumn: line.indexOf(value) + value.length + 1,
+                                endColumn: line.indexOf(operand) + operand.length + 1,
                                 message: `Immediate value ${value} is a 16-bit number but is not signed. It will be interpreted as ${toSigned(valueNumber, 16)}.`,
                                 severity: monaco.MarkerSeverity.Warning,
                             });

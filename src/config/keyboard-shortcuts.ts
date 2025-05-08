@@ -20,23 +20,30 @@ export const keyboardShortcuts: Record<string, { action: () => void; label: stri
         label: "Stop Simulation",
         description: "Stops the currently running simulation."
     },
+    "F6": {
+        action: () => {
+            useSimulationStore().loadProgram();
+        },
+        label: "Reset Simulation",
+        description: "Resets the simulation to its initial state."
+    },
+    "F8": {
+        action: () => {
+            if (useSimulationStore().status === 'paused') {
+                useSimulationStore().resume();
+                return;
+            }
+            useSimulationStore().pause();
+        },
+        label: "Pause/Resume Simulation",
+        description: "Pauses the simulation if running, or resumes it if paused."
+    },
     "F9": {
         action: () => {
             useSimulationStore().step();
         },
         label: "Step Simulation",
         description: "Executes a single step in the simulation."
-    },
-    "F10": {
-        action: () => {
-            if (useSimulationStore().status === 'running') {
-                useSimulationStore().pause();
-                return;
-            }
-            useSimulationStore().resume();
-        },
-        label: "Pause/Resume Simulation",
-        description: "Pauses the simulation if running, or resumes it if paused."
     },
     "CTRL O": {
         action: () => {
@@ -88,5 +95,27 @@ export const keyboardShortcuts: Record<string, { action: () => void; label: stri
         },
         label: "Open Project Settings",
         description: "Opens the project-specific settings dialog."
+    },
+    "CTRL H": {
+        action: () => {
+            useUIStore().openHelp();
+        },
+        label: "Open Help",
+        description: "Opens the help dialog."
+    },
+    "ESCAPE": {
+        action: () => {
+            console.log("ESC pressed");
+
+            if (useUIStore().showSettings) {
+                useUIStore().closeSettings();
+            }
+            if (useUIStore().showHelp) {
+                useUIStore().closeHelp();
+            }
+
+        },
+        label: "Close Settings/Help",
+        description: "Closes the settings or help dialog if open."
     }
 };

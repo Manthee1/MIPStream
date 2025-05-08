@@ -16,7 +16,7 @@
                     </div>
                     <div class="setting-text">
                         <label class="setting-name">{{ setting.label }}</label>
-                        <p class=" setting-description">{{ setting.description }}</p>
+                        <p class="setting-description">{{ setting.description }}</p>
                     </div>
                 </div>
                 <div class="setting-input">
@@ -88,6 +88,15 @@ export default defineComponent({
     mounted() {
         this.currentTabIndex = this.settingsConfig.activeTabIndex;
     },
+    watch: {
+        settingsConfig: {
+            handler(newValue) {
+                this.settings = clone(newValue.settings);
+                this.currentTabIndex = newValue.activeTabIndex;
+            },
+            deep: true,
+        },
+    },
     computed: {
         currentTab() {
             if (!this.settingsConfig?.tabs) return { name: '', settings: [], icon: '', };
@@ -129,9 +138,6 @@ export default defineComponent({
             this.settingsConfig.activeTabIndex = index;
             this.currentTabIndex = index;
         },
-    },
-    watch: {
-
     },
 });
 </script>
@@ -199,7 +205,9 @@ export default defineComponent({
                         margin: 0
                     .setting-description
                         color: var(--color-subtext)
-                        margin: 0.2rem 0
+                        font-size: 1.3rem
+                        text-align: justify;
+                        margin: 0.2rem 0.1rem
                         max-width: 50rem
 
             .setting-input

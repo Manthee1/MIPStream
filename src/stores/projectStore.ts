@@ -35,7 +35,6 @@ export const useProjectStore = defineStore('project', {
             }, 0);
 
             useUIStore().changeDropdownItemAction("Save", () => {
-                console.log("Saving", this.currentProject);
                 this.saveProject();
             });
 
@@ -77,7 +76,6 @@ export const useProjectStore = defineStore('project', {
             // If no activity in 2 seconds, and autoSave is enabled, save the project
             if (useSettingsStore().autoSave) {
                 setTimeout(() => {
-                    console.log("Auto Saving");
                     this.saveProject();
                 }, 2000);
             }
@@ -86,7 +84,6 @@ export const useProjectStore = defineStore('project', {
         setProjectSetting(key: string, value: any) {
             if (!this.currentProject) return;
             this.currentProject.settings = { ...defaultProjectSettings, ...this.currentProject.settings, [key]: value };
-            console.log("Settings Updated", this.currentProject);
 
 
             if (key == 'cpuType') {
@@ -113,7 +110,6 @@ export const useProjectStore = defineStore('project', {
         async updateProjectLayout(layout: any) {
             if (!layout || !this.currentProject) return;
             this.currentProject.layoutGridConfig = clone(layout);
-            console.log("Layout Updated", this.currentProject);
             await updateProject(toRaw(this.currentProject));
 
         },

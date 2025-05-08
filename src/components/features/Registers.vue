@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
 import { advanceRegisterNames, decToBinary, decToHex } from '../../assets/js/utils';
+import { default as _ } from '../../assets/js/core/config/cpu-variables';
+
 </script>
 
 <template>
@@ -13,7 +15,7 @@ import { advanceRegisterNames, decToBinary, decToHex } from '../../assets/js/uti
         <div class="registers-container">
             <ul class="register-list" v-for="(column) in [0, 1]" :key="'reg-column-' + column">
                 <li class="register-item" @click="editRegister(column * 16 + index)"
-                    :class="{ 'editing': editRegisterIndex == column * 16 + index }"
+                    :class="{ 'editing': editRegisterIndex == column * 16 + index, 'updated': column * 16 + index == lastUpdatedRegister }"
                     v-for="(value, index) in registers.slice(column * 16, (column + 1) * 16)" :key="index">
                     <span class="flex-0 register-name">{{ getRegisterName(column * 16 + index) }}</span>
                     <!-- Binary value -->
@@ -54,7 +56,14 @@ export default defineComponent({
             // @ts-ignore
             return this.$simulationStore.core.registerFile as number[]
         },
+        lastUpdatedRegister(): number {
+            if (this.$simulationStore.stagePCs[4] == -1 || !(_?.RegWrite_WB.value ?? 0)) return -1
+            return (_?.WriteRegister_WB.value ?? -1)
+        }
+
     },
+
+
     methods: {
         editRegister(index: number) {
             this.editRegisterIndex = index;
@@ -67,7 +76,6 @@ export default defineComponent({
         },
         getRegisterName(registerNumber: number) {
             const prefix = this.$projectStore.getProjectSetting('registerPrefix');
-            console.log('registerNumber', this.$projectStore.getProjectSetting('registerNamingConvention'));
 
             if (this.$projectStore.getProjectSetting('registerNamingConvention') == 'advanced') {
                 return prefix + advanceRegisterNames[registerNumber];
@@ -144,11 +152,14 @@ div.registers
                 background-color: var(--color-surface-1)
             &:last-child
                 border-bottom: none
+            &.updated
+                background-color: var(--color-accent-background)
             &.editing
                 .register-name
                     flex: 0 0 auto
                     width: auto
                     text-align: right
+            
             input
                 padding: 0.2rem
                 border: 1px solid var(--color-surface-3)

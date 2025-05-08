@@ -111,7 +111,7 @@ export const components: ComponentLayout[] = [
         id: "ALUSrcMUX",
         label: "ALUSrcMUX",
         description: "Multiplexer that selects the second operand for the ALU.",
-        type: "mux",
+        type: "mux_reversed",
         dimensions: { width: 25, height: 50 }, pos: { x: 713, y: 386 },
         ports: muxesPorts.ALUSrcMUX
     },

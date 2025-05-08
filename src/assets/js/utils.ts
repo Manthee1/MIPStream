@@ -84,13 +84,16 @@ export function isLabel(str: string): boolean {
 
 
 /**
- * Checks if the given string is a memory address.
- * @param str - The string to check.
- * @returns True if the string is a memory address, false otherwise.
+ * Checks if the given string is hex.
  */
-export function isMemory(str: string): boolean {
-    const memoryPattern = /^0x[0-9A-Fa-f]+$/;
-    return memoryPattern.test(str);
+export function isHex(str: string): boolean {
+    const hexPattern = /^[0-9A-Fa-f]+$/;
+    return hexPattern.test(str);
+}
+
+export function isBin(str: string): boolean {
+    const binPattern = /^[01]+$/;
+    return binPattern.test(str);
 }
 
 /**
@@ -133,13 +136,31 @@ export function toUnsigned(value: number): number {
 
 export function isEffectiveAddress(value: string): boolean {
 
-    // imm(reg) or imm, where imm can be decimal, hex (0x), or binary (0b)
-    const effectiveAddressPattern = /^(0x[0-9A-Fa-f]+|0b[01]+|\d+)\s*\(\s*[Rr]\d+\s*\)$/;
-    return effectiveAddressPattern.test(value);
+    // Validate that the value is in the form of imm(register) without regex
+    //  register must have prefix $ or R. and after have either 0to31 numbers or advanced register names
+    // imm must be a number, binary, hex or decimal
+    const parts = value.split('(');
+    if (parts.length !== 2) return false;
+    const imm = parts[0].trim();
+    const register = parts[1].split(')')[0].trim();
+    if (register.length == 0) return false;
+    if (!isRegister(register)) return false;
+    if (imm.length == 0) return false;
+    if (!isValue(imm) && !isHex(imm) && !isBin(imm)) return false;
+    return true;
 }
 
 export function getEffectiveAddressRegister(value: string): number {
-    return parseInt(value.split('(')[1].split(')')[0].slice(1));
+    // if its a value return it otherwise check which register nname index it is
+    const registerName = value.split('(')[1].split(')')[0].trim().slice(1);
+    if (isValue(registerName)) {
+        return parseInt(registerName);
+    }
+    if (advanceRegisterNames.indexOf(registerName) == -1) {
+        throw new Error(`Invalid register name: ${registerName}`);
+    }
+    return advanceRegisterNames.indexOf(registerName);
+
 }
 
 export function getEffectiveAddressImm(value: string): number {

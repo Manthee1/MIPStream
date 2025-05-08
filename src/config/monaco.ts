@@ -24,7 +24,6 @@ export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
     const registers = Array.from({ length: 32 }, (_, i) => `${i}`);
     const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
     const registerRegex = new RegExp(`([R\\$](${registers.join('|')}|${advanceRegisterNames.join('|')}))\\b`, 'g');
-    console.log('regex', registerRegex);
 
 
     // Unregister all providers

@@ -583,8 +583,8 @@ export const connections: ConnectionLayout[] = [
         "to": "RegisterControlUnit.reg1",
         "type": "data",
         "bitRange": [
-            0,
-            31
+            6,
+            10
         ],
         "bends": [
             {
@@ -615,8 +615,8 @@ export const connections: ConnectionLayout[] = [
         "to": "RegisterControlUnit.reg2",
         "type": "data",
         "bitRange": [
-            0,
-            31
+            5,
+            9
         ],
         "bends": [
             {
@@ -647,8 +647,8 @@ export const connections: ConnectionLayout[] = [
         "to": "ControlUnit.opcode",
         "type": "data",
         "bitRange": [
-            0,
-            31
+            11,
+            15
         ],
         "bends": [
             {

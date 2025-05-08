@@ -1,6 +1,6 @@
 /** @format */
 
-import { clone } from "../utils";
+import { clone, decToHex } from "../utils";
 import { connections } from "./config/connections/base-connections";
 import { baseControlSignals } from "./config/controlSignals";
 import { baseInstructionConfig } from "./config/instructions";
@@ -47,12 +47,6 @@ export default class MIPSBase {
     };
 
     options: { [name: string]: any } = {};
-
-    // get options() {
-    //     console.log(this._options);
-    //     return this._options;
-    // }
-
     registerFile: number[];
     instructionMemory: Uint32Array;
     dataMemory: number[];
@@ -282,7 +276,7 @@ export default class MIPSBase {
 
         // ALU
         const ALUSrc = _.ALUSrc_EX.value = currStage.ALUSrc.value;
-        const ALUInput1 = _.Reg1Data_EX.value = currStage.Reg1Data.value;
+        const ALUInput1 = _.ALUIn1_EX.value = _.Reg1Data_EX.value = currStage.Reg1Data.value;
         const ALUInput2 = _.ALUIn2_EX.value = ALUSrc ? currStage.Imm.value : currStage.Reg2Data.value;
 
         let ALUResult = 0;
@@ -295,6 +289,7 @@ export default class MIPSBase {
             case ALUOperations.SUB: ALUResult = ALUInput1 - ALUInput2; break;
             case ALUOperations.AND: ALUResult = ALUInput1 & ALUInput2; break;
             case ALUOperations.OR: ALUResult = ALUInput1 | ALUInput2; break;
+            case ALUOperations.NOR: ALUResult = ~(ALUInput1 | ALUInput2); break;
             case ALUOperations.XOR: ALUResult = ALUInput1 ^ ALUInput2; break;
             case ALUOperations.SLL: ALUResult = ALUInput1 << ALUInput2; break;
             case ALUOperations.SRL: ALUResult = ALUInput1 >>> ALUInput2; break;
@@ -352,6 +347,7 @@ export default class MIPSBase {
         _.Reg2Data_MEM.value = currStage.Reg2Data.value;
         _.BranchCond_MEM.value = (currStage.Branch.value && currStage.Zero.value) ? 1 : 0;
 
+        _.MemReadResult_MEM.value = 0;
 
         // Forward IR
         this.stageRegisters.MEMtoWB.IR.value = currStage.IR.value;
@@ -367,13 +363,14 @@ export default class MIPSBase {
         this.stageRegisters.MEMtoWB.MemtoReg.value = _.MemtoReg_MEM.value = currStage.MemtoReg.value;
 
         // Memory
-        const address = currStage.ALUResult.value;
+        // Use the address as an unsigned 32-bit integer
+        const address = currStage.ALUResult.value >>> 0;
 
         if (currStage.MemWrite.value) {
             // Check if address is valid, if not throw an error and halt the program
             if (address < 0 || address + 3 >= this.options.dataMemorySize) {
                 this.halt();
-                throw new Error(`Segmentation fault: Invalid memory access at address 0x${address.toString(16).toUpperCase()}`);
+                throw new Error(`Memory Access Violation: Can't read 4 bytes from address 0x${decToHex(address, 8)}`);
             }
             for (let i = 0; i < 4; i++) {
                 const byteAddress = address + i;
@@ -385,7 +382,7 @@ export default class MIPSBase {
             // Check if address is valid, if not throw an error and halt the program
             if (address < 0 || address + 3 >= this.options.dataMemorySize) {
                 this.halt();
-                throw new Error(`Segmentation fault: Invalid memory access at address 0x${address.toString(16).toUpperCase()}`);
+                throw new Error(`Memory Access Violation: Can't read 4 bytes from address 0x${address.toString(16).toUpperCase()}`);
             }
             // Load 4 bytes from memory
             this.stageRegisters.MEMtoWB.MemReadResult.value = _.MemReadResult_MEM.value =
@@ -405,15 +402,14 @@ export default class MIPSBase {
         _.MemtoReg_WB.value = currStage.MemtoReg.value;
         _.ALUResult_WB.value = currStage.ALUResult.value;
         _.MemReadResult_WB.value = currStage.MemReadResult.value;
-
+        _.WriteRegister_WB.value = currStage.WriteRegister.value;
 
         // Writeback
         if (currStage.RegWrite.value) {
+            // Check if the write register 0
+            if (currStage.WriteRegister.value === 0) return;
             const value = currStage.MemtoReg.value ? currStage.MemReadResult.value : currStage.ALUResult.value;
             _.WriteRegisterData_WB.value = this.registerFile[currStage.WriteRegister.value] = value;
-
-            console.log(`Writeback: ${currStage.WriteRegister.value} = ${value}`);
-
         }
     }
 

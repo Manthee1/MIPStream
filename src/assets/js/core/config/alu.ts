@@ -12,7 +12,8 @@ export const ALUOperations = {
     MUL: 0b1010,
     DIV: 0b1011,
     MFHI: 0b1100,
-    MFLO: 0b1101
+    MFLO: 0b1101,
+    NOR: 0b1110
 };
 
 
@@ -30,7 +31,8 @@ export const ALUOperationsSigns = {
     MUL: '*',
     DIV: '/',
     MFHI: 'MFHI',
-    MFLO: 'MFLO'
+    MFLO: 'MFLO',
+    NOR: '~|'
 }
 
 export const ALUOperationstoSigns: { [key: number]: string } = {
@@ -47,7 +49,8 @@ export const ALUOperationstoSigns: { [key: number]: string } = {
     0b1010: '*',
     0b1011: '/',
     0b1100: 'MFHI',
-    0b1101: 'MFLO'
+    0b1101: 'MFLO',
+    0b1110: '~|'
 }
 
 
@@ -65,7 +68,6 @@ export function getAluControl(ALUOp: number, funct: number): number {
             ALUControl = funct;
             break;
         case 0b11:
-            // This is a special case for the ALUOp 11, which is used for immediate operations
             return ALUOperations.AND;
         default:
             throw new Error("Unknown ALU operation");

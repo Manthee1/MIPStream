@@ -44,6 +44,7 @@ export const useUIStore = defineStore('ui', {
         },
 
         openProjectSettings() {
+            useUIStore().closeSettings();
             const projectStore = useProjectStore();
             if (!projectStore.currentProject) return;
             if (!projectStore.currentProject.settings) {
@@ -54,6 +55,7 @@ export const useUIStore = defineStore('ui', {
         },
 
         openGeneralSettings() {
+            useUIStore().closeSettings();
             generalSettingsConfig.settings = settings;
             this.openSettings(generalSettingsConfig);
         },

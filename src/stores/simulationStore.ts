@@ -34,6 +34,7 @@ export const useSimulationStore = defineStore('simulation', {
         stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
         errors: [] as string[],
         runtimeErrors: [] as string[],
+        warnings: [] as string[],
         errorsUpdateTimeout: null as any,
     }),
     getters: {
@@ -52,7 +53,6 @@ export const useSimulationStore = defineStore('simulation', {
             const cpuConfig = CPUS[cpuType];
 
             const customInstructions = await getInstructions(999, { cpuType: cpuType });
-            console.log('customInstructions', customInstructions);
 
             if (customInstructions) {
                 cpuOptions.customInstructions = customInstructions;
@@ -118,6 +118,18 @@ export const useSimulationStore = defineStore('simulation', {
 
         },
 
+        updateCode(code: string) {
+            this.program = code;
+            this.updateErrors();
+
+            // If the change was done while the cpu is not stopped, add warning
+            if (this.status !== 'stopped') {
+                this.warnings[0] = ('Code changed while running. The editor visuals may not be in sync with the actual editor content. Please reload the program to fix this.');
+                return;
+            }
+
+        },
+
         shiftStagePCs() {
             const pc = this.core.PC.value / 4;
 
@@ -175,6 +187,8 @@ export const useSimulationStore = defineStore('simulation', {
             }
             this.stagePCs = [0, -1, -1, -1, -1];
             this.loadedProgram = this.program;
+            this.warnings = [];
+
             try {
                 this.core.loadProgram(instructionMemory);
                 this.core.loadMemory(memory);
@@ -189,50 +203,110 @@ export const useSimulationStore = defineStore('simulation', {
                 this.status = 'stopped';
                 return;
             }
+
+            notify({
+                type: 'success',
+                title: 'Program loaded',
+                text: 'Program loaded successfully',
+            });
+
+
             this.cpuDiagram.draw();
         },
         step() {
-            if (this.status != 'paused') return;
+            if (this.status != 'paused') {
+                notify({
+                    type: 'warning',
+                    title: 'Warning',
+                    text: 'Simulation must be paused to step',
+                });
+                return;
+            }
             // Add current pc to stagePCs and remove the oldest one
             this.runCycle();
             this.shiftStagePCs();
             this.cpuDiagram.draw();
-            console.log(clone(this.stagePCs));
 
             if (this.core.halted) this.status = 'stopped'
         },
         pause() {
+            if (this.status !== 'running') {
+                notify({
+                    type: 'warning',
+                    title: 'Warning',
+                    text: 'Cannot pause simulation. Simulation is not running',
+                });
+                return;
+            }
             this.status = 'paused';
         },
         stop() {
+
+            if (this.status === 'stopped') {
+                notify({
+                    type: 'warning',
+                    title: 'Warning',
+                    text: 'Simulation is already stopped',
+                });
+                return;
+            }
+
             this.status = 'stopped';
             this.core.reset();
             this.stagePCs = [-1, -1, -1, -1, -1];
         },
         run() {
+            if (this.status === 'running') {
+                notify({
+                    type: 'warning',
+                    title: 'Warning',
+                    text: 'Simulation is already running. You can use F8 to pause it or SHIFT + F5 to stop it.',
+                });
+                return;
+            }
             this.loadProgram();
             if (this.status === 'stopped') return;
             this.resume();
         },
 
         async resume() {
+            console.time('resume');
             this.status = 'running';
+            let lastUIUpdate = performance.now();
+            const UIUpdateIntervalAtMaxSpeed = useProjectStore().getProjectSetting('UIUpdateIntervalAtMaxSpeed');
+            console.log('UIUpdateIntervalAtMaxSpeed', UIUpdateIntervalAtMaxSpeed);
+
             // Run until the program is finished
             while (this.status == 'running' && !this.core.halted) {
                 // Add current pc to stagePCs and remove the oldest one
                 this.runCycle();
                 this.shiftStagePCs();
-                this.cpuDiagram.draw();
-                console.log(this.breakpoints, this.PCToLineMap[this.core.PC.value / 4]);
+                // If the speed is high draw only every 10 cycles
+                if (this.speed < 100) {
+                    this.cpuDiagram.draw();
+                }
                 if (this.breakpoints.includes(this.PCToLineMap[this.core.PC.value / 4])) {
                     this.status = 'paused';
                     return;
                 }
-                await wait(1000 / this.speed);
+                if (this.speed >= 100) {
+                    // Request ui update every UIUpdateIntervalAtMaxSpeed ms
+                    if (UIUpdateIntervalAtMaxSpeed >= 0 && performance.now() - lastUIUpdate > UIUpdateIntervalAtMaxSpeed) {
+                        this.cpuDiagram.draw();
+                        lastUIUpdate = performance.now();
+                        await wait(0);
+                        continue;
+                    }
+                    continue;
+                }
+
+                else await wait(1000 / this.speed);
 
             }
             if (this.core.halted)
                 this.status = 'stopped';
+            this.cpuDiagram.draw();
+            console.timeEnd('resume');
         },
 
         runCycle() {
@@ -257,7 +331,8 @@ export const useSimulationStore = defineStore('simulation', {
 
 
         reset() {
-            this.stop();
+            if (this.status !== 'stopped')
+                this.stop();
             this.program = '';
             this.loadedProgram = '';
             this.errors = [];

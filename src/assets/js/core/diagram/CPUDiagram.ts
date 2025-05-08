@@ -479,7 +479,7 @@ export class CPUDiagram {
         // Add the name to the center of the component
 
 
-        let value = ((typeof port.value === 'object') ? port.value._value : port.value).toString() ?? '';
+        let value = ((typeof port.value === 'object') ? port.value?.value ?? 0 : port.value).toString() ?? '';
         const valueEnc = useProjectStore().getProjectSetting('diagramValueRepresentation');
 
         if (valueEnc === 'hex') {

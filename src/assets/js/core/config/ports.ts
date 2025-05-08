@@ -92,7 +92,7 @@ export const muxesPorts = {
     ],
     MemtoRegMUX: [
         ...twoToOnePorts(_.MemReadResult_WB, _.ALUResult_WB, _.WriteRegisterData_WB),
-        ...controlInputPort(_.MemtoReg_MEM, "MemtoReg"),
+        ...controlInputPort(_.MemtoReg_WB, "MemtoReg"),
     ],
     BranchMUX: [
         ...twoToOnePorts(_.NPC_IF, _.TargetPC_MEM, _.NPC_MEM),
@@ -380,7 +380,7 @@ export const dataMemoryPorts: Array<PortLayout> = [
         ...clone(controlSignalPorts["MemRead"]),
         relPos: 0.8,
         location: 'top',
-        value: _.MemReadResult_MEM
+        value: _.MemRead_MEM
     },
 
 ];

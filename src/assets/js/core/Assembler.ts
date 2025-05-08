@@ -19,12 +19,8 @@ export class Assembler {
         this.options = { ...this.options, ...options };
     }
 
-    getOperands(instruction: string): string[] {
-        // split the string on a space, remove everything after a comma if exists
-    }
-
-
     encodeInstruction(instruction: string, labels: Map<string, number>, dataMemoryReferences: Map<string, number>, pc: number): number {
+
         const mnemonic = instruction.split(" ")[0];
         const operands = extractOperands(instruction);
         // If the instruction NOP, return a NOP instruction
@@ -305,6 +301,7 @@ export class Assembler {
 
         // Resize the array to the number of instructions
         encodedInstructions = encodedInstructions.slice(0, pc);
+
 
         return { instructions: encodedInstructions, pcLineMap, labels: labels, memory: memory, dataMemoryReferences: dataMemoryReferences };
     }

@@ -330,6 +330,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
                     label: 'effective address',
                     kind: monaco.languages.CompletionItemKind.Value,
                     insertText: `0(${registerPrefix}0)`,
+                    range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column),
                     detail: 'Memory Address',
                     documentation: {
                         value: 'Memory address',

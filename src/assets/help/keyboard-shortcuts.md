@@ -1,5 +1,7 @@
 # Keyboard Shortcuts
+<!-- Intro -->
 
+> **Note**: Sometimes shortcuts may not work if the editor is focused and blocking them. To use the shortcuts, click away from the editor to change the focus.
 ---
 
 ## Simulation Controls
@@ -58,3 +60,5 @@ These shortcuts are used to reset layouts or access settings.
 - `Ctrl + Alt + ,`  
     **Action**: Open Project Settings  
     **Description**: Opens the project-specific settings dialog.
+
+---

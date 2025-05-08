@@ -91,9 +91,9 @@ export default defineComponent({
 		// Listener for changes in the editor
 		monaco.editor.getModels()[0].onDidChangeContent(() => {
 			const code = monaco.editor.getModels()[0].getValue();
-			this.$simulationStore.program = code;
-			this.onUpdate(code);
-			this.$simulationStore.updateErrors();
+			this.$simulationStore.updateCode(code);
+			this.$projectStore.updateProjectCode(code);
+
 
 		});
 
@@ -152,11 +152,6 @@ export default defineComponent({
 
 	},
 	methods: {
-
-		onUpdate(code: string) {
-			useProjectStore().updateProjectCode(code);
-		},
-
 		handleMouseMove(e: monaco.editor.IEditorMouseEvent) {
 			const model = editor.getModel();
 			if (!model) return;

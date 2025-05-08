@@ -83,7 +83,7 @@ export default defineComponent({
         background: var(--color-system-success)
         border-left-color: var(--color-system-success-dark)
 
-    &.warn 
+    &.warning, &.warn 
         background: var(--color-system-warning)
         border-left-color: var(--color-system-warning-dark)
 

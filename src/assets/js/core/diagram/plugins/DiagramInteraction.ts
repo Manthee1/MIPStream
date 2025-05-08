@@ -71,11 +71,11 @@ export class DiagramInteraction extends CPUDiagramPlugin {
     }
 
     keyDownHandler(e: KeyboardEvent) {
-        console.log('key down', e.key);
+        // console.log('key down', e.key);
     }
 
     keyUpHandler(e: KeyboardEvent) {
-        console.log('key up', e.key);
+        // console.log('key up', e.key);
     }
 
 
@@ -172,9 +172,6 @@ export class DiagramInteraction extends CPUDiagramPlugin {
                         columnWidths[j] = Math.max(columnWidths[j], ctx.measureText((row[j]).toString()).width);
                     }
                 }
-
-                console.log(columnWidths);
-
 
                 for (let i = 0; i < body.length; i++) {
                     // Find the longest row and use it as the column width

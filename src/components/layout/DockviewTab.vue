@@ -22,7 +22,7 @@ export default defineComponent({
     },
     mounted() {
         this.title = this.params.api.title;
-        console.log('Params', this.params.params);
+        // console.log('Params', this.params.params);
 
     },
 
