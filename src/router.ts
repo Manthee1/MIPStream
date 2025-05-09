@@ -8,7 +8,7 @@ import { getProject } from './services/projectsService.ts';
 
 export function initRouter() {
     const router = createRouter({
-        history: createWebHistory(),
+        history: createWebHistory(import.meta.env.BASE_URL),
         routes,
     })
 

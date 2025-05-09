@@ -117,7 +117,7 @@ export default {
         width: 100%;
         border-collapse: collapse;
         overflow: hidden;
-        margin-top: 1rem;
+        margin: 1rem 0px;
 
         th {
 
