@@ -1,11 +1,12 @@
 import * as monaco from 'monaco-editor';
 import { useProjectStore } from '../../stores/projectStore';
-import { decToBinary, decToHex, isValue, decToUnsigned, isRegister, advanceRegisterNames, getRegisterNumber, registerDescriptions } from '../../assets/js/utils';
+import { decToBinary, decToHex, isValue, decToUnsigned, isRegister, advanceRegisterNames, getRegisterNumber, registerDescriptions, getInstructionSyntax, getPseudoCode } from '../../assets/js/utils';
+import { EditorUtils } from './editorUtils';
 // import * as themeData from 'monaco-themes/themes/Dawn.json';
 
-export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
+export function getHoverProvider() {
     // Constants
-    const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
+    const mnemonics = EditorUtils.mnemonics;
     const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
 
     return {
@@ -13,10 +14,9 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
             const word = model.getWordAtPosition(position);
             if (word) {
                 const { word: text } = word;
-                console.log('text', text);
 
                 if (mnemonicRegex.test(text)) {
-                    const instruction = INSTRUCTION_SET.find(inst => inst.mnemonic === text);
+                    const instruction = EditorUtils.instructionSet.find(inst => inst.mnemonic === text);
                     if (instruction) {
                         setTimeout(() => {
                             // Find the data-href attribute of the first link
@@ -32,7 +32,7 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
                             range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
                             contents: [
                                 {
-                                    value: `*(Instruction)* [**${instruction.mnemonic}**](${instruction.mnemonic}--docs) <br> ${instruction.description}`,
+                                    value: `*(Instruction)* **${instruction.mnemonic}** - ${getInstructionSyntax(instruction)} <br> ${getPseudoCode(instruction)} <br> ${instruction.description}`,
                                     supportThemeIcons: true,
                                     supportHtml: true
                                 }
@@ -44,38 +44,7 @@ export function getHoverProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
             }
 
-            // Extract the value at position
-            const lineContent = model.getLineContent(position.lineNumber);
-            // Find the boundaries of the word ( the start or end can be anythings except alphanumeric)
-            // Search forward for the first non-alphanumeric character
-            console.log('position.column', position.column, lineContent, lineContent[position.column]);
-
-
-            const allowedCharsRegex = /[\w-\$]/;
-
-            let end = position.column - 1;
-            for (; end < lineContent.length; end++) {
-                const char = lineContent[end];
-                if (!allowedCharsRegex.test(char)) {
-                    break;
-                }
-            }
-            // Search backward for the first non-alphanumeric character
-            let start = position.column - 1;
-            for (; start >= 0; start--) {
-                const char = lineContent[start];
-                if (!allowedCharsRegex.test(char)) {
-                    start++;
-                    break;
-                }
-            }
-            // If start is -1, it means the word starts at the beginning of the line
-            if (start < 0) {
-                start = 0;
-            }
-
-            // Get the word
-            const wordValue = lineContent.slice(start, end);
+            const { value: wordValue, start, end } = EditorUtils.getHoverdValue(model.getLineContent(position.lineNumber), position.column);
 
             // If it was hovered of a value show its signed, unsigned, hex and binary representation
             if (isValue(wordValue)) {

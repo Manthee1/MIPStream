@@ -173,7 +173,15 @@ export function isMnemonic(mnemonic: string): boolean {
 }
 
 export function extractOperands(line: string): string[] {
-    return line.split(';')[0].trim().split(/\s/).slice(1).map((operand) => operand.split(',')[0]).filter((operand) => operand !== '');
+    return line.split(';')[0].trim()
+        // Replaec every space and comma with a single space
+        .replace(/[\s,]+/g, ' ')
+        // Split by space
+        .split(' ')
+        // Remove the first element (mnemonic)
+        .slice(1)
+        // Remove empty strings
+        .map((operand) => operand.split(' ')[0]).filter((operand) => operand !== '');
 }
 
 export function getInstructionSyntax(instruction: InstructionConfig) {
@@ -341,8 +349,9 @@ export function getPseudoCode(instructionConfig: InstructionConfig) {
 
     const Rs = (operands.includes('REG_SOURCE') || operands.includes('MEM_ADDRESS')) ? 'Rs' : '0'
     const Rt = (operands.includes('REG_TARGET')) ? 'Rt' : '0'
+    const imm = (operands.includes('IMMEDIATE')) ? 'imm' : '0'
 
-    const ALUIn2 = cs['ALUSrc'] ? 'imm' : 'Rt';
+    const ALUIn2 = cs['ALUSrc'] ? imm : Rt;
 
     if (cs['RegWrite']) {
         const memOut = cs['MemRead'] ? `MEM[${Rs} ${ALUOPSign} ${ALUIn2}];\n` : '0'
@@ -355,7 +364,7 @@ export function getPseudoCode(instructionConfig: InstructionConfig) {
     }
 
     if (cs['Branch']) {
-        out += `if (${Rs} ${ALUOPSign} Rt == 0) PC = label;\n`
+        out += `if (${Rs} ${ALUOPSign} ${ALUIn2} == 0) PC = label;\n`
     }
     return out;
 

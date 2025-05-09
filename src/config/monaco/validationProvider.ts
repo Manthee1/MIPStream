@@ -2,14 +2,15 @@ import { Assembler } from "../../assets/js/core/Assembler";
 import { extractOperands, getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, isEffectiveAddress, isLabel, isRegister, isValue, isXBit, isXBitSigned, isXBitUnsigned, toSigned } from "../../assets/js/utils";
 import { useProjectStore } from "../../stores/projectStore";
 import monaco from "../monaco";
+import { EditorUtils } from "./editorUtils";
 
 
 export let validate = function (model: monaco.editor.ITextModel) {
 }
 
 
-export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
-    const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
+export function updateValidationProvider() {
+    const registerPrefix = EditorUtils.registerPrefix;
     validate = function (model: monaco.editor.ITextModel) {
 
         const lines = model.getLinesContent();
@@ -147,7 +148,7 @@ export function updateValidationProvider(INSTRUCTION_SET: InstructionConfig[]) {
             const mnemonic = firstWord;
             if (mnemonic == '' || mnemonic[0] == ';') return;
 
-            const instruction = INSTRUCTION_SET.find((instruction) => instruction.mnemonic === mnemonic);
+            const instruction = EditorUtils.instructionSet.find((instruction) => instruction.mnemonic === mnemonic);
             if (!instruction) {
                 errors.push({
                     startLineNumber: index + 1,

@@ -1,3 +1,19 @@
+<script setup lang="ts">
+import { defineComponent, markRaw, toRaw } from 'vue';
+import { CPUS } from '../assets/js/core/config/cpus';
+import MIPSBase from '../assets/js/core/MIPSBase';
+import MButton from '../components/common/MButton.vue';
+import Dropdown from '../components/common/Dropdown.vue';
+import { clone, decToBinary, getDefaultInstructionDefOperands, getInstructionSyntax, getOperandSyntax, getPseudoCode } from '../assets/js/utils';
+import MSelect from '../components/common/MSelect.vue';
+import { ALUOperations, ALUOperationsSigns } from '../assets/js/core/config/alu';
+import CpuDiagram from '../components/features/CpuDiagram.vue';
+import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
+import { Assembler } from '../assets/js/core/Assembler';
+import { deleteInstruction, getInstruction, getInstructionByMnemonic, getInstructions, insertInstruction, Instruction, updateInstruction } from '../services/instructionsService';
+
+</script>
+
 <template>
     <div class="instructions-config">
         <div class="panel cpu-types">
@@ -95,7 +111,7 @@
                                 <span>Opcode</span>
                                 <span class="my-auto mr-auto flex"
                                     v-if="selectedInstruction.type != 'R' && (customInstructions.some(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic) || instructions.find(inst => inst.opcode === selectedInstruction?.opcode && inst.mnemonic !== selectedInstruction.mnemonic))"
-                                    title="Opcode already exists">
+                                    :title="'Opcode already in use by \'' + instructions.find(inst => inst.opcode === selectedInstruction?.opcode)?.mnemonic + '\'\n Change it or the instruction will not work correctly'">
                                     <vue-feather :size="18" style="color: var(--color-system-warning);"
                                         type="alert-triangle" />
                                 </span>
@@ -152,7 +168,18 @@
 
 
                         <div class="form-group flex-12">
-                            <label>Operands</label>
+                            <label class="flex gap-2">
+                                <span>Operands</span>
+                                <!-- If there is no operand in middle of defined operants -->
+                                <span class="my-auto mr-auto flex" v-if="selectedInstruction.operands != undefined && selectedInstruction.operands.some((operand, index) => {
+                                    return operand == 'NONE' &&
+                                        (selectedInstruction?.operands && (selectedInstruction.operands[index + 1] ?? 'NONE')) !== 'NONE'
+                                })" title="Undefined operand in the middle of defined operands">
+                                    <vue-feather :size="18" style="color: var(--color-system-warning);"
+                                        type="alert-triangle" />
+                                </span>
+
+                            </label>
                             <div class="flex flex-row flex-nowrap gap-2 flex-left">
                                 <template v-for="(operand, operandIndex) in selectedInstruction?.operands"
                                     :key="operandIndex">
@@ -169,7 +196,7 @@
                                 <label>{{ key }}</label>
                                 <MSelect :disabled="!isCurrentInstructionCustom" compact :options="new Array((2 ** value.bits)).fill(0).map((_, i) => {
                                     return {
-                                        label: i.toString(2),
+                                        label: decToBinary(i, value.bits),
                                         value: i
                                     }
                                 })" :value="selectedInstruction.controlSignals[key] ?? 0"
@@ -195,22 +222,6 @@
 
 
 <script lang="ts">
-import { defineComponent, markRaw, toRaw } from 'vue';
-import { CPUS } from '../assets/js/core/config/cpus';
-import MIPSBase from '../assets/js/core/MIPSBase';
-import MButton from '../components/common/MButton.vue';
-import Dropdown from '../components/common/Dropdown.vue';
-import { clone, getDefaultInstructionDefOperands, getInstructionSyntax, getOperandSyntax, getPseudoCode } from '../assets/js/utils';
-import MSelect from '../components/common/MSelect.vue';
-import { ALUOperations, ALUOperationsSigns } from '../assets/js/core/config/alu';
-import CpuView from '../components/core/CpuView.vue';
-import { useSimulationStore } from '../stores/simulationStore';
-import CpuDiagram from '../components/features/CpuDiagram.vue';
-import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
-import { Assembler } from '../assets/js/core/Assembler';
-import { watch } from 'fs';
-import { deleteInstruction, getInstruction, getInstructionByMnemonic, getInstructions, insertInstruction, Instruction, updateInstruction } from '../services/instructionsService';
-import Instructions from '../components/features/Instructions.vue';
 
 
 export default defineComponent({

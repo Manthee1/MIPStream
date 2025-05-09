@@ -1,79 +1,12 @@
 import * as monaco from 'monaco-editor';
-import { advanceRegisterNames, getDefaultInstructionDefOperands, getInstructionSyntax, getProgramLines } from '../../assets/js/utils';
+import { advanceRegisterNames, getDefaultInstructionDefOperands, getInstructionSyntax, getProgramLines, getPseudoCode } from '../../assets/js/utils';
 import { useProjectStore } from '../../stores/projectStore';
 import { Assembler } from '../../assets/js/core/Assembler';
+import { EditorUtils } from './editorUtils';
 
-export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
-    // Constants
-    const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
-    const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
-    const registers = [...Array.from({ length: 32 }, (_, i) => `${registerPrefix}${i}`), ...advanceRegisterNames.map(x => registerPrefix + x)]
+export function getCompletionsProvider() {
 
-
-    let dataSectionLineIndex = -1;
-    let textSectionLineIndex = -1;
-
-    function getlabels(code: string) {
-        if (textSectionLineIndex === -1) return [];
-        const lines = getProgramLines(code);
-        const textSectionStart = textSectionLineIndex + 1;
-        const textSectionEnd = lines.length;
-
-        const labels = lines
-            .slice(textSectionStart, textSectionEnd)
-            .join('\n')
-            .match(/(?<=^\s*)[a-zA-Z_]\w*(?=:)/gm);
-        if (!labels) return [];
-        return labels;
-    }
-
-    function getDataLabels(code: string) {
-        const lines = getProgramLines(code);
-
-        if (dataSectionLineIndex === -1) return [];
-        const dataSectionEnd = textSectionLineIndex !== -1 ? textSectionLineIndex : lines.length;
-
-        const dataLabels = lines
-            .slice(dataSectionLineIndex + 1, dataSectionEnd)
-            .join('\n')
-            .match(/(?<=\n|^)([a-zA-Z_]\w*):/g);
-        if (!dataLabels) return [];
-        return dataLabels.map((label) => label.slice(0, -1));
-    }
-
-
-    // Figure out which section we are in. if indexed are already defined, use them
-    function getSection(code: string, lineNumber: number) {
-        const lines = getProgramLines(code);
-        console.log(lineNumber, lines[dataSectionLineIndex], lines[textSectionLineIndex]);
-        console.log(lines[dataSectionLineIndex]?.trim().startsWith('.data'), lines[textSectionLineIndex]?.trim().startsWith('.text'));
-
-
-        // Check if both indexes are correct
-        if (!lines[dataSectionLineIndex]?.trim().startsWith('.data') && !lines[textSectionLineIndex]?.trim().startsWith('.text')) {
-            dataSectionLineIndex = -1;
-            textSectionLineIndex = -1;
-        }
-
-        console.log(dataSectionLineIndex, textSectionLineIndex);
-        if (dataSectionLineIndex == -1 && textSectionLineIndex == -1) {
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line.startsWith('.data')) {
-                    dataSectionLineIndex = i;
-                } else if (line.startsWith('.text')) {
-                    textSectionLineIndex = i;
-                }
-            }
-        }
-
-        if (dataSectionLineIndex == -1 && textSectionLineIndex == -1) return 'unknown';
-
-        if (lineNumber > textSectionLineIndex + 1) return 'text';
-        if (lineNumber > dataSectionLineIndex && dataSectionLineIndex != -1) return 'data';
-        return 'unknown';
-
-    }
+    const registers = EditorUtils.registers;
 
 
     function getRegisterCompletions(addComma: boolean = false, includeZero: boolean = false, triggerSuggest: boolean = false): monaco.languages.CompletionList {
@@ -105,13 +38,13 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
             const line = model.getLineContent(position.lineNumber);
             const lineUntilPosition = line.substring(0, position.column - 1);
-            const section = getSection(model.getValue(), position.lineNumber);
-            console.log(section, dataSectionLineIndex, textSectionLineIndex);
+            const section = EditorUtils.getSection(model.getValue(), position.lineNumber);
+            console.log(section, EditorUtils.dataSectionLineIndex, EditorUtils.textSectionLineIndex);
 
             if (section === 'unknown') {
                 // If dataSectionLineIndex and textSectionLineIndex are not defined, suggest both
 
-                if (dataSectionLineIndex == -1) {
+                if (EditorUtils.dataSectionLineIndex == -1) {
                     return {
                         suggestions: [
                             {
@@ -128,7 +61,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
                         ]
                     }
                 }
-                if (textSectionLineIndex == -1 && textSectionLineIndex == -1) {
+                if (EditorUtils.textSectionLineIndex == -1 && EditorUtils.textSectionLineIndex == -1) {
                     return {
                         suggestions: [
                             {
@@ -153,7 +86,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
             else if (section === 'data') {
                 let dataSuggestions: monaco.languages.CompletionItem[] = [];
                 // if data is defined but text is not, suggest text
-                if (textSectionLineIndex == -1) {
+                if (EditorUtils.textSectionLineIndex == -1) {
                     dataSuggestions.push({
                         label: '.text',
                         kind: monaco.languages.CompletionItemKind.Method,
@@ -244,7 +177,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
 
             if (position.column <= line.search(/\S|$/) + 2) {
-                const instructionSuggestions: monaco.languages.CompletionItem[] = INSTRUCTION_SET.map((instruction) => ({
+                const instructionSuggestions: monaco.languages.CompletionItem[] = EditorUtils.instructionSet.map((instruction) => ({
                     label: instruction.mnemonic,
                     kind: monaco.languages.CompletionItemKind.Method,
                     insertText: instruction.mnemonic + ((instruction.operands && instruction.operands.length == 0) ? '' : ' '),
@@ -252,8 +185,9 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
                     command: (instruction.operands && instruction.operands.length == 0) ? undefined : { title: 'Trigger suggest', id: 'editor.action.triggerSuggest' },
                     detail: getInstructionSyntax(instruction),
                     documentation: {
-                        value: instruction.description,
+                        value: `**${getPseudoCode(instruction).trim()}**` + '<br>' + instruction.description + '\n',
                         isTrusted: true,
+                        supportHtml: true,
                     }
                 })) as monaco.languages.CompletionItem[]
 
@@ -277,13 +211,9 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
 
             // Find the instruction
             const mnemonic = line.trim().split(' ')[0];
-            const instruction = INSTRUCTION_SET.find((instruction: InstructionConfig) => instruction.mnemonic === mnemonic);
+            const instruction = EditorUtils.instructionSet.find((instruction: InstructionConfig) => instruction.mnemonic === mnemonic);
 
             if (!instruction) return { suggestions: [] };
-
-
-            console.log(line, mnemonic, lineUntilPosition, position);
-
 
             const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
             const operandIndex = lineUntilPosition.split(',').length - 1;
@@ -295,10 +225,6 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
             currentOperand = currentOperand?.replace(/^\s+/, '');
             // IF there are still spaces, then don't suggest anything
             if (isLastOperand && currentOperand && currentOperand.includes(' ')) return { suggestions: [] };
-
-            console.log(currentOperand, operand);
-
-            console.log(operandIndex, operand, operands);
 
             if (operand === 'REG_DESTINATION' || operand === 'REG_SOURCE' || operand === 'REG_TARGET') {
                 const addComma = operands.length > 1 && operandIndex < operands.length - 1;
@@ -329,7 +255,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
                 const effectiveAddressSuggestion: monaco.languages.CompletionItem = {
                     label: 'effective address',
                     kind: monaco.languages.CompletionItemKind.Value,
-                    insertText: `0(${registerPrefix}0)`,
+                    insertText: `0(${EditorUtils.registerPrefix}0)`,
                     range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column),
                     detail: 'Memory Address',
                     documentation: {
@@ -341,7 +267,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
                     suggestions: [
                         effectiveAddressSuggestion,
                         // Data labels
-                        ...getDataLabels(model.getValue()).map((label) => ({
+                        ...EditorUtils.getDataLabels(model.getValue()).map((label) => ({
                             label: label,
                             kind: monaco.languages.CompletionItemKind.Reference,
                             insertText: label,
@@ -356,7 +282,7 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
             }
 
             if (operand === 'LABEL') {
-                const labels = getlabels(model.getValue());
+                const labels = EditorUtils.getLabels(model.getValue());
                 const labelSuggestions = labels.map((label) => ({
                     label: label,
                     kind: monaco.languages.CompletionItemKind.Reference,
@@ -372,6 +298,24 @@ export function getCompletionsProvider(INSTRUCTION_SET: InstructionConfig[]) {
                     suggestions: labelSuggestions,
                 };
             }
+
+            if (operand === 'NONE')
+                return {
+                    suggestions: [
+                        {
+                            label: 'none',
+                            kind: monaco.languages.CompletionItemKind.Method,
+                            insertText: 'none',
+                            range: new monaco.Range(position.lineNumber, position.column - 1, position.lineNumber, position.column),
+                            detail: 'No operand',
+                            documentation: {
+                                value: 'No operand',
+                                isTrusted: true,
+                            },
+                        } as monaco.languages.CompletionItem,
+                    ],
+                };
+
 
 
 

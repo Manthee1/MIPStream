@@ -9,6 +9,7 @@ import { baseInstructionConfig } from '../assets/js/core/config/instructions';
 import { getHoverProvider } from './monaco/hoverProvider';
 import { updateValidationProvider } from './monaco/validationProvider';
 import { useProjectStore } from '../stores/projectStore';
+import { EditorUtils } from './monaco/editorUtils';
 
 
 let completionsProvider: any | null = null;
@@ -19,11 +20,10 @@ let definitionProvider: any | null = null;
 export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
 
     // Constants
-    const mnemonics = INSTRUCTION_SET.map((instruction) => instruction.mnemonic);
-    const registerPrefix = useProjectStore().getProjectSetting('registerPrefix');
+    EditorUtils.update(INSTRUCTION_SET);
     const registers = Array.from({ length: 32 }, (_, i) => `${i}`);
-    const mnemonicRegex = new RegExp(`\\b(${mnemonics.join('|')})\\b`, 'g');
-    const registerRegex = new RegExp(`([R\\$](${registers.join('|')}|${advanceRegisterNames.join('|')}))\\b`, 'g');
+    const mnemonicRegex = new RegExp(`\\b(${EditorUtils.mnemonics.join('|')})\\b`, 'g');
+    const registerRegex = new RegExp(`( |,)[R\\$](${registers.join('|')}|${advanceRegisterNames.join('|')})`, 'g');
 
 
     // Unregister all providers
@@ -74,18 +74,17 @@ export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
     });
 
 
-
     // Completion Item Provider
-    completionsProvider = monaco.languages.registerCompletionItemProvider('asm', getCompletionsProvider(INSTRUCTION_SET));
+    completionsProvider = monaco.languages.registerCompletionItemProvider('asm', getCompletionsProvider());
 
     // Hover Provider
-    hoverProvider = monaco.languages.registerHoverProvider('asm', getHoverProvider(INSTRUCTION_SET));
+    hoverProvider = monaco.languages.registerHoverProvider('asm', getHoverProvider());
 
     // Definition Provider
-    definitionProvider = monaco.languages.registerDefinitionProvider('asm', getDefinitionProvider(INSTRUCTION_SET));
+    definitionProvider = monaco.languages.registerDefinitionProvider('asm', getDefinitionProvider());
 
     // Validation
-    updateValidationProvider(INSTRUCTION_SET);
+    updateValidationProvider();
 
 };
 

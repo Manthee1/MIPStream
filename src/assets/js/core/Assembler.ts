@@ -62,7 +62,6 @@ export class Assembler {
             throw new Error(`Invalid number of operands for instruction ${mnemonic}. Expected ${expectedOperandsLength}, got ${operands.length}.`);
         }
 
-
         let rs = 0;
         let rt = 0;
         let rd = 0;

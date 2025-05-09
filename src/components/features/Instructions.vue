@@ -6,15 +6,16 @@
         </div>
         <ul class="flex flex-column flex-nowrap gap-2">
             <li v-for="instruction in filteredInstructions" :key="instruction.opcode">
-                <div class="flex flex-row flex-top-left gap-3">
+                <div class="flex flex-row flex-nowrap flex-top-left gap-3">
                     <!-- Custom icon depending on instruction type -->
 
-                    <vue-feather :type="getIcon(instruction)"></vue-feather>
-                    <div class="flex flex-column flex-left gap-2">
+                    <vue-feather :size="24" style="min-width:24px" :type="getIcon(instruction)"></vue-feather>
+                    <div class="flex flex-column flex-left gap-2 flex-auto">
                         <div class="flex flex-row flex-left width-full gap-2">
 
                             <label for="">{{ instruction.mnemonic }}</label> - <span>{{
                                 getInstructionSyntax(instruction) }}</span>
+                            <span class="instruction-type">{{ instruction.type }}</span>
                         </div>
                         <p class="width-full text-medium">
                             {{ getPseudoCode(instruction) }}
@@ -96,6 +97,13 @@ export default defineComponent({
 
             label {
                 margin: 0px;
+            }
+
+            .instruction-type {
+                font-size: 1.5rem;
+                color: var(--color-surface-4);
+                margin-left: auto;
+                margin-right: 1rem;
             }
 
             p {

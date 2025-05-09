@@ -6,7 +6,7 @@ General
 - [x] Add options to each workspace panel
 - [x] Add multi cpu support
 - [x] Add custom instructions
-- [ ] Add help
+- [x] Add help
 
 Home
 - [x] Make projects sorted by last opened
@@ -25,7 +25,7 @@ Simulator
 - [x] Add shortcuts simulation control
 - [x] Add hex and binary number support
 - [x] Disable control buttons when not possible to use
-- [ ] Add advance register convention support
+- [x] Add advance register convention support
 - [x] Add ability to change register and memory values
 
 Project Settings
@@ -35,7 +35,7 @@ Project Settings
 Settings
 - [x] Make autosave work
 - [x] Add overlay for settings
-- [ ] Add shortcuts to settings (exit)
+- [x] Add shortcuts to settings (exit)
 
 
 Diagram
@@ -53,13 +53,13 @@ Diagram
 Other Visuals
 - [x] Remove CPU window title
 - [x] Improve memory view
-- [ ] Add the ability to show what data is going to be changed/used in the next instruction
+- [x] Add the ability to show what data is going to be changed/used in the next instruction
 - [x] Fix editor popover clipping
-- [ ] Add info about code changes that were not assembled while the cpu is running
+- [x] Add info about code changes that were not assembled while the cpu is running
 
 Other Functionality
 - [x] Add Project rename
-- [ ] Add name and description to keyboard shortcuts( for future addition into a help screen)
+- [x] Add name and description to keyboard shortcuts( for future addition into a help screen)
 
 Bugs
 - [x] Fix editing the code while running the simulation directly changing cpuview stage instruction info

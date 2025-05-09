@@ -20,7 +20,7 @@
 		</div>
 		<div class="flex gap-1 ml-3">
 			<MRange :modelValue="$simulationStore.speed" @update:modelValue="$simulationStore.setSpeed($event)" :min="1"
-				:max="1000" :step="1" />
+				:max="100" :step="1" />
 			<span style="width:7ch" class="m-auto">{{ $simulationStore.speed }} ins/s</span>
 		</div>
 	</div>

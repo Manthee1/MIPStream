@@ -1,6 +1,7 @@
 <template>
     <div class="range-container">
-        <input type="range" :value="value" @input="updateValue" step="1" min="0" max="100" :style="gradientStyle" />
+        <input type="range" :value="value" @input="updateValue" :step="step" :min="min" :max="max"
+            :style="gradientStyle" />
     </div>
 </template>
 
@@ -43,7 +44,7 @@ export default defineComponent({
     computed: {
         gradientStyle() {
             return {
-                background: `linear-gradient(to right, var(--color-accent) ${this.value}%, var(--color-surface-1) ${this.value}%)`
+                background: `linear-gradient(to right, var(--color-accent) ${(this.value - this.min) / (this.max - this.min) * 100}%, var(--color-surface-1) ${(this.value - this.min) / (this.max - this.min) * 100}%)`
             };
         }
     },
