@@ -22,7 +22,7 @@ export function updateValidationProvider() {
 
         lines.forEach((line: string, index: number) => {
             // Remove comment if any
-            line = line.split(';')[0].trim();
+            line = line.split(';')[0].trimEnd() + ' ';
             // If the line is empty or a comment or empty, skip it
             if (line.trim() === '' || line.trim()[0] === ';') return;
             const firstWord = line.trim().split(' ')[0].trim();

@@ -105,7 +105,7 @@ export class EditorUtils {
         // Search forward for the first non-alphanumeric character
 
 
-        const allowedCharsRegex = /[\w-\$]/;
+        const allowedCharsRegex = /[\w-\.\$]/;
 
         let end = column - 1;
         for (; end < lineContent.length; end++) {

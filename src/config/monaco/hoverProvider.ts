@@ -1,3 +1,4 @@
+import { Assembler } from './../../assets/js/core/Assembler';
 import * as monaco from 'monaco-editor';
 import { useProjectStore } from '../../stores/projectStore';
 import { decToBinary, decToHex, isValue, decToUnsigned, isRegister, advanceRegisterNames, getRegisterNumber, registerDescriptions, getInstructionSyntax, getPseudoCode } from '../../assets/js/utils';
@@ -14,6 +15,7 @@ export function getHoverProvider() {
             const word = model.getWordAtPosition(position);
             if (word) {
                 const { word: text } = word;
+
 
                 if (mnemonicRegex.test(text)) {
                     const instruction = EditorUtils.instructionSet.find(inst => inst.mnemonic === text);
@@ -48,7 +50,7 @@ export function getHoverProvider() {
 
             // If it was hovered of a value show its signed, unsigned, hex and binary representation
             if (isValue(wordValue)) {
-                const value = (wordValue.startsWith('0b')) ? parseInt(wordValue.slice(2), 2) : parseInt(wordValue);
+                const value = ((wordValue.startsWith('0b')) ? parseInt(wordValue.slice(2), 2) : parseInt(wordValue)) | 0;
                 let [value32, value16, value8] = [value, value, value];
                 value32 = value;
                 value16 = (value << 16) >> 16;
@@ -86,6 +88,18 @@ export function getHoverProvider() {
                     ]
                 };
             }
+
+            if (Assembler.dataDirectivesSizeMap[wordValue]) {
+                const size = Assembler.dataDirectivesSizeMap[wordValue];
+                return {
+                    range: new monaco.Range(position.lineNumber, start + 1, position.lineNumber, end + 1),
+                    contents: [
+                        { value: `**Data Directive**` },
+                        { value: `Size: ${size} bytes` },
+                    ]
+                };
+            }
+
 
 
             return null;

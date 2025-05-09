@@ -44,23 +44,25 @@ export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
             root: [
                 [mnemonicRegex, 'mnemonic'],
                 [registerRegex, 'register'],
-                [/\b\d+\b/, 'immediate'],
+                [/\.(byte|half|word)/, 'data-directive'],
+                [/\b\d+\b/, 'immediate'], // Decimal numbers
+                [/\b0x[0-9a-fA-F]+\b/, 'immediate'], // Hexadecimal numbers
+                [/\b0b[01]+\b/, 'immediate'], // Binary numbers
                 [/\b\w+:/, 'label'],
                 [/;.*/, 'comment'],
                 [/\.(data|text)/, 'section'],
-                [/\.(byte|half|word)/, 'data-type'],
             ],
             label: [
                 [/\w+/, 'label', '@pop']
             ]
         },
-        ignoreCase: true,
-        defaultToken: 'invalid',
+        ignoreCase: false,
+        defaultToken: '',
         tokenPostfix: '.asm',
     });
 
     monaco.languages.setLanguageConfiguration('asm', {
-        wordPattern: /[a-zA-Z]+/,
+        wordPattern: /[a-zA-Z_][a-zA-Z0-9_]+/,
         autoClosingPairs: [
             { open: '(', close: ')' },
             { open: '[', close: ']' },
@@ -97,7 +99,7 @@ const rulesDark = [
     { token: 'label', foreground: 'DCDCAA' },
     { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
     { token: 'section', foreground: '4EC9B0' },
-    { token: 'data-type', foreground: 'CE9178' },
+    { token: 'data-directive', foreground: '5A82D8' },
     ...githubDarkTheme.rules,
 ] as monaco.editor.ITokenThemeRule[];
 
@@ -111,13 +113,13 @@ monaco.editor.defineTheme('dark', {
 });
 
 const rulesWhite = [
-    { token: 'mnemonic', foreground: '5a82d8' },
+    { token: 'mnemonic', foreground: '5A82D8' },
     { token: 'register', foreground: 'D16969' },
     { token: 'immediate', foreground: '3f3f3f' },
     { token: 'label', foreground: 'ab4264' },
     { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
     { token: 'section', foreground: '006000' },
-    { token: 'data-type', foreground: '3f3f3f' },
+    { token: 'data-directive', foreground: '5A82D8' },
 ] as monaco.editor.ITokenThemeRule[];
 
 monaco.editor.defineTheme('light', {
