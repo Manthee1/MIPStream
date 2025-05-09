@@ -34,21 +34,6 @@ export const generalSettingTabs: SettingTab[] = [
         ]
     },
     {
-        name: 'Simulation',
-        icon: 'cpu',
-        settings: [
-
-            {
-                key: 'warnOnOverUnderflow',
-                label: 'Warn On Over/Underflow',
-                type: 'checkbox',
-                default: true,
-                description: 'Warn the user if a register overflows or underflows.',
-                icon: 'alert-triangle'
-            },
-        ]
-    },
-    {
         name: 'Editing',
         icon: 'edit',
         settings: [
@@ -65,7 +50,7 @@ export const generalSettingTabs: SettingTab[] = [
                 key: 'instantProblemListUpdate',
                 label: 'Instant Problem List Update',
                 type: 'checkbox',
-                default: true,
+                default: false,
                 description: 'Update the problem list as you type without delay.',
                 icon: 'check-square'
             },

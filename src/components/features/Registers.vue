@@ -112,7 +112,8 @@ div.registers
     flex-flow: row nowrap
     justify-content: space-between
     padding: 0.5rem 1rem
-    font-size: 1.5rem
+    font-size: 1.2rem
+    font-family: var(--font-family-mono)
     border-bottom: 1px solid #ccc
 
 .registers-container
@@ -120,7 +121,8 @@ div.registers
     flex-flow: row nowrap
     flex: 1 1 auto
     gap: 1rem
-    font-size: 1.5rem
+    font-size: 1.2rem
+    font-family: var(--font-family-mono)
     padding: 0.5rem 1rem
 
     .register-list

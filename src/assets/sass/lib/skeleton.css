@@ -568,6 +568,10 @@ tfoot {
     text-align: center;
 }
 
+.text-justify {
+    text-align: justify;
+}
+
 
 .pull-right {
     float: right;

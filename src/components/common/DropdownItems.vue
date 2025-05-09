@@ -125,7 +125,7 @@ export default defineComponent({
         color: var(--color-text)
         cursor: pointer
         text-decoration: none
-        transition: background-color 0.3s
+        transition: background-color 0.1s
         gap: 0.2em
         .item-icon
             margin: auto 0

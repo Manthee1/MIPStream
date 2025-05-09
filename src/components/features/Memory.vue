@@ -90,6 +90,7 @@ export default defineComponent({
     flex-direction: column
     grid-template-columns: repeat(17, 1fr)
     font-size: 1rem
+    font-family: var(--font-family-mono);
     padding: 0.5rem
     gap: 0.2rem
     // background-color: var(--color-surface-0)

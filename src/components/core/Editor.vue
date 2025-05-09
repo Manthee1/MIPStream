@@ -128,6 +128,12 @@ export default defineComponent({
 				const stageName = "stage-" + index;
 				const line = this.$simulationStore.PCToLineMap[this.$simulationStore.stagePCs[index]];
 
+				// Scroll to the line if the stage is if
+				if (index == 0) {
+					editor.revealLineInCenter(line);
+					editor.revealLine(line);
+				}
+
 				return [
 					{
 						range: new monaco.Range(+line, 1, +line, 1),

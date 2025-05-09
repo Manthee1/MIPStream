@@ -20,7 +20,7 @@
                         <p class="width-full text-medium">
                             {{ getPseudoCode(instruction) }}
                         </p>
-                        <p class="width-full text-medium" v-if="instruction.description">
+                        <p class="width-full text-medium text-justify" v-if="instruction.description">
                             {{ instruction.description }}
                         </p>
                     </div>

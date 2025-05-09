@@ -31,6 +31,8 @@ export const useSimulationStore = defineStore('simulation', {
         breakpoints: [] as number[],
         PCToLineMap: [] as number[],
         instructionCount: 0 as number,
+        instructionMemory: new Uint32Array(0) as Uint32Array,
+        instructionMemoryMnemonics: [] as string[],
         stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
         errors: [] as string[],
         runtimeErrors: [] as string[],
@@ -45,7 +47,7 @@ export const useSimulationStore = defineStore('simulation', {
         async init(project: Project) {
             const cpuOptions = {
                 dataMemorySize: project?.settings?.memorySize ?? defaultProjectSettings.memorySize,
-                instructionMemorySize: project?.settings?.instructionMemorySize ?? defaultProjectSettings.instructionMemorySize,
+                instructionMemorySize: 0xffff
             } as any
 
             // Get cpu type
@@ -210,7 +212,7 @@ export const useSimulationStore = defineStore('simulation', {
                 text: 'Program loaded successfully',
             });
 
-
+            this.instructionMemory = instructionMemory;
             this.cpuDiagram.draw();
         },
         step() {
@@ -335,6 +337,7 @@ export const useSimulationStore = defineStore('simulation', {
                 this.stop();
             this.program = '';
             this.loadedProgram = '';
+            this.instructionMemory = new Uint32Array(0);
             this.errors = [];
         }
 

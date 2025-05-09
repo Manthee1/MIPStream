@@ -127,7 +127,7 @@ export const components: ComponentLayout[] = [
         id: "ALUControl",
         label: "ALUControl",
         description: "Control unit for the ALU that determines the operation to be performed.",
-        type: "register",
+        type: "alu_control",
         dimensions: { width: 50, height: 50 }, pos: { x: 777, y: 484 },
         ports: ALUControlPorts
     },

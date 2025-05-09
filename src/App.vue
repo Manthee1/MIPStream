@@ -15,7 +15,7 @@
         </Window>
     </div>
 
-    <div class="help-window-wrapper" v-if="$UIStore.showHelp" @click="$UIStore.closeHelp">
+    <div class="help-window-wrapper" v-show="$UIStore.showHelp" @click="$UIStore.closeHelp">
         <Window title="Help" @click.stop closeable :onClose="$UIStore.closeHelp">
             <HelpWindow />
         </Window>

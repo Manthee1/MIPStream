@@ -95,14 +95,20 @@ export const useProjectStore = defineStore('project', {
                     return;
                 }
             }
+            const settingsRequiringDiagramUpdate = ['diagramValueRepresentation', 'diagramShowValues'];
+            if (settingsRequiringDiagramUpdate.includes(key)) {
+                useSimulationStore().cpuDiagram.draw();
+            }
 
             // If the setting in
-            const settingsRequiringReinit = ['cpuType', 'memorySize', 'instructionMemorySize', 'registerPrefix'];
+            const settingsRequiringReinit = ['cpuType', 'memorySize', 'registerPrefix'];
             if (settingsRequiringReinit.includes(key)) {
 
                 useSimulationStore().reset();
                 useSimulationStore().init(this.currentProject);
             }
+
+
 
             updateProject(toRaw(this.currentProject));
         },

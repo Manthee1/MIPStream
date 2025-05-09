@@ -42,8 +42,10 @@ export function getDefinitionProvider(): monaco.languages.DefinitionProvider {
                     if (!dataLabel) return null;
                     const labelName = dataLabel;
                     const programLines = EditorUtils.getSectionCodeLines(model.getValue(), 'data');
-                    const labelLineNumber = programLines.findIndex((line: string) => line.trim().startsWith(labelName + ':'));
+                    const labelLineNumber = programLines.findIndex((line: string) => line.trim().startsWith(labelName + ':')) + EditorUtils.dataSectionLineIndex;
                     const labelLine = model.getLineContent(labelLineNumber + 1);
+                    console.log(programLines, labelName, labelLine);
+
                     const column = labelLine.indexOf(labelName) + 1;
 
                     if (labelLineNumber == -1) return null;

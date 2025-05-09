@@ -26,7 +26,7 @@
           <tr v-for="project in projects" :key="project.id">
             <td>
               <router-link :to="{ name: 'Workspace', params: { id: project.id } }">{{ project.name
-                }}</router-link>
+              }}</router-link>
             </td>
             <!-- <td>{{ formatDateRecent(new Date(project.createdAt)) }}</td> -->
             <td>{{ formatDateRecent(new Date(project.savedAt)) }}</td>
@@ -41,6 +41,8 @@
           </tr>
         </tbody>
       </table>
+      <!-- Pagination -->
+
     </div>
   </div>
 </template>
@@ -107,14 +109,16 @@ export default defineComponent({
   display: flex
   background-color: var(--color-surface-1)
   width: 100%
-  height: 100%
+  min-height: 100%
+  padding: 5rem 0px
+
 
   .content-container
     padding: 3rem
     max-width: 800px
     width: 100%
     margin: auto
-    margin-top: 18vh
+    // margin-top: 18vh
     background-color: var(--color-surface-0)
     border-radius: 10px
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1)

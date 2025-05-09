@@ -29,7 +29,7 @@ export default {
     border-radius: 25px;
     position: relative;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.2s;
 }
 
 .switch--on {
@@ -44,7 +44,7 @@ export default {
     position: absolute;
     top: 1px;
     left: 1px;
-    transition: left 0.3s;
+    transition: left 0.2s;
 }
 
 .switch--on .switch__toggle {

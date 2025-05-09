@@ -25,6 +25,7 @@ import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vu
 import Registers from "../components/features/Registers.vue";
 import Stages from "../components/features/Stages.vue";
 import Memory from "../components/features/Memory.vue";
+import HexView from "../components/features/HexView.vue";
 import Instructions from "../components/features/Instructions.vue";
 import { defaultLayoutGridConfig, panelsConfig } from "../config/layout";
 
@@ -43,6 +44,7 @@ export default defineComponent({
 		Accordion,
 		Stages,
 		Memory,
+		HexView,
 		Instructions,
 		DockviewVue,
 		DockviewTab,

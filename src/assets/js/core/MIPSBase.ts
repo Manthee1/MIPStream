@@ -18,7 +18,7 @@ export default class MIPSBase {
             default: 1024,
             type: "number",
             min: 128,
-            max: 2097152,
+            max: 0xffff,
         },
         {
             label: "Data Memory Size",
@@ -119,7 +119,7 @@ export default class MIPSBase {
 
     loadProgram(instructions: Uint32Array) {
         if (instructions.length > this.options.instructionMemorySize) {
-            throw new Error(`Program size exceeds instruction memory size`);
+            throw new Error(`Program size (${instructions.length}) exceeds instruction memory size (${this.options.instructionMemorySize})`);
         }
         this.reset();
         this.instructionMemory.set(instructions);
@@ -129,7 +129,7 @@ export default class MIPSBase {
 
     loadMemory(data: number[]) {
         if (data.length > this.options.dataMemorySize) {
-            throw new Error(`Data size exceeds data memory size`);
+            throw new Error(`Data size (${data.length}) exceeds data memory size (${this.options.dataMemorySize})`);
         }
         this.dataMemory = new Array(this.options.dataMemorySize).fill(0);
         for (let i = 0; i < data.length; i++) {

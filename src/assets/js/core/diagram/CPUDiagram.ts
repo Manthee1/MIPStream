@@ -1,4 +1,5 @@
 import { useProjectStore } from "../../../../stores/projectStore";
+import { decToBinary, decToHex } from "../../utils";
 import SpatialMap from "../../utils/SpatialMap";
 
 export class CPUDiagramPlugin {
@@ -346,7 +347,7 @@ export class CPUDiagram {
 
                 this.ctx.setLineDash([]);
                 this.ctx.closePath();
-                this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '10px Arial');
+                this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '9px Arial');
                 break;
             case 'mux':
             case 'mux_reversed':
@@ -392,6 +393,12 @@ export class CPUDiagram {
 
                 // Draw the text
                 this.drawText('CU', x + width / 2, y + height / 2, 'black', '12px Arial', 'center', 'middle');
+                break;
+
+            case 'alu_control':
+                // Draw the component
+                this.drawRect(x, y, width, height, 'white', 'black');
+                this.drawText(componentLayout.label, x + width / 2, y + height / 2, 'black', '9px Arial');
                 break;
 
             default:
@@ -482,10 +489,11 @@ export class CPUDiagram {
         let value = ((typeof port.value === 'object') ? port.value?.value ?? 0 : port.value).toString() ?? '';
         const valueEnc = useProjectStore().getProjectSetting('diagramValueRepresentation');
 
+        const unsignedValue = parseInt(value) >>> 0;
         if (valueEnc === 'hex') {
-            value = '0x' + parseInt(value).toString(16);
+            value = '0x' + unsignedValue.toString(16).toUpperCase();
         } else if (valueEnc === 'bin') {
-            value = '0b' + parseInt(value).toString(2);
+            value = unsignedValue.toString(2);
         }
 
         const portWidth = this.ctx.measureText(value).width;
@@ -499,10 +507,10 @@ export class CPUDiagram {
                 y += portHeight;
                 break;
             case 'left':
-                x -= portWidth / 2;
+                x -= portWidth / 1.2;
                 break;
             case 'right':
-                x += portWidth / 2;
+                x += portWidth / 1.2;
                 break;
         }
         // Add a rectangle with the port value

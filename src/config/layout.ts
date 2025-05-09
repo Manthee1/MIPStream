@@ -5,31 +5,61 @@ export const defaultLayoutGridConfig = {
         "type": "branch",
         "data": [
             {
-                "type": "leaf",
-                "data": {
-                    "views": [
-                        "stages",
-                        "registers",
-                        "memory",
-                        "instructions"
-                    ],
-                    "activeView": "memory",
-                    "id": "2"
-                },
-                "size": 371
+                "type": "branch",
+                "data": [
+                    {
+                        "type": "leaf",
+                        "data": {
+                            "views": [
+                                "memory"
+                            ],
+                            "activeView": "memory",
+                            "id": "6"
+                        },
+                        "size": 380
+                    },
+                    {
+                        "type": "leaf",
+                        "data": {
+                            "views": [
+                                "registers"
+                            ],
+                            "activeView": "registers",
+                            "id": "2"
+                        },
+                        "size": 524
+                    }
+                ],
+                "size": 347
             },
             {
-                "type": "leaf",
+                "type": "branch",
+                "data": [
+                    {
+                        "type": "leaf",
+                        "data": {
+                            "views": [
+                                "editor"
+                            ],
+                            "activeView": "editor",
+                            "id": "3"
+                        },
+                        "size": 703
+                    },
+                    {
+                        "type": "leaf",
+                        "data": {
+                            "views": [
+                                "problems"
+                            ],
+                            "activeView": "problems",
+                            "id": "1"
 
-                "data": {
-                    "views": [
-                        "editor"
-                    ],
-                    "activeView": "editor",
-                    "id": "3",
-
-                },
-                "size": 688
+                        },
+                        "size": 201
+                    }
+                ],
+                "size": 541
             },
             {
                 "type": "branch",
@@ -43,24 +73,35 @@ export const defaultLayoutGridConfig = {
                             "activeView": "cpuView",
                             "id": "4"
                         },
-                        "size": 586
+                        "size": 520
                     },
                     {
                         "type": "leaf",
                         "data": {
                             "views": [
-                                "problems"
+                                "hexView"
                             ],
-                            "activeView": "problems",
+                            "activeView": "hexView",
                             "id": "5"
                         },
-                        "size": 317
+                        "size": 384
                     }
                 ],
-                "size": 861
+                "size": 757
+            },
+            {
+                "type": "leaf",
+                "data": {
+                    "views": [
+                        "instructions"
+                    ],
+                    "activeView": "instructions",
+                    "id": "9"
+                },
+                "size": 275
             }
         ],
-        "size": 903
+        "size": 904
     } as SerializedGridObject<GroupPanelViewState>,
     "width": 1920,
     "height": 903,
@@ -92,6 +133,12 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "id": "memory",
         "contentComponent": "Memory",
         "title": "Memory",
+        "tabComponent": "DockviewTab",
+    },
+    "hexView": {
+        "id": "hexView",
+        "contentComponent": "HexView",
+        "title": "Hex View",
         "tabComponent": "DockviewTab",
     },
     "instructions": {

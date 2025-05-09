@@ -11,6 +11,11 @@ const helpTabs: Array<{ name: string; icon: string, component: ComponentOptions 
     { name: "General", icon: "help-circle", component: GeneralHelp },
     { name: "Registers", icon: "columns", component: RegistersHelp },
     { name: "Shortcuts", icon: "corner-right-up", component: KeyboardShortuctsHelp },
+    // { name: "Memory", icon: "cpu", component: MemoryHelp },
+    // { name: "Diagram", icon: "cpu", component: DiagramHelp },
+    // { name: "Hex View", icon: "cpu", component: HexViewHelp },
+    // { name: "Instructions", icon: "cpu", component: InstructionsHelp },
+    // { name: "Instruction Config", icon: "cpu", component: InstructionConfigHelp },
     // { name: "Troubleshooting", icon: "alert-triangle", component: GeneralHelp },
 ];
 
@@ -47,7 +52,6 @@ export default {
     methods: {
         setActiveTab(index: number) {
             console.log("Setting active tab to: ", index);
-
             this.currentTabIndex = index;
         },
     },
@@ -91,6 +95,30 @@ export default {
     h6 {
         font-weight: bold;
         margin: 1em 0 0.5em;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    h3 {
+        font-size: 1.2em;
+    }
+
+    h4 {
+        font-size: 1.1em;
+    }
+
+    h5 {
+        font-size: 1em;
+    }
+
+    h6 {
+        font-size: 0.9em;
     }
 
     p {
