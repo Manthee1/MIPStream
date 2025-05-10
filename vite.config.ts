@@ -29,8 +29,7 @@ export default defineConfig({
         categories: ['education', 'tools', 'ide',],
         //@ts-ignore - keywords exists but is not defined in the type
         keywords: ['programming', 'simulation', 'mips', 'assembly', 'cpu', 'pipelining'],
-        display_override: ['window-controls-overlay', 'minimal-ui'],
-        display: 'fullscreen',
+        display: 'standalone',
         icons: [
           {
             src: '/icons/icon-192x192.png',
