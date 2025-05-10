@@ -9,7 +9,7 @@ import { default as _ } from '../../assets/js/core/config/cpu-variables';
     <div class="registers">
         <div class="pc">
             <span>PC</span>
-            <span>0x{{ decToHex($simulationStore.core.PC.value, 8) }}</span>
+            <span>0x{{ decToHex($simulationStore.core.PC.value, 16) }}</span>
             <span>{{ $simulationStore.core.PC.value }} ({{ $simulationStore.core.PC.value / 4 }})</span>
         </div>
         <div class="registers-container">
