@@ -148,7 +148,7 @@ export default defineComponent({
     flex-flow: row nowrap
     justify-content: flex-start
     align-content: flex-start
-    min-width: 300px
+    min-width: 800px
     min-height: 300px
     height: 80vh
     width: 50vw

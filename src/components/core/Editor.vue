@@ -224,7 +224,7 @@ export default defineComponent({
 	.monaco-editor
 		border: 1px var(--color-surface-1) solid
 		.overflow-guard
-			overflow-y: visible
+			overflow-y: hidden
 
 .monaco-editor
 	.breakpoint, .hover-breakpoint

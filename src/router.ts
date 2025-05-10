@@ -19,6 +19,7 @@ export function initRouter() {
         const dropdownItems = getRouteDropdownItems(to.name?.toString() || '');
         UIStore.topBar.dropdownItems = dropdownItems;
 
+        document.title = to.meta?.title as string ?? 'MIPStream';
 
         // If next is workspace, check if the project exists
         if (to.name == 'Workspace') {
@@ -30,13 +31,15 @@ export function initRouter() {
                 return;
             }
 
+            document.title += ' - ' + project.name;
+
             useProjectStore().setCurrentProject(project);
             next();
             return;
         }
 
 
-        UIStore.topBar.title = to.name?.toString() || '';
+        UIStore.topBar.title = document.title;
         useProjectStore().updateRecentProjects();
 
 

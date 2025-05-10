@@ -32,9 +32,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { getDefaultInstructionDefOperands, getInstructionSyntax, getPseudoCode } from '../../assets/js/utils';
-import { get } from 'http';
-import { ALUOperationstoSigns, getAluControl } from '../../assets/js/core/config/alu';
+import { getInstructionSyntax, getPseudoCode } from '../../assets/js/utils';
 
 export default defineComponent({
     data() {

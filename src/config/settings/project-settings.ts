@@ -8,25 +8,14 @@ import { useProjectStore } from "../../stores/projectStore";
 
 // Visualization: value representation(dec,hex,bin) for memory/diagram/registers all individually, register nameing convention, 
 export const projectSettingTabs: SettingTab[] = [
-    {
-        name: 'General',
-        icon: 'settings',
-        settings: [
-            {
-                key: 'UIUpdateIntervalAtMaxSpeed',
-                label: 'Update Interval at Max Speed (ms)',
-                type: 'number',
-                default: 100,
-                min: -1,
-                max: 10000,
-                step: 1,
-                description: `Specify how often the UI should update (in milliseconds) when the simulation is running at maximum speed.
-Set to '-1' to disable updates during simulation, which will freeze the UI until the simulation is paused.`,
-                icon: 'clock'
-            },
+    // {
+    //     name: 'General',
+    //     icon: 'settings',
+    //     settings: [
 
-        ]
-    },
+
+    //     ]
+    // },
     {
         name: 'Simulation',
         icon: 'cpu',
@@ -41,6 +30,18 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                 step: 1,
                 description: 'Choose the speed of the simulation. Setting to 100 executes without delay.',
                 icon: 'cpu'
+            },
+            {
+                key: 'UIUpdateIntervalAtMaxSpeed',
+                label: 'Update Interval at Max Speed (ms)',
+                type: 'number',
+                default: 100,
+                min: -1,
+                max: 10000,
+                step: 1,
+                description: `Specify how often the UI should update (in milliseconds) when the simulation is running at maximum speed.
+Set to '-1' to disable updates during simulation, which will freeze the UI until the simulation is paused.`,
+                icon: 'clock'
             },
             {
                 key: 'cpuType',

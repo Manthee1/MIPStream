@@ -15,6 +15,24 @@ import 'dockview-core/dist/styles/dockview.css'
 import { initKeyboardHandler } from "./keyboardHandler";
 import { useProjectStore } from "./stores/projectStore";
 
+import { registerSW } from 'virtual:pwa-register';
+
+const updateSW = registerSW({
+    onNeedRefresh() {
+        if (confirm('A new version is available. Do you want to update?')) {
+            updateSW(true); // Force the service worker to update
+        }
+    },
+    onOfflineReady() {
+        notify({
+            title: 'Offline ready',
+            text: 'App is ready to work offline',
+            type: 'success',
+            duration: 5000,
+        });
+    },
+});
+
 const pinia = createPinia()
 
 const app = createApp(App);

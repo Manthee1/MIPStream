@@ -5,7 +5,6 @@ import { promptProjectName, confirmAction, notify, downloadProject } from '../ut
 import { useRouter } from 'vue-router';
 import { useUIStore } from './UIStore';
 import { useSettingsStore } from './settingsStore';
-import { rejects } from 'assert';
 import { clone } from '../assets/js/utils';
 import { toRaw } from 'vue';
 import { settings } from '../storage/settingsStorage';
@@ -31,7 +30,7 @@ export const useProjectStore = defineStore('project', {
             this.currentProject = project;
 
             setTimeout(() => {
-                useUIStore().setTitle(project.name + " - MIPStream");
+                useUIStore().setTitle(project.name);
             }, 0);
 
             useUIStore().changeDropdownItemAction("Save", () => {

@@ -15,6 +15,11 @@ const theme = settings.theme;
 // Add the theme to the html element
 document.documentElement.classList.add(`theme-${theme}`);
 
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+if (themeColorMeta)
+    themeColorMeta.setAttribute('content', theme === 'dark' ? '#141517' : '#ffffff');
+
+
 export const useUIStore = defineStore('ui', {
     state: () => ({
         showProjectSettings: false,
@@ -77,6 +82,12 @@ export const useUIStore = defineStore('ui', {
             this.theme = newTheme;
             document.documentElement.classList.remove('theme-light', 'theme-dark');
             document.documentElement.classList.add(`theme-${this.theme}`);
+
+            // Update the theme_color for PWA
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeColorMeta)
+                themeColorMeta.setAttribute('content', newTheme === 'dark' ? '#141517' : '#ffffff');
+
             // Remove the transition style after the transition is complete
             setTimeout(() => {
                 document.documentElement.classList.remove('theme-transition');

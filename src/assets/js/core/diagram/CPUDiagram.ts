@@ -32,7 +32,7 @@ export class CPUDiagram {
     canvas: HTMLCanvasElement = null as any;
     ctx: CanvasRenderingContext2D = null as any;
 
-    drawIntervalRefence: NodeJS.Timeout = null as any;
+    // drawIntervalRefence: NodeJS.Timeout = null as any;
     plugins: Array<typeof CPUDiagramPlugin> = [];
     pluginInstances: CPUDiagramPlugin[] = [];
 
@@ -581,7 +581,7 @@ export class CPUDiagram {
 
 
     destroy() {
-        clearInterval(this.drawIntervalRefence);
+        // clearInterval(this.drawIntervalRefence);
         this.pluginInstances.forEach((plugin) => {
             plugin.destroy();
         });

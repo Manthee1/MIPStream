@@ -247,7 +247,7 @@ export default defineComponent({
 
             diagramMaximized: false,
 
-            updateTimeout: null as NodeJS.Timeout | null,
+            updateTimeout: null as number | null,
         };
     },
     async mounted() {
