@@ -1,4 +1,4 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/18da4b55-2c6e-4a02-be17-daee5331bcf4/deploy-status)](https://app.netlify.com/sites/mipstream/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/18da4b55-2c6e-4a02-be17-daee5331bcf4/deploy-status)](https://mipstream.netlify.app)
 # MIPS Web-Based Simulator
 
 This project is a web-based simulator for the MIPS architecture. It allows users to simulate and execute MIPS assembly code in a browser environment.
