@@ -15,7 +15,10 @@
                         <vue-feather v-if="setting?.icon" class="setting-icon" :type="setting.icon" />
                     </div>
                     <div class="setting-text">
-                        <label class="setting-name">{{ setting.label }}</label>
+                        <label class="setting-name">{{ setting.label }} <small class="font-light ml-2"
+                                v-if="setting.type === 'number'">|&nbsp; {{ setting.min ?? 0 }} to {{ setting.max ?? 100
+                                }}
+                            </small></label>
                         <p class="setting-description">{{ setting.description }}</p>
                     </div>
                 </div>
@@ -163,6 +166,7 @@ export default defineComponent({
             justify-content: space-between
             gap: 2rem
             padding: 1rem 2rem
+            margin-right: 1rem
             border-radius: 5px
             background-color: var(--color-surface-0)
             border: 2px solid var(--color-surface-2)

@@ -180,5 +180,5 @@ export default defineComponent({
             &:hover
                 background: var(--color-surface-1)
             &.selected
-                background: var(--color-surface-3)
+                background: var(--color-accent-background)
 </style>

@@ -2,7 +2,8 @@
     <div>
         <div class="stages" ref="stages">
             <!-- render stage and the instruction of that stage -->
-            <div class="stage" :class="'stage-' + index" v-for="(stagePC, index) in stagePCs" :key="index">
+            <div class="stage" :class="{ ['stage-' + index]: true, 'flushed': isFlushed(index) }"
+                v-for="(stagePC, index) in stagePCs" :key="index">
                 <span v-if="stagePC == -1 || stagePC > $simulationStore.instructionCount"> nop</span>
                 <span v-else :style="{ fontSize: getFontSize(program[$simulationStore.PCToLineMap[stagePC] - 1]) }">
                     {{ program[$simulationStore.PCToLineMap[stagePC] - 1] }}
@@ -27,6 +28,7 @@ import MIPSBase from '../../assets/js/core/MIPSBase';
 import { DiagramInteraction } from '../../assets/js/core/diagram/plugins/DiagramInteraction';
 import { clone, getProgramLines } from '../../assets/js/utils';
 import CpuDiagram from '../features/CpuDiagram.vue';
+import cpuVariables from '../../assets/js/core/config/cpu-variables';
 export default defineComponent({
     components: { Window, CpuDiagram },
     name: 'CpuView',
@@ -80,7 +82,16 @@ export default defineComponent({
             // return the font size
             return Math.min(1.5, (stageWidth / textWidth) * 2) + 'rem';
 
-        }
+        },
+
+        isFlushed(index: number) {
+            if (this.$simulationStore.stagePCs[index] == -1) return true
+            // check if the stage is flushed by comparing the assembled instructions vs the current instruction
+            const activeStagesIntruction = [cpuVariables.IR_IF, cpuVariables.IR_ID, cpuVariables.IR_EX, cpuVariables.IR_MEM, cpuVariables.IR_WB];
+            const activeStageInstruction = activeStagesIntruction[index].value;
+
+            return activeStageInstruction == 0x0000003f;
+        },
 
     }
 });
@@ -102,6 +113,7 @@ export default defineComponent({
         flex: 1
         text-align: center
         line-height: 2rem
+  
 
         &.stage-0
             border-color: #FFD70030
@@ -118,6 +130,9 @@ export default defineComponent({
         &.stage-4
             border-color: #ff69b430
             background-color: #ff69b430
+        &.flushed
+            background-color: var(--color-surface-2)
+            color: var(--color-subtext)
     
 .cpu-view 
     display: flex

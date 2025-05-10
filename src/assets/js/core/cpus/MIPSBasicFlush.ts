@@ -4,51 +4,92 @@ import { clone } from "../../utils";
 import { default as _ } from "../config/cpu-variables";
 import { instructionConfigWithJump } from "../config/instructions";
 import MIPSBase from "../MIPSBase";
-import { controlInputPort, getControlUnitPorts, muxPorts, oneToOnePorts, twoToOnePorts } from '../config/ports';
-import { connections } from '../config/connections/jump-connections';
+import { controlInputPort, getControlUnitPorts, muxPorts, oneToOnePorts, stagePorts, twoToOnePorts } from '../config/ports';
+import { connections } from '../config/connections/base-connections';
+
+const flushPortTemplate: PortLayout = {
+    id: "Flush",
+    label: "Flush",
+    type: 'input',
+    location: 'top',
+    bits: 1,
+    value: 0,
+    relPos: 0.5,
+};
 
 
-const jumpComponents: ComponentLayout[] = [
-    ...components.filter((component) => component.id !== "BranchMUX" && component.id !== "ControlUnit"), // Remove the original BranchMUX{
+stagePorts.IFtoIDPorts.push(
     {
-        id: "JumpShiftLeft",
-        label: "JumpShiftLeft",
-        description: "Jump address shifted left by 2 bits.",
-        type: "shift",
-        dimensions: { width: 30, height: 30 }, pos: { x: 360, y: 120 },
-        ports: oneToOnePorts(_.JumpAddress, _.JumpAddressShifted)
+        ...flushPortTemplate,
+        ...{ value: _.Flush_IF },
     },
+)
+stagePorts.IDtoEXPorts.push(
     {
-        id: "JumpMUX",
-        label: "JumpMUX",
-        description: "Jump MUX",
-        type: "mux",
-        dimensions: { width: 25, height: 50 }, pos: { x: 1005, y: 196 },
-        ports: [
-            ...twoToOnePorts(_.JumpAddressShifted, _.PreNPC_MEM, _.NPC_MEM),
-            ...controlInputPort(_.Jump_ID, "Jump", 'top'),
-        ]
+        ...flushPortTemplate,
+        ...{ value: _.Flush_ID },
     },
+)
+stagePorts.EXtoMEMPorts.push(
     {
-        id: "BranchMUX",
-        label: "BranchMUX",
-        description: "Branch MUX",
-        type: "mux_reversed",
-        dimensions: { width: 25, height: 50 }, pos: { x: 950, y: 211 },
-        ports: [
-            ...twoToOnePorts(_.PreNPC_MEM, _.TargetPC_MEM, _.NPC_MEM),
-            ...controlInputPort(_.Branch_MEM, "Bran", 'bottom'),
-        ]
+        ...flushPortTemplate,
+        ...{ value: _.Flush_EX },
     },
-    {
-        id: "ControlUnit",
-        label: "ControlUnit",
-        description: "Control unit that generates control signals for the CPU based on the instruction.",
-        type: "control_unit",
-        dimensions: { width: 50, height: 100 }, pos: { x: 411, y: 140 },
-        ports: getControlUnitPorts(controlSignalsWithJump)
-    },
+)
+
+const flushComponents: ComponentLayout[] = [
+    ...components, // Remove the original BranchMUX{
 ];
+
+const flushConnections = clone(connections);
+// Flush connection template
+const flushConnectionTemplate: ConnectionLayout = {
+    "id": connections.length + 1,
+    "from": "BranchAndGate.out",
+    "to": "",
+    "type": "control",
+    bitRange: [0, 0],
+    bends: [],
+    "fromPos": {
+        "x": 992,
+        "y": 316.5
+    },
+    toPos: { x: 0, y: 0 }
+};
+
+
+flushConnections.push({
+    ...flushConnectionTemplate,
+    "id": connections.length,
+    "to": "IFtoID.Flush",
+    "bends": [
+        { "x": 1007, "y": 115 },
+        { "x": 305, "y": 115 },
+    ],
+    "toPos": { "x": 305, "y": 150 }
+})
+
+flushConnections.push({
+    ...flushConnectionTemplate,
+    "id": connections.length,
+    "to": "IDtoEX.Flush",
+    "bends": [
+        { "x": 1007, "y": 115 },
+        { "x": 605, "y": 115 },
+    ],
+    "toPos": { "x": 605, "y": 150 }
+})
+
+flushConnections.push({
+    ...flushConnectionTemplate,
+    "id": connections.length,
+    "to": "EXtoMEM.Flush",
+    "bends": [
+        { "x": 1007, "y": 115 },
+        { "x": 895, "y": 115 },
+    ],
+    "toPos": { "x": 895, "y": 150 }
+})
 
 
 export class MIPSBasicFlush extends MIPSBase {
@@ -58,42 +99,27 @@ export class MIPSBasicFlush extends MIPSBase {
     public cpuLayout: CPULayout = {
         width: 1200,
         height: 700,
-        components: jumpComponents,
-        connections: connections,
+        components: flushComponents,
+        connections: flushConnections
     };
 
-    fetch(): void {
-        // Update PC
-        this.PC.value = _.NPC_MEM.value;
+    memory(): void {
 
-        // Fetch instruction from memory
-        _.IR_IF.value = this.instructionMemory[this.PC.value / 4]; // divide by 4 because we are using a 32 bit array rather then an 8 bit array
-
-        // Increment PC
-        this.stageRegisters.IFtoID.NPC.value = _.NPC_IF.value = this.PC.value + 4;
-        _.PreNPC_MEM.value = _.BranchCond_MEM.value ? _.TargetPC_MEM.value : _.NPC_IF.value;
-
-        _.NPC_MEM.value = _.Jump_ID.value ? _.JumpAddressShifted.value : _.PreNPC_MEM.value;
-
-
-
-    }
-
-    decode(): void {
-        super.decode();
-
-        const currStage = this.stageRegisters.IFtoID;
-        const instruction = currStage.IR.value;
-        const opcode = _.OPCODE_ID.value = instruction >>> 26;
-        const instructionConfig = this.instructionConfig.find((config) => (config.opcode & 0b111111) === opcode);
-        _.Jump_ID.value = instructionConfig?.controlSignals.Jump ?? 0;
-
-        // Get the jump address
-        const jumpAddress = instruction & 0x03FFFFFF;
-        _.JumpAddress.value = jumpAddress;
-        _.JumpAddressShifted.value = (jumpAddress << 2) | (this.PC.value & 0xF0000000);
+        // Flush the output of the pipeline register if branch is taken in the previous cycle. Essectially, as if writing to the stage registers was blocked.
+        if (_.BranchCond_MEM.value) {
+            const stageRegistersToFlush = [this.stageRegisters.IFtoID, this.stageRegisters.IDtoEX, this.stageRegisters.EXtoMEM];
+            for (let stage of stageRegistersToFlush) {
+                for (let register of Object.values(stage)) {
+                    register.value = 0;
+                }
+            }
+            _.IR_EX.value = _.IR_ID.value = _.IR_IF.value = 0x0000003f; // Add a unique identifier to the IR register to indicate a flushed instruction
+        }
 
 
+        super.memory();
+        // Update the flush signals
+        _.Flush_IF.value = _.Flush_ID.value = _.Flush_EX.value = _.BranchCond_MEM.value
     }
 
 }

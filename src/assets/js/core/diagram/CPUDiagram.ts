@@ -496,9 +496,16 @@ export class CPUDiagram {
             value = unsignedValue.toString(2);
         }
 
+        let isBoxed = useProjectStore().getProjectSetting('diagramShowValues') == 'boxed'
+
+        this.ctx.font = '12px Arial';
         const portWidth = this.ctx.measureText(value).width;
         const portHeight = 12;
         // Push the text depending on the port location
+        let textAlign: CanvasTextAlign = 'center';
+        let margin = isBoxed ? 4 : 2;
+        let rectX = x - (portWidth + margin) / 2;
+        let rectY = y;
         switch (port.location) {
             case 'top':
                 y -= portHeight;
@@ -507,16 +514,29 @@ export class CPUDiagram {
                 y += portHeight;
                 break;
             case 'left':
-                x -= portWidth / 1.2;
+                x -= margin;
+                textAlign = 'right';
+                rectX = x - portWidth - margin / 2;
                 break;
             case 'right':
-                x += portWidth / 1.2;
+                x += margin;
+                textAlign = 'left';
+                rectX = x - margin / 2;
                 break;
         }
+        rectY = y - (portHeight + margin) / 2;
+
+        // Round the position
+        x = Math.round(x);
+        y = Math.round(y);
+        rectX = Math.round(rectX);
+        rectY = Math.round(rectY);
+
+
         // Add a rectangle with the port value
         if (useProjectStore().getProjectSetting('diagramShowValues') == 'boxed')
-            this.drawRectCenter(x, y, portWidth + 4, portHeight + 3, 'rgba(255, 255, 255, 0.5)', 'black');
-        this.drawText(value, x, y, 'black', portHeight + 'px Arial', 'center', 'middle');
+            this.drawRect(rectX, rectY, portWidth + 4, portHeight + 3, 'rgba(255, 255, 255, 0.5)', 'black');
+        this.drawText(value, x, y, 'black', portHeight + 'px Arial', textAlign, 'middle');
 
     }
 
@@ -525,17 +545,22 @@ export class CPUDiagram {
 
         this.ctx.beginPath();
 
-        if (connectionLayout.type === 'data') {
-            this.ctx.strokeStyle = 'black';
-        } else {
-            this.ctx.setLineDash([5, 5]);
-            this.ctx.strokeStyle = 'red';
-        }
         // Get the from port value
         const fromPort = this.ports.get(connectionLayout.from) as PortLayout;
         const fromPortValue = ((typeof fromPort.value === 'object') ? fromPort.value.value : fromPort.value) as number;
-        this.ctx.globalAlpha = fromPortValue == 0 ? 0.5 : 1;
 
+        let color = 'black';
+        if (connectionLayout.type === 'data') {
+            if (fromPortValue == 0)
+                color = 'rgb(120, 120, 120)';
+        } else {
+            this.ctx.setLineDash([5, 5]);
+            color = 'rgb(39, 27, 112)';
+            if (fromPortValue == 0)
+                color = 'rgb(173, 173, 255)';
+        }
+
+        this.ctx.strokeStyle = color;
 
         this.ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
         pathPoints.forEach((point) => {
@@ -543,8 +568,6 @@ export class CPUDiagram {
         });
         this.ctx.stroke();
         this.ctx.setLineDash([]);
-        this.ctx.globalAlpha = 1;
-
 
         // // Draw the bit range
         // const bitRangeText = `${bitRange[0]}-${bitRange[1]}`;

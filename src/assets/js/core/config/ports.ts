@@ -582,11 +582,11 @@ export const stagePorts: { [key: string]: Array<PortLayout> } = {
 const stageNames = ["ID", "EX", "MEM", "WB"];
 
 Object.values(stagePorts).forEach(ports => {
-    console.log(ports);
     const stageName = stageNames.shift();
 
     const mirroredPorts = []
     for (let port of ports) {
+        if (port.location == 'top' || port.location == 'bottom') continue;
         const mirroredPort = clone(port);
 
         port.id = `${port.id}In`;
@@ -605,7 +605,3 @@ Object.values(stagePorts).forEach(ports => {
     }
     ports.push(...mirroredPorts);
 });
-
-
-
-console.log(stagePorts);

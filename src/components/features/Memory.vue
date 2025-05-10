@@ -4,31 +4,27 @@ import { decToHex } from '../../assets/js/utils';
 </script>
 
 <template>
-    <div>
-        <!-- Print individual bytes of memory -->
-        <div class="memory-list" @click="editMemoryAddress"
-            :style="`grid-template-columns: repeat(${rowWidth + 1}, 1fr)`">
-            <span class="memory-address"></span>
-            <span class="text-center memory-address column-label" v-for="index in rowWidth" :key="index">0x{{
-                decToHex(index
-                    -
-                    1, 8) }}</span>
-            <template v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
-                <span class="memory-address row-label">0x{{ decToHex(rowIndex * 16, 8) }}</span>
-                <span class="memory-item" v-for="(value, index) in row"
-                    :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index"
-                    :class="{ 'non-zero': value !== 0 }">
-                    <template v-if="editMemoryAddressIndex == 16 * rowIndex + index">
-                        <input class="input-small" type="number"
-                            v-model="$simulationStore.core.dataMemory[16 * rowIndex + index]"
-                            @keyup.enter="editMemoryAddressIndex = -1" @blur="editMemoryAddressIndex = -1" />
-                    </template>
-                    <template v-else>
-                        {{ decToHex(value, 8) }}
-                    </template>
-                </span>
-            </template>
-        </div>
+    <div class="memory-list" @click="editMemoryAddress" :style="`grid-template-columns: repeat(${rowWidth + 1}, 1fr)`">
+        <span class="memory-address"></span>
+        <span class="text-center memory-address column-label" v-for="index in rowWidth" :key="index">0x{{
+            decToHex(index
+                -
+                1, 8) }}</span>
+        <template v-for="(row, rowIndex) in memoryRows" :key="rowIndex">
+            <span class="memory-address row-label">0x{{ decToHex(rowIndex * 16, 8) }}</span>
+            <span class="memory-item" v-for="(value, index) in row"
+                :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index"
+                :class="{ 'non-zero': value !== 0 }">
+                <template v-if="editMemoryAddressIndex == 16 * rowIndex + index">
+                    <input class="input-small" type="number"
+                        v-model="$simulationStore.core.dataMemory[16 * rowIndex + index]"
+                        @keyup.enter="editMemoryAddressIndex = -1" @blur="editMemoryAddressIndex = -1" />
+                </template>
+                <template v-else>
+                    {{ decToHex(value, 8) }}
+                </template>
+            </span>
+        </template>
     </div>
 </template>
 
@@ -96,6 +92,7 @@ export default defineComponent({
     // background-color: var(--color-surface-0)
     width: 100%;
     overflow: auto;
+    height: 100%;
     ol,ul,li
         list-style-type: none
         padding: 0
@@ -114,7 +111,7 @@ export default defineComponent({
             top: -5px
         &.row-label
             position: sticky
-            left: 0
+            left: -5px
     
     .memory-item
         display: flex

@@ -79,6 +79,11 @@ const cpuVariables: Record<string, Ref<number>> = {
     JumpAddressShifted: {} as Ref<number>,
     PreNPC_MEM: {} as Ref<number>,
 
+
+    // Flush cpu
+    Flush_IF: {} as Ref<number>,
+    Flush_ID: {} as Ref<number>,
+    Flush_EX: {} as Ref<number>,
 }
 
 // Make sure all the values are proxied

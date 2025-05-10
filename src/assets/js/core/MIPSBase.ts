@@ -6,7 +6,7 @@ import { baseControlSignals } from "./config/controlSignals";
 import { baseInstructionConfig } from "./config/instructions";
 import { stageRegisters } from "./config/stages-registers";
 import { default as _ } from "./config/cpu-variables";
-import { ALUOperations, getAluControl } from "./config/alu";
+import { ALUOperations, getAluControl, getAluResult } from "./config/alu";
 import { components } from "./config/components";
 
 
@@ -269,7 +269,7 @@ export default class MIPSBase {
 
         // ALU Control
         const ALUOp = _.ALUOp_EX.value = currStage.ALUOp.value & 0b11;
-        const func = _.funct_EX.value = currStage.Imm.value & 0b001111;
+        const func = _.funct_EX.value = currStage.Imm.value & 0b111111;
 
         const ALUControl: number = getAluControl(ALUOp, func);
         _.ALUCONTROL_EX.value = ALUControl;
@@ -279,40 +279,9 @@ export default class MIPSBase {
         const ALUInput1 = _.ALUIn1_EX.value = _.Reg1Data_EX.value = currStage.Reg1Data.value;
         const ALUInput2 = _.ALUIn2_EX.value = ALUSrc ? currStage.Imm.value : currStage.Reg2Data.value;
 
-        let ALUResult = 0;
-        let HI = this.HI;
-        let LO = this.LO;
-
-
-        switch (ALUControl) {
-            case ALUOperations.ADD: ALUResult = ALUInput1 + ALUInput2; break;
-            case ALUOperations.SUB: ALUResult = ALUInput1 - ALUInput2; break;
-            case ALUOperations.AND: ALUResult = ALUInput1 & ALUInput2; break;
-            case ALUOperations.OR: ALUResult = ALUInput1 | ALUInput2; break;
-            case ALUOperations.NOR: ALUResult = ~(ALUInput1 | ALUInput2); break;
-            case ALUOperations.XOR: ALUResult = ALUInput1 ^ ALUInput2; break;
-            case ALUOperations.SLL: ALUResult = ALUInput1 << ALUInput2; break;
-            case ALUOperations.SRL: ALUResult = ALUInput1 >>> ALUInput2; break;
-            case ALUOperations.SRA: ALUResult = ALUInput1 >> ALUInput2; break;
-            case ALUOperations.SLT: ALUResult = ALUInput1 < ALUInput2 ? 1 : 0; break;
-            case ALUOperations.SLTU: ALUResult = (ALUInput1 >>> 0) < (ALUInput2 >>> 0) ? 1 : 0; break;
-            case ALUOperations.MUL:
-                const result = BigInt(ALUInput1) * BigInt(ALUInput2);
-                HI = Number(result >> 32n); // High 32 bits
-                LO = Number(result & 0xFFFFFFFFn); // Low 32 bits
-                ALUResult = LO; // For simplicity, returning the low part
-                break;
-            case ALUOperations.DIV:
-                if (ALUInput2 !== 0) {
-                    LO = Math.floor(ALUInput1 / ALUInput2);
-                    HI = ALUInput1 % ALUInput2;
-                    ALUResult = LO; // For simplicity, returning the low part
-                } else throw new Error("Division by zero");
-                break;
-            case ALUOperations.MFHI: ALUResult = HI; break;
-            case ALUOperations.MFLO: ALUResult = LO; break;
-            default: throw new Error("Unknown ALU operation");
-        }
+        let { ALUResult, HI, LO } = getAluResult(ALUControl, ALUInput1, ALUInput2, this.HI, this.LO);
+        this.HI = HI;
+        this.LO = LO;
 
         ALUResult = ALUResult | 0; // Ensure ALUResult is a 32-bit integer
 
@@ -370,7 +339,7 @@ export default class MIPSBase {
             // Check if address is valid, if not throw an error and halt the program
             if (address < 0 || address + 3 >= this.options.dataMemorySize) {
                 this.halt();
-                throw new Error(`Memory Access Violation: Can't read 4 bytes from address 0x${decToHex(address, 8)}`);
+                throw new Error(`Memory Access Violation: Can't write 4 bytes from address 0x${decToHex(address, 8)}`);
             }
             for (let i = 0; i < 4; i++) {
                 const byteAddress = address + i;
@@ -403,7 +372,7 @@ export default class MIPSBase {
         _.ALUResult_WB.value = currStage.ALUResult.value;
         _.MemReadResult_WB.value = currStage.MemReadResult.value;
         _.WriteRegister_WB.value = currStage.WriteRegister.value;
-
+        _.WriteRegisterData_WB.value = 0;
         // Writeback
         if (currStage.RegWrite.value) {
             // Check if the write register 0

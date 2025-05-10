@@ -21,9 +21,10 @@ export function initLSP(INSTRUCTION_SET: InstructionConfig[]) {
 
     // Constants
     EditorUtils.update(INSTRUCTION_SET);
-    const registers = Array.from({ length: 32 }, (_, i) => `${i}`);
+    const registers = Array.from({ length: 32 }, (_, i) => `${i}`).reverse();
     const mnemonicRegex = new RegExp(`\\b(${EditorUtils.mnemonics.join('|')})\\b`, 'g');
-    const registerRegex = new RegExp(`( |,)[R\\$](${registers.join('|')}|${advanceRegisterNames.join('|')})`, 'g');
+    const registerRegex = new RegExp(`[R\\$](${registers.join('|')}|${advanceRegisterNames.join('|')})`, 'g');
+    console.log(`Register Regex: ${registerRegex}`);
 
 
     // Unregister all providers

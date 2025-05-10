@@ -20,11 +20,11 @@ export const CPUS: Record<string, CPUTypeConfig> = {
         description: 'Basic MIPS CPU with unconditional jumps.',
         cpu: MIPSJump
     },
-    // 'basic-flush': {
-    //     name: 'Basic with Flush',
-    //     description: 'Basic MIPS CPU with flush support for branch instructions. When a branch instruction makes it to the MEM stage, all previous stages are flushed.',
-    //     cpu: MIPSBasicFlush
-    // },
+    'basic-flush': {
+        name: 'Basic with Flush',
+        description: 'Basic MIPS CPU with flush support for branch instructions. When a branch instruction makes it to the MEM stage, all previous stages are flushed.',
+        cpu: MIPSBasicFlush
+    },
     // 'data-hazard': {
     //     name: 'Data Hazard',
     //     description: 'Basic MIPS CPU with data hazard detection.',

@@ -33,13 +33,12 @@ export function getCompletionsProvider() {
 
 
     return {
-        triggerCharacters: [' ', '\t'],
+        triggerCharacters: [' ', '\t',],
         provideCompletionItems: (model, position, context, token): monaco.languages.CompletionList => {
 
             const line = model.getLineContent(position.lineNumber);
             const lineUntilPosition = line.substring(0, position.column - 1);
             const section = EditorUtils.getSection(model.getValue(), position.lineNumber);
-            console.log(section, EditorUtils.dataSectionLineIndex, EditorUtils.textSectionLineIndex);
 
             if (section === 'unknown') {
                 // If dataSectionLineIndex and textSectionLineIndex are not defined, suggest both
@@ -167,16 +166,14 @@ export function getCompletionsProvider() {
                         suggestions: dataSuggestions,
                     };
                 }
-
-
-
-
-
-
             }
 
 
-            if (position.column <= line.search(/\S|$/) + 2) {
+            // If the line is empty or the cursor is at the end of the first word, suggest the instructions
+
+            console.log(`lineUntilPosition: ${lineUntilPosition}`);
+
+            if (lineUntilPosition.trim().length === 0 || lineUntilPosition.trimStart().split(' ').length === 1) {
                 const instructionSuggestions: monaco.languages.CompletionItem[] = EditorUtils.instructionSet.map((instruction) => ({
                     label: instruction.mnemonic,
                     kind: monaco.languages.CompletionItemKind.Method,

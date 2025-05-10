@@ -68,7 +68,7 @@ export default {
             const stages = this.$simulationStore.stagePCs;
             for (let i = 0; i < stages.length; i++) {
                 const stage = stages[i];
-                if (stage !== -1) {
+                if (stage !== -1 && instructions[stage]) {
                     instructions[stage].stage = i;
                 }
             }

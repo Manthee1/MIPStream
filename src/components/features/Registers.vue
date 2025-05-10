@@ -66,6 +66,15 @@ export default defineComponent({
 
     methods: {
         editRegister(index: number) {
+            if (index == 0) {
+                this.$notify({
+                    type: 'error',
+                    title: 'Error',
+                    text: 'Cannot edit register 0',
+                    duration: 2000,
+                });
+                return;
+            }
             this.editRegisterIndex = index;
             // focus the input when it's rendered
             this.$nextTick(() => {
@@ -133,7 +142,6 @@ div.registers
         flex-flow: column nowrap
         justify-content: center
         align-content: center
-        gap: 0.2rem
         flex: 1 1 auto
         &:first-child
             padding-right: 1rem
@@ -145,7 +153,6 @@ div.registers
             cursor: pointer
             padding: 0.3rem 0.8rem
             gap: 0.5rem
-            border-radius: 2px
             >*
                 flex: auto
                 width: 100%
@@ -156,6 +163,8 @@ div.registers
                 border-bottom: none
             &.updated
                 background-color: var(--color-accent-background)
+                color: var(--color-regular)
+
             &.editing
                 .register-name
                     flex: 0 0 auto
