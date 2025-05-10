@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-import Markdown from 'vite-plugin-md'
+import Markdown from 'unplugin-vue-markdown/vite';
 import path from 'path';
 const __dirname = path.resolve();
 
@@ -11,7 +11,7 @@ export default defineConfig({
   // base: '',
   plugins: [vue({
     include: [/\.vue$/, /\.md$/],
-  }), Markdown()],
+  }), Markdown({})],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
