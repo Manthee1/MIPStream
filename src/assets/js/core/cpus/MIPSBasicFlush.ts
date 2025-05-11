@@ -4,7 +4,7 @@ import { clone } from "../../utils";
 import { default as _ } from "../config/cpu-variables";
 import { instructionConfigWithJump } from "../config/instructions";
 import MIPSBase from "../MIPSBase";
-import { controlInputPort, getControlUnitPorts, muxPorts, oneToOnePorts, stagePorts, twoToOnePorts } from '../config/ports';
+import { stagePorts } from '../config/ports';
 import { connections } from '../config/connections/base-connections';
 
 const flushPortTemplate: PortLayout = {
@@ -17,29 +17,35 @@ const flushPortTemplate: PortLayout = {
     relPos: 0.5,
 };
 
+const IFtoIDPorts = clone(stagePorts.IFtoIDPorts);
+const IDtoEXPorts = clone(stagePorts.IDtoEXPorts);
+const EXtoMEMPorts = clone(stagePorts.EXtoMEMPorts);
 
-stagePorts.IFtoIDPorts.push(
+IFtoIDPorts.push(
     {
         ...flushPortTemplate,
         ...{ value: _.Flush_IF },
     },
 )
-stagePorts.IDtoEXPorts.push(
+IDtoEXPorts.push(
     {
         ...flushPortTemplate,
         ...{ value: _.Flush_ID },
     },
 )
-stagePorts.EXtoMEMPorts.push(
+EXtoMEMPorts.push(
     {
         ...flushPortTemplate,
         ...{ value: _.Flush_EX },
     },
 )
 
-const flushComponents: ComponentLayout[] = [
-    ...components, // Remove the original BranchMUX{
-];
+const flushComponents: ComponentLayout[] = clone(components);
+flushComponents.forEach((component) => {
+    if (component.id === "IFtoID") component.ports = IFtoIDPorts;
+    else if (component.id === "IDtoEX") component.ports = IDtoEXPorts;
+    else if (component.id === "EXtoMEM") component.ports = EXtoMEMPorts;
+});
 
 const flushConnections = clone(connections);
 // Flush connection template
