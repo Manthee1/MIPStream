@@ -7,8 +7,10 @@
 		<div class="controls">
 			<MButton outlined small icon="code" @click="reloadProgram" title="Assemble and load (F6)" />
 			<div class="my-auto vert-line"></div>
-			<MButton v-if="status == 'stopped'" outlined small icon="play" @click="run" title="Run (F5)" />
-			<MButton v-else-if="status == 'running'" outlined small icon="pause" @click="pause" title="Pause (F8)" />
+			<MButton :disabled="$simulationStore.loadedProgram == '' || status == 'running'" outlined small icon="play"
+				@click="run" title="Run from start (F5)" />
+			<MButton v-if="status != 'paused'" :disabled="status == 'stopped'" outlined small icon="pause"
+				@click="pause" title="Pause (F8)" />
 			<MButton v-else-if="status == 'paused'" outlined small icon="play-circle" @click="resume"
 				title="Resume (F8)" />
 			<MButton outlined small icon="square" :disabled="status == 'stopped'" @click="stop"

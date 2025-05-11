@@ -32,7 +32,7 @@ export const useSimulationStore = defineStore('simulation', {
         PCToLineMap: [] as number[],
         instructionCount: 0 as number,
         instructionMemory: new Uint32Array(0) as Uint32Array,
-        instructionMemoryMnemonics: [] as string[],
+        dataMemory: [] as number[],
         stagePCs: [-1, -1, -1, -1, -1] as [number, number, number, number, number],
         errors: [] as string[],
         runtimeErrors: [] as string[],
@@ -164,7 +164,7 @@ export const useSimulationStore = defineStore('simulation', {
                 });
                 return;
             }
-            let memory: number[] = [];
+            let dataMemory: number[] = [];
             try {
                 this.status = 'paused';
                 this.errors = [];
@@ -173,7 +173,7 @@ export const useSimulationStore = defineStore('simulation', {
                 instructionMemory = data.instructions;
                 this.PCToLineMap = data.pcLineMap;
                 this.instructionCount = data.instructions.length;
-                memory = data.memory;
+                dataMemory = data.memory;
             } catch (errors: any) {
                 const errorMessage = 'Error/s occurred while loading the program';
                 this.updateErrors();
@@ -193,7 +193,7 @@ export const useSimulationStore = defineStore('simulation', {
 
             try {
                 this.core.loadProgram(instructionMemory);
-                this.core.loadMemory(memory);
+                this.core.loadMemory(dataMemory);
             }
             catch (error: any) {
                 notify({
@@ -213,6 +213,7 @@ export const useSimulationStore = defineStore('simulation', {
             });
 
             this.instructionMemory = instructionMemory;
+            this.dataMemory = dataMemory;
             this.cpuDiagram.draw();
         },
         step() {
@@ -258,7 +259,16 @@ export const useSimulationStore = defineStore('simulation', {
             this.stagePCs = [-1, -1, -1, -1, -1];
         },
         run() {
-            if (this.status === 'running') {
+            if (this.loadedProgram == '') {
+                notify({
+                    type: 'warning',
+                    title: 'Warning',
+                    text: 'No program loaded. Please load a program before running. You can use F6 to load the program.',
+                });
+                return;
+            }
+
+            if (this.status == 'running') {
                 notify({
                     type: 'warning',
                     title: 'Warning',
@@ -266,13 +276,19 @@ export const useSimulationStore = defineStore('simulation', {
                 });
                 return;
             }
-            this.loadProgram();
-            if (this.status === 'stopped') return;
+
+
+            this.stagePCs = [0, -1, -1, -1, -1];
+            this.core.loadProgram(this.instructionMemory);
+            this.core.loadMemory(this.dataMemory);
+            console.log('Loaded program', this.instructionMemory);
+            console.log('Loaded data', this.dataMemory);
+
+            this.cpuDiagram.draw();
             this.resume();
         },
 
         async resume() {
-            console.time('resume');
             this.status = 'running';
             let lastUIUpdate = performance.now();
             const UIUpdateIntervalAtMaxSpeed = useProjectStore().getProjectSetting('UIUpdateIntervalAtMaxSpeed');
@@ -308,7 +324,6 @@ export const useSimulationStore = defineStore('simulation', {
             if (this.core.halted)
                 this.status = 'stopped';
             this.cpuDiagram.draw();
-            console.timeEnd('resume');
         },
 
         runCycle() {
@@ -338,6 +353,7 @@ export const useSimulationStore = defineStore('simulation', {
             this.program = '';
             this.loadedProgram = '';
             this.instructionMemory = new Uint32Array(0);
+            this.dataMemory = [];
             this.errors = [];
         }
 

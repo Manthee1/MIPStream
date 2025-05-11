@@ -124,7 +124,6 @@ export function getAluControl(ALUOp: number, funct: number): number {
 
 
 export function getAluResult(ALUControl: number, ALUInput1: number, ALUInput2: number, HI: number, LO: number) {
-    console.log(`ALUControl: ${ALUControl}, ALUInput1: ${ALUInput1}, ALUInput2: ${ALUInput2}, HI: ${HI}, LO: ${LO}`);
     let isUnsigned: boolean = false;
     let ALUResult: number = 0;
     switch (ALUControl) {
