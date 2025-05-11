@@ -6,7 +6,7 @@
         @click="$router.push({ name: 'InstructionsConfig' })">
         <span class="button-text">Instruction Config</span>
       </MButton>
-      <div class="flex">
+      <div class="flex mb-3">
         <MButton class="my-auto" filled accent icon="plus" @click="setupProject()">Create Project</MButton>
         <input v-model="search" type="text" placeholder="Search projects..." class="mt input-small" />
       </div>
