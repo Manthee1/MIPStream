@@ -265,7 +265,7 @@ end:
 
 
         async updateRecentProjects() {
-            this.recentProjects = await getProjects(10, { by: 'updatedAt', type: 'desc' });
+            this.recentProjects = await getProjects(10, { by: 'savedAt', type: 'desc' });
         }
     },
 });
