@@ -1,5 +1,5 @@
 import { projectSettingTabs } from "../config/settings/project-settings";
-import { IOrderQuery, ITable } from "jsstore";
+import { IOrderQuery, ITable, IWhereQuery } from "jsstore";
 import db from "../db/database";
 
 export interface Project {
@@ -61,11 +61,12 @@ export const existsProject = async (id: number) => {
     return !!(await getProjectById(id));
 }
 
-export const getProjects = async (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'asc' }) => {
+export const getProjects = async (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'asc' }, where: IWhereQuery = {}) => {
     let projects = (await db.select({
         from: 'projects',
         limit: limit,
-        order: order
+        order: order,
+        where: where
     })) as Project[];
     return projects;
 };

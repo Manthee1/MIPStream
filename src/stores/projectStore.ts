@@ -61,7 +61,7 @@ export const useProjectStore = defineStore('project', {
                 notify('error', 'Error', error.message);
                 return;
             }
-            useUIStore().setTitle(this.currentProject.name + " - MIPStream");
+            useUIStore().setTitle(this.currentProject.name);
 
             notify('success', 'Project Saved', 'The project has been saved successfully');
         },
@@ -70,7 +70,7 @@ export const useProjectStore = defineStore('project', {
             if (!code || !this.currentProject) return;
             this.currentProject.code = code;
             this.projectSaved = false;
-            useUIStore().setTitle(this.currentProject.name + " - MIPStream *");
+            useUIStore().setTitle(this.currentProject.name + ' (unsaved)');
 
             // If no activity in 2 seconds, and autoSave is enabled, save the project
             if (useSettingsStore().autoSave) {

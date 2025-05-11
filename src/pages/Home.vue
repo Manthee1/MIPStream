@@ -1,12 +1,15 @@
 <template>
   <div class="content-wrapper">
     <div class="content-container">
-      <h1>Projects</h1>
-      <MButton filled accent icon="plus" @click="setupProject()">Create Project</MButton>
+      <h1 class="projects-title">Projects</h1>
       <MButton filled accent class="instruction-config-button" icon="server"
         @click="$router.push({ name: 'InstructionsConfig' })">
         <span class="button-text">Instruction Config</span>
       </MButton>
+      <div class="flex">
+        <MButton class="my-auto" filled accent icon="plus" @click="setupProject()">Create Project</MButton>
+        <input v-model="search" type="text" placeholder="Search projects..." class="mt input-small" />
+      </div>
       <table class="projects-table">
         <thead>
           <tr>
@@ -63,11 +66,22 @@ export default defineComponent({
   data() {
     return {
       projects: [] as Project[],
+      search: '',
     };
   },
   async mounted() {
     this.updateProjects();
   },
+
+  watch: {
+    search: {
+      handler(newValue) {
+        this.updateProjects();
+
+      },
+    },
+  },
+
   methods: {
 
     async deleteProject(id: number) {
@@ -92,7 +106,9 @@ export default defineComponent({
     },
 
     async updateProjects() {
-      this.projects = await getProjects(10, { by: 'savedAt', type: 'desc' });
+      this.projects = await getProjects(10, { by: 'savedAt', type: 'desc', }, {
+        name: { like: '%' + this.search + '%' },
+      });
 
     },
 
@@ -122,10 +138,14 @@ export default defineComponent({
     background-color: var(--color-surface-0)
     border-radius: 10px
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1)
+    .projects-title
+      font-size: 3rem
+      border-bottom: 1px solid var(--color-surface-2)
+      padding: 0.5rem 0rem
+      
 
     .projects-table
       width: 100%
-      margin-top: 20px
 
 .instruction-config-button
   position: absolute
