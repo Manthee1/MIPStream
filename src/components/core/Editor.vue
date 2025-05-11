@@ -40,17 +40,22 @@ export default defineComponent({
 
 	mounted() {
 
-		// Find the topmost dv-groupview and dv-view and set overflow to visible
+		const thisEl = this.$el.parentElement as HTMLDivElement;
 
-		const thisEl = this.$el.parentElement
+		// dv-split-view-container
+		const dvSplitViewContainer = thisEl.closest('.dv-split-view-container') as HTMLDivElement;
+		if (dvSplitViewContainer) {
+			dvSplitViewContainer.style.overflow = 'visible';
+		}
 
-		const dvGroupView = thisEl.closest('.dv-groupview');
+		const dvGroupView = thisEl.closest('.dv-groupview') as HTMLDivElement;
 		if (dvGroupView) {
 			dvGroupView.style.overflow = 'visible';
 		}
-		const dvView = thisEl.closest('.dv-view');
-		if (dvView) {
+		let dvView = thisEl.closest('.dv-view') as HTMLDivElement;
+		while (dvView) {
 			dvView.style.overflow = 'visible';
+			dvView = dvView.parentElement?.closest('.dv-view') as HTMLDivElement;
 		}
 
 

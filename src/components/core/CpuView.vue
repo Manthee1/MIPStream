@@ -56,7 +56,6 @@ export default defineComponent({
 
     watch: {
         cpuType(value) {
-            console.log('CPU Type changed', value);
             this.$simulationStore.cpuDiagram?.destroy();
         },
     },
@@ -76,11 +75,13 @@ export default defineComponent({
             if (!text) return '1.5rem';
             // get stages element and find the first stage's width
             const stages = this.$refs.stages as HTMLElement;
-            const stageWidth = stages.querySelector('.stage')?.clientWidth || 100;
+            const stageWidth = (stages.querySelector('.stage')?.clientWidth || 100) - 20;
             // get the text width
-            const textWidth = text.length * 10;
+            const textWidth = text.trim().length;
+            const textHeightToWidthRatio = 15 / 9;
+
             // return the font size
-            return Math.min(1.5, (stageWidth / textWidth) * 2) + 'rem';
+            return Math.ceil(Math.min(15, (stageWidth / textWidth) * textHeightToWidthRatio)) / 10 + 'rem';
 
         },
 
@@ -105,33 +106,34 @@ export default defineComponent({
     height: 100%
     min-width: 300px
     background-color: var(--color-surface-1)
-    border: 1px solid var(--color-regular)
+    // border: 1px solid var(--color-regular)
     border-bottom: 0
     color: var(--color-regular)    
     & .stage
-        border-right: 1px solid var(--color-regular)
+        --color: var(--color-regular)
+        border: 2px solid var(--color-regular)
         flex: 1
         text-align: center
         line-height: 2rem
-  
+        font-size: 1.5rem
+        border-color: var(--color)
+        background-color: var(--color)
+        color: var(--color-regular)
+        font-family: var(--font-family-mono)
 
         &.stage-0
-            border-color: #FFD70030
-            background-color: #FFD70030
+            --color: #FFD70030
         &.stage-1
-            border-color: #00FF0030
-            background-color: #00FF0030
+            --color: #00FF0030
         &.stage-2
-            border-color: #fa807230
-            background-color: #fa807230
+            --color: #fa807230
         &.stage-3
-            border-color: #87ceeb30
-            background-color: #87ceeb30
+            --color: #87ceeb30
         &.stage-4
-            border-color: #ff69b430
-            background-color: #ff69b430
+            --color: #ff69b430
         &.flushed
             background-color: var(--color-surface-2)
+            border-color: var(--color-surface-3)
             color: var(--color-subtext)
     
 .cpu-view 

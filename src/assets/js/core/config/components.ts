@@ -1,4 +1,4 @@
-import { ALUControlPorts, aluPorts, controlUnitPorts, dataMemoryPorts, instructionMemoryPorts, muxesPorts, muxPorts, oneToOnePorts, registerFilePorts, singleOutput, stagePorts, twoToOnePorts } from "./ports";
+import { ALUControlPorts, aluPorts, controlUnitPorts, dataMemoryPorts, instructionMemoryPorts, muxesPorts, muxPorts, oneToOnePorts, registerFilePorts, singleInput, singleOutput, stagePorts, twoToOnePorts } from "./ports";
 import { default as _ } from "./cpu-variables";
 
 export const components: ComponentLayout[] = [
@@ -89,12 +89,15 @@ export const components: ComponentLayout[] = [
         description: "Sign extension unit that extends immediate values to 32 bits.",
         type: "sign_extend",
         dimensions: { width: 50, height: 50 }, pos: { x: 501, y: 525 },
-        ports: oneToOnePorts(_.Imm_ID, _.SignedImm_ID)
+        ports: [
+            { ...singleInput(_.Imm_ID)[0], bits: 16 },
+            ...singleOutput(_.SignedImm_ID),
+        ]
     },
     {
         id: "ShiftLeft",
         label: "ShiftLeft",
-        description: "Shift-left unit that shifts immediate values for branch calculations.",
+        description: "Shift-left unit that shifts immediate value by 2 bits for branch target calculation.",
         type: "shift",
         dimensions: { width: 50, height: 50 }, pos: { x: 701, y: 253 },
         ports: oneToOnePorts(_.SignedImm_EX, _.ShiftedImm_EX)

@@ -296,7 +296,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            6
+            5
         ],
         "bends": [
             {
@@ -1800,7 +1800,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            4
         ],
         "bends": [
             {
@@ -1832,7 +1832,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            4
         ],
         "bends": [
             {
@@ -1864,7 +1864,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            4
         ],
         "bends": [
             {
@@ -2056,7 +2056,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            4
         ],
         "bends": [],
         "fromPos": {
@@ -2075,7 +2075,7 @@ export const connections: ConnectionLayout[] = [
         "type": "data",
         "bitRange": [
             0,
-            31
+            4
         ],
         "bends": [],
         "fromPos": {

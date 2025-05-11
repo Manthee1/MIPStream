@@ -171,9 +171,8 @@ export function getCompletionsProvider() {
 
             // If the line is empty or the cursor is at the end of the first word, suggest the instructions
 
-            console.log(`lineUntilPosition: ${lineUntilPosition}`);
 
-            if (lineUntilPosition.trim().length === 0 || lineUntilPosition.trimStart().split(' ').length === 1) {
+            if (lineUntilPosition.trim().length === 0 || lineUntilPosition.trimStart().split(' ').length === 1 && !lineUntilPosition.trim().endsWith(':')) {
                 const instructionSuggestions: monaco.languages.CompletionItem[] = EditorUtils.instructionSet.map((instruction) => ({
                     label: instruction.mnemonic,
                     kind: monaco.languages.CompletionItemKind.Method,

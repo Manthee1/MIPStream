@@ -122,7 +122,7 @@ export function isXBitUnsigned(value: number, x: number): boolean {
 export function toSigned(value: number, x: number): number {
     if (value >= 2 ** (x - 1)) {
         // Convert to signed
-        return value - (1 << x);
+        value -= 2 ** x;
     }
     return value;
 }

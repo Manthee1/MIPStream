@@ -1,6 +1,6 @@
 /** @format */
 
-import { clone, decToHex } from "../utils";
+import { clone, decToHex, toSigned } from "../utils";
 import { connections } from "./config/connections/base-connections";
 import { baseControlSignals } from "./config/controlSignals";
 import { baseInstructionConfig } from "./config/instructions";
@@ -232,8 +232,8 @@ export default class MIPSBase {
 
 
         // Register File
-        this.stageRegisters.IDtoEX.Reg1Data.value = this.registerFile[rs];
-        this.stageRegisters.IDtoEX.Reg2Data.value = this.registerFile[rt];
+        this.stageRegisters.IDtoEX.Reg1Data.value = toSigned(this.registerFile[rs], 32);
+        this.stageRegisters.IDtoEX.Reg2Data.value = toSigned(this.registerFile[rt], 32);
 
         // Forward Immediate(sign extended), Rd, Rt
         this.stageRegisters.IDtoEX.Imm.value = imm;
@@ -282,8 +282,6 @@ export default class MIPSBase {
         let { ALUResult, HI, LO } = getAluResult(ALUControl, ALUInput1, ALUInput2, this.HI, this.LO);
         this.HI = HI;
         this.LO = LO;
-
-        ALUResult = ALUResult | 0; // Ensure ALUResult is a 32-bit integer
 
         // Forward ALUResult
         this.stageRegisters.EXtoMEM.ALUResult.value = ALUResult;

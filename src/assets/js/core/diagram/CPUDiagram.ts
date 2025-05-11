@@ -169,10 +169,10 @@ export class CPUDiagram {
             const fromPort = this.ports.get(connection.from) as PortLayout;
             const toPort = this.ports.get(connection.to) as PortLayout;
 
-            const bits = connection.bitRange[1] - connection.bitRange[0] + 1;
-            // Fix the from and to port bits
-            fromPort.bits = bits;
-            toPort.bits = bits;
+            // const bits = connection.bitRange[1] - connection.bitRange[0] + 1;
+            // // Fix the from and to port bits
+            // fromPort.bits = bits;
+            // toPort.bits = bits;
 
             connection.fromPos = fromPort?.pos
             connection.toPos = toPort?.pos

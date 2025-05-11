@@ -125,7 +125,7 @@ export function getAluControl(ALUOp: number, funct: number): number {
 
 export function getAluResult(ALUControl: number, ALUInput1: number, ALUInput2: number, HI: number, LO: number) {
     console.log(`ALUControl: ${ALUControl}, ALUInput1: ${ALUInput1}, ALUInput2: ${ALUInput2}, HI: ${HI}, LO: ${LO}`);
-
+    let isUnsigned: boolean = false;
     let ALUResult: number = 0;
     switch (ALUControl) {
         case ALUOperations.SLL: ALUResult = ALUInput1 << ALUInput2; break;
@@ -133,10 +133,10 @@ export function getAluResult(ALUControl: number, ALUInput1: number, ALUInput2: n
         case ALUOperations.SLT: ALUResult = ALUInput1 < ALUInput2 ? 1 : 0; break;
         case ALUOperations.SLTU: ALUResult = (ALUInput1 >>> 0) < (ALUInput2 >>> 0) ? 1 : 0; break;
         case ALUOperations.SRA: ALUResult = ALUInput1 >> ALUInput2; break;
-        case ALUOperations.ADD: ALUResult = ALUInput1 + ALUInput2; break;
-        case ALUOperations.ADDU: ALUResult = (ALUInput1 >>> 0) + (ALUInput2 >>> 0); break;
+        case ALUOperations.ADD: ALUResult = (ALUInput1 + ALUInput2); break;
+        case ALUOperations.ADDU: ALUResult = ((ALUInput1 >>> 0) + (ALUInput2 >>> 0)) >>> 0; isUnsigned = true; break;
         case ALUOperations.SUB: ALUResult = ALUInput1 - ALUInput2; break;
-        case ALUOperations.SUBU: ALUResult = (ALUInput1 >>> 0) - (ALUInput2 >>> 0); break;
+        case ALUOperations.SUBU: ALUResult = ((ALUInput1 >>> 0) - (ALUInput2 >>> 0)) >>> 0; isUnsigned = true; break;
         case ALUOperations.AND: ALUResult = ALUInput1 & ALUInput2; break;
         case ALUOperations.OR: ALUResult = ALUInput1 | ALUInput2; break;
         case ALUOperations.XOR: ALUResult = ALUInput1 ^ ALUInput2; break;
@@ -161,6 +161,12 @@ export function getAluResult(ALUControl: number, ALUInput1: number, ALUInput2: n
         case 0x3f: break; // Flushed Instruction identifier
         default: throw new Error("Unknown ALU operation");
     }
+
+    if (!isUnsigned)
+        ALUResult = ALUResult | 0; // Ensure ALUResult is a 32-bit integer
+    HI = HI | 0; // Ensure HI is a 32-bit integer
+    LO = LO | 0; // Ensure LO is a 32-bit integer
+
 
     return {
         ALUResult,
