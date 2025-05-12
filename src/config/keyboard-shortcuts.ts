@@ -1,9 +1,9 @@
-import { settings } from "../storage/settingsStorage";
+import { downloadProject } from './../utils/projectActions';
 import { useProjectStore } from "../stores/projectStore";
 import { useSimulationStore } from "../stores/simulationStore";
 import { useUIStore } from "../stores/UIStore";
 import { defaultLayoutGridConfig } from "./layout";
-import { generalSettingsConfig } from "./settings/general-settings";
+import { notify } from '@kyvg/vue3-notification';
 
 export const keyboardShortcuts: Record<string, { action: () => void; label: string; description: string }> = {};
 
@@ -82,7 +82,17 @@ keyboardShortcuts["CTRL S"] = {
 
 keyboardShortcuts["CTRL SHIFT S"] = {
     action: () => {
-        // downloadProject(useUIStore());
+        const currentProject = useProjectStore().currentProject;
+        if (!currentProject) {
+            notify({
+                title: "No project to download",
+                text: "Please create or open a project before downloading.",
+                type: "error",
+                duration: 3000,
+            });
+            return;
+        }
+        downloadProject(currentProject);
     },
     label: "Download Project",
     description: "Downloads the current project to your local machine."
@@ -127,6 +137,8 @@ keyboardShortcuts["CTRL H"] = {
 keyboardShortcuts["ESCAPE"] = {
     action: () => {
         console.log("ESC pressed");
+
+        (document.querySelector('.modal .modal-content .close-button') as HTMLButtonElement)?.click();
 
         if (useUIStore().showSettings) {
             useUIStore().closeSettings();

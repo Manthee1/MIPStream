@@ -134,14 +134,6 @@ export function createConfig() {
                 UIStore.openHelp();
             }
         },
-        aboutItem:
-        {
-            label: 'About',
-            action: () => {
-                console.log('About clicked');
-            }
-        }
-        ,
         exitItem:
         {
             label: 'Exit',
@@ -177,7 +169,6 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
                 dropdownItemsConfig.instructionConfig,
                 dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.helpItem,
-                dropdownItemsConfig.aboutItem,
 
                 dropdownItemsConfig.seperatorItem,
 
@@ -200,7 +191,6 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
                 dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.projectSettingsItem,
                 dropdownItemsConfig.helpItem,
-                dropdownItemsConfig.aboutItem,
 
                 dropdownItemsConfig.seperatorItem,
 
@@ -219,7 +209,6 @@ export function getRouteDropdownItems(route: string): DropdownItem[] {
                 dropdownItemsConfig.seperatorItem,
                 dropdownItemsConfig.settingsItem,
                 dropdownItemsConfig.helpItem,
-                dropdownItemsConfig.aboutItem,
                 dropdownItemsConfig.seperatorItem,
                 dropdownItemsConfig.backHomeItem,
                 dropdownItemsConfig.exitItem

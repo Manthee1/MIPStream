@@ -247,6 +247,24 @@ export function getCompletionsProvider() {
                 };
             }
 
+            if (operand === 'SHAMT') {
+                return {
+                    suggestions: [
+                        {
+                            label: 'shamt',
+                            kind: monaco.languages.CompletionItemKind.Value,
+                            insertText: '0',
+                            detail: 'Shift amount',
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            documentation: {
+                                value: 'Shift amount',
+                                isTrusted: true,
+                            },
+                        } as monaco.languages.CompletionItem,
+                    ],
+                };
+            }
+
             if (operand === 'MEM_ADDRESS') {
                 const effectiveAddressSuggestion: monaco.languages.CompletionItem = {
                     label: 'effective address',

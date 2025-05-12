@@ -207,6 +207,8 @@ export function getOperandSyntax(operand: OperandType) {
             return 'Rt';
         case 'IMMEDIATE':
             return 'imm';
+        case 'SHAMT':
+            return 'shamt';
         case 'MEM_ADDRESS':
             return 'imm(Rs)';
         case 'LABEL':

@@ -67,13 +67,13 @@ export default {
     height: 80vh;
     width: 70vw;
     max-width: 90vw;
-    overflow: auto;
 
     .tab-content .markdown-body {
         padding: 0rem 2rem;
         margin-right: 2rem;
         border-radius: 0.5rem;
-
+        padding-bottom: 5rem;
+        overflow: auto;
         background-color: var(--color-surface-0);
     }
 

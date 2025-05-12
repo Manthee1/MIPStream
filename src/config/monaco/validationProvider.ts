@@ -238,6 +238,29 @@ export function updateValidationProvider() {
                             severity: monaco.MarkerSeverity.Error,
                         });
                     }
+                } else if (operandType === 'SHAMT') {
+                    if (isNaN(Number(operand))) {
+                        errors.push({
+                            startLineNumber: index + 1,
+                            startColumn: line.indexOf(operand) + 1,
+                            endLineNumber: index + 1,
+                            endColumn: line.indexOf(operand) + operand.length + 1,
+                            message: `Invalid shift amount: ${operand}`,
+                            severity: monaco.MarkerSeverity.Error,
+                        });
+                    }
+                    // If the number is not a 5 bit signed number, show a warning
+                    const value = parseInt(operand);
+                    if (!isXBitSigned(value, 5) && isXBitUnsigned(value, 5)) {
+                        errors.push({
+                            startLineNumber: index + 1,
+                            startColumn: line.indexOf(operand) + 1,
+                            endLineNumber: index + 1,
+                            endColumn: line.indexOf(operand) + operand.length + 1,
+                            message: `Shift amount ${operand} is a 5-bit number but is not signed. It will be interpreted as ${toSigned(value, 5)}.`,
+                            severity: monaco.MarkerSeverity.Warning,
+                        });
+                    }
                 } else if (operandType === 'MEM_ADDRESS') {
                     const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
                     const isEffectiveAddressEvaluated = isEffectiveAddress(operand);

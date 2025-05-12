@@ -52,6 +52,10 @@ Tells the assembler how to interpret the instruction. The options are already me
 ### 3. **Funct Field** (R-Type Only)
 Defines the specific operation the ALU will perform (e.g., addition, subtraction).
 
+### 4. **Shamt** (R-Type Only)
+Specifies the shift amount for shift operations. It is not used in other instruction types.
+> This is internally implemented but no current CPU model uses it. It is included for future compatibility.
+
 ### 4. **Operands**
 Operands specify the data or addresses used by the instruction:
 - **Rs**: Source register (Read Reg 1 in the diagram).
@@ -60,8 +64,6 @@ Operands specify the data or addresses used by the instruction:
 - **imm**: Immediate value (I-Type only).
 - **label**: Address label for jumps.
 - **imm(Rs)**: Memory address offset (I-Type for load/store).
-
-
 
 ### 5. **Control Signals** (I-Type and J-Type Only)
 Control signals determine the behavior of the CPU for the instruction. You can understand their function by observing their path in the CPU diagram.

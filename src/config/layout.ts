@@ -136,7 +136,7 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "tabComponent": "DockviewTab",
     },
     "instructionMemory": {
-        "id": "InstructionMemory",
+        "id": "instructionMemory",
         "contentComponent": "InstructionMemory",
         "title": "Instruction Memory",
         "tabComponent": "DockviewTab",

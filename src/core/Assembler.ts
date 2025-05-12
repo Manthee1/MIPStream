@@ -102,7 +102,16 @@ export class Assembler {
                 const value = labels.get(operand) as number;
                 addr = value;
                 imm = value - pc - 1;
-            } else if (operandType === "MEM_ADDRESS") {
+            }
+            else if (operandType === "SHAMT") {
+                if (!isValue(operand)) throw new Error(`Invalid shift amount: ${operand}.`);
+                let temp = parseInt(operand);
+                if (operand.startsWith('0b')) temp = parseInt(operand.slice(2), 2);
+                if (!isXBit(temp, 5)) throw new Error(`Shift amount must be a 5-bit integer: ${temp}.`);
+                shamt = temp;
+            }
+
+            else if (operandType === "MEM_ADDRESS") {
 
                 // Check if the operand is a variable in dataMemoryReferences or an effective address
                 const variableRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;

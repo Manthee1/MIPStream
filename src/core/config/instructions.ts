@@ -65,19 +65,19 @@ export const baseInstructionConfig: InstructionConfig[] = [
         ...RType,
         mnemonic: "sll",
         funct: ALUOperations.SLL,
-        description: "Shift the bits of the second register to the left by a specified amount and store the result in the destination register.",
+        description: "Shift the bits of the second register to the left by the value in the third register and store the result in the destination register.",
     },
     {
         ...RType,
         mnemonic: "srl",
         funct: ALUOperations.SRL,
-        description: "Shift the bits of the second register to the right (logical shift) by a specified amount and store the result in the destination register.",
+        description: "Shift the bits of the second register to the right (logical shift) by the value in the third register and store the result in the destination register.",
     },
     {
         ...RType,
         mnemonic: "sra",
         funct: ALUOperations.SRA,
-        description: "Shift the bits of the second register to the right (arithmetic shift) by a specified amount and store the result in the destination register.",
+        description: "Shift the bits of the second register to the right (arithmetic shift) by the value in the third register and store the result in the destination register.",
     },
     {
         ...RType,
@@ -173,4 +173,3 @@ export const instructionConfigWithJump: InstructionConfig[] = [
         ],
     }
 ]
-

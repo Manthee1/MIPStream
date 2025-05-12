@@ -7,6 +7,10 @@
 ## Simulation Controls
 These shortcuts are used to control the simulation process.
 
+- `F6`  
+    **Action**: Assemble and Load  
+    **Description**: Assembles the code and loads it into the simulator.
+    
 - `F5`  
     **Action**: Run Simulation  
     **Description**: Starts the simulation process.
@@ -15,13 +19,21 @@ These shortcuts are used to control the simulation process.
     **Action**: Stop Simulation  
     **Description**: Stops the currently running simulation.
 
+- `F8`  
+    **Action**: Pause/Resume Simulation  
+    **Description**: Pauses the simulation if running, or resumes it if paused.
+
 - `F9`  
     **Action**: Step Simulation  
     **Description**: Executes a single step in the simulation.
 
-- `F10`  
-    **Action**: Pause/Resume Simulation  
-    **Description**: Pauses the simulation if running, or resumes it if paused.
+- `Ctrl + (+)`
+    **Action**: Increase Simulation Speed  
+    **Description**: Increases the speed of the simulation.
+- `Ctrl + (-)`
+    **Action**: Decrease Simulation Speed  
+    **Description**: Decreases the speed of the simulation.
+
 
 ---
 
