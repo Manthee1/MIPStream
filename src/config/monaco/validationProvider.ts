@@ -1,4 +1,4 @@
-import { Assembler } from "../../assets/js/core/Assembler";
+import { Assembler } from "../../core/Assembler";
 import { extractOperands, getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, isEffectiveAddress, isLabel, isRegister, isValue, isXBit, isXBitSigned, isXBitUnsigned, toSigned } from "../../assets/js/utils";
 import { useProjectStore } from "../../stores/projectStore";
 import monaco from "../monaco";

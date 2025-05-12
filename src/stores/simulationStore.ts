@@ -2,14 +2,14 @@ import { defineStore } from 'pinia'
 // import MIPSCore from '../assets/js/core/MIPSCore'
 import { clone, wait } from '../assets/js/utils'
 import { notify } from "@kyvg/vue3-notification";
-import { Assembler } from '../assets/js/core/Assembler';
+import { Assembler } from '../core/Assembler';
 import { AssemblerError } from '../assets/js/errors';
 import { useSettingsStore } from './settingsStore';
-import MIPSBase from '../assets/js/core/MIPSBase';
-import { baseInstructionConfig } from '../assets/js/core/config/instructions';
-import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
+import MIPSBase from '../core/MIPSBase';
+import { baseInstructionConfig } from '../core/config/instructions';
+import { CPUDiagram } from '../core/diagram/CPUDiagram';
 import { defaultProjectSettings, Project } from '../services/projectsService';
-import { CPUS } from '../assets/js/core/config/cpus';
+import { CPUS } from '../core/config/cpus';
 import monaco, { initLSP } from '../config/monaco';
 import { validate } from '../config/monaco/validationProvider';
 import { getInstructions } from '../services/instructionsService';

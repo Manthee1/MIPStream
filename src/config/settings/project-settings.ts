@@ -3,7 +3,7 @@
 // General: performance mode, cpu type, memory size
 // Simulation: speed, 
 
-import { CPUS } from "../../assets/js/core/config/cpus";
+import { CPUS } from "../../core/config/cpus";
 import { useProjectStore } from "../../stores/projectStore";
 
 // Visualization: value representation(dec,hex,bin) for memory/diagram/registers all individually, register nameing convention, 
@@ -62,7 +62,7 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                 type: 'number',
                 default: 256,
                 min: 128,
-                max: 1024,
+                max: 4096,
                 step: 1,
                 description: 'Choose the memory size for the simulation.',
                 icon: 'cpu'
@@ -94,7 +94,7 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                     { value: 'R', label: 'R' },
                 ],
                 description: 'Choose the prefered register prefix to show in the registers panel and use in code completions.',
-                icon: 'code'
+                icon: 'type'
             },
             {
                 key: 'registerNamingConvention',
@@ -106,7 +106,7 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                     { value: 'advanced', label: 'Advanced', description: 'zero, at, v0, ...' },
                 ],
                 description: 'Choose which register naming convention to show in the registers panel.',
-                icon: 'cpu'
+                icon: 'type'
             },
             {
                 key: 'registerValueRepresentationColumn1',
@@ -120,7 +120,7 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                     { value: 'bin', label: 'Binary' },
                 ],
                 description: 'Choose the value representation for the first column of the registers.',
-                icon: 'cpu'
+                icon: 'sliders'
             },
             {
                 key: 'registerValueRepresentationColumn2',
@@ -134,31 +134,31 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                     { value: 'bin', label: 'Binary' },
                 ],
                 description: 'Choose the value representation for the second column of the registers.',
-                icon: 'cpu'
+                icon: 'sliders'
             },
         ]
     },
-    // Memory
-    {
-        name: 'Memory',
-        icon: 'table',
-        settings: [
+    // // Memory
+    // {
+    //     name: 'Memory',
+    //     icon: 'table',
+    //     settings: [
 
-            {
-                key: 'memoryValueRepresentation',
-                label: 'Memory Value Representation',
-                type: 'radio',
-                default: 'dec',
-                options: [
-                    { value: 'dec', label: 'Decimal' },
-                    { value: 'hex', label: 'Hexadecimal' },
-                    { value: 'bin', label: 'Binary' },
-                ],
-                description: 'Choose the value representation for the memory.',
-                icon: 'cpu'
-            },
-        ]
-    },
+    //         {
+    //             key: 'memoryValueRepresentation',
+    //             label: 'Memory Value Representation',
+    //             type: 'radio',
+    //             default: 'dec',
+    //             options: [
+    //                 { value: 'dec', label: 'Decimal' },
+    //                 { value: 'hex', label: 'Hexadecimal' },
+    //                 { value: 'bin', label: 'Binary' },
+    //             ],
+    //             description: 'Choose the value representation for the memory.',
+    //             icon: 'cpu'
+    //         },
+    //     ]
+    // },
     {
         name: 'Diagram',
         icon: 'map',
@@ -176,14 +176,14 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
                     { value: 'bin', label: 'Binary' },
                 ],
                 description: 'Choose the value representation for the diagram.',
-                icon: 'cpu'
+                icon: 'sliders'
             },
             {
                 key: 'diagramShowValues',
                 label: 'Show Values',
                 description: 'Show values in the diagram.',
                 type: 'radio',
-                default: 'all',
+                default: 'show',
                 options: [
                     { value: 'none', label: 'None', description: 'Do not show any values' },
                     { value: 'show', label: 'All', description: 'Show all values' },

@@ -31,7 +31,7 @@ import { decToHex } from '../../assets/js/utils';
 <script lang="ts">
 
 export default {
-    name: "HexView",
+    name: "InstructionMemory",
 
     computed: {
 

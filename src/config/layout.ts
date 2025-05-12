@@ -79,9 +79,9 @@ export const defaultLayoutGridConfig = {
                         "type": "leaf",
                         "data": {
                             "views": [
-                                "hexView"
+                                "instructionMemory"
                             ],
-                            "activeView": "hexView",
+                            "activeView": "instructionMemory",
                             "id": "5"
                         },
                         "size": 384
@@ -135,10 +135,10 @@ export const panelsConfig: Record<string, GroupviewPanelState> = {
         "title": "Memory",
         "tabComponent": "DockviewTab",
     },
-    "hexView": {
-        "id": "hexView",
-        "contentComponent": "HexView",
-        "title": "Hex View",
+    "instructionMemory": {
+        "id": "InstructionMemory",
+        "contentComponent": "InstructionMemory",
+        "title": "Instruction Memory",
         "tabComponent": "DockviewTab",
     },
     "instructions": {

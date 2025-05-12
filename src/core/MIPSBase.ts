@@ -1,12 +1,12 @@
 /** @format */
 
-import { clone, decToHex, toSigned } from "../utils";
+import { clone, decToHex, toSigned } from "../assets/js/utils";
 import { connections } from "./config/connections/base-connections";
 import { baseControlSignals } from "./config/controlSignals";
 import { baseInstructionConfig } from "./config/instructions";
 import { stageRegisters } from "./config/stages-registers";
 import { default as _ } from "./config/cpu-variables";
-import { ALUOperations, getAluControl, getAluResult } from "./config/alu";
+import { getAluControl, getAluResult } from "./config/alu";
 import { components } from "./config/components";
 
 

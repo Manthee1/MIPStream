@@ -2,8 +2,8 @@
 
 // utils.ts
 
-import { ALUOperationstoSigns, getAluControl } from "./core/config/alu";
-import { baseInstructionConfig } from "./core/config/instructions";
+import { ALUOperationstoSigns, getAluControl } from "../../core/config/alu";
+import { baseInstructionConfig } from "../../core/config/instructions";
 
 
 const mnemonics = new Set(baseInstructionConfig.map((instruction) => instruction.mnemonic));

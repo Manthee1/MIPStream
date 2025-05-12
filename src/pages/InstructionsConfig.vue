@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { defineComponent, markRaw, toRaw } from 'vue';
-import { CPUS } from '../assets/js/core/config/cpus';
-import MIPSBase from '../assets/js/core/MIPSBase';
+import { CPUS } from '../core/config/cpus';
+import MIPSBase from '../core/MIPSBase';
 import MButton from '../components/common/MButton.vue';
 import Dropdown from '../components/common/Dropdown.vue';
 import { clone, decToBinary, getDefaultInstructionDefOperands, getInstructionSyntax, getOperandSyntax, getPseudoCode } from '../assets/js/utils';
 import MSelect from '../components/common/MSelect.vue';
-import { ALUOperations, ALUOperationsSigns } from '../assets/js/core/config/alu';
-import CpuDiagram from '../components/features/CpuDiagram.vue';
-import { CPUDiagram } from '../assets/js/core/diagram/CPUDiagram';
-import { Assembler } from '../assets/js/core/Assembler';
+import { ALUOperations, ALUOperationsSigns } from '../core/config/alu';
+import CpuDiagram from '../components/panels/partials/CpuDiagram.vue';
+import { CPUDiagram } from '../core/diagram/CPUDiagram';
+import { Assembler } from '../core/Assembler';
 import { deleteInstruction, getInstruction, getInstructionByMnemonic, getInstructions, insertInstruction, Instruction, updateInstruction } from '../services/instructionsService';
 
 </script>

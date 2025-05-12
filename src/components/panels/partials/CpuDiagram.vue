@@ -4,8 +4,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { CPUDiagram } from '../../assets/js/core/diagram/CPUDiagram';
-import { DiagramInteraction } from '../../assets/js/core/diagram/plugins/DiagramInteraction';
+import { CPUDiagram } from '../../../core/diagram/CPUDiagram';
+import { DiagramInteraction } from '../../../core/diagram/plugins/DiagramInteraction';
 
 
 export default defineComponent({

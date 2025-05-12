@@ -1,10 +1,9 @@
 <!-- @format -->
 
 <script setup lang="ts">
-import Editor from "@/components/core/Editor.vue";
-import Controls from "@/components/core/Controls.vue";
-import SideBar from "@/components/layout/SideBar.vue";
-import CpuView from "@/components/core/CpuView.vue";
+import Editor from "@/components/panels/Editor.vue";
+import Controls from "@/components/panels/partials/Controls.vue";
+import CpuView from "@/components/panels/CpuView.vue";
 import Window from "@/components/common/Window.vue";
 import DockviewTab from "../components/layout/DockviewTab.vue";
 
@@ -19,14 +18,14 @@ import DockviewTab from "../components/layout/DockviewTab.vue";
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Problems from "../components/core/Problems.vue";
+import Problems from "../components/panels/Problems.vue";
 import Accordion from "../components/common/Accordion.vue";
 import { DockviewReadyEvent, DockviewVue, SerializedDockview } from "dockview-vue";
-import Registers from "../components/features/Registers.vue";
-import Stages from "../components/features/Stages.vue";
-import Memory from "../components/features/Memory.vue";
-import HexView from "../components/features/HexView.vue";
-import Instructions from "../components/features/Instructions.vue";
+import Registers from "../components/panels/Registers.vue";
+import Stages from "../components/panels/Stages.vue";
+import Memory from "../components/panels/Memory.vue";
+import InstructionMemory from "../components/panels/InstructionMemory.vue";
+import Instructions from "../components/panels/Instructions.vue";
 import { defaultLayoutGridConfig, panelsConfig } from "../config/layout";
 
 let confirmSaveBeforeLeave = async () => true;
@@ -36,7 +35,6 @@ export default defineComponent({
 	components: {
 		Editor,
 		Controls,
-		SideBar,
 		CpuView,
 		Window,
 		Problems,
@@ -44,7 +42,7 @@ export default defineComponent({
 		Accordion,
 		Stages,
 		Memory,
-		HexView,
+		InstructionMemory,
 		Instructions,
 		DockviewVue,
 		DockviewTab,

@@ -8,7 +8,7 @@ import { useSettingsStore } from './settingsStore';
 import { clone } from '../assets/js/utils';
 import { toRaw } from 'vue';
 import { settings } from '../storage/settingsStorage';
-import { CPUS } from '../assets/js/core/config/cpus';
+import { CPUS } from '../core/config/cpus';
 
 export const useProjectStore = defineStore('project', {
     state: () => ({

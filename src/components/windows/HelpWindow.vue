@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import GeneralHelp from '../../assets/help/general.md';
-import RegistersHelp from '../../assets/help/registers.md';
+import SimulatorHelp from '../../assets/help/simulator.md';
 import KeyboardShortuctsHelp from '../../assets/help/keyboard-shortcuts.md';
+import InstructionConfigHelp from '../../assets/help/instruction-config.md';
+import TroubleshootingHelp from '../../assets/help/troubleshooting.md';
+import SettingsHelp from '../../assets/help/settings.md';
+import AboutHelp from '../../assets/help/about.md';
 import { ComponentOptions } from 'vue';
 import '../../assets/sass/components/tab-window.scss'
 
@@ -9,14 +13,11 @@ import '../../assets/sass/components/tab-window.scss'
 
 const helpTabs: Array<{ name: string; icon: string, component: ComponentOptions }> = [
     { name: "General", icon: "help-circle", component: GeneralHelp },
-    { name: "Registers", icon: "columns", component: RegistersHelp },
     { name: "Shortcuts", icon: "corner-right-up", component: KeyboardShortuctsHelp },
-    // { name: "Memory", icon: "cpu", component: MemoryHelp },
-    // { name: "Diagram", icon: "cpu", component: DiagramHelp },
-    // { name: "Hex View", icon: "cpu", component: HexViewHelp },
-    // { name: "Instructions", icon: "cpu", component: InstructionsHelp },
-    // { name: "Instruction Config", icon: "cpu", component: InstructionConfigHelp },
-    // { name: "Troubleshooting", icon: "alert-triangle", component: GeneralHelp },
+    { name: "Simulator", icon: "square", component: SimulatorHelp },
+    { name: "Instruction Config", icon: "server", component: InstructionConfigHelp },
+    { name: "Troubleshooting", icon: "alert-triangle", component: TroubleshootingHelp },
+    // { name: "About", icon: "info", component: AboutHelp },
 ];
 
 </script>

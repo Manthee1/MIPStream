@@ -1,4 +1,4 @@
-import { clone } from "../../utils"
+import { clone } from "../../assets/js/utils"
 import { baseControlSignals } from "./controlSignals"
 import _ from "./cpu-variables"
 

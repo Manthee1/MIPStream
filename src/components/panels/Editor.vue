@@ -18,7 +18,7 @@
 import { defineComponent } from 'vue';
 // import { getStageName } from '../../assets/js/utils';
 import { initLSP, default as monaco } from "../../config/monaco";
-import Controls from './Controls.vue';
+import Controls from './partials/Controls.vue';
 import { useProjectStore } from '../../stores/projectStore';
 import { validate } from '../../config/monaco/validationProvider';
 

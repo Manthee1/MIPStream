@@ -5,7 +5,7 @@ import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
 import { getCompletionsProvider } from './monaco/completionsProvider';
 import { getDefinitionProvider } from './monaco/definitionProvider';
 import { advanceRegisterNames, getDefaultInstructionDefOperands, isLabel } from '../assets/js/utils';
-import { baseInstructionConfig } from '../assets/js/core/config/instructions';
+import { baseInstructionConfig } from '../core/config/instructions';
 import { getHoverProvider } from './monaco/hoverProvider';
 import { updateValidationProvider } from './monaco/validationProvider';
 import { useProjectStore } from '../stores/projectStore';

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
 import { advanceRegisterNames, decToBinary, decToHex } from '../../assets/js/utils';
-import { default as _ } from '../../assets/js/core/config/cpu-variables';
+import { default as _ } from '../../core/config/cpu-variables';
 
 </script>
 

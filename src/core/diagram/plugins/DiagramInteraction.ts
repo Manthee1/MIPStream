@@ -1,6 +1,6 @@
-import { useProjectStore } from "../../../../../stores/projectStore";
-import { decToBinary, decToHex } from "../../../utils";
-import { SpatialItem } from "../../../utils/SpatialMap";
+import { useProjectStore } from "../../../stores/projectStore";
+import { decToBinary, decToHex } from "../../../assets/js/utils";
+import { SpatialItem } from "../../../assets/js/utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
 interface InfoBoxBodyContentConfig {

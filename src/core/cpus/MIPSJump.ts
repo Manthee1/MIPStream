@@ -1,6 +1,6 @@
-import { components } from './../config/components';
-import { baseControlSignals, controlSignalsWithJump } from './../config/controlSignals';
-import { clone } from "../../utils";
+import { components } from '../config/components';
+import { baseControlSignals, controlSignalsWithJump } from '../config/controlSignals';
+import { clone } from "../../assets/js/utils";
 import { default as _ } from "../config/cpu-variables";
 import { instructionConfigWithJump } from "../config/instructions";
 import MIPSBase from "../MIPSBase";

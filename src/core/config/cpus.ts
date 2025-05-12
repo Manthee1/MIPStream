@@ -12,7 +12,7 @@ interface CPUTypeConfig {
 export const CPUS: Record<string, CPUTypeConfig> = {
     "basic": {
         name: "Basic",
-        description: "Basic CPU with no special features.",
+        description: "Basic CPU with no special panels.",
         cpu: MIPSBase
     },
     'basic-jump': {

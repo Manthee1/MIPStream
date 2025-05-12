@@ -1,4 +1,4 @@
-import { Assembler } from './../../assets/js/core/Assembler';
+import { Assembler } from '../../core/Assembler';
 import * as monaco from 'monaco-editor';
 import { useProjectStore } from '../../stores/projectStore';
 import { decToBinary, decToHex, isValue, decToUnsigned, isRegister, advanceRegisterNames, getRegisterNumber, registerDescriptions, getInstructionSyntax, getPseudoCode } from '../../assets/js/utils';

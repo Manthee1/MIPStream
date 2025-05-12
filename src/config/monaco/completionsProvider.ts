@@ -1,7 +1,7 @@
 import * as monaco from 'monaco-editor';
 import { advanceRegisterNames, getDefaultInstructionDefOperands, getInstructionSyntax, getProgramLines, getPseudoCode } from '../../assets/js/utils';
 import { useProjectStore } from '../../stores/projectStore';
-import { Assembler } from '../../assets/js/core/Assembler';
+import { Assembler } from '../../core/Assembler';
 import { EditorUtils } from './editorUtils';
 
 export function getCompletionsProvider() {

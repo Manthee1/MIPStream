@@ -16,26 +16,40 @@ MIPStream is a web-based simulator designed to help users understand and experim
 - **Error Detection**: Identify and debug errors in your assembly code with helpful feedback.
 - **Customizable Layout**: Adjust the workspace layout to suit your preferences.
 
+
+---
+
+## **General User Interface Overview**
+- **Top Bar**: Contains a dropdown menu accessible via the hamburger icon, the title of the project/page, and a quick acess button to switch between light and dark mode. The hamburger menu provides access to various options, including creating, importing, downloading projects, accessing settings and other navigation options.
+- **Settings Window**: Access general and project-specific settings to customize the simulator's appearance and functionality.
+- **Help Dialog**: Open the help dialog for quick access to documentation and troubleshooting tips.
+- **Notification Area**: Displays notifications and error messages related to the simulator's operation. Located in the bottom left corner of the screen.
+
 ---
 
 ## **Getting Started**
-1. **Write Your Code**:
-   - Open the editor and write your MIPS assembly code.
+1. **Create a New Project**:
+   - Either click the **hamburger menu** in the top left corner and select **New**, or use the **New Project** button from the home page.
+   - Supply a name for your project to the prompt that appears and click **Create Project**.
+   - A new project will be created, and opened.
+   - 
+2. **Write Your Code**:
+   - Focus on the editor and write your MIPS assembly code.
    - Use `.data` and `.text` sections to define variables and instructions.
 
-2. **Assemble and Load**:
+3. **Assemble and Load**:
    - Click the **Assemble and Load** button (or press `F6`) to assemble your code and load it into the simulator.
 
-3. **Run the Simulation**:
+4. **Run the Simulation**:
    - Use the **Run** button (or press `F5`) to start the simulation.
    - Adjust the simulation speed using the slider.
 
-4. **Pause, Resume, or Step**:
+5. **Pause, Resume, or Step**:
    - Pause the simulation with the **Pause** button (`F8`).
    - Resume the simulation with the same button.
    - Use the **Step** button (`F9`) to execute one instruction at a time.
 
-5. **Stop the Simulation**:
+6. **Stop the Simulation**:
    - Stop the simulation with the **Stop** button (`Shift + F5`).
 
 ---
@@ -49,16 +63,11 @@ Here are some useful shortcuts to control the simulator:
 - **Stop Simulation**: `Shift + F5`
 - **Open General Settings**: `Ctrl + ,`
 - **Open Project Settings**: `Ctrl + Alt + ,`
+- **Open Help Window**: `Ctrl + H`
 - **Reset Layout**: `Ctrl + Shift + L` (In case the layout breaks)
 
 ---
 
-## **Simulation Controls**
-- **Registers**: View and monitor the values of all registers in real-time.
-- **Memory**: Inspect memory contents and track changes during execution.
-- **Hex View**: See the assembled instructions.
-
----
 
 ## **Common Errors**
 1. **Syntax Errors**:

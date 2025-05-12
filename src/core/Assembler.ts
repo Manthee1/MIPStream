@@ -1,5 +1,5 @@
-import { extractOperands, getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, toSigned, } from "../utils"
-import { AssemblerError, AssemblerErrorList, ErrorType } from "../errors";
+import { extractOperands, getDefaultInstructionDefOperands, getEffectiveAddressImm, getEffectiveAddressRegister, getProgramLines, getRegisterNumber, isEffectiveAddress, isLabel, isMnemonic, isRegister, isValidRegister, isValue, isXBit, isXBitSigned, toSigned, } from "../assets/js/utils"
+import { AssemblerError, AssemblerErrorList, ErrorType } from "../assets/js/errors";
 
 export class Assembler {
     INSTRUCTION_SET: InstructionConfig[];

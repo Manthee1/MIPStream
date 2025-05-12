@@ -1,4 +1,4 @@
-import { SpatialItem } from "../../../utils/SpatialMap";
+import { SpatialItem } from "../../../assets/js/utils/SpatialMap";
 import { CPUDiagram, CPUDiagramPlugin } from "../CPUDiagram";
 
 export class DiagramEditor extends CPUDiagramPlugin {

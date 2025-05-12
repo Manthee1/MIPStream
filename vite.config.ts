@@ -59,25 +59,9 @@ export default defineConfig({
   server: {
     port: 1420,
     strictPort: true,
-
-    host: host || false,
-    hmr: host
-      ? {
-        protocol: 'ws',
-        host,
-        port: 1421,
-      } : undefined,
-
-    watch: {
-      // 3. tell vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
-    },
   },
-  envPrefix: ['VITE_', 'TAURI_ENV_*'],
+  envPrefix: ['VITE_'],
   build: {
-    target: process.env.TAURI_ENV_PLATFORM == 'windows' ? 'chrome105' : 'safari13',
-    minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
-    sourcemap: !!process.env.TAURI_ENV_DEBUG,
   },
   resolve: {
     alias: {

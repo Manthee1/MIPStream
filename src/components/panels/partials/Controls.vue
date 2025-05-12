@@ -20,10 +20,11 @@
 			<span class="status-circle my-auto" :title="status" :class="'status-' + status"></span>
 
 		</div>
-		<div class="flex gap-1 ml-3">
+		<div class="flex gap-1 mx-3">
 			<MRange :modelValue="$simulationStore.speed" @update:modelValue="$simulationStore.setSpeed($event)" :min="1"
 				:max="100" :step="1" />
-			<span style="width:7ch" class="m-auto">{{ $simulationStore.speed }} ins/s</span>
+			<span style="width:7ch" class="m-auto">{{ $simulationStore.speed < 100 ? $simulationStore.speed : 'ꝏ' }}
+					ins/s</span>
 		</div>
 	</div>
 </template>
@@ -31,7 +32,7 @@
 <script>
 import { defineComponent } from "vue";
 import MButton from "@/components/common/MButton.vue";
-import MRange from "../common/MRange.vue";
+import MRange from "../../common/MRange.vue";
 
 
 export default defineComponent({

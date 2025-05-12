@@ -1,6 +1,6 @@
-import { useProjectStore } from "../../../../stores/projectStore";
-import { decToBinary, decToHex } from "../../utils";
-import SpatialMap from "../../utils/SpatialMap";
+import { useProjectStore } from "../../stores/projectStore";
+import { decToBinary, decToHex } from "../../assets/js/utils";
+import SpatialMap from "../../assets/js/utils/SpatialMap";
 
 export class CPUDiagramPlugin {
     cpuDiagram: CPUDiagram;

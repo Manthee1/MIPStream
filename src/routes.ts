@@ -1,7 +1,7 @@
 import { RouteRecordRaw } from 'vue-router';
 import Workspace from '@/pages/Workspace.vue';
 import Home from '@/pages/Home.vue';
-import CpuView from '@/components/core/CpuView.vue';
+import CpuView from '@/components/panels/CpuView.vue';
 import InstructionConfig from './pages/InstructionsConfig.vue';
 
 

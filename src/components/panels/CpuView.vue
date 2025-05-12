@@ -22,13 +22,13 @@
 import Window from '@/components/common/Window.vue';
 import { defineComponent } from 'vue';
 // import { cpuConfig, cpuLayout } from '../../assets/js/core/cpus/simple';
-import { CPUDiagram } from '../../assets/js/core/diagram/CPUDiagram';
-import { DiagramEditor } from '../../assets/js/core/diagram/plugins/DiagramEditor';
-import MIPSBase from '../../assets/js/core/MIPSBase';
-import { DiagramInteraction } from '../../assets/js/core/diagram/plugins/DiagramInteraction';
+import { CPUDiagram } from '../../core/diagram/CPUDiagram';
+import { DiagramEditor } from '../../core/diagram/plugins/DiagramEditor';
+import MIPSBase from '../../core/MIPSBase';
+import { DiagramInteraction } from '../../core/diagram/plugins/DiagramInteraction';
 import { clone, getProgramLines } from '../../assets/js/utils';
-import CpuDiagram from '../features/CpuDiagram.vue';
-import cpuVariables from '../../assets/js/core/config/cpu-variables';
+import CpuDiagram from '../panels/partials/CpuDiagram.vue';
+import cpuVariables from '../../core/config/cpu-variables';
 export default defineComponent({
     components: { Window, CpuDiagram },
     name: 'CpuView',
