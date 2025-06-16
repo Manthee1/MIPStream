@@ -242,6 +242,22 @@ export function decToUnsigned(value: number, bits: number): number {
     return value;
 }
 
+// Parse any string into a number no matter if its decimal, hex or binary
+export function parseNumber(value: string): number {
+    value = value.trim();
+    console.log(value);
+
+    if (value.startsWith('0x') && isHex(value.slice(2))) {
+        return parseInt(value.slice(2), 16);
+    } else if (value.startsWith('0b') && isBin(value.slice(2))) {
+        return parseInt(value.slice(2), 2);
+    } else if (isValue(value)) {
+        return parseInt(value, 10);
+    } else {
+        throw new Error(`Invalid number format: ${value}`);
+    }
+}
+
 
 export function getStageName(stage: number): string {
     switch (stage) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import { decToHex } from '../../assets/js/utils';
+import { decToHex, isXBit, parseNumber } from '../../assets/js/utils';
+import { notify } from '@kyvg/vue3-notification';
 </script>
 
 <template>
@@ -16,15 +17,15 @@ import { decToHex } from '../../assets/js/utils';
                 :data-address="'0x' + decToHex(16 * rowIndex + index, 8)" :key="index"
                 :class="{ 'non-zero': value !== 0 }">
                 <template v-if="editMemoryAddressIndex == 16 * rowIndex + index">
-                    <input class="input-small" type="number"
-                        v-model="$simulationStore.core.dataMemory[16 * rowIndex + index]"
-                        @keyup.enter="editMemoryAddressIndex = -1" @blur="editMemoryAddressIndex = -1" />
+                    <input class="input-small" v-model="newMemoryValue" @keyup.enter="saveMemoryValue"
+                        @keyup.esc="editMemoryAddressIndex = -1" @blur="saveMemoryValue" />
                 </template>
                 <template v-else>
                     {{ decToHex(value, 8) }}
                 </template>
             </span>
         </template>
+        {{ newMemoryValue }}
     </div>
 </template>
 
@@ -41,6 +42,7 @@ export default defineComponent({
         return {
             hoveredMemoryAddress: null,
             editMemoryAddressIndex: -1,
+            newMemoryValue: 0 as number | string,
             rowWidth: 16,
         };
     },
@@ -67,6 +69,7 @@ export default defineComponent({
             if (target.classList.contains('memory-item')) {
                 const address = parseInt(target.getAttribute('data-address')!.slice(2), 16);
                 this.editMemoryAddressIndex = address;
+                this.newMemoryValue = this.$simulationStore.core.dataMemory[address];
                 // focus the input when it's rendered
                 this.$nextTick(() => {
                     const input = document.querySelector('.memory-item input') as HTMLInputElement;
@@ -74,7 +77,25 @@ export default defineComponent({
                     input.select();
                 });
             }
-        }
+        },
+
+        saveMemoryValue(event: Event) {
+            const input = event.target as HTMLInputElement;
+            let value;
+            try {
+                value = parseNumber(this.newMemoryValue + '');
+                if (!isXBit(value, 32)) throw "Value must be a 32-bit integer"
+            } catch (error: any) {
+                notify({
+                    title: 'Error',
+                    text: error,
+                    type: 'error',
+                });
+                return;
+            }
+            this.$simulationStore.core.dataMemory[this.editMemoryAddressIndex] = value;
+            this.editMemoryAddressIndex = -1;
+        },
     },
 });
 </script>

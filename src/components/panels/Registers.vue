@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import { advanceRegisterNames, decToBinary, decToHex } from '../../assets/js/utils';
+import { advanceRegisterNames, decToBinary, decToHex, isXBit, parseNumber } from '../../assets/js/utils';
 import { default as _ } from '../../core/config/cpu-variables';
+import { notify } from '@kyvg/vue3-notification';
 
 </script>
 
@@ -20,8 +21,8 @@ import { default as _ } from '../../core/config/cpu-variables';
                     <span class="flex-0 register-name">{{ getRegisterName(column * 16 + index) }}</span>
                     <!-- Binary value -->
                     <template v-if="editRegisterIndex == column * 16 + index">
-                        <input class="input-small" type="number" v-model="registers[column * 16 + index]"
-                            @keyup.enter="editRegisterIndex = -1" @blur="editRegisterIndex = -1" />
+                        <input class="input-small" v-model="newRegisterValue" @keyup.enter="saveRegisterValue"
+                            @blur="saveRegisterValue" @keyup.esc="editRegisterIndex = -1" />
                     </template>
                     <template v-else>
                         <span>{{ parseValue(value,
@@ -48,6 +49,7 @@ export default defineComponent({
     data() {
         return {
             editRegisterIndex: -1,
+            newRegisterValue: '',
         };
     },
 
@@ -76,12 +78,30 @@ export default defineComponent({
                 return;
             }
             this.editRegisterIndex = index;
+            this.newRegisterValue = this.parseValue(this.$simulationStore.core.registerFile[this.editRegisterIndex], this.$projectStore.getProjectSetting('registerValueRepresentationColumn1')).toString();
             // focus the input when it's rendered
             this.$nextTick(() => {
                 const input = document.querySelector('.register-item input') as HTMLInputElement;
                 input.focus();
                 input.select();
             });
+        },
+        saveRegisterValue(event: Event) {
+            const input = event.target as HTMLInputElement;
+            let value;
+            try {
+                value = parseNumber(this.newRegisterValue + '');
+                if (!isXBit(value, 32)) throw "Value must be a 32-bit integer"
+            } catch (error: any) {
+                notify({
+                    title: 'Error',
+                    text: error,
+                    type: 'error',
+                });
+                return;
+            }
+            this.$simulationStore.core.registerFile[this.editRegisterIndex] = value;
+            this.editRegisterIndex = -1;
         },
         getRegisterName(registerNumber: number) {
             const prefix = this.$projectStore.getProjectSetting('registerPrefix');
