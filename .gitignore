@@ -23,3 +23,75 @@ yarn.lock
 *.njsproj
 *.sln
 *.sw?
+presentation/engine.js
+presentation/marp.config.js
+presentation/package.json
+presentation/script.html
+presentation/script.md
+presentation/script.pdf
+presentation/thesis-defense.html
+presentation/thesis-defense.md
+presentation/thesis-defense.pdf
+presentation/BC - Obhajoba - Martin Dinja/thesis-defense.html
+presentation/BC - Obhajoba - Martin Dinja/images/cpu-models.png
+presentation/BC - Obhajoba - Martin Dinja/images/custom-instructions.png
+presentation/BC - Obhajoba - Martin Dinja/images/diagram.png
+presentation/BC - Obhajoba - Martin Dinja/images/drmips.png
+presentation/BC - Obhajoba - Martin Dinja/images/editor.png
+presentation/BC - Obhajoba - Martin Dinja/images/mips_pipeline.png
+presentation/BC - Obhajoba - Martin Dinja/images/mips-pipeline.png
+presentation/BC - Obhajoba - Martin Dinja/images/mipsim.png
+presentation/BC - Obhajoba - Martin Dinja/images/mipstream-icon.png
+presentation/BC - Obhajoba - Martin Dinja/images/mipstream.png
+presentation/BC - Obhajoba - Martin Dinja/images/panels.gif
+presentation/BC - Obhajoba - Martin Dinja/images/panels.png
+presentation/BC - Obhajoba - Martin Dinja/images/pipeline.png
+presentation/BC - Obhajoba - Martin Dinja/images/pwa-desktop.png
+presentation/BC - Obhajoba - Martin Dinja/images/pwa.png
+presentation/BC - Obhajoba - Martin Dinja/images/webmips.png
+presentation/BC - Obhajoba - Martin Dinja/images/wims.png
+presentation/images/cpu-models.png
+presentation/images/custom-instructions.png
+presentation/images/diagram.png
+presentation/images/drmips.png
+presentation/images/editor.png
+presentation/images/mips_pipeline.png
+presentation/images/mips-pipeline.png
+presentation/images/mipsim.png
+presentation/images/mipstream-icon.png
+presentation/images/mipstream.png
+presentation/images/panels.gif
+presentation/images/panels.png
+presentation/images/pipeline.png
+presentation/images/pwa-desktop.png
+presentation/images/pwa.png
+presentation/images/webmips.png
+presentation/images/wims.png
+docs/bachlors_paper/main.aux
+docs/bachlors_paper/main.blg
+docs/bachlors_paper/main.fdb_latexmk
+docs/bachlors_paper/main.fls
+docs/bachlors_paper/main.out
+docs/bachlors_paper/main.pdf
+docs/bachlors_paper/main.synctex.gz
+docs/bachlors_paper/main.tex
+docs/bachlors_paper/main.toc
+docs/bachlors_paper/Martin Dinja-Simulator for instruction pipelining-Bakalárska práca - Maj 8.pdf
+docs/bachlors_paper/Martin Dinja-Simulator for instruction pipelining-Bakalárska práca.pdf
+docs/bachlors_paper/appendices/appendix.aux
+docs/bachlors_paper/appendices/appendix.tex
+docs/bachlors_paper/appendices/appendix1.aux
+docs/bachlors_paper/appendices/appendix1.tex
+docs/bachlors_paper/appendices/cdrom.aux
+docs/bachlors_paper/assets/images/home_screen.png
+docs/bachlors_paper/assets/images/instruction_config_page.png
+docs/bachlors_paper/assets/images/simulator_wireframe.png
+docs/bachlors_paper/content/analysis.tex
+docs/bachlors_paper/content/conclusion.tex
+docs/bachlors_paper/content/implementation.tex
+docs/bachlors_paper/content/intro.tex
+docs/bachlors_paper/content/resume.tex
+docs/bachlors_paper/content/solution.tex
+docs/bachlors_paper/content/verification.tex
+docs/bachlors_paper/preamble/annotation.tex
+package-lock.json
