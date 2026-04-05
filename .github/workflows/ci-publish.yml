@@ -22,31 +22,12 @@ jobs:
       - name: Install & Build
         run: npm ci && npm run build
 
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/manthee1/mipstream:${{ github.sha }}
-            ghcr.io/manthee1/mipstream:latest
-      
-      
       - name: "Debug: secrets presence (no secret values shown)"
         run: |
           echo "Checking repository secrets presence (will not print values)"
           if [ -n "${{ secrets.VPS_SSH_PRIVATE_KEY }}" ]; then echo "VPS_SSH_PRIVATE_KEY=present"; else echo "VPS_SSH_PRIVATE_KEY=missing"; fi
           if [ -n "${{ secrets.VPS_HOST }}" ]; then echo "VPS_HOST=present"; else echo "VPS_HOST=missing"; fi
           if [ -n "${{ secrets.VPS_USER }}" ]; then echo "VPS_USER=present"; else echo "VPS_USER=missing"; fi
-          if [ -n "${{ secrets.VPS_GHCR_TOKEN }}" ]; then echo "VPS_GHCR_TOKEN=present"; else echo "VPS_GHCR_TOKEN=missing"; fi
-          if [ -n "${{ secrets.VPS_DOCKER_COMPOSE_PATH }}" ]; then echo "VPS_DOCKER_COMPOSE_PATH=present"; else echo "VPS_DOCKER_COMPOSE_PATH=missing"; fi
           if [ -n "${{ secrets.VPS_SSH_PORT }}" ]; then echo "VPS_SSH_PORT=present"; else echo "VPS_SSH_PORT=missing"; fi
 
       - name: Check deploy secrets
@@ -59,7 +40,18 @@ jobs:
             echo "deploy=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Deploy to VPS via SSH (optional)
+      - name: Upload `dist` to VPS 
+        if: steps.check_deploy.outputs.deploy == 'true'
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          source: "dist/*"
+          target: "${{ secrets.VPS_TARGET_DIR }}/releases/${{ github.sha }}"
+
+      - name: Finalize deploy on VPS 
         if: steps.check_deploy.outputs.deploy == 'true'
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -69,27 +61,26 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             set -euo pipefail
-            IMAGE=ghcr.io/manthee1/mipstream:${{ github.sha }}
-            LATEST=ghcr.io/manthee1/mipstream:latest
+            RELEASE_DIR="${{ secrets.VPS_TARGET_DIR }}/releases/${{ github.sha }}"
+            CURRENT_DIR="${{ secrets.VPS_TARGET_DIR }}/current"
 
-            if [ -n "${{ secrets.VPS_GHCR_TOKEN || '' }}" ]; then
-              echo "Logging into ghcr.io on VPS"
-              echo "${{ secrets.VPS_GHCR_TOKEN }}" | docker login ghcr.io -u "deploy" --password-stdin
+            echo "Preparing release dir: $RELEASE_DIR"
+            mkdir -p "${{ secrets.VPS_TARGET_DIR }}/releases"
+            # ensure uploaded files exist
+            if [ ! -d "$RELEASE_DIR" ]; then
+              echo "ERROR: release directory not found: $RELEASE_DIR"
+              exit 1
             fi
 
-            echo "Pulling image $IMAGE"
-            docker pull "$IMAGE" || docker pull "$LATEST"
+            # set ownership to deploy user (best-effort)
+            chown -R ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} "$RELEASE_DIR" || true
 
-            if [ -n "${{ secrets.VPS_DOCKER_COMPOSE_PATH || '' }}" ]; then
-              if command -v docker-compose >/dev/null 2>&1; then
-                docker-compose -f "${{ secrets.VPS_DOCKER_COMPOSE_PATH }}" pull || true
-                docker-compose -f "${{ secrets.VPS_DOCKER_COMPOSE_PATH }}" up -d
-              else
-                docker compose -f "${{ secrets.VPS_DOCKER_COMPOSE_PATH }}" pull || true
-                docker compose -f "${{ secrets.VPS_DOCKER_COMPOSE_PATH }}" up -d
-              fi
-            else
-              # fallback: restart a named container
-              docker rm -f mipstream || true
-              docker run -d --name mipstream -p 80:80 --restart unless-stopped "$LATEST"
+            # update current symlink
+            ln -sfn "$RELEASE_DIR" "$CURRENT_DIR"
+            chown -h ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} "$CURRENT_DIR" || true
+
+            # reload nginx if present (may require sudo on some systems)
+            if command -v nginx >/dev/null 2>&1; then
+              echo "Reloading nginx"
+              sudo systemctl reload nginx || true
             fi
