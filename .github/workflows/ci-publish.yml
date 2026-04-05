@@ -35,8 +35,19 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mipstream:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/mipstream:latest
+            ghcr.io/manthee1/mipstream:${{ github.sha }}
+            ghcr.io/manthee1/mipstream:latest
+      
+      
+      - name: "Debug: secrets presence (no secret values shown)"
+        run: |
+          echo "Checking repository secrets presence (will not print values)"
+          if [ -n "${{ secrets.VPS_SSH_PRIVATE_KEY }}" ]; then echo "VPS_SSH_PRIVATE_KEY=present"; else echo "VPS_SSH_PRIVATE_KEY=missing"; fi
+          if [ -n "${{ secrets.VPS_HOST }}" ]; then echo "VPS_HOST=present"; else echo "VPS_HOST=missing"; fi
+          if [ -n "${{ secrets.VPS_USER }}" ]; then echo "VPS_USER=present"; else echo "VPS_USER=missing"; fi
+          if [ -n "${{ secrets.VPS_GHCR_TOKEN }}" ]; then echo "VPS_GHCR_TOKEN=present"; else echo "VPS_GHCR_TOKEN=missing"; fi
+          if [ -n "${{ secrets.VPS_DOCKER_COMPOSE_PATH }}" ]; then echo "VPS_DOCKER_COMPOSE_PATH=present"; else echo "VPS_DOCKER_COMPOSE_PATH=missing"; fi
+          if [ -n "${{ secrets.VPS_SSH_PORT }}" ]; then echo "VPS_SSH_PORT=present"; else echo "VPS_SSH_PORT=missing"; fi
 
       - name: Check deploy secrets
         id: check_deploy
@@ -58,12 +69,12 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             set -euo pipefail
-            IMAGE=ghcr.io/${{ github.repository_owner }}/mipstream:${{ github.sha }}
-            LATEST=ghcr.io/${{ github.repository_owner }}/mipstream:latest
+            IMAGE=ghcr.io/manthee1/mipstream:${{ github.sha }}
+            LATEST=ghcr.io/manthee1/mipstream:latest
 
             if [ -n "${{ secrets.VPS_GHCR_TOKEN || '' }}" ]; then
               echo "Logging into ghcr.io on VPS"
-              echo "${{ secrets.VPS_GHCR_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+              echo "${{ secrets.VPS_GHCR_TOKEN }}" | docker login ghcr.io -u "deploy" --password-stdin
             fi
 
             echo "Pulling image $IMAGE"
