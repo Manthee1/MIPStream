@@ -1,4 +1,3 @@
-
 General
 - [x] Rework stores. Split view storage into project storage and UI storage
 - [x] Rework the storage system to be more efficient. Use IndexDB
@@ -37,7 +36,6 @@ Settings
 - [x] Add overlay for settings
 - [x] Add shortcuts to settings (exit)
 
-
 Diagram
 - [x] Add custom icons for components
 - [x] Connect Reg1Data to the ALU
@@ -70,4 +68,3 @@ Bugs
 - [x] Fix loading project the second time breaks diagram
 - [x] Fix instructions loaded after halt
 - [x] Fix stages line display not handling long lines
-
