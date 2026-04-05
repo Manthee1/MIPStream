@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import * as githubDarkTheme from 'monaco-themes/themes/GitHub Dark.json';
+import githubDarkTheme from './monaco/themes/GitHub Dark.json';
 // import INSTRUCTION_SET from '../assets/js/config/instructionSet';
 // import { InstructionType, MemOp } from '../assets/js/interfaces/instruction';
 import { getCompletionsProvider } from './monaco/completionsProvider';
