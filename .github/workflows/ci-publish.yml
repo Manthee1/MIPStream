@@ -40,7 +40,16 @@ jobs:
             echo "deploy=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload `dist` to VPS 
+      - name: Create tarball of `dist` for upload
+        if: steps.check_deploy.outputs.deploy == 'true'
+        run: |
+          set -euo pipefail
+          TAR=dist-${{ github.sha }}.tar.gz
+          rm -f "$TAR"
+          # create tarball containing only the contents of dist (no top-level dist/ dir)
+          tar -C dist -czf "$TAR" .
+
+      - name: Upload dist tarball to VPS
         if: steps.check_deploy.outputs.deploy == 'true'
         uses: appleboy/scp-action@master
         with:
@@ -48,10 +57,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_SSH_PORT }}
-          source: "dist/*"
-          target: "${{ secrets.VPS_TARGET_DIR }}/releases/${{ github.sha }}"
+          source: "dist-${{ github.sha }}.tar.gz"
+          target: "${{ secrets.VPS_TARGET_DIR }}"
 
-      - name: Finalize deploy on VPS 
+      - name: Extract dist tarball on VPS
         if: steps.check_deploy.outputs.deploy == 'true'
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -61,26 +70,12 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             set -euo pipefail
-            RELEASE_DIR="${{ secrets.VPS_TARGET_DIR }}/releases/${{ github.sha }}"
-            CURRENT_DIR="${{ secrets.VPS_TARGET_DIR }}/current"
-
-            echo "Preparing release dir: $RELEASE_DIR"
-            mkdir -p "${{ secrets.VPS_TARGET_DIR }}/releases"
-            # ensure uploaded files exist
-            if [ ! -d "$RELEASE_DIR" ]; then
-              echo "ERROR: release directory not found: $RELEASE_DIR"
+            TAR="dist-${{ github.sha }}.tar.gz"
+            cd "${{ secrets.VPS_TARGET_DIR }}"
+            if [ ! -f "$TAR" ]; then
+              echo "ERROR: tarball not found: $TAR"
               exit 1
             fi
+            tar -xzf "$TAR"
+            rm -f "$TAR"
 
-            # set ownership to deploy user (best-effort)
-            chown -R ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} "$RELEASE_DIR" || true
-
-            # update current symlink
-            ln -sfn "$RELEASE_DIR" "$CURRENT_DIR"
-            chown -h ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} "$CURRENT_DIR" || true
-
-            # reload nginx if present (may require sudo on some systems)
-            if command -v nginx >/dev/null 2>&1; then
-              echo "Reloading nginx"
-              sudo systemctl reload nginx || true
-            fi

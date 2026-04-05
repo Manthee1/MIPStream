@@ -1,9 +1,0 @@
-version: "3.8"
-services:
-  mipstream:
-    image: ghcr.io/manthee1/mipstream:latest
-    restart: always
-    ports:
-      - "80:80"
-    environment:
-      - NODE_ENV=production
