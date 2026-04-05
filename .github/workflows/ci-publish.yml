@@ -38,8 +38,18 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/mipstream:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/mipstream:latest
 
+      - name: Check deploy secrets
+        id: check_deploy
+        run: |
+          # set deploy output to true only if both required secrets are present
+          if [ -n "${{ secrets.VPS_SSH_PRIVATE_KEY }}" ] && [ -n "${{ secrets.VPS_HOST }}" ]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy to VPS via SSH (optional)
-        if: ${{ secrets.VPS_SSH_PRIVATE_KEY && secrets.VPS_HOST }}
+        if: steps.check_deploy.outputs.deploy == 'true'
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
