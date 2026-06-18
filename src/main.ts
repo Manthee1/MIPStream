@@ -12,7 +12,7 @@ import { notify } from '@kyvg/vue3-notification';
 import { initRouter } from './router'
 
 import 'dockview-core/dist/styles/dockview.css'
-import { initKeyboardHandler } from "./keyboardHandler";
+import KeyboardPlugin from './plugins/KeyboardPlugin';
 import { useProjectStore } from "./stores/projectStore";
 
 import { registerSW } from 'virtual:pwa-register';
@@ -70,7 +70,7 @@ app.config.globalProperties.$prompt = UIStore.prompt;
 app.config.globalProperties.$projectStore = projectStore;
 // app.config.globalProperties.$notify = notify;
 
-initKeyboardHandler();
+app.use(KeyboardPlugin);
 
 
 const router = initRouter();
