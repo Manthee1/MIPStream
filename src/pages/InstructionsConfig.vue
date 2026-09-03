@@ -387,7 +387,7 @@ export default defineComponent({
                 description: 'New instruction',
                 funct: 0,
                 controlSignals: {},
-                operands: getDefaultInstructionDefOperands({ type: 'R', } as InstructionConfig),
+                operands: getDefaultInstructionDefOperands({ type: 'R', } as InstructionSetConfig),
 
             };
             newInstruction = await insertInstruction(newInstruction);
@@ -479,7 +479,7 @@ export default defineComponent({
                 this.deleteInstruction(mnemonic);
             }
         },
-        getAvailableOperands(instruction: InstructionConfig, currentOperand: OperandType) {
+        getAvailableOperands(instruction: InstructionSetConfig, currentOperand: OperandType) {
             const operands = instruction.operands ?? getDefaultInstructionDefOperands(instruction);
 
             let availableOperands: OperandType[] = ['REG_DESTINATION',

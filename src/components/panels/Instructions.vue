@@ -52,7 +52,7 @@ export default defineComponent({
         },
     },
     methods: {
-        getIcon(instructionConfig: InstructionConfig) {
+        getIcon(instructionConfig: InstructionSetConfig) {
             if (instructionConfig.mnemonic == 'halt') return 'x-circle'
             if (instructionConfig.mnemonic == 'nop') return 'circle'
 
