@@ -1,12 +1,15 @@
 {
   "name": "mipstream",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sim:build": "cd src/core/simulator && make",
+    "sim:clean": "cd src/core/simulator && make clean",
+    "sim:run": "cd src/core/simulator && ./mipstream"
   },
   "dependencies": {
     "@kyvg/vue3-notification": "^3.4.1",
