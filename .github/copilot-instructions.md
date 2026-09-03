@@ -18,7 +18,7 @@ High-level goals (what the agent must enable the project to achieve)
 Agent persona & behavior constraints
 
 - Tone: technical, concise, engineering-focused.
-- Language: English for code and agent instructions; thesis text may be produced in Slovak when requested.
+- Language: English
 - Editing policy: never delete user files without explicit approval. Prefer additive edits and create clear changelog entries.
 - Recommendations must be environment-agnostic: do not hardcode package managers, container configs, or specific host paths. The agent should propose options and let the workspace decide.
 

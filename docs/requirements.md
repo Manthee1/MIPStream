@@ -2,66 +2,66 @@
 
 ## 1. Project System Architecture & Separation of Concerns
 
-To guarantee execution speed while preserving total visual editability, the simulator splits into two distinct execution lifecycles: a pure-functional, performance-optimized processing backend and a schema-driven, reactive presentation frontend.
+To guarantee high execution throughput while preserving complete visual editability, the simulator splits into two distinct execution lifecycles: a pure, headless TypeScript simulation engine operating directly over flat memory structures, and a schema-driven, reactive presentation layer built with Vue 3 and Vue Flow.
 
 ```
        ┌────────────────────────────────────────────────────────┐
-       │                 FRONTEND (Vue 3 / TypeScript)          │
-       │  • View Layer Canvas (Vue Flow)                        │
-       │  • Structural Schema Definition (IndexedDB)            │
-       │  • Syntax Highlighting & Token Processing (Monaco)     │
+       │             PRESENTATION LAYER (Vue 3 / Vue Flow)       │
+       │  • Interactive Visual Canvas (Vue Flow)                │
+       │  • Structural Layout & Persistence (IndexedDB)         │
+       │  • Text Editing, Syntax Highlighting & Tokenizing (Monaco)│
        └───────────────────────────┬────────────────────────────┘
                                    │
-                     Wasm Payload  │  Live Cycle Execution Buffer
-                     Initialization│  (Flat State Arrays)
+                      Canvas Schema│  Batched Signal Updates /
+                       Instantiation│  UI Flush (Shared Memory)
                                    ▼
        ┌────────────────────────────────────────────────────────┐
-       │                BACKEND (WebAssembly / Pure C)          │
-       │  • Flat Array Memory Buffers (`uint32_t`)              │
-       │  • Pointerless Direct Dependency Evaluation Graph      │
-       │  • Microarchitectural Cycle & Latch Controllers        │
+       │             HEADLESS ENGINE LAYER (TypeScript)         │
+       │  • Flat Typed State Arrays (`Uint32Array`)             │
+       │  • Direct Topological Graph Evaluation Loop            │
+       │  • 2-Phase Clock Step & Latch Controllers             │
        └────────────────────────────────────────────────────────┘
 
 ```
 
-### 1.1 The Backend (C Engine via WebAssembly)
+### 1.1 The Engine Layer (Pure TypeScript Core)
 
-* **Design Philosophy:** The execution layer is completely blind to visual semantics, component positions, aesthetic properties, and data types. It evaluates pure binary bitstreams.
-* **Memory Architecture:** Operating out of a shared WebAssembly memory buffer, the engine passes state changes down standard flat 32-bit unsigned integer arrays (`uint32_t`). It manages no dynamic pointers during clock cycles, avoiding memory fragmentation and serialization overhead.
+* **Design Philosophy:** The execution layer is headless and operates independently from visual semantics, component positions, aesthetic properties, and UI state. It processes raw numeric data through a direct graph representation.
+* **Memory Architecture:** Operating on pre-allocated, flat TypedArrays (e.g., `Uint32Array`), the engine passes signal states without allocating short-lived objects during execution loops. This minimizes Garbage Collection (GC) pauses and allows the engine to evaluate tens of thousands of instruction cycles per second entirely within the JavaScript runtime.
 
-### 1.2 The Frontend (Vue 3 / TypeScript / IndexedDB)
+### 1.2 The Presentation Layer (Vue 3 / TypeScript / IndexedDB)
 
-* **Design Philosophy:** The frontend serves as the absolute source of truth for structural definitions. The complete system design, component attributes, interconnection arrays, and custom Instruction Set Architecture (ISA) records live in client-side persistence (`IndexedDB`).
-* **Runtime Layer:** When a simulation starts, the frontend serializes the database layout into a compact binary layout payload, initializes the Wasm execution instance, and reads raw bit buffers out of memory on every clock edge to dynamically derive representation, layout, and visual state.
+* **Design Philosophy:** The frontend serves as the source of truth for visual layout and structural definitions. System layouts, node positions, port attributes, wire routing points, and custom Instruction Set Architecture (ISA) records reside in client-side storage (`IndexedDB`).
+* **Runtime Sync Layer:** When simulation runs, the presentation layer instantiates the engine graph directly from the active structural schema. On clock ticks, the engine updates its internal state arrays, and the UI periodically samples those arrays to refresh pin labels, high-low wire states, and visual component diagnostic views at standard frame rates (e.g., 60 FPS).
 
 ---
 
-## 2. Shared Memory State Buffer Protocol
+## 2. Shared In-Memory State Buffer Protocol
 
-Execution tracking between the WebAssembly runtime and the Vue Flow canvas relies on a single, continuous shared byte array buffer. The layout of this block is defined explicitly upon execution initialization.
+To decouple engine performance from Vue 3 reactivity overhead, the execution state uses a central memory context composed of continuous flat `Uint32Array` buffers. The presentation layer selectively reads from these arrays to update the UI without driving individual cycle evaluations through reactive state wrappers.
 
 ### 2.1 Buffer Composition Checklist
 
 #### A. Wire Values Array (Combinational Interconnect State)
 
-A sequential layout of 32-bit unsigned integers where each index maps to a unique connection wire UUID.
+A contiguous `Uint32Array` where each index corresponds directly to a unique internal wire handle ID.
 
-* Every wire state tracks its data inside a `uint32_t`.
-* **Component-Level Evaluation:** Arbitrary bit widths (e.g., a 5-bit register pointer or a 1-bit control unit line) are enforced uniformly using bitwise masking operations at the component pin level (e.g., `value & 0x1F`), keeping global buffer structures flat.
+* Every wire state tracks its data as a raw 32-bit integer.
+* **Component-Level Evaluation:** Arbitrary bit widths (e.g., a 5-bit register pointer or a 1-bit control line) are enforced uniformly using bitwise masking operations within the component logic (e.g., `value & 0x1F`), keeping global buffer structures flat.
 
 #### B. Pipeline Stage Interface State
 
-Rather than transmitting strings or complex JSON representations over the Wasm boundary, the engine writes a fixed-size structural metadata payload for each logical pipeline latch register:
+For each logical pipeline latch register, the engine updates a fixed-size slot within a flat typed state block:
 
 1. **Raw Bitstream:** The raw 32-bit binary representation of the instruction currently occupying the stage (e.g., `0x00AF8020`).
 2. **Current PC:** The absolute Program Counter memory address attached to that specific instruction.
-3. **Execution Flags:** Boolean state triggers verifying if the stage is currently experiencing a **Stall** condition or a **Flush** condition.
+3. **Execution Flags:** Bitmasks tracking flags such as **Stall** or **Flush** conditions for that stage.
 
 #### C. State Storage Elements
 
-* **Register File:** A fixed array block of 32 elements representing tracking fields (`$zero` through `$ra`).
-* **Data Memory Modification Queue:** To prevent copying the entire RAM boundary every cycle, the engine manages a small circular mutation log highlighting the **last 10 changed memory addresses and values**, allowing the UI to highlight memory cell overrides dynamically.
-* **Internal Performance Metrics:** Shared allocation blocks tracking specific hardware telemetry, such as dynamic branch prediction counters or structural cache miss boundaries.
+* **Register File Buffer:** A contiguous `Uint32Array` of fixed size (e.g., 32 elements for standard general-purpose registers).
+* **Data Memory Modification Queue:** To avoid scanning or copying large RAM blocks during UI sync passes, the engine maintains a small ring buffer tracking recent memory writes (address and mutated value pairs), allowing the UI to highlight changed memory cells dynamically.
+* **Internal Performance Metrics:** Continuous counters tracking hardware telemetry, such as branch prediction attempts, hits, and structural pipeline stalls.
 
 ---
 
@@ -142,13 +142,14 @@ If an adjustment down the 5-tier inheritance chain creates an invalid bit-width 
 * **The Warning State:** The canvas triggers a validation warning flag. The mismatched connection line and handle are highlighted in a distinct amber/yellow outline (`.wire-warning`).
 * **Contextual Tooltip Reporting:** Hovering over the error node invokes an accurate feedback modal: *“Bit-width mismatch: This port outputs 32 bits, but the destination port is configured to process 16 bits.”*
 
-### 4.4 Circular Dependency Errors
+### 4.4 Circular Dependency Validation
 
-If a designer creates a circular dependency (e.g., a feedback loop where the output of a register feeds back into its own input without an intervening pipeline stage or any other clocked component), the system will:
-* **Detect the Cycle:** The frontned will analyze the directed graph of connections and identify the cycle.
-* **Highlight the Loop:** All wires and nodes involved in the cycle will be highlighted in red.
-* **Block Simulation:** The simulation engine will refuse to run until the cycle is resolved, preventing undefined behavior.
-* **Provide Resolution Suggestions:** The tooltip will suggest possible fixes, such as adding a pipeline stage or breaking the loop.
+If a designer creates an unbuffered circular path (e.g., a pure combinational feedback loop where an output feeds back into its own input path without passing through a clocked sequential component like a register):
+
+* **Cycle Detection:** The engine performs a Depth-First Search (DFS) topological sort over combinational nodes during graph compilation.
+* **Highlight Loop:** All wires and nodes participating in the unstable combinational loop are visually highlighted on the Vue Flow canvas in red.
+* **Block Execution:** The engine halts clock execution until a clocked buffer (e.g., pipeline register or latch) breaks the combinational loop.
+* **Resolution Guidance:** Tooltips display clear actionable suggestions (e.g., *“Unbuffered combinational cycle detected. Insert a latch or register to split the path across clock boundaries.”*).
 
 ---
 
@@ -170,10 +171,12 @@ Every instruction format is mapped structurally as an array of discrete bitfield
     { "name": "rt",     "bits": 5, "type": "register" },
     { "name": "rd",     "bits": 5, "type": "register" },
     { "name": "funct",  "bits": 9, "type": "constant" }
-  ],
+  ]
 }
 
-Concrete instruction mnemonics (e.g., `ADD`, `SUB`, `AND`) are then mapped to specific field values in a separate instruction definition table, allowing the frontend to generate accurate syntax highlighting, auto-completion, and real-time validation in the Monaco editor.
+```
+
+Concrete instruction mnemonics (e.g., `ADD`, `SUB`, `AND`) map to specific field values in a separate instruction definition table, allowing the presentation layer to generate accurate syntax highlighting, auto-completion, and real-time validation in the Monaco editor.
 
 ```json
 {
@@ -190,10 +193,10 @@ Concrete instruction mnemonics (e.g., `ADD`, `SUB`, `AND`) are then mapped to sp
 
 ### 5.2 Assembly Syntax Token Integration with Monaco Editor
 
-The frontend takes this layout definition schema and automatically builds syntax profiles for the text editor, keeping compilation tracking efficient and modular:
+The frontend takes this layout definition schema and automatically builds syntax profiles for the text editor:
 
-* **Real-Time Linting Syntax Generation:** The system transforms the structural `syntax_template` definition straight into a runtime Regular Expression validation array. If a programmer drops an immediate parameter into a instruction structure that expects three register variables, Monaco flags the syntax mismatch instantly with a red squiggle error line.
-* **Contextual Auto-Complete Cache:** When a designer instantiates a custom instruction mnemonic (e.g., `MY_VEC_ADD`), it is instantly parsed by the editor's Language Server. It populates auto-complete panels and renders structural parameter summaries whenever a user hovers over the token string.
+* **Real-Time Linting Syntax Generation:** The system transforms the structural definition directly into Regular Expression rules. If a programmer drops an immediate value into an instruction structure that expects three register variables, Monaco flags the mismatch with an error squiggle.
+* **Contextual Auto-Complete:** Custom instruction mnemonics (e.g., `MY_VEC_ADD`) are dynamically ingested into the editor's Language Server configuration, providing auto-completion and operand documentation on hover.
 
 ### 5.3 Decoupling Microarchitectural Control Signals
 
@@ -201,14 +204,14 @@ To resolve the paradox of configuring complex execution paths without restrictin
 
 #### A. External Truth Tables
 
-Instead of a hidden configuration wizard, instructions write direct hexadecimal value blocks to their mapped bitfields. If an architect designs a variant with an instruction format that routes an `opcode` of `0x01` out to an unconventional control block, they type `0x01` directly into that constant field row.
+Instructions write direct hexadecimal or integer values to their mapped bitfields. If an architect designs a variant with an instruction format that routes an `opcode` of `0x01` out to a control block, they set `0x01` directly in that constant field row.
 
 #### B. Component-Exposed Operation Enums (The ALU Solution)
 
-To preserve intuitive drop-down configuration menus for complex units (like the ALU) on an architecture where underlying binary mappings can be reversed or scrambled:
+To preserve intuitive dropdown configuration menus for complex units (like the ALU) on an architecture where underlying binary mappings can vary:
 
-1. **Component-Level Mapping:** The creator registers their custom operation mappings directly inside the canvas **ALU Component Property Inspector** (e.g., declaring that binary sequence `0x0C` triggers `SUBTRAC_MODE`, while `0x02` triggers `ADD_MODE`).
-2. **Dynamic Inspector Generation:** When a user configures an instruction to trigger an ALU task, the workspace panel queries the active canvas arrangement, checks the ALU node's translation matrix, and dynamically updates its dropdown text labels using the creator's precise structural choices.
+1. **Component-Level Mapping:** The creator registers custom operation mappings directly inside the canvas **ALU Component Property Inspector** (e.g., declaring that binary sequence `0x0C` triggers `SUBTRACT_MODE`, while `0x02` triggers `ADD_MODE`).
+2. **Dynamic Inspector Generation:** When configuring an instruction to trigger an ALU operation, the workspace panel queries the active ALU node configuration, reads its translation matrix, and populates dropdown labels using those precise choices.
 
 ```
 [ALU Node Config Canvas] ──► Sets 0x0C = "SUB" 
@@ -244,23 +247,23 @@ Rather than rendering layout windows statically, the IDE dashboard scans the can
 
 ```
 
-* **Dynamic Panel Ingestion:** A component type like `RegisterFile` explicitly binds to a matching frontend view template (e.g., a multi-column table element grid). If that hardware node exists on the canvas grid, the workspace dynamically mounts a matching panel inside the active `dockview` interface.
-* **Eliminating Layout Redundancy:** If an engineer designs a streamlined arithmetic processor that completely lacks data memory, the `DataMemory` block is left off the connection canvas. The IDE reads this omission and automatically removes the data memory viewer panel from the application menus.
-* **Decoupled Metric Tracking UI:** Complex runtime structures (e.g., tracking correct vs. incorrect steps inside a branch predictor) are managed via an exported `metrics` tracking configuration schema. The main dashboard loop automatically catches these counter rows and initializes modular graphing widgets inside a general performance monitoring pane without hardcoding custom panel tracking logic.
+* **Dynamic Panel Ingestion:** A component type like `RegisterFile` explicitly binds to a matching frontend view template (e.g., a tabular grid). If that hardware node exists on the canvas, the workspace dynamically mounts the corresponding panel inside the active `dockview` interface.
+* **Eliminating Layout Redundancy:** If an engineer designs an arithmetic-only processor that lacks a data memory module, the `DataMemory` component is omitted from the canvas. The IDE detects this omission and automatically hides the data memory inspector panel.
+* **Decoupled Metric Tracking UI:** Complex runtime metrics (e.g., branch predictor hit/miss ratios) are exported through a telemetry configuration schema. The main dashboard loop consumes these counters and renders modular diagnostic widgets in a performance monitoring panel without requiring dedicated hardcoded layouts.
 
 ---
 
 ## 7. Long-Term Architecture Refactoring Roadmap
 
-To ensure development velocity remains steady during development, layout engine optimization tasks are split into clear operational implementation cycles.
+To ensure steady progress during development, layout engine tasks are divided into clear operational phases.
 
 ### 7.1 Layout Engine Transition Strategy (Polishing Phase Priority)
 
-While the current configuration under `dockview` (Version 2.x) provides the baseline core panels necessary for prototype simulation, long-term layout maintenance and configuration state caching present known lifecycle limits.
+While the baseline workspace uses `dockview` (Version 2.x) to manage UI panels, long-term state preservation across complex user sessions remains a key focus area.
 
 #### The Golden Layout Migration Path
 
-Once the underlying WebAssembly binary execution paths and the token-based instruction compiler engines are stable, developers will execute a planned UI refactoring migration to move the layout management layer over to **Golden Layout**.
+Once the core TypeScript execution loop and instruction field compilers are fully stabilized, a planned UI refactoring pass will evaluate migrating the layout management layer over to **Golden Layout**.
 
-* **Why this transition is planned:** Golden Layout provides a native, highly resilient layout preservation engine that reduces custom state code. It tracks entire multi-window layout positions and container groupings inside a clean, standard JSON payload that saves straight to client storage (`localStorage` or IndexedDB) with absolute reliability across window reloads.
-* **Implementation Protocol:** Because Golden Layout is built as a pure, framework-agnostic TypeScript module, its inclusion will utilize explicit component mount targets using Vue 3 `teleport` configurations, isolating window sizing refactoring passes safely away from the canvas rendering engine layers.
+* **Motivation:** Golden Layout offers robust, framework-agnostic layout preservation features that serialize multi-panel workspace arrangements to clean JSON structures stored in client-side storage (`localStorage` or IndexedDB).
+* **Implementation Strategy:** Because Golden Layout operates as a framework-agnostic module, integration will leverage Vue 3 `teleport` targets to cleanly isolate panel mounting logic from the underlying Vue Flow graph rendering pipeline.
