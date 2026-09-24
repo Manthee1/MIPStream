@@ -5,7 +5,7 @@ import MuxNode from "@/components/diagram/nodes/MuxNode.vue";
 import ControlUnitNode from "@/components/diagram/nodes/ControlUnitNode.vue";
 import StageRegisterNode from "@/components/diagram/nodes/StageRegisterNode.vue";
 import GenericNode from "@/components/diagram/nodes/GenericNode.vue";
-import { CPUComponent } from "../../types/cpu";
+import { CPUComponent } from "../../types/engine";
 
 export const COMPONENTS: CPUComponent[] = [
 	{
