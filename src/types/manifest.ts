@@ -2,6 +2,11 @@
 
 export type PortDirection = "input" | "output";
 
+export interface Vector2 {
+  x: number;
+  y: number;
+}
+
 /**
  * Structural port data defined by the manifest.
  */
@@ -11,6 +16,11 @@ export interface PortDefinition {
   bits: number;        // Bus width
   label: string;       // Default visual label (e.g., "In 0")
   tooltip?: string;    // Optional tooltip for UI
+  /**
+   * Relative position of the port on the component body.
+   * (0,0) is the module center/origin.
+   */
+  position?: Vector2;
 }
 
 /**
@@ -75,7 +85,7 @@ export interface ModuleManifest<TConfig = any> {
 export interface SerializedModule {
   id: string;          // Unique instance ID (e.g., "u1")
   typeId: string;      // Reference to the manifest
-  position: { x: number; y: number };
+  position: Vector2;
   rotation: number;
   config: Record<string, any>; // User-defined overrides
 }

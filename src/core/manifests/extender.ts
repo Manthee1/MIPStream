@@ -15,8 +15,8 @@ export const ExtenderManifest: ModuleManifest<ExtenderConfig> = {
   },
 
   generatePorts: (config) => [
-    { id: "in", direction: "input", bits: config.inputBits, label: "In" },
-    { id: "out", direction: "output", bits: config.outputBits, label: "Out" },
+    { id: "in", direction: "input", bits: config.inputBits, label: "In", position: { x: -40, y: 0 } },
+    { id: "out", direction: "output", bits: config.outputBits, label: "Out", position: { x: 40, y: 0 } },
   ],
 
   createEvaluators: (config): ModuleEvaluators => {
@@ -28,20 +28,15 @@ export const ExtenderManifest: ModuleManifest<ExtenderConfig> = {
         const outputs = new Uint32Array(1);
         
         if (config.isSigned) {
-          // Check the sign bit of the input
           const signBit = (val >> (config.inputBits - 1)) & 1;
           if (signBit) {
-            // Create a mask for the upper bits
-            // e.g., if inputBits is 16, mask is 0xFFFF0000
             const mask = ((1 << (config.outputBits - config.inputBits)) - 1) << config.inputBits;
             outputs[0] = (val | mask) >>> 0;
           } else {
-            // Just the value
             const mask = (1 << config.inputBits) - 1;
             outputs[0] = (val & mask) >>> 0;
           }
         } else {
-          // Zero extension
           const mask = (1 << config.inputBits) - 1;
           outputs[0] = (val & mask) >>> 0;
         }

@@ -1,11 +1,13 @@
 import { projectSettingTabs } from "../config/settings/project-settings";
-import { IOrderQuery, ISelectQuery, ITable, IWhereQuery } from "jsstore";
-import db from "../db/database";
+import { IOrderQuery, IWhereQuery } from "jsstore";
+import { ArchitectureConfig } from "../types/architecture";
+import { BaseRepository } from "../db/repository";
 
 export interface Project {
     id: number;
     name: string;
     code: string;
+    architecture: ArchitectureConfig;
     settings: Record<string, any>;
     layoutGridConfig: any;
     savedAt: Date;
@@ -14,7 +16,6 @@ export interface Project {
     size: number;
 }
 
-
 export const defaultProjectSettings: Record<string, any> = {};
 projectSettingTabs.forEach(tab => {
     tab.settings.forEach(setting => {
@@ -22,66 +23,39 @@ projectSettingTabs.forEach(tab => {
     });
 });
 
+class ProjectRepository extends BaseRepository<Project> {
+    constructor() {
+        super('projects');
+    }
 
-
-async function getProjectById(id: number) {
-    return (await db.select({
-        from: 'projects',
-        where: {
-            id: id
-        }
-    }))[0] as Project | undefined;
+    async getByName(name: string): Promise<Project | undefined> {
+        const results = await this.getAll({
+            where: { name },
+            order: { by: 'id', type: 'desc' },
+            limit: 1
+        });
+        return results[0];
+    }
 }
 
-async function getProjectByName(name: string) {
-    return (await db.select({
-        from: 'projects',
-        where: {
-            name: name
-        },
-        order: {
-            by: 'id',
-            type: 'desc'
-        }
-    }))[0] as Project | undefined;
-}
+const projectRepo = new ProjectRepository();
 
-
-
-export const getProject = async (id: number) => {
-
-    const project = await getProjectById(id);
-    if (!project)
-        return null;
-
-    return project;
-};
+export const getProject = (id: number) => projectRepo.getById(id);
 
 export const existsProject = async (id: number) => {
-    return !!(await getProjectById(id));
-}
-
-export const getProjects = async (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'asc' }, where: IWhereQuery = {}) => {
-    let options: ISelectQuery = {
-        from: 'projects',
-        limit: limit,
-        order: order,
-    }
-    if (Object.keys(where).length > 0) {
-        options.where = where;
-    }
-
-    let projects = (await db.select(options)) as Project[];
-    return projects;
+    const count = await projectRepo.count({ id });
+    return count > 0;
 };
 
+export const getProjects = (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'asc' }, where: IWhereQuery = {}) => {
+    return projectRepo.getAll({ limit, order, where });
+};
 
-export const insertProject = async (project: Project) => {
-
-    const defaultProject: Project = {
-        id: 0,
+export const insertProject = async (project: Partial<Project> & { name: string }) => {
+    const defaultProject: Omit<Project, 'id'> = {
         name: 'Untitled',
         code: '',
+        architecture: { modules: [], nets: [] },
         settings: defaultProjectSettings,
         layoutGridConfig: {},
         savedAt: new Date(),
@@ -90,51 +64,25 @@ export const insertProject = async (project: Project) => {
         size: 0
     };
 
-    const newProject = { ...defaultProject, ...project } as { [key: string]: any };
-
-    delete newProject.id;
+    const newProject = { ...defaultProject, ...project } as Project;
+    delete (newProject as any).id;
+    
     newProject.size = JSON.stringify(newProject).length;
-    // Add the project to the database
-    console.log('Inserting project', newProject);
-
-    await db.insert({
-        into: 'projects',
-        values: [newProject]
-    });
-
-    const insertedProject = (await getProjectByName(project.name));
-    if (!insertedProject)
-        throw new Error('Failed to create project');
-
-    return insertedProject;
-}
+    
+    const results = await projectRepo.insert(newProject);
+    return results[0];
+};
 
 export const updateProject = async (project: Project) => {
-    if (!project.id)
-        throw new Error('Project id is required');
-    const existingProject = await getProjectById(project.id);
-    if (!existingProject)
-        throw new Error('Project does not exist');
+    if (!project.id) throw new Error('Project id is required');
+    
     project.updatedAt = new Date();
     project.size = JSON.stringify(project).length;
-    await db.update({
-        in: 'projects',
-        set: project,
-        where: {
-            id: project.id
-        }
-    });
+    
+    await projectRepo.update(project.id, project);
 };
 
-export const deleteProject = async (id: number) => {
-
-    return await db.remove({
-        from: 'projects',
-        where: {
-            id: id
-        }
-    });
-};
+export const deleteProject = (id: number) => projectRepo.delete(id);
 
 
 

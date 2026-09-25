@@ -1,6 +1,6 @@
 /** @format */
 
-interface InstructionTypeConfig {
+export interface InstructionTypeConfig {
 	type: string;
 	description: string;
 	fields: string[];
@@ -8,9 +8,9 @@ interface InstructionTypeConfig {
 	default_operands?: InstructionOperandConfig[];
 }
 
-type field_types = "register" | "raw_value" | "label_absolute" | "label_relative" | "memory_address";
+export type field_types = "register" | "raw_value" | "label_absolute" | "label_relative" | "memory_address";
 
-interface AssemblerFieldConfig {
+export interface AssemblerFieldConfig {
 	field: string;
 	label: string;
 	def_type: field_types;
@@ -18,13 +18,13 @@ interface AssemblerFieldConfig {
 	ranges: [number, number][];
 }
 
-interface AssemblerConfig {
+export interface AssemblerConfig {
 	fields: AssemblerFieldConfig[];
 	instruction_types: InstructionTypeConfig[];
 	instruction_set_config: InstructionConfig[];
 }
 
-const MIPS_ASSEMBLER_FIELDS_CONFIG: AssemblerConfig["fields"] = [
+export const MIPS_ASSEMBLER_FIELDS_CONFIG: AssemblerConfig["fields"] = [
 	{
 		field: "opcode",
 		label: "Operation Code",
@@ -83,9 +83,9 @@ const MIPS_ASSEMBLER_FIELDS_CONFIG: AssemblerConfig["fields"] = [
 	},
 ];
 // First string is the field name, second is the type of the field (optional), third is additional info (optional, e.g., for memory_address, it could be the base register)
-type InstructionOperandConfig = [string, field_types?, string?];
+export type InstructionOperandConfig = [string, field_types?, string?];
 
-interface InstructionConfig {
+export interface InstructionConfig {
 	mnemonic: string;
 	type?: string;
 	description?: string;
@@ -93,55 +93,57 @@ interface InstructionConfig {
 	field_values?: { [field: string]: number };
 }
 
-const defaultInstructionConfig: AssemblerConfig = {
+export const baseInstructionConfig: InstructionConfig[] = [
+    {
+        field_values: { opcode: 0x00, funct: 0x20 },
+        mnemonic: "add",
+        type: "R",
+        operands: [["rs"], ["rt"], ["rd"]],
+        description: "Add two registers and store the result in a destination register.",
+    },
+    {
+        mnemonic: "addi",
+        type: "I",
+        operands: [["rs"], ["rt"], ["imm"]],
+        description: "Add an immediate value to a register and store the result in a destination register.",
+        field_values: { opcode: 0x08 },
+    },
+    {
+        field_values: { opcode: 0x23 },
+        mnemonic: "beq",
+        type: "I",
+        operands: [["rs"], ["rt"], ["imm", "label_relative"]],
+        description: "Branch to a label if two registers are equal.",
+    },
+    {
+        mnemonic: "lw",
+        type: "I",
+        operands: [["rt"], ["imm", "memory_address","rs"]],
+        description: "Load a word from memory into a register.",
+        field_values: { opcode: 0x23 },
+    },
+    {
+        mnemonic: "sw",
+        type: "I",
+        operands: [["rt"], ["imm", "memory_address","rs"]],
+        description: "Store a word from a register into memory.",
+        field_values: { opcode: 0x2B },
+    },
+    {
+        field_values: { opcode: 0x00, funct: 0x00 },
+        mnemonic: "nop",
+        type: "R",
+        operands: [["rs"], ["rt"], ["rd"]],
+        description: "No operation. This instruction does nothing and is often used for timing or alignment purposes.",
+    },
+];
+
+export const defaultInstructionConfig: AssemblerConfig = {
 	fields: MIPS_ASSEMBLER_FIELDS_CONFIG,
 	instruction_types: [
 		{ type: "R", description: "Register-type instruction", fields: ["opcode", "rs", "rt", "rd", "shamt", "funct"], default_field_values: { opcode: 0 }, default_operands: [["rs"], ["rt"], ["rd"]] },
 		{ type: "I", description: "Immediate-type instruction", fields: ["opcode", "rs", "rt", "imm"] },
 		{ type: "J", description: "Jump-type instruction", fields: ["opcode", "address"] },
 	],
-	instruction_set_config: [
-		{
-			field_values: { opcode: 0x00, funct: 0x20 },
-			mnemonic: "add",
-			type: "R",
-			operands: [["rs"], ["rt"], ["rd"]],
-			description: "Add two registers and store the result in a destination register.",
-		},
-		{
-			mnemonic: "addi",
-			type: "I",
-			operands: [["rs"], ["rt"], ["imm"]],
-			description: "Add an immediate value to a register and store the result in a destination register.",
-			field_values: { opcode: 0x08 },
-		},
-		{
-			field_values: { opcode: 0x23 },
-			mnemonic: "beq",
-			type: "I",
-			operands: [["rs"], ["rt"], ["imm", "label_relative"]],
-			description: "Branch to a label if two registers are equal.",
-        },
-        {
-            mnemonic: "lw",
-            type: "I",
-            operands: [["rt"], ["imm", "memory_address","rs"]],
-            description: "Load a word from memory into a register.",
-            field_values: { opcode: 0x23 },
-        },
-        {
-            mnemonic: "sw",
-            type: "I",
-            operands: [["rt"], ["imm", "memory_address","rs"]],
-            description: "Store a word from a register into memory.",
-            field_values: { opcode: 0x2B },
-        }
-		{
-			field_values: { opcode: 0x00, funct: 0x00 },
-			mnemonic: "nop",
-			type: "R",
-			operands: [["rs"], ["rt"], ["rd"]],
-			description: "No operation. This instruction does nothing and is often used for timing or alignment purposes.",
-		},
-	],
+	instruction_set_config: baseInstructionConfig,
 };

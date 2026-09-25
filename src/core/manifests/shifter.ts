@@ -17,8 +17,8 @@ export const ShifterManifest: ModuleManifest<ShifterConfig> = {
   },
 
   generatePorts: (config) => [
-    { id: "in", direction: "input", bits: config.bitWidth, label: "In" },
-    { id: "out", direction: "output", bits: config.bitWidth, label: "Out" },
+    { id: "in", direction: "input", bits: config.bitWidth, label: "In", position: { x: -40, y: 0 } },
+    { id: "out", direction: "output", bits: config.bitWidth, label: "Out", position: { x: 40, y: 0 } },
   ],
 
   createEvaluators: (config): ModuleEvaluators => {

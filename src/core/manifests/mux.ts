@@ -16,6 +16,7 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
     const ports: PortDefinition[] = [];
     
     // Dynamically generate input ports based on config
+    // Assuming inputs on the left (-40, offset)
     for (let i = 0; i < config.numInputs; i++) {
       ports.push({
         id: `in${i}`,
@@ -23,10 +24,11 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
         bits: config.bitWidth,
         label: `In ${i}`,
         tooltip: `Data input ${i}`,
+        position: { x: -40, y: (i - (config.numInputs - 1) / 2) * 20 }
       });
     }
     
-    // Select line
+    // Select line on the bottom
     const selBits = Math.ceil(Math.log2(config.numInputs)) || 1;
     ports.push({
       id: "sel",
@@ -34,21 +36,22 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
       bits: selBits,
       label: "Sel",
       tooltip: "Selection control",
+      position: { x: 0, y: 40 }
     });
     
-    // Output port
+    // Output port on the right
     ports.push({
       id: "out",
       direction: "output",
       bits: config.bitWidth,
       label: "Out",
+      position: { x: 40, y: 0 }
     });
     
     return ports;
   },
 
   createEvaluators: (config): ModuleEvaluators => {
-    // Define the port order for the Uint32Array mapping
     const inputPorts: string[] = [];
     for (let i = 0; i < config.numInputs; i++) {
       inputPorts.push(`in${i}`);
@@ -61,15 +64,10 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
       inputPorts,
       outputPorts,
       evaluate: (inputs: Uint32Array): Uint32Array => {
-        const selIndex = config.numInputs; // Index of 'sel' port
+        const selIndex = config.numInputs;
         const selValue = inputs[selIndex];
-        
         const outputs = new Uint32Array(1);
-        
-        // Select the input based on selValue. 
-        // If selValue is out of bounds, default to 0.
         outputs[0] = (selValue < config.numInputs) ? inputs[selValue] : 0;
-        
         return outputs;
       }
     };

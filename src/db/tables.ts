@@ -17,10 +17,15 @@ export const projectTableConfig: ITable = {
             notNull: true,
             default: '',
         },
+        architecture: {
+            dataType: 'object',
+            notNull: true,
+            default: { modules: [], nets: [] },
+        },
         layoutGridConfig: {
             dataType: 'object',
             notNull: true,
-            default: '{}',
+            default: {},
         },
         size: {
             dataType: 'number',
@@ -30,7 +35,7 @@ export const projectTableConfig: ITable = {
         settings: {
             dataType: 'object',
             notNull: true,
-            default: '{}',
+            default: {},
         },
         savedAt: {
             dataType: 'date_time',
@@ -45,4 +50,16 @@ export const projectTableConfig: ITable = {
             notNull: true,
         },
     },
+}
+
+export const instructionTableConfig: ITable = {
+    name: 'instructions',
+    columns: {
+        id: {
+            dataType: 'number',
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        // ... assuming other columns exist or will be added
+    }
 }
