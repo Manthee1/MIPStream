@@ -1,82 +1,28 @@
-import App from "./App.vue";
 import { createApp } from "vue";
+import { createPinia } from 'pinia';
+import { createRouter, createWebHistory } from 'vue-router';
+import App from "./App.vue";
 
-import { createPinia } from 'pinia'
-import { useSimulationStore } from './stores/simulationStore'
-import { useUIStore } from './stores/UIStore'
-import { useSettingsStore } from './stores/settingsStore'
-import VueFeather from 'vue-feather';
-import Notifications from '@kyvg/vue3-notification';
-import { notify } from '@kyvg/vue3-notification';
+import './assets/index.css';
 
-import { initRouter } from './router'
+// Initialize Pinia
+const pinia = createPinia();
 
-import 'dockview-core/dist/styles/dockview.css'
-import KeyboardPlugin from './plugins/KeyboardPlugin';
-import { useProjectStore } from "./stores/projectStore";
+// Minimal Router Setup
+const routes = [
+    { path: '/', component: () => import('./pages/Home.vue') },
+    { path: '/workspace', component: () => import('./pages/Workspace.vue') },
+];
 
-import { registerSW } from 'virtual:pwa-register';
-
-const updateSW = registerSW({
-    onNeedRefresh() {
-        if (confirm('A new version is available. Do you want to update?')) {
-            updateSW(true); // Force the service worker to update
-        }
-    },
-    onOfflineReady() {
-        notify({
-            title: 'Offline ready',
-            text: 'App is ready to work offline',
-            type: 'success',
-            duration: 5000,
-        });
-    },
+const router = createRouter({
+    history: createWebHistory(),
+    routes,
 });
-
-const pinia = createPinia()
 
 const app = createApp(App);
 
 app.use(pinia);
-// Stores
-const simulationStore = useSimulationStore();
-const UIStore = useUIStore();
-const projectStore = useProjectStore();
-const settings = useSettingsStore();
-
-declare module '@vue/runtime-core' {
-    interface ComponentCustomProperties {
-        $context: typeof app.config.globalProperties
-        $simulationStore: ReturnType<typeof useSimulationStore>
-        $settings: ReturnType<typeof useSettingsStore>
-        $UIStore: ReturnType<typeof useUIStore>
-        $projectStore: ReturnType<typeof useProjectStore>
-        $confirm: (data: ModalData) => Promise<boolean | string>
-        $prompt: (data: ModalData) => Promise<boolean | string>
-        $router: typeof router
-        $route: typeof router.currentRoute
-        $notify: typeof notify
-    }
-}
-// @ts-ignore
-window.simulationStore = simulationStore;
-
-app.config.globalProperties.$context = app.config.globalProperties
-app.config.globalProperties.$simulationStore = simulationStore;
-app.config.globalProperties.$settings = settings;
-app.config.globalProperties.$UIStore = UIStore;
-app.config.globalProperties.$confirm = UIStore.confirm;
-app.config.globalProperties.$prompt = UIStore.prompt;
-app.config.globalProperties.$projectStore = projectStore;
-// app.config.globalProperties.$notify = notify;
-
-app.use(KeyboardPlugin);
-
-
-const router = initRouter();
 app.use(router);
-app.use(Notifications);
-
-app.component(VueFeather.name ?? '', VueFeather);
 
 app.mount("#app");
+

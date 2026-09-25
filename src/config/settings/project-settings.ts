@@ -3,7 +3,6 @@
 // General: performance mode, cpu type, memory size
 // Simulation: speed, 
 
-import { CPUS } from "../../core/config/cpus";
 import { useProjectStore } from "../../stores/projectStore";
 
 // Visualization: value representation(dec,hex,bin) for memory/diagram/registers all individually, register nameing convention, 
@@ -42,19 +41,6 @@ export const projectSettingTabs: SettingTab[] = [
                 description: `Specify how often the UI should update (in milliseconds) when the simulation is running at maximum speed.
 Set to '-1' to disable updates during simulation, which will freeze the UI until the simulation is paused.`,
                 icon: 'clock'
-            },
-            {
-                key: 'cpuType',
-                label: 'CPU Type',
-                type: 'radio',
-                default: 'basic',
-                options: Object.entries(CPUS).map(([key, cpu]) => ({
-                    value: key,
-                    label: cpu.name,
-                    description: cpu.description,
-                })),
-                description: 'Choose the CPU type for the simulation.',
-                icon: 'cpu'
             },
             {
                 key: 'memorySize',
@@ -202,7 +188,7 @@ Set to '-1' to disable updates during simulation, which will freeze the UI until
 export const projectSettingsWindowConfig: SettingWindowConfig = {
     tabs: projectSettingTabs,
     settings: [],
-    setSetting: (key, value) => useProjectStore().setProjectSetting(key, value),
+    setSetting: (key, value) => useProjectStore(),
     title: 'Project Settings',
     icon: 'settings',
     description: 'Configure the settings for the project.',
