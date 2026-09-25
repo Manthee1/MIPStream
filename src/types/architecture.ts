@@ -1,61 +1,74 @@
-import { SerializedModule, HydratedModule, Vector2 } from "./manifest";
+import { ModuleManifest, PortDefinition, SerializedModule as BaseSerializedModule, Vector2 } from "./manifest";
 
 export type Axis = 'X' | 'Y';
 
 /**
- * Defines the target of a net segment.
- * It can either be an internal junction within the net or a module port.
+ * --- 1. SERIALIZED LAYER (Persistence) ---
  */
+
+export interface SerializedModule extends BaseSerializedModule {
+  // Inherits id, typeId, position, rotation, config
+}
+
 export type NetTarget = 
   | { type: 'junction'; index: number }
-  | { type: 'port'; module: string; port: string };
+  | { type: 'port'; moduleId: string; portId: string };
 
-/**
- * A segment representing a path to a target using alternating orthogonal coordinates.
- */
 export interface NetSegment {
   to: NetTarget;
   firstAxis: Axis;
-  /**
-   * Alternating coordinates. 
-   * If firstAxis is 'X', positions[0] is the new X, positions[1] is the new Y, etc.
-   */
   positions: number[];
 }
 
-/**
- * A branch segment starts from an existing junction within the same net.
- */
 export interface NetBranch extends NetSegment {
-  from: number; // Index into the parent net's junctions array
+  fromJunctionIndex: number; 
 }
 
-/**
- * A Net represents a single output driver branching to multiple sinks.
- * It strictly enforces 1-to-N connectivity and orthogonal routing.
- */
 export interface SerializedNet {
   id: string;
-  driver: { module: string; port: string };
-  junctions: [number, number][]; // 2D array of [x, y] coordinates
-  trunk: NetSegment;             // The initial segment from the driver
-  branches: NetBranch[];         // Subsequent segments branching from junctions
+  driver: { moduleId: string; portId: string };
+  junctions: [number, number][];
+  trunk: NetSegment;             
+  branches: NetBranch[];         
 }
 
-/**
- * The complete serializable state of a CPU architecture.
- */
 export interface ArchitectureConfig {
   modules: SerializedModule[];
   nets: SerializedNet[];
 }
 
 /**
- * The fully rehydrated state of an architecture.
- * Ready for the editor and simulation engine.
+ * --- 2. HYDRATED LAYER (Editor UI) ---
  */
+
+export interface HydratedModule extends SerializedModule {
+  manifest: ModuleManifest;
+  ports: PortDefinition[];
+  isValid: boolean;
+  errors: string[];
+}
+
 export interface HydratedArchitecture {
   modules: HydratedModule[];
-  nets: SerializedNet[]; // Keeping the serialized structure for now as it's the source of truth
+  nets: SerializedNet[]; 
+}
+
+/**
+ * --- 3. RUNTIME LAYER (Simulation Engine) ---
+ */
+
+export interface RuntimeModule {
+  id: string;
+  evaluate: (inputs: Uint32Array) => Uint32Array;
+  /** Indices into the Engine's global wire state Uint32Array */
+  inputIndices: number[];
+  outputIndices: number[];
+  clockEdge?: 'rising' | 'falling' | 'both';
+}
+
+export interface SimulationState {
+  wireValues: Uint32Array; 
+  cycleCount: number;
+  isRunning: boolean;
 }
 
