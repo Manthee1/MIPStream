@@ -1,14 +1,30 @@
-# MIPStream — Interactive CPU Diagram + Simulator
+# MIPStream
 
-MIPStream is evolving into an interactive CPU microarchitecture editor and cycle-accurate simulator focused on visual diagram editing (like Logisim) and advanced branch prediction support. The project provides:
+Digital logic schematic editor and computer architecture simulator.
 
-- A visual drag-and-drop datapath editor for composing ALUs, registers, MUXes, pipeline registers, and control logic.
-- A cycle-accurate simulation engine supporting forwarding, stalling, and both static and dynamic branch prediction modes.
-- Config-driven CPU descriptions (JSON) and example CPU configs under `config/examples/`.
-- A verification harness to compare traces and final state with golden references.
+## Functionality
+- Schematic capture with orthogonal routing.
+- Cycle-accurate simulation via dependency graph evaluation.
+- Custom ISA definition via PDL (Processor Description Language).
+- Dual-mode operation: Design (edit) and Simulate (runtime).
 
-See `docs/ROADMAP.md` for the new high-level plan and required codebase changes.
+## Stack
+- Framework: Vue 3, Pinia, Vue Router
+- UI/Layout: Radix Vue, Tailwind CSS v4, Golden Layout
+- Graphics: Konva (via vue-konva)
+- Persistence: JsStore (IndexedDB)
+- Editor: Monaco
 
-## License
+## Usage
+1. `npm install`
+2. `npm run dev`
 
-This project is licensed under the MIT License. See `LICENSE`.
+## Structure
+- src/core/engine: Simulation runtime logic.
+- src/editor: Schematic editor components and wiring.
+- src/simulator: Runtime diagnostic panels.
+- src/shared: Component manifests and unified types.
+- src/legacy: Archived MIPS-specific code.
+
+Documentation located in /docs.
+Agent context located in AGENTS.md.
