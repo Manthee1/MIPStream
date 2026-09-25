@@ -1,0 +1,122 @@
+
+.alert
+    padding: 1rem 2rem
+    border-radius: 0.5rem
+    margin: 1rem 0
+    color: var(--color-text)
+    border: 3px solid transparent
+    font-weight: 700
+    display: flex
+    gap: 1rem
+    align-items: center
+    ul
+        list-style: none
+
+    &-success
+        border-color: var(--color-system-success)
+        color: var(--color-system-success)
+
+    &-danger
+        border-color: var(--color-system-error)
+        color: var(--color-system-error)
+
+    &-warning
+        border-color: var(--color-system-warning)
+        color: var(--color-system-warning)
+
+    &-info
+        border-color: var(--color-system-info)
+        color: var(--color-system-info)
+
+    & ion-icon
+        font-size: 1.5rem
+
+// <div class="confirm-modal" style="display: none;">
+//     <div class="confirm-modal-content">
+//         <div class="confirm-modal-header">
+//             <h2>Confirm</h2>
+//             <ion-icon name="close-outline" class="close-icon"></ion-icon>
+//         </div>
+//         <div class="confirm-modal-body">
+//             <p>Are you sure you want to remove this item from the cart?</p>
+//         </div>
+//         <div class="confirm-modal-footer">
+//             <button class="button-outlined">No</button>
+//             <button class="button-filled">Yes</button>
+//         </div>
+//     </div>
+// </div>
+
+.form-section
+    display: flex
+    flex-flow: row wrap
+    justify-content: flex-start
+    align-content: flex-start
+    margin-top: 0.5rem
+    width: 100%
+    gap: 2rem
+    --gap: 4rem
+
+    input:not([type="checkbox"]):not([type="radio"]) .form-section select, textarea
+        display: flex
+        min-width: 50px
+
+    .form-section-title
+        margin: 0rem
+
+.input-wrapper
+    position: relative
+    display: flex
+    flex-flow: row wrap
+    justify-content: flex-start
+    align-content: center
+
+    >
+        input:not([type="checkbox"]):not([type="radio"]), select, textarea
+            flex: 1
+            width: 100%
+
+            + label
+                position: absolute
+                cursor: text
+                top: 1.5rem
+                left: 2rem
+                margin: auto
+                font-weight: 400
+                color: var(--color-subtext)
+                user-select: none
+                white-space: nowrap
+                text-overflow: ellipsis
+                overflow: hidden
+                width: calc(100% - 4rem)
+                transition: all 0.3s
+
+                > span
+                    color: var(--color-system-error)
+                    margin-left: 0.2rem
+
+            &:not(:placeholder-shown) + label
+                top: -1.3rem
+                left: 1rem
+                padding: 0.2rem 0.6rem
+                border-radius: 0.5rem
+                font-size: 1.2rem
+                width: 100%
+                overflow: visible
+        // If input is radio or checkbox
+        input[type="checkbox"], input[type="radio"]
+            flex: 0
+            margin: auto
+            width: auto
+            + label
+                margin: auto
+                margin-left: 0.3rem
+            &.hidden
+                visibility: hidden
+                margin: 0
+                padding: 0
+                width: 0
+                height: 0
+                position: absolute
+                min-width: 0
+                min-height: 0
