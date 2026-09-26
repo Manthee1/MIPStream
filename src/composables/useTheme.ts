@@ -9,17 +9,25 @@ function getSystemPreference(): Theme {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+// Dispatch custom event to notify other parts of the app about theme change
+function dispatchThemeChangeEvent(theme: Theme) {
+    const event = new CustomEvent('theme-change', { detail: { theme } })
+    window.dispatchEvent(event)
+}
+
 function applyTheme(theme: Theme) {
     const el = typeof document !== 'undefined' ? document.documentElement : null
     if (!el) return
     if (theme === 'dark') {
         el.classList.add('dark')
         el.setAttribute('data-theme', 'dark')
+        dispatchThemeChangeEvent('dark')
         return
     }
 
     el.classList.remove('dark')
     el.setAttribute('data-theme', 'light')
+    dispatchThemeChangeEvent('light')
 }
 
 export function useTheme() {

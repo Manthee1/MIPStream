@@ -1,3 +1,13 @@
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+/**
+ * Merges tailwind classes using clsx and tailwind-merge to handle conflicts.
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 /** @format */
 
 export function getStageName(stage: number): string {
@@ -24,3 +34,4 @@ export function wait(ms: number) {
 export function clone<T>(obj: T): T {
 	return JSON.parse(JSON.stringify(obj));
 }
+
