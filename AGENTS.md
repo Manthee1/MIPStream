@@ -57,6 +57,18 @@ Every hardware entity supports a multi-tiered documentation system:
 
 ---
 
+## 6. Code Style & Standards
+
+Agents must adhere to the rules defined in **[STYLE_GUIDE.md](./docs/architecture/STYLE_GUIDE.md)**:
+- Logic must be abstracted into composables.
+- Styling is strictly Tailwind CSS v4.
+- Complex UI must use Naive UI components.
+- Icons must use Tabler Icons (`@tabler/icons-vue`).
+- Simulation logic must remain pure TS (no Vue reactivity in the hot path).
+
+
+---
+
 ## 5. Directory Mapping
 
 - `src/core/engine/`: Headless logic and buffer management.
