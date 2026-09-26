@@ -1,10 +1,10 @@
 # Project MVP Roadmap (2026)
 
 ## Phase 0: Cleanup & Workspace Prep (Immediate)
-- [ ] **Structural Reorganization**: Move legacy MIPS-hardcoded logic to `src/legacy/`.
-- [ ] **Dependency Setup**: Install `konva`, `vue-konva`, and `golden-layout`.
+- [x] **Structural Reorganization**: Move legacy MIPS-hardcoded logic to `src/legacy/`.
+- [x] **Dependency Setup**: Install `konva`, `vue-konva`, and `golden-layout`.
 - [ ] **Unified Project Store**: Create `projectStore.ts` to manage the new `Project` container (Hardware + Software).
-- [ ] **Legacy CSS Purge**: Clean up `src/assets/sass/` and establish a CSS-variable-driven theme system.
+- [x] **Legacy CSS Purge**: Clean up `src/assets/sass/` and establish a CSS-variable-driven theme system.
 
 ## Phase 1: Core Simulation Engine & Type Unification
 - [ ] **Type Refactoring**: Finalize the Serialized, Hydrated, and Runtime type layers in `src/types/architecture.ts`.
