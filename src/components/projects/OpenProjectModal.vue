@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { NModal, NCard, NList, NListItem, NText, NButton, NSpace, useMessage, NIcon } from 'naive-ui';
+import { NModal, NCard, NList, NListItem, NText, NButton, NSpace, useMessage, NIcon, NThing } from 'naive-ui';
 import { getProjects } from '../../services/projectsService';
 import { Project } from '../../shared/types/project';
 import { useProjectStore } from '../../stores/projectStore';
@@ -68,11 +68,12 @@ watch(() => props.show, (newVal) => {
                 <IconFolder />
               </n-icon>
             </template>
-            <n-space vertical :size="2">
-              <n-text strong>{{ project.name }}</n-text>
-              <n-text depth="3" class="text-xs">{{ project.description || 'No description' }}</n-text>
-            </n-space>
-            <template #suffix>
+
+            <n-space justify="space-between" align="center">
+              <n-space vertical :size="2" class="flex-1">
+                <n-text strong>{{ project.name }}</n-text>
+                <n-text depth="3" class="text-xs">{{ project.description || 'No description' }}</n-text>
+              </n-space>
               <n-space align="center" :size="4">
                 <n-icon size="14" depth="3">
                   <IconClock />
@@ -81,10 +82,10 @@ watch(() => props.show, (newVal) => {
                   {{ new Date(project.updatedAt).toLocaleDateString() }}
                 </n-text>
               </n-space>
-            </template>
+            </n-space>
           </n-list-item>
         </n-list>
-        
+
         <div v-if="projects.length === 0 && !loading" class="py-12 text-center">
           <n-text depth="3">No projects found.</n-text>
         </div>

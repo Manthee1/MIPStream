@@ -1,24 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { IconArrowLeft, IconPlayerPlay, IconPlayerStop, IconPlayerSkipForward, IconSettings, IconDeviceFloppy, IconCpu } from '@tabler/icons-vue';
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { NLayout, NLayoutHeader, NLayoutContent, NSpace, NButton, NIcon, NText, useMessage } from 'naive-ui';
+import { NLayout, NLayoutContent, NText, useMessage } from 'naive-ui';
 import { useProjectStore } from '../stores/projectStore';
+import { useUIStore } from '../stores/UIStore';
 
 const router = useRouter();
 const message = useMessage();
 const projectStore = useProjectStore();
-const perspective = ref<'design' | 'simulate'>('design');
-
-const handleSave = async () => {
-  if (!projectStore.currentProject) return;
-  try {
-    await projectStore.saveProject();
-    message.success('Project saved');
-  } catch (err: any) {
-    message.error('Failed to save project: ' + err.message);
-  }
-};
+const uiStore = useUIStore();
 
 onMounted(() => {
   if (!projectStore.currentProject) {
@@ -29,67 +19,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <n-layout class="h-screen flex flex-col bg-surface-1">
-    <!-- Workspace Top Bar -->
-    <n-layout-header bordered class="h-14 flex items-center justify-between px-4 shrink-0 bg-white dark:bg-surface-0">
-      <n-space align="center" :size="16">
-        <n-button quaternary circle @click="router.push('/')">
-          <template #icon>
-            <n-icon><IconArrowLeft /></n-icon>
-          </template>
-        </n-button>
-        <div class="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
-        <n-text strong class="text-sm tracking-tight">
-          {{ projectStore.currentProject?.name || 'Untitled Project' }}
-        </n-text>
-      </n-space>
-
-      <div class="flex bg-slate-100 dark:bg-slate-900 p-1">
-        <button 
-          @click="perspective = 'design'"
-          :class="['px-4 py-1.5 text-xs font-bold transition-all', perspective === 'design' ? 'bg-white dark:bg-surface-2 shadow-sm shadow-slate-200 dark:shadow-black' : 'text-slate-500']"
-        >
-          Design
-        </button>
-        <button 
-          @click="perspective = 'simulate'"
-          :class="['px-4 py-1.5 text-xs font-bold transition-all', perspective === 'simulate' ? 'bg-white dark:bg-surface-2 shadow-sm shadow-slate-200 dark:shadow-black' : 'text-slate-500']"
-        >
-          Simulate
-        </button>
-      </div>
-
-      <n-space align="center" :size="8">
-        <n-space :size="4" v-if="perspective === 'simulate'">
-          <n-button quaternary circle type="success">
-            <template #icon><n-icon><IconPlayerPlay /></n-icon></template>
-          </n-button>
-          <n-button quaternary circle disabled>
-            <template #icon><n-icon><IconPlayerStop /></n-icon></template>
-          </n-button>
-          <n-button quaternary circle type="primary">
-            <template #icon><n-icon><IconPlayerSkipForward /></n-icon></template>
-          </n-button>
-        </n-space>
-        <n-button quaternary circle @click="handleSave">
-          <template #icon><n-icon><IconDeviceFloppy /></n-icon></template>
-        </n-button>
-        <n-button quaternary circle>
-          <template #icon><n-icon><IconSettings /></n-icon></template>
-        </n-button>
-      </n-space>
-    </n-layout-header>
-
-    <!-- Workspace Main Area -->
+  <n-layout class="h-full flex flex-col bg-surface-1">
     <n-layout-content class="flex-grow relative overflow-hidden bg-slate-50 dark:bg-slate-900/50">
-      <!-- Design Perspective Placeholder -->
-      <div v-if="perspective === 'design'" class="absolute inset-0 flex items-center justify-center">
+      <div v-if="uiStore.perspective === 'design'" class="absolute inset-0 flex items-center justify-center">
         <div class="text-center">
           <div class="text-slate-300 dark:text-slate-800 mb-4 flex justify-center">
              <div class="border-2 border-dashed border-current rounded-3xl p-12">
-               <n-icon size="64">
-                 <IconCpu />
-               </n-icon>
+               <img src="/logo.svg" class="w-16 h-16 opacity-20 grayscale" alt="Logo" />
              </div>
           </div>
           <n-text depth="3" class="text-lg font-bold">Architecture Canvas Placeholder</n-text>
@@ -97,8 +33,6 @@ onMounted(() => {
           <n-text depth="3" class="text-sm">Drag modules from the palette to start designing</n-text>
         </div>
       </div>
-
-      <!-- Simulate Perspective Placeholder -->
       <div v-else class="absolute inset-0 flex items-center justify-center">
          <n-text depth="3" class="text-lg font-bold">Simulation Perspective Placeholder</n-text>
       </div>

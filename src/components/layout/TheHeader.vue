@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { computed, h } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, 
-  NDivider, useMessage 
-} from 'naive-ui';
-import { 
-  IconCpu, IconPlus, IconFolderOpen,
-  IconDeviceFloppy, IconHistory, IconLogout, IconSettings,
-  IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconTool
-} from '@tabler/icons-vue';
+import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, useMessage, NButtonGroup } from 'naive-ui';
+import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconTool, IconPlayerStop, IconPlayerSkipForward } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
 import useTheme from '../../composables/useTheme';
@@ -21,6 +14,7 @@ const route = useRoute();
 const message = useMessage();
 const { isDark, toggleTheme } = useTheme();
 
+const hasProject = computed(() => !!projectStore.currentProject);
 const isWorkspace = computed(() => route.path === '/workspace');
 const currentProjectName = computed(() => projectStore.currentProject?.name || 'No Project');
 
@@ -50,7 +44,7 @@ const fileOptions = computed(() => [
     }))
   },
   { type: 'divider', key: 'd1' },
-  { label: 'Save Project', key: 'save', disabled: !projectStore.currentProject, icon: () => h(NIcon, null, { default: () => h(IconDeviceFloppy) }) },
+  { label: 'Save Project', key: 'save', disabled: !hasProject.value, icon: () => h(NIcon, null, { default: () => h(IconDeviceFloppy) }) },
   { type: 'divider', key: 'd2' },
   { label: 'Exit', key: 'exit', icon: () => h(NIcon, null, { default: () => h(IconLogout) }) }
 ]);
@@ -66,7 +60,7 @@ const editOptions = [
 
 const viewOptions = computed(() => [
   {
-    label: 'Perspective', key: 'perspective', icon: () => h(NIcon, null, { default: () => h(IconAdjustments) }),
+    label: 'Perspective', key: 'perspective', disabled: !hasProject.value, icon: () => h(NIcon, null, { default: () => h(IconAdjustments) }),
     children: [
       { label: 'Design', key: 'perspective-design', icon: () => h(NIcon, null, { default: () => h(IconTool) }), disabled: uiStore.perspective === 'design' },
       { label: 'Simulate', key: 'perspective-simulate', icon: () => h(NIcon, null, { default: () => h(IconPlayerPlay) }), disabled: uiStore.perspective === 'simulate' }
@@ -81,42 +75,113 @@ const helpOptions = [
   { label: 'Documentation', key: 'docs', props: { onClick: () => uiStore.openHelp() } },
   { label: 'About', key: 'about' }
 ];
+
+const handleSave = async () => {
+  if (!projectStore.currentProject) return;
+  try { await projectStore.saveProject(); message.success('Project saved'); }
+  catch (err: any) { message.error('Failed to save project: ' + err.message); }
+};
 </script>
 
+
 <template>
-  <n-layout-header bordered class="h-10 flex items-center px-2 select-none z-50">
-    <div class="flex items-center gap-2 mr-4 cursor-pointer" @click="router.push('/')">
-      <n-icon size="20" class="text-primary"><IconCpu /></n-icon>
-      <n-text strong class="text-sm tracking-tight">MIPStream</n-text>
+  <n-layout-header bordered class="h-10 grid grid-cols-[1fr_auto_1fr] items-center px-2 select-none z-50">
+    <!-- Left Section -->
+    <div class="flex items-center gap-2 min-w-0">
+      <div class="flex items-center gap-2 mr-2 shrink-0 cursor-pointer" @click="router.push('/')">
+        <img src="../../logo.svg" class="w-5 h-5" alt="Logo" />
+        <n-text strong class="text-sm tracking-tight">MIPStream</n-text>
+      </div>
+      <n-space :size="4" align="center" class="shrink-0">
+        <n-dropdown :options="fileOptions" @select="handleFileMenu" trigger="click" placement="bottom-start"><n-button
+            quaternary size="tiny" class="px-2">File</n-button></n-dropdown>
+        <n-dropdown :options="editOptions" trigger="click" placement="bottom-start"><n-button quaternary size="tiny"
+            class="px-2">Edit</n-button></n-dropdown>
+        <n-dropdown :options="viewOptions" @select="handleViewMenu" trigger="click" placement="bottom-start"><n-button
+            quaternary size="tiny" class="px-2">View</n-button></n-dropdown>
+        <n-dropdown :options="helpOptions" trigger="click" placement="bottom-start"><n-button quaternary size="tiny"
+            class="px-2">Help</n-button></n-dropdown>
+      </n-space>
     </div>
-    <n-space :size="4" align="center">
-      <n-dropdown :options="fileOptions" @select="handleFileMenu" trigger="click" placement="bottom-start">
-        <n-button quaternary size="tiny" class="px-2">File</n-button>
-      </n-dropdown>
-      <n-dropdown :options="editOptions" trigger="click" placement="bottom-start">
-        <n-button quaternary size="tiny" class="px-2">Edit</n-button>
-      </n-dropdown>
-      <n-dropdown :options="viewOptions" @select="handleViewMenu" trigger="click" placement="bottom-start">
-        <n-button quaternary size="tiny" class="px-2">View</n-button>
-      </n-dropdown>
-      <n-dropdown :options="helpOptions" trigger="click" placement="bottom-start">
-        <n-button quaternary size="tiny" class="px-2">Help</n-button>
-      </n-dropdown>
-    </n-space>
-    <div class="flex-grow flex justify-center pointer-events-none">
-      <n-text depth="3" class="text-xs font-medium">{{ currentProjectName }}{{ projectStore.projectSaved ? '' : '*' }}</n-text>
+
+    <!-- Center Section -->
+    <div class="flex justify-center min-w-0 px-4">
+      <n-text depth="3" class="text-xs font-medium truncate max-w-[40vw]">
+        {{ currentProjectName }}{{ projectStore.projectSaved ? '' : '*' }}
+      </n-text>
     </div>
-    <n-space :size="8" align="center" class="ml-auto">
-      <n-text v-if="isWorkspace" depth="3" class="text-[10px] uppercase tracking-widest font-bold">{{ uiStore.perspective }} mode</n-text>
-      <n-divider vertical />
-      <n-button quaternary size="tiny" @click="toggleTheme" class="px-1">
-        <n-icon size="16"><IconSun v-if="isDark" /><IconMoon v-else /></n-icon>
-      </n-button>
-    </n-space>
+
+    <!-- Right Section -->
+    <div class="flex items-center justify-end gap-2 min-w-0">
+      <n-space :size="8" align="center" class="shrink-0">
+
+
+
+        <!-- Workspace Specific Simulation Controls -->
+        <n-space :size="4" v-if="hasProject && isWorkspace && uiStore.perspective === 'simulate'">
+          <n-button quaternary circle size="tiny" type="success"><template #icon><n-icon>
+                <IconPlayerPlay />
+              </n-icon></template></n-button>
+          <n-button quaternary circle size="tiny" disabled><template #icon><n-icon>
+                <IconPlayerStop />
+              </n-icon></template></n-button>
+          <n-button quaternary circle size="tiny" type="primary"><template #icon><n-icon>
+                <IconPlayerSkipForward />
+              </n-icon></template></n-button>
+          <n-divider vertical />
+        </n-space>
+
+
+
+        <!-- Workspace Specific Perspective Switch -->
+        <n-button-group size="tiny" v-if="hasProject && isWorkspace">
+          <n-button :secondary="uiStore.perspective !== 'design'"
+            :type="uiStore.perspective === 'design' ? 'primary' : 'default'"
+            @click="uiStore.perspective = 'design'">Design</n-button>
+          <n-button :secondary="uiStore.perspective !== 'simulate'"
+            :type="uiStore.perspective === 'simulate' ? 'primary' : 'default'"
+            @click="uiStore.perspective = 'simulate'">Simulate</n-button>
+        </n-button-group>
+
+        <n-divider vertical v-if="hasProject && isWorkspace" />
+
+
+
+        <!-- Global Project Actions -->
+        <n-button quaternary size="tiny" @click="handleSave" v-if="hasProject && isWorkspace" title="Save Project">
+          <template #icon><n-icon>
+              <IconDeviceFloppy />
+            </n-icon></template>
+        </n-button>
+
+
+
+        <n-divider vertical />
+
+        <!-- Global Theme Toggle -->
+        <n-button quaternary size="tiny" @click="toggleTheme" class="px-1">
+          <n-icon size="16">
+            <IconSun v-if="isDark" />
+            <IconMoon v-else />
+          </n-icon>
+        </n-button>
+        <n-button quaternary size="tiny" @click="uiStore.openGeneralSettings" title="Settings">
+          <template #icon><n-icon>
+              <IconSettings />
+            </n-icon></template>
+        </n-button>
+      </n-space>
+    </div>
   </n-layout-header>
 </template>
 
 <style scoped>
-.n-layout-header { background-color: var(--bg-surface); }
-:deep(.n-button) { border-radius: 0; }
+.n-layout-header {
+  background-color: var(--bg-surface);
+}
+
+:deep(.n-button),
+:deep(.n-button-group .n-button) {
+  border-radius: 0;
+}
 </style>
