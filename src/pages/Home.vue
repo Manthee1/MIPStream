@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useProjectStore } from '../stores/projectStore';
+import { useUIStore } from '../stores/UIStore';
 import { useRouter } from 'vue-router';
 import { IconPlus, IconFolderOpen } from '@tabler/icons-vue';
 import { NLayout, NLayoutContent, NSpace, NCard, NText, NH1, NH2, NIcon, useMessage } from 'naive-ui';
-import CreateProjectModal from '../components/projects/CreateProjectModal.vue';
 import { Project } from '../shared/types/project';
 
 const projectStore = useProjectStore();
+const uiStore = useUIStore();
 const router = useRouter();
 const message = useMessage();
 
-const showCreateModal = ref(false);
-
 const createNewProject = () => {
-  showCreateModal.value = true;
+  uiStore.showCreateProjectModal = true;
 };
 
 const openProject = (project: Project) => {
@@ -24,7 +23,7 @@ const openProject = (project: Project) => {
 };
 
 const handleFileOpen = () => {
-  message.info('Open from file system coming soon. Use the list below for now.');
+  uiStore.showOpenProjectModal = true;
 };
 
 onMounted(() => {
@@ -33,7 +32,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <n-layout class="min-h-screen bg-surface-0">
+  <n-layout class="min-h-full bg-surface-0">
     <n-layout-content content-style="padding: 48px 24px;">
       <div class="max-w-4xl mx-auto">
         <header class="flex items-center justify-between mb-12">
@@ -103,8 +102,6 @@ onMounted(() => {
           </section>
         </main>
       </div>
-
-      <CreateProjectModal v-model:show="showCreateModal" />
     </n-layout-content>
   </n-layout>
 </template>
@@ -115,3 +112,4 @@ onMounted(() => {
   margin-top: 0;
 }
 </style>
+

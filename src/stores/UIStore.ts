@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
 import { useRouter } from 'vue-router';
-import { useNotification } from '@kyvg/vue3-notification';
 import { DockviewApi, GroupviewPanelState, IDockviewPanel } from 'dockview-vue';
-import { panelsConfig } from '../config/layout';
 import { useProjectStore } from './projectStore';
 import { defaultProjectSettings } from '../services/projectsService';
 import { projectSettingsWindowConfig } from '../config/settings/project-settings';
@@ -25,6 +23,9 @@ export const useUIStore = defineStore('ui', {
         showProjectSettings: false,
         showSettings: false,
         showHelp: false,
+        showCreateProjectModal: false,
+        showOpenProjectModal: false,
+        perspective: 'design' as 'design' | 'simulate',
         settingsWindowConfig: {} as SettingWindowConfig,
         theme: theme,
         modalData: {} as ModalData,
@@ -152,24 +153,7 @@ export const useUIStore = defineStore('ui', {
 
         },
 
-        togglePanel(panelId: string) {
-            const panelConfig = panelsConfig[panelId];
-            if (!panelConfig) return;
-            console.log('Toggle Panel', panelConfig, this.dockviewApi);
 
-            const panelState = this.dockviewApi.getPanel(panelId);
-            console.log('Panel State', panelState);
-            if (!panelState) return;
-            // panelState.api.set
-            // if (panelState.api.isVisible) {
-            //     panelState.api.maximize();
-            //     setTimeout(() => {
-            //         panelState.api.exitMaximized();
-            //     }, 10);
-
-            // }
-
-        },
 
         setTopBar(title: string, dropdownItems: DropdownItem[]) {
 

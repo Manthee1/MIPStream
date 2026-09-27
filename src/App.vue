@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { darkTheme, NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, NThemeEditor, NButton, NGlobalStyle } from 'naive-ui'
-import { computed, ref } from 'vue'
-import ThemeToggler from './components/ThemeToggler.vue'
+import { darkTheme, NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, NGlobalStyle, NLayout } from 'naive-ui'
+import { ref } from 'vue'
 import useTheme from './composables/useTheme.ts'
+import TheHeader from './components/layout/TheHeader.vue'
+import CreateProjectModal from './components/projects/CreateProjectModal.vue'
+import OpenProjectModal from './components/projects/OpenProjectModal.vue'
+import { useUIStore } from './stores/UIStore'
 
 const { isDark } = useTheme()
+const uiStore = useUIStore()
 
 const theme = ref(isDark ? darkTheme : null)
-
 
 const lightThemeOverrides = {
   common: {
@@ -49,28 +52,29 @@ const darkThemeOverrides = {
 const themeOverrides = ref(isDark ? darkThemeOverrides : lightThemeOverrides)
 
 window.addEventListener('theme-change', (event: any) => {
-  console.log('Theme changed to:', event.detail.theme)
-
   theme.value = event.detail.theme === 'dark' ? darkTheme : null
   themeOverrides.value = event.detail.theme === 'dark' ? darkThemeOverrides : lightThemeOverrides
 })
-
-
 </script>
 
 <template>
   <NConfigProvider :theme="theme" :theme-overrides="themeOverrides" inline-theme-disabled>
+    <NGlobalStyle />
     <NMessageProvider>
       <NNotificationProvider>
         <NDialogProvider>
-          <NThemeEditor />
-          <!-- <NButton @click="theme = !isDark ? darkTheme : null">Toggle Theme</NButton> -->
-          <main class="min-h-screen font-sans antialiased">
-            <ThemeToggler />
-            <router-view />
-          </main>
+          <NLayout class="h-screen flex flex-col overflow-hidden">
+            <TheHeader />
+            <main class="flex-grow overflow-auto relative">
+              <router-view />
+            </main>
+          </NLayout>
+
+          <CreateProjectModal v-model:show="uiStore.showCreateProjectModal" />
+          <OpenProjectModal v-model:show="uiStore.showOpenProjectModal" />
         </NDialogProvider>
       </NNotificationProvider>
     </NMessageProvider>
   </NConfigProvider>
 </template>
+
