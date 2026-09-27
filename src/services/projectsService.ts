@@ -35,7 +35,7 @@ export const existsProject = async (id: number) => {
     return count > 0;
 };
 
-export const getProjects = (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'desc' }, where: IWhereQuery = {}) => {
+export const getProjects = (limit = 10, order: IOrderQuery = { by: 'updatedAt', type: 'desc' }, where?: IWhereQuery) => {
     return projectRepo.getAll({ limit, order, where });
 };
 
@@ -54,16 +54,16 @@ export const insertProject = async (project: Partial<Project> & { name: string }
 
     const newProject = { ...defaultProject, ...project } as Project;
     delete (newProject as any).id;
-    
+
     const results = await projectRepo.insert(newProject);
     return results[0];
 };
 
 export const updateProject = async (project: Project) => {
     if (!project.id) throw new Error('Project id is required');
-    
+
     project.updatedAt = new Date();
-    
+
     await projectRepo.update(project.id, project);
 };
 

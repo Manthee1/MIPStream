@@ -5,7 +5,7 @@ import db from "./database";
  * A generic repository for common IndexedDB operations via JsStore.
  */
 export class BaseRepository<T> {
-  constructor(protected tableName: string) {}
+  constructor(protected tableName: string) { }
 
   async getAll(query: { limit?: number, order?: IOrderQuery, where?: IWhereQuery } = {}): Promise<T[]> {
     return await db.select({

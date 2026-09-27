@@ -9,7 +9,7 @@ export const useProjectStore = defineStore('project', {
         projectSaved: true,
         recentProjects: [] as Project[],
     }),
-    
+
     actions: {
         setCurrentProject(project: Project) {
             this.currentProject = project;

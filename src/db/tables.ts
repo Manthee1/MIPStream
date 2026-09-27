@@ -42,13 +42,3 @@ export const projectTableConfig: ITable = {
     },
 }
 
-export const instructionTableConfig: ITable = {
-    name: 'instructions',
-    columns: {
-        id: {
-            dataType: 'number',
-            primaryKey: true,
-            autoIncrement: true,
-        },
-    }
-}
