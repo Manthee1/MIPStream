@@ -9,9 +9,8 @@ connection.addPlugin(workerInjector);
 const database: IDataBase = {
     name: 'mipstream',
     tables: [projectTableConfig, instructionTableConfig],
-    version: 2
+    version: 3
 }
-let isDbCreated = false;
 
 connection.initDb(database);
 

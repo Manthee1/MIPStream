@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { Project } from '../shared/types/project';
 import { updateProject, getProjects } from '../services/projectsService';
-import { notify } from '../utils/projectActions';
 import { toRaw } from 'vue';
 
 export const useProjectStore = defineStore('project', {
@@ -24,9 +23,9 @@ export const useProjectStore = defineStore('project', {
                 this.currentProject.updatedAt = new Date();
                 await updateProject(toRaw(this.currentProject) as any);
                 this.projectSaved = true;
-                notify('success', 'Project Saved', 'The project has been saved successfully');
             } catch (error: any) {
-                notify('error', 'Error', error.message);
+                console.error('Failed to save project:', error);
+                throw error;
             }
         },
 
@@ -41,3 +40,4 @@ export const useProjectStore = defineStore('project', {
         }
     }
 });
+

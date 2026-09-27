@@ -45,6 +45,7 @@ export function hydrateModule(instance: SerializedModule): HydratedModule {
 
   return {
     ...instance,
+    manifest,
     config, // Resolved config
     ports,
     evaluators

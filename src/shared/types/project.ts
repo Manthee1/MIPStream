@@ -1,21 +1,9 @@
-import { ArchitectureConfig } from "../shared/types/architecture";
+import { ArchitectureConfig } from "./architecture";
 
-/**
- * PDL (Processor Description Language) - Defines instruction formats and machine layout.
- */
-export interface ISADefinition {
-    format_name: string;
-    total_bits: number;
-    fields: {
-        name: string;
-        bits: number;
-        type: 'constant' | 'register' | 'immediate' | 'address';
-    }[];
-    instructions: {
-        mnemonic: string;
-        field_values: Record<string, number>;
-        operands: string[];
-    }[];
+export interface ProjectEditor {
+    id: string;
+    name: string;
+    sourceCode: string;
 }
 
 /**
@@ -30,15 +18,9 @@ export interface Project {
     // Hardware Blueprint
     architecture: ArchitectureConfig;
     
-    // Software & ISA
+    // Software
     software: {
-        isa: ISADefinition;
-        sourceCode: string;
-        // Mapping of which code segment goes to which memory module ID
-        mappings: {
-            memoryModuleId: string;
-            startAddress: number;
-        }[];
+        editors: ProjectEditor[];
     };
     
     // Meta

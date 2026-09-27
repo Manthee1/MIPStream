@@ -23,6 +23,8 @@ const lightThemeOverrides = {
     borderColor: '#e2e8f0',
     borderColorHover: '#cbd5e1',
     borderColorPressed: '#94a3b8',
+    borderRadius: '0px',
+    borderRadiusSmall: '0px',
   },
 }
 
@@ -40,6 +42,8 @@ const darkThemeOverrides = {
     borderColor: '#334155',
     borderColorHover: '#475569',
     borderColorPressed: '#64748b',
+    borderRadius: '0px',
+    borderRadiusSmall: '0px',
   },
 }
 const themeOverrides = ref(isDark ? darkThemeOverrides : lightThemeOverrides)

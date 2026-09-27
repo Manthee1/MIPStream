@@ -8,7 +8,12 @@
 
 ## 2. UI & Component Strategy
 
-- **Naive UI First**: Prefer [Naive UI](https://www.naiveui.com/) components for all UI elements (Buttons, Dropdowns, Dialogs, Tooltips, etc.) to ensure a consistent, professional design system.
+- **Jagged Aesthetic**: The application follows a sharp, rectangular aesthetic. **Avoid rounding (`border-radius`) on all UI elements.**
+    - Tailwind: Use `rounded-none` or simply avoid `rounded-*` classes.
+    - Naive UI: Ensure `borderRadius` in the theme configuration is set to `0px`.
+    - Exceptions: Only use rounding for elements where it is functionally required (e.g., specific circular ports or icons that must be round for clarity), but default to sharp edges for all containers, buttons, cards, and inputs.
+- **Naive UI Component Preference**: Use Naive UI components for layout and structure (e.g., `NGrid`, `NSpace`, `NLayout`) rather than raw Tailwind grid/flex classes whenever possible.
+- **Minimal Style Overrides**: Avoid manually overriding Naive UI component colors or internal styles with Tailwind classes. The components are already configured to follow the system's "Jagged" theme and handle dark/light mode transitions automatically. Use Tailwind strictly for high-level positioning, margin, and padding adjustments.
 - **Tabler Icons**: All iconography must use [Tabler Icons](https://tabler-icons.io/vue) (`@tabler/icons-vue`).
 - **Component Granularity**: Break large UI trees into smaller, single-responsibility components. If a template exceeds ~200 lines, it is a candidate for decomposition.
 - **Tailwind Utility-First**: Use Tailwind CSS v4 utility classes exclusively for custom layout, spacing, and minor stylistic tweaks. Writing raw `<style>` blocks or plain CSS is strictly forbidden unless required by third-party canvas library overrides (Konva).

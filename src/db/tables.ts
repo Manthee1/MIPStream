@@ -12,34 +12,24 @@ export const projectTableConfig: ITable = {
             dataType: 'string',
             notNull: true,
         },
-        code: {
+        description: {
             dataType: 'string',
             notNull: true,
             default: '',
         },
+        software: {
+            dataType: 'object',
+            notNull: true,
+            default: { editors: [] },
+        },
         architecture: {
             dataType: 'object',
             notNull: true,
-            default: { modules: [], nets: [] },
-        },
-        layoutGridConfig: {
-            dataType: 'object',
-            notNull: true,
-            default: {},
-        },
-        size: {
-            dataType: 'number',
-            notNull: true,
-            default: 0,
         },
         settings: {
             dataType: 'object',
             notNull: true,
             default: {},
-        },
-        savedAt: {
-            dataType: 'date_time',
-            notNull: true,
         },
         createdAt: {
             dataType: 'date_time',
@@ -60,6 +50,5 @@ export const instructionTableConfig: ITable = {
             primaryKey: true,
             autoIncrement: true,
         },
-        // ... assuming other columns exist or will be added
     }
 }

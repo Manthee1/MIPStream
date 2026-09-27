@@ -90,10 +90,16 @@ export interface SerializedModule {
   config: Record<string, any>; // User-defined overrides
 }
 
+import { ModuleEvaluators, ModuleManifest, PortDefinition, SerializedModule } from "./manifest";
+
 /**
  * A fully rehydrated module instance ready for simulation and rendering.
  */
 export interface HydratedModule extends SerializedModule {
+  manifest: ModuleManifest;
   ports: PortDefinition[];
   evaluators: ModuleEvaluators;
+  /** Editor-only metadata */
+  isValid?: boolean;
+  errors?: string[];
 }

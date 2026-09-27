@@ -1,5 +1,5 @@
-import { ArchitectureConfig, SerializedNet } from "./types/architecture";
-import { HydratedModule, SerializedModule } from "./types/manifest";
+import { ArchitectureConfig, ArchitectureConfiguration, SerializedNet } from "./types/architecture";
+import { HydratedModule } from "./types/manifest";
 import { hydrateModule } from "./manifestRegistry";
 
 /**
@@ -7,10 +7,15 @@ import { hydrateModule } from "./manifestRegistry";
  * Strips runtime-only data like evaluation functions.
  */
 export function serializeArchitecture(
+  name: string,
+  description: string,
   modules: HydratedModule[],
-  nets: SerializedNet[]
+  nets: SerializedNet[],
+  configuration: ArchitectureConfiguration
 ): ArchitectureConfig {
   return {
+    name,
+    description,
     modules: modules.map(m => ({
       id: m.id,
       typeId: m.typeId,
@@ -19,6 +24,7 @@ export function serializeArchitecture(
       config: m.config,
     })),
     nets: JSON.parse(JSON.stringify(nets)), // Ensure deep copy of the net tree
+    configuration: JSON.parse(JSON.stringify(configuration)),
   };
 }
 

@@ -24,7 +24,6 @@ const { isDark, toggleTheme } = useTheme()
     width: 2.5rem;
     height: 2.5rem;
     border: 0;
-    border-radius: 9999px;
     background: transparent;
     color: currentColor;
     cursor: pointer;
