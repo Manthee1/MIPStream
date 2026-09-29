@@ -13,6 +13,8 @@
 - [ ] **Clock Cycle Controller**: Implementation of the 2-phase (Rising/Falling) clock logic.
 
 ## Phase 2: Architecture Editor (Design Perspective)
+> See [Detailed Implementation Plan](../architecture/SCHEMATIC_DESIGNER_PLAN.md) for the Designer Class and Workflow.
+
 - [ ] **Konva Canvas**: Basic stage with infinite pan/zoom in `src/editor/`.
 - [ ] **Module Components**: Rendering modules with dynamic ports.
 - [ ] **Orthogonal Wiring**: Implementation of the trunk/branch wiring system with junction support.

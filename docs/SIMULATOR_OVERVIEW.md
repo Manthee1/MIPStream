@@ -65,9 +65,9 @@ The Architecture Editor View provides a graphical environment for constructing a
 
 ### Structural Editing & Interaction
 
-* **Module Library:** A left-hand sidebar containing draggable hardware components and functional modules (ALUs, Registers, Control Units, Multiplexers, Memory Blocks).
+* **Module Library:** A left-hand sidebar containing hardware modules and functional modules (ALUs, Registers, Control Units, Multiplexers, Memory Blocks).
 * **Toolbar & Shortcuts:** A contextual editing toolbar equipped with keyboard shortcuts for common actions (selection, deletion, grouping, rotation, routing).
-* **Multi-Selection & Grouping:** Capability to select multiple components, drag them as a group, and re-arrange schematic layouts cleanly.
+* **Multi-Selection & Grouping:** Capability to select multiple modules, drag them as a group, and re-arrange schematic layouts cleanly.
 
 ### Netlist & Wire Routing
 

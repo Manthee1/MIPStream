@@ -13,7 +13,10 @@
     - Naive UI: Ensure `borderRadius` in the theme configuration is set to `0px`.
     - Exceptions: Only use rounding for elements where it is functionally required (e.g., specific circular ports or icons that must be round for clarity), but default to sharp edges for all containers, buttons, cards, and inputs.
 - **Naive UI Component Preference**: Use Naive UI components for layout and structure (e.g., `NGrid`, `NSpace`, `NLayout`) rather than raw Tailwind grid/flex classes whenever possible.
-- **Minimal Style Overrides**: Avoid manually overriding Naive UI component colors or internal styles with Tailwind classes. The components are already configured to follow the system's "Jagged" theme and handle dark/light mode transitions automatically. Use Tailwind strictly for high-level positioning, margin, and padding adjustments.
+- **Minimal Style Overrides**: Avoid manually changing element colors, especially Naive UI component colors or internal styles with Tailwind classes. The components are already configured to follow the system's "Jagged" theme and handle dark/light mode transitions automatically. Use Tailwind strictly for high-level positioning, margin, and padding adjustments.
+- **Color styling guide**: If a `div` or other native element that has no color styling, you are allowed to add specific background and text colors as long as you:
+    - Use preconfigured tailwind global color styles, no hardcoding color values into the class.
+    - Make sure to first include the light theme colors and then dark theme colors using `dark:` tailwind prefix
 - **Tabler Icons**: All iconography must use [Tabler Icons](https://tabler-icons.io/vue) (`@tabler/icons-vue`).
 - **Component Granularity**: Break large UI trees into smaller, single-responsibility components. If a template exceeds ~200 lines, it is a candidate for decomposition.
 - **Tailwind Utility-First**: Use Tailwind CSS v4 utility classes exclusively for custom layout, spacing, and minor stylistic tweaks. Writing raw `<style>` blocks or plain CSS is strictly forbidden unless required by third-party canvas library overrides (Konva).

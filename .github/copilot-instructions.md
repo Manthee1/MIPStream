@@ -11,7 +11,7 @@ High-level goals (what the agent must enable the project to achieve)
 
 - Load CPU configurations from JSON describing modular components (ALU, registers, MUX, pipeline registers, hazard units, predictors).
 - Provide a cycle-accurate simulation engine supporting forwarding, stalling, full hazard detection, and static/dynamic branch prediction.
-- Offer a visual drag-and-drop editor to assemble datapath components and map control signals.
+- Offer a visual editor to assemble datapath components and map control signals.
 - Produce execution traces and metrics: cycles, CPI, stalls, branch miss rate, and other per-run diagnostics.
 - Provide verification/testing harness to compare outputs against reference simulators or golden traces.
 
