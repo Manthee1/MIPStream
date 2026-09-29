@@ -1,4 +1,7 @@
-import { ModuleManifest, PortDefinition, ModuleEvaluators } from "../types/manifest";
+import { ModuleManifest, ModuleEvaluators } from "../../types/manifest";
+import description from "./description.md?raw";
+import icon from "./icon.svg?raw";
+import Panel from "./Panel.vue";
 
 export interface ExtenderConfig {
   inputBits: number;
@@ -8,11 +11,43 @@ export interface ExtenderConfig {
 
 export const ExtenderManifest: ModuleManifest<ExtenderConfig> = {
   typeId: "std.extender",
+  label: "Bit Extender",
+  description,
+  icon,
+  panel: Panel,
+  category: "logic",
+
   defaultConfig: {
     inputBits: 16,
     outputBits: 32,
     isSigned: true,
   },
+
+  configSchema: [
+    {
+      key: "inputBits",
+      label: "Input Bits",
+      type: "number",
+      min: 1,
+      max: 32,
+      default: 16
+    },
+    {
+      key: "outputBits",
+      label: "Output Bits",
+      type: "number",
+      min: 1,
+      max: 32,
+      default: 32
+    },
+    {
+      key: "isSigned",
+      label: "Sign Extend",
+      type: "boolean",
+      default: true,
+      tooltip: "If true, performs sign extension. If false, performs zero extension."
+    }
+  ],
 
   generatePorts: (config) => [
     { id: "in", direction: "input", bits: config.inputBits, label: "In", position: { x: -40, y: 0 } },

@@ -1,8 +1,8 @@
-import { 
-  ModuleManifest, 
-  SerializedModule, 
-  HydratedModule, 
-  PortDefinition 
+import {
+  ModuleManifest,
+  SerializedModule,
+  HydratedModule,
+  PortDefinition
 } from "./types/manifest";
 
 const manifestRegistry = new Map<string, ModuleManifest>();
@@ -15,12 +15,30 @@ export function registerManifest(manifest: ModuleManifest) {
 }
 
 /**
+ * Retrieves a module manifest by its typeId.
+ * @param typeId The unique identifier of the module type.
+ * @returns The corresponding ModuleManifest or undefined if not found.
+ */
+export function getManifest(typeId: string): ModuleManifest | undefined {
+  return manifestRegistry.get(typeId);
+}
+
+
+/**
+ * Retrieves all registered module manifests.
+ * @returns An array of all ModuleManifest objects in the registry.
+ */
+export function getAllManifests(): ModuleManifest[] {
+  return Array.from(manifestRegistry.values());
+}
+
+/**
  * Resolves a serialized module instance against its manifest.
  * Rehydrates ports and evaluation functions on demand.
  */
 export function hydrateModule(instance: SerializedModule): HydratedModule {
   const manifest = manifestRegistry.get(instance.typeId);
-  
+
   if (!manifest) {
     throw new Error(`Manifest not found for typeId: ${instance.typeId}`);
   }

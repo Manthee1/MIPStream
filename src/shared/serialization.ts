@@ -17,7 +17,7 @@ export function serializeArchitecture(
     name,
     description,
     modules: modules.map(m => ({
-      id: m.id,
+      id: m.designator,
       typeId: m.typeId,
       position: m.position,
       rotation: m.rotation,

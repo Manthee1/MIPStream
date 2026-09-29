@@ -1,4 +1,7 @@
-import { ModuleManifest, PortDefinition, ModuleEvaluators } from "../types/manifest";
+import { ModuleManifest, ModuleEvaluators } from "../../types/manifest";
+import description from "./description.md?raw";
+import icon from "./icon.svg?raw";
+import Panel from "./Panel.vue";
 
 export type LogicOp = "and" | "or" | "xor" | "nor";
 
@@ -9,10 +12,34 @@ export interface LogicGateConfig {
 
 export const LogicGateManifest: ModuleManifest<LogicGateConfig> = {
   typeId: "std.logic",
+  label: "Logic Gate",
+  description,
+  icon,
+  panel: Panel,
+  category: "logic",
+
   defaultConfig: {
     bitWidth: 32,
     op: "and",
   },
+
+  configSchema: [
+    {
+      key: "bitWidth",
+      label: "Bit Width",
+      type: "number",
+      min: 1,
+      max: 32,
+      default: 32
+    },
+    {
+      key: "op",
+      label: "Operation",
+      type: "select",
+      options: ["and", "or", "xor", "nor"],
+      default: "and"
+    }
+  ],
 
   generatePorts: (config) => [
     { id: "a", direction: "input", bits: config.bitWidth, label: "A", position: { x: -40, y: -10 } },
@@ -30,10 +57,10 @@ export const LogicGateManifest: ModuleManifest<LogicGateConfig> = {
         const outputs = new Uint32Array(1);
 
         switch (config.op) {
-          case "and": outputs[0] = a & b; break;
-          case "or":  outputs[0] = a | b; break;
-          case "xor": outputs[0] = a ^ b; break;
-          case "nor": outputs[0] = ~(a | b); break;
+          case "and": outputs[0] = (a & b) >>> 0; break;
+          case "or":  outputs[0] = (a | b) >>> 0; break;
+          case "xor": outputs[0] = (a ^ b) >>> 0; break;
+          case "nor": outputs[0] = (~(a | b)) >>> 0; break;
         }
 
         return outputs;

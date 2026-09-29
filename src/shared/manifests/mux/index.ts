@@ -1,4 +1,7 @@
-import { ModuleManifest, PortDefinition, ModuleEvaluators } from "../types/manifest";
+import { ModuleManifest, PortDefinition, ModuleEvaluators } from "../../types/manifest";
+import description from "./description.md?raw";
+import icon from "./icon.svg?raw";
+import Panel from "./Panel.vue";
 
 export interface MuxConfig {
   bitWidth: number;
@@ -7,16 +10,39 @@ export interface MuxConfig {
 
 export const MuxManifest: ModuleManifest<MuxConfig> = {
   typeId: "std.mux",
+  label: "Multiplexer",
+  description,
+  icon,
+  panel: Panel,
+  category: "logic",
+
   defaultConfig: {
     bitWidth: 32,
     numInputs: 2,
   },
+
+  configSchema: [
+    {
+      key: "bitWidth",
+      label: "Bit Width",
+      type: "number",
+      min: 1,
+      max: 32,
+      default: 32
+    },
+    {
+      key: "numInputs",
+      label: "Number of Inputs",
+      type: "number",
+      min: 2,
+      max: 32,
+      default: 2
+    }
+  ],
   
   generatePorts: (config) => {
     const ports: PortDefinition[] = [];
     
-    // Dynamically generate input ports based on config
-    // Assuming inputs on the left (-40, offset)
     for (let i = 0; i < config.numInputs; i++) {
       ports.push({
         id: `in${i}`,
@@ -28,7 +54,6 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
       });
     }
     
-    // Select line on the bottom
     const selBits = Math.ceil(Math.log2(config.numInputs)) || 1;
     ports.push({
       id: "sel",
@@ -39,7 +64,6 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
       position: { x: 0, y: 40 }
     });
     
-    // Output port on the right
     ports.push({
       id: "out",
       direction: "output",

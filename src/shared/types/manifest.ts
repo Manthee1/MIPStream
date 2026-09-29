@@ -1,8 +1,12 @@
 /** @format */
 
+import type { Component } from "vue";
+
 export type PortDirection = "input" | "output";
 
-export interface Vector2 {
+export type ModuleCategory = "logic" | "memory" | "iO" | "custom";
+
+export interface Pos {
   x: number;
   y: number;
 }
@@ -20,7 +24,7 @@ export interface PortDefinition {
    * Relative position of the port on the component body.
    * (0,0) is the module center/origin.
    */
-  position?: Vector2;
+  position?: Pos;
 }
 
 /**
@@ -61,18 +65,45 @@ export interface ModuleEvaluators {
   clockEdge?: ClockEdge;
 }
 
+
+export interface ModulePropertySchema {
+  key: string; // Config property key
+  label: string; // Human-readable label for UI
+  type: "number" | "string" | "boolean" | "select"; // Data type
+  default?: any; // Default value if not provided
+  options?: any[]; // For 'select' type, the list of valid options
+  min?: number; // For 'number' type, minimum value
+  max?: number; // For 'number' type, maximum value
+  step?: number; // For 'number' type, step increment
+  tooltip?: string; // Optional tooltip for UI guidance
+}
+
 /**
  * The static definition of a logic component type.
  */
 export interface ModuleManifest<TConfig = any> {
   typeId: string;      // Unique identifier (e.g., "std.mux", "std.alu")
+  label: string;       // Human-readable name (e.g., "Multiplexer")
+  description: string; // Markdown content (imported from .md)
+  icon: string;        // SVG content (imported from .svg)
+  category: ModuleCategory;   // Optional grouping (e.g., "Logic", "Memory")
+
+  /**
+   * Optional panel component for the simulator view.
+   * This component will be rendered when the module is inspected during simulation.
+   */
+  panel?: Component;
+
   defaultConfig: TConfig;
-  
+
+  configSchema?: ModulePropertySchema[]; // Optional schema for UI config editors
+
+
   /**
    * Generates port definitions based on a specific configuration.
    */
   generatePorts: (config: TConfig) => PortDefinition[];
-  
+
   /**
    * Factory for simulation evaluation functions.
    */
@@ -83,14 +114,13 @@ export interface ModuleManifest<TConfig = any> {
  * Data-only representation of a module instance, suitable for JSON serialization.
  */
 export interface SerializedModule {
-  id: string;          // Unique instance ID (e.g., "u1")
+  designator: string;          // Unique instance ID (e.g., "u1")
   typeId: string;      // Reference to the manifest
-  position: Vector2;
+  position: Pos;
   rotation: number;
   config: Record<string, any>; // User-defined overrides
 }
 
-import { ModuleEvaluators, ModuleManifest, PortDefinition, SerializedModule } from "./manifest";
 
 /**
  * A fully rehydrated module instance ready for simulation and rendering.

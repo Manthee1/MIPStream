@@ -1,9 +1,11 @@
 import { registerManifest } from "./manifestRegistry";
-import { MuxManifest } from "./manifests/mux";
-import { AdderManifest } from "./manifests/adder";
-import { ShifterManifest } from "./manifests/shifter";
-import { ExtenderManifest } from "./manifests/extender";
-import { LogicGateManifest } from "./manifests/logic";
+import {
+  MuxManifest,
+  AdderManifest,
+  ShifterManifest,
+  ExtenderManifest,
+  LogicGateManifest,
+} from "./manifests";
 
 /**
  * Initializes the manifest registry with all standard components.
