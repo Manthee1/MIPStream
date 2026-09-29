@@ -1,22 +1,11 @@
 import { defineStore } from 'pinia'
 import { settings } from '../storage/settingsStorage';
 import { useRouter } from 'vue-router';
-import { DockviewApi, GroupviewPanelState, IDockviewPanel } from 'dockview-vue';
 import { useProjectStore } from './projectStore';
 import { defaultProjectSettings } from '../services/projectsService';
 import { projectSettingsWindowConfig } from '../config/settings/project-settings';
 import { generalSettingsConfig } from '../config/settings/general-settings';
-
-
-const theme = settings.theme;
-
-// Add the theme to the html element
-document.documentElement.classList.add(`theme-${theme}`);
-
-const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-if (themeColorMeta)
-    themeColorMeta.setAttribute('content', theme === 'dark' ? '#141517' : '#ffffff');
-
+import useTheme from '@/composables/useTheme';
 
 export const useUIStore = defineStore('ui', {
     state: () => ({
@@ -27,14 +16,13 @@ export const useUIStore = defineStore('ui', {
         showOpenProjectModal: false,
         perspective: 'design' as 'design' | 'simulate',
         settingsWindowConfig: {} as SettingWindowConfig,
-        theme: theme,
+        theme: useTheme().theme,
         modalData: {} as ModalData,
         dropdownData: { id: '', show: false, items: [] as DropdownItem[], compact: false, y: 0, x: 0 },
         topBar: {
             title: '',
             dropdownItems: [] as DropdownItem[]
         },
-        dockviewApi: {} as DockviewApi,
     }),
     getters: {
 

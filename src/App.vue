@@ -2,7 +2,7 @@
 import { darkTheme, NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, NGlobalStyle, NLayout } from 'naive-ui'
 import { ref } from 'vue'
 import useTheme from './composables/useTheme.ts'
-import TheHeader from './components/layout/TheHeader.vue'
+import TopBar from './components/layout/TopBar.vue'
 import CreateProjectModal from './components/projects/CreateProjectModal.vue'
 import OpenProjectModal from './components/projects/OpenProjectModal.vue'
 import { useUIStore } from './stores/UIStore'
@@ -64,8 +64,8 @@ window.addEventListener('theme-change', (event: any) => {
       <NNotificationProvider>
         <NDialogProvider>
           <NLayout class="h-screen flex flex-col overflow-hidden">
-            <TheHeader />
-            <main class="flex-grow overflow-auto relative">
+            <TopBar />
+            <main class="flex-grow overflow-auto relative h-[calc(100%-2.5rem)]">
               <router-view />
             </main>
           </NLayout>
@@ -77,4 +77,3 @@ window.addEventListener('theme-change', (event: any) => {
     </NMessageProvider>
   </NConfigProvider>
 </template>
-

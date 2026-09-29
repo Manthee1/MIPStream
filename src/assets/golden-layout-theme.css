@@ -1,0 +1,93 @@
+/* Golden Layout Theme Integration - Jagged Style */
+
+/* Base container */
+.lm_root {
+    background: var(--bg-app);
+}
+
+.lm_content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+}
+
+/* Header & Tabs */
+.lm_header {
+    background: var(--bg-element);
+    height: 40px !important;
+    padding: 0 !important;
+}
+
+.lm_tabs {
+    height: 40px !important;
+}
+
+.lm_tab {
+    background: var(--bg-element) !important;
+    color: var(--text-secondary) !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 20px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--border-color) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.lm_tab:hover {
+    background: var(--bg-app) !important;
+    color: var(--text-primary) !important;
+}
+
+.lm_tab.lm_active {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 2px solid var(--color-primary) !important;
+}
+
+/* Close/Popout buttons */
+.lm_controls {
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    padding: 0 10px !important;
+}
+
+.lm_controls > li {
+    width: 20px !important;
+    height: 20px !important;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.lm_controls > li:hover {
+    opacity: 1;
+}
+
+/* Splitters */
+.lm_splitter {
+    background: var(--bg-app) !important;
+    opacity: 1 !important;
+}
+
+.lm_splitter:hover,
+.lm_splitter.lm_dragging {
+    background: var(--color-primary) !important;
+}
+
+/* Dragging proxy */
+.lm_dragProxy {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--color-primary) !important;
+    border-radius: 0 !important;
+    opacity: 0.8;
+}
+
+/* Stack styling */
+.lm_stack > .lm_items {
+    border: 1px solid var(--border-color);
+}
