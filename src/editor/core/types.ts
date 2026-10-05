@@ -9,15 +9,26 @@ export interface ViewportState {
   zoom: number;
 }
 
+/** Active "Select & Place" preview state attached to the cursor. */
+export interface PlacementState {
+  /** Manifest typeId of the module being placed. */
+  typeId: string;
+  /** Current ghost rotation in degrees (0 | 90 | 180 | 270). */
+  rotation: number;
+}
+
 export interface DesignerConfig {
   container: HTMLDivElement;
   mode: EditorMode;
   gridSize: number;
   onViewportChange?: (state: ViewportState) => void;
   onToolChange?: (tool: EditorTool) => void;
+  onSelectionChange?: (ids: string[]) => void;
+  onPlacementChange?: (state: PlacementState | null) => void;
 }
 
 export interface Point {
   x: number;
   y: number;
 }
+
