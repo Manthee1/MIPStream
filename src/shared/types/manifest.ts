@@ -1,5 +1,6 @@
 /** @format */
 
+import type Konva from "konva";
 import type { Component } from "vue";
 
 export type PortDirection = "input" | "output";
@@ -79,6 +80,45 @@ export interface ModulePropertySchema {
 }
 
 /**
+ * Canvas color tokens supplied by the editor renderer at draw time.
+ * Values are resolved from the global CSS theme variables so module draw
+ * functions never hardcode colors.
+ */
+export interface RenderTheme {
+  bodyFill: string;
+  bodyStroke: string;
+  /** Highlight color for selected elements. */
+  selected: string;
+  text: string;
+  /** Accent used for ports and control points. */
+  accent: string;
+}
+
+/** Runtime mode the module is being drawn for. */
+export type RenderMode = "editor" | "viewer";
+
+/** Input parameters handed to a manifest's custom draw function. */
+export interface ModuleRenderOptions<TConfig = any> {
+  /** Fully resolved (defaults + overrides) module configuration. */
+  config: TConfig;
+  /** Relative port definitions — the single source of truth for connectivity. */
+  ports: PortDefinition[];
+  /** Current rotation in degrees (0 | 90 | 180 | 270). */
+  rotation: number;
+  mode: RenderMode;
+  /** Human-readable module label. */
+  label: string;
+  /** Resolved theme tokens. */
+  theme: RenderTheme;
+}
+
+/** Physical size of the drawn module body (unrotated bounding box). */
+export interface ModuleRenderOutput {
+  width: number;
+  height: number;
+}
+
+/**
  * The static definition of a logic component type.
  */
 export interface ModuleManifest<TConfig = any> {
@@ -97,6 +137,15 @@ export interface ModuleManifest<TConfig = any> {
   defaultConfig: TConfig;
 
   configSchema?: ModulePropertySchema[]; // Optional schema for UI config editors
+
+  /**
+   * Custom draw function for the module body. Draw in module-local coordinates
+   * around the origin (0,0); the caller applies position/rotation via the
+   * group transform. Port visuals are drawn by the editor renderer from the
+   * same `ports` array, guaranteeing visual/logical port sync.
+   * When omitted, a default body is derived from the port layout.
+   */
+  render?: (group: Konva.Group, options: ModuleRenderOptions<TConfig>) => ModuleRenderOutput;
 
 
   /**

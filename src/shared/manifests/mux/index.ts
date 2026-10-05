@@ -2,6 +2,7 @@ import { ModuleManifest, PortDefinition, ModuleEvaluators } from "../../types/ma
 import description from "./description.md?raw";
 import icon from "./icon.svg?raw";
 import Panel from "./Panel.vue";
+import { drawMuxBody } from "./draw";
 
 export interface MuxConfig {
   bitWidth: number;
@@ -15,6 +16,7 @@ export const MuxManifest: ModuleManifest<MuxConfig> = {
   icon,
   panel: Panel,
   category: "logic",
+  render: drawMuxBody,
 
   defaultConfig: {
     bitWidth: 32,

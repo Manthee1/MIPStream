@@ -1,10 +1,13 @@
 /** @format */
 
 import Konva from 'konva';
-import { DesignerConfig, EditorTool, EditorMode, ViewportState, PlacementState } from './types';
+import { DesignerConfig, EditorTool, EditorMode, ViewportState, PlacementState, Point } from './types';
 import { GridManager } from './grid';
 import { EventManager } from './events';
 import { ContextTracker, ShortcutManager } from './keyboard';
+import { getManifest, hydrateModule } from '@/shared/manifestRegistry';
+import type { SerializedModule, Pos } from '@/shared/types/manifest';
+import { createModuleNode, setNodeSelected, nodePortWorldPosition } from './render/module-node';
 
 /**
  * Orchestrator for the schematic designer canvas.
@@ -29,6 +32,8 @@ export class SchematicDesigner {
   private gridSize: number;
 
   private readonly selection = new Set<string>();
+  private readonly moduleNodes = new Map<string, Konva.Group>();
+  private moduleCounter = 0;
   private placement: PlacementState | null = null;
 
   private config: DesignerConfig;
@@ -157,10 +162,16 @@ export class SchematicDesigner {
   public select(id: string): void {
     this.selection.add(id);
     this.contextTracker.enable('schematic:selection');
+    const node = this.moduleNodes.get(id);
+    if (node) setNodeSelected(node, true);
     this.notifySelectionChange();
   }
 
   public clearSelection(): void {
+    for (const id of this.selection) {
+      const node = this.moduleNodes.get(id);
+      if (node) setNodeSelected(node, false);
+    }
     this.selection.clear();
     this.contextTracker.disable('schematic:selection');
     this.notifySelectionChange();
@@ -171,12 +182,14 @@ export class SchematicDesigner {
   }
 
   /**
-   * Removes the selected items from the design. Actual module/net removal is
-   * wired up in later stages; for now it clears the selection state.
+   * Removes every selected item. Modules are destroyed from the canvas;
+   * net deletion is wired up in Stage 5.
    */
   public deleteSelected(): void {
-    // TODO (Stage 4/5): remove modules/nets from the document + netlist.
-    this.clearSelection();
+    for (const id of Array.from(this.selection)) {
+      this.removeModule(id);
+    }
+    this.notifySelectionChange();
   }
 
   // --------------------------------------------------------------- placement
@@ -214,6 +227,74 @@ export class SchematicDesigner {
 
   public getPlacement(): PlacementState | null {
     return this.placement;
+  }
+
+  // ----------------------------------------------------------------- modules
+
+  /**
+   * Creates, hydrates, and renders a module instance at the given scene
+   * position. The rendered body comes from the manifest's custom `render`
+   * (falling back to the default port-derived body), and the ports are drawn
+   * from the same hydrated port definitions used for connectivity.
+   * @returns the assigned designator (e.g. "u3"), or null for an unknown typeId.
+   */
+  public addModule(typeId: string, position: Point, rotation = 0): string | null {
+    const manifest = getManifest(typeId);
+    if (!manifest) return null;
+
+    const designator = `u${++this.moduleCounter}`;
+    const serialized: SerializedModule = {
+      designator,
+      typeId,
+      position: { x: position.x, y: position.y },
+      rotation,
+      config: {},
+    };
+
+    const hydrated = hydrateModule(serialized);
+    const node = createModuleNode(hydrated, this.mode === 'editor' ? 'editor' : 'viewer');
+    this.logicLayer.add(node);
+    this.moduleNodes.set(designator, node);
+
+    // Basic click-to-select in editor mode with the select tool active.
+    node.on('click', () => {
+      if (this.mode !== 'editor' || this.activeTool !== 'select') return;
+      this.clearSelection();
+      this.select(designator);
+    });
+
+    return designator;
+  }
+
+  /** Removes a module node from the canvas and all internal tracking. */
+  public removeModule(designator: string): boolean {
+    const node = this.moduleNodes.get(designator);
+    if (!node) return false;
+
+    node.destroy();
+    this.moduleNodes.delete(designator);
+
+    if (this.selection.delete(designator) && this.selection.size === 0) {
+      this.contextTracker.disable('schematic:selection');
+    }
+
+    return true;
+  }
+
+  /** All module designators currently on the canvas. */
+  public getModuleDesignators(): string[] {
+    return Array.from(this.moduleNodes.keys());
+  }
+
+  /**
+   * Scene-space position of a module port, resolved through the live Konva
+   * transform so it stays correct even while the node is mid-drag.
+   * Foundation for Stage 5 wire routing.
+   */
+  public getPortWorldPosition(designator: string, portId: string): Pos | null {
+    const node = this.moduleNodes.get(designator);
+    if (!node) return null;
+    return nodePortWorldPosition(node, portId);
   }
 
   // ---------------------------------------------------------------- viewport
