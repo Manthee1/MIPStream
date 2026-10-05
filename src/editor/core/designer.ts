@@ -5,6 +5,8 @@ import { DesignerConfig, EditorTool, EditorMode, ViewportState, PlacementState, 
 import { GridManager } from './grid';
 import { EventManager } from './events';
 import { ContextTracker, ShortcutManager } from './keyboard';
+import { PlacementManager } from './placement';
+import { setPlacementListener } from './placement-bridge';
 import { getManifest, hydrateModule } from '@/shared/manifestRegistry';
 import type { SerializedModule, Pos } from '@/shared/types/manifest';
 import { createModuleNode, setNodeSelected, nodePortWorldPosition } from './render/module-node';
@@ -26,6 +28,7 @@ export class SchematicDesigner {
   private eventManager: EventManager;
   private contextTracker: ContextTracker;
   private shortcutManager: ShortcutManager;
+  private placementManager: PlacementManager;
 
   private mode: EditorMode;
   private activeTool: EditorTool = 'select';
@@ -70,9 +73,20 @@ export class SchematicDesigner {
     this.shortcutManager = new ShortcutManager(this.contextTracker);
 
     this.eventManager.attach();
+
+    // "Select & Place" engine: ghost preview + stamping on the interaction layer.
+    this.placementManager = new PlacementManager(this.stage, {
+      layer: this.interactionLayer,
+      gridSize: this.gridSize,
+      onPlaced: (typeId, position, rotation) => this.addModule(typeId, position, rotation),
+      isEnabled: () => this.mode === 'editor',
+    });
+
     if (this.mode === 'editor') {
       this.contextTracker.enable('schematic:editor');
       this.registerDefaultShortcuts();
+      // Palette panels reach the designer through the placement bridge.
+      setPlacementListener((typeId) => this.beginPlacement(typeId));
     }
     this.shortcutManager.attach();
 
@@ -195,10 +209,16 @@ export class SchematicDesigner {
   // --------------------------------------------------------------- placement
 
   /**
-   * Enters "Select & Place" mode for the given module type. Ghost preview
-   * rendering is implemented in Stage 4.
+   * Enters "Select & Place" mode for the given module type. A grid-snapped
+   * ghost preview attaches to the cursor; left-click stamps instances
+   * continuously until cancelled. Clicking a different palette item swaps
+   * the ghost type.
    */
   public beginPlacement(typeId: string): void {
+    // Drop any in-flight placement so a new type can take over.
+    if (this.placement) this.cancelPlacement();
+    if (!this.placementManager.begin(typeId)) return;
+
     this.placement = { typeId, rotation: 0 };
     this.contextTracker.enable('schematic:placing');
     this.setTool('place');
@@ -208,6 +228,7 @@ export class SchematicDesigner {
   /** Cancels the active placement preview and returns to the select tool. */
   public cancelPlacement(): void {
     if (!this.placement) return;
+    this.placementManager.cancel();
     this.placement = null;
     this.contextTracker.disable('schematic:placing');
     // Only revert to the select tool when placement mode was driving it;
@@ -221,7 +242,7 @@ export class SchematicDesigner {
   /** Rotates the placement ghost by 90-degree increments. */
   public rotatePlacement(): void {
     if (!this.placement) return;
-    this.placement.rotation = (this.placement.rotation + 90) % 360;
+    this.placement.rotation = this.placementManager.rotate();
     this.notifyPlacementChange();
   }
 
@@ -334,6 +355,8 @@ export class SchematicDesigner {
   }
 
   public destroy(): void {
+    setPlacementListener(null);
+    this.placementManager.cancel();
     this.shortcutManager.detach();
     this.eventManager.detach();
     this.stage.destroy();

@@ -1,10 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { NText } from 'naive-ui';
-import { ViewportState } from '../core/types';
+import { ViewportState, PlacementState } from '../core/types';
+import { getManifest } from '@/shared/manifestRegistry';
 
-defineProps<{
+const props = defineProps<{
   viewport: ViewportState;
+  placement: PlacementState | null;
 }>();
+
+/** Human-readable label of the module currently being placed. */
+const placementLabel = computed(() => {
+  if (!props.placement) return null;
+  return getManifest(props.placement.typeId)?.label ?? props.placement.typeId;
+});
 </script>
 
 <template>
@@ -15,6 +24,9 @@ defineProps<{
       </n-text>
       <n-text depth="3" class="text-[10px] uppercase tracking-wider font-bold">
         Y: {{ Math.round(viewport.y) }}
+      </n-text>
+      <n-text v-if="placementLabel" type="primary" class="text-[10px] uppercase tracking-wider font-bold">
+        Placing: {{ placementLabel }} — R: rotate · Esc: cancel
       </n-text>
     </div>
     <div>

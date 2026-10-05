@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { SchematicDesigner } from '../core/designer';
-import { EditorTool, ViewportState } from '../core/types';
+import { EditorTool, ViewportState, PlacementState } from '../core/types';
 import EditorToolbar from './EditorToolbar.vue';
 import EditorStatusBar from './EditorStatusBar.vue';
 
@@ -10,6 +10,7 @@ let designer: SchematicDesigner | null = null;
 
 const activeTool = ref<EditorTool>('select');
 const viewport = ref<ViewportState>({ x: 0, y: 0, zoom: 1 });
+const placement = ref<PlacementState | null>(null);
 
 onMounted(() => {
   if (canvasContainer.value) {
@@ -22,6 +23,9 @@ onMounted(() => {
       },
       onToolChange: (tool) => {
         activeTool.value = tool;
+      },
+      onPlacementChange: (state) => {
+        placement.value = state;
       }
     });
   }
@@ -50,7 +54,7 @@ const handleToolChange = (tool: EditorTool) => {
       class="flex-1 w-full h-full cursor-default"
     ></div>
 
-    <EditorStatusBar :viewport="viewport" />
+    <EditorStatusBar :viewport="viewport" :placement="placement" />
   </div>
 </template>
 
