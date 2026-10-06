@@ -96,8 +96,8 @@ const updateGrid = (patch: Partial<GridSettings>): void => {
           <n-input-number
             size="small"
             class="!w-24"
-            :min="5"
-            :step="5"
+            :min="1"
+            :step="1"
             :value="gridSettings.size"
             :disabled="!gridSettings.show"
             @update:value="updateGrid({ size: $event ?? gridSettings.size })"

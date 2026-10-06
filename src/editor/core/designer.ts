@@ -1139,7 +1139,7 @@ export class SchematicDesigner {
 
   /** Live base grid size used by every snapping consumer. */
   private getGridSize(): number {
-    return this.gridSettings.size;
+    return this.gridManager.getVisualStep();
   }
 
   private notifySelectionChange(): void {

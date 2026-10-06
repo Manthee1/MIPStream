@@ -13,7 +13,7 @@ export interface GridRenderSettings {
 }
 
 /** Below this on-screen spacing (px), a grid level promotes to a coarser one. */
-const MIN_LEVEL_SPACING_PX = 12;
+const MIN_LEVEL_SPACING_PX = 8;
 /** Coarser level multiplier — the KiCad-style fine + coarse grid pair. */
 const MAJOR_MULTIPLE = 5;
 
@@ -29,10 +29,13 @@ export class GridManager {
   private readonly layer: Konva.Layer;
   private readonly gridGroup: Konva.Group;
   private settings: GridRenderSettings;
+  /** The currently visible grid increment (snapped to the promoted level). */
+  private currentVisualStep: number;
 
   constructor(layer: Konva.Layer, settings: GridRenderSettings) {
     this.layer = layer;
     this.settings = settings;
+    this.currentVisualStep = settings.size;
     this.gridGroup = new Konva.Group({ listening: false });
     this.layer.add(this.gridGroup);
   }
@@ -40,12 +43,18 @@ export class GridManager {
   /** Applies new grid settings and redraws immediately. */
   public applySettings(settings: GridRenderSettings): void {
     this.settings = settings;
+    this.currentVisualStep = settings.size;
     this.render();
   }
 
   /** Current grid settings. */
   public getSettings(): GridRenderSettings {
     return this.settings;
+  }
+
+  /** The currently visible snapping increment (matches visual grid density). */
+  public getVisualStep(): number {
+    return this.currentVisualStep;
   }
 
   /**
@@ -55,7 +64,10 @@ export class GridManager {
   public render(): void {
     this.gridGroup.destroyChildren();
 
-    if (!this.settings.show || this.settings.size <= 0) return;
+    if (!this.settings.show || this.settings.size <= 0) {
+      this.currentVisualStep = this.settings.size;
+      return;
+    }
 
     const stage = this.layer.getStage();
     if (!stage || stage.width() === 0 || stage.height() === 0) return;
@@ -75,11 +87,14 @@ export class GridManager {
     while (minorStep * scale < MIN_LEVEL_SPACING_PX) {
       minorStep *= MAJOR_MULTIPLE;
     }
+    this.currentVisualStep = minorStep;
     const majorStep = minorStep * MAJOR_MULTIPLE;
 
     const color = readRenderTheme().bodyStroke;
-    this.drawLevel(view, scale, minorStep, color, 0.14, 1, false);
-    this.drawLevel(view, scale, majorStep, color, 0.32, 1.5, true);
+
+    // Render minor grid first (subtle), then major grid on top (pronounced).
+    this.drawLevel(view, scale, minorStep, color, 0.15, 0.8, false);
+    this.drawLevel(view, scale, majorStep, color, 0.5, 1.6, true);
   }
 
   /** Draws one grid level across the visible rectangle. */
