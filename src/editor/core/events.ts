@@ -2,6 +2,7 @@
 
 import Konva from 'konva';
 import { Point } from './types';
+import { isTextEntryTarget } from './keyboard';
 
 export interface EventManagerOptions {
   /** Fired whenever the viewport (pan/zoom) changes. */
@@ -10,15 +11,23 @@ export interface EventManagerOptions {
   onResize: () => void;
 }
 
-/** Right-click is treated as a drag when moved beyond this threshold (px). */
+/** Right-click is treated as a pan when moved beyond this threshold (px). */
 const CONTEXT_MENU_THRESHOLD = 8;
 /** Right-click held motionless for this long (ms) emits a context menu. */
 const CONTEXT_MENU_DELAY = 180;
 
+/** State of an in-flight right-button viewport pan. */
+interface PanState {
+  startClient: Point;
+  startStage: Point;
+}
+
 /**
  * Owns all DOM / Konva event wiring for the schematic canvas.
  *
- * - Pan: right-mouse drag (via Konva.dragButtons = [2]).
+ * - Pan: manual right-mouse drag (works over empty canvas AND over modules,
+ *   since the stage itself is never Konva-draggable; module nodes keep the
+ *   default left-button Konva drag).
  * - Context menu: right-mouse long-press without movement.
  * - Zoom: wheel, centered on the cursor, clamped between 0.1x and 5x.
  */
@@ -29,6 +38,34 @@ export class EventManager {
 
   private contextMenuTimer: number | null = null;
   private contextMenuStart: Point | null = null;
+  private panState: PanState | null = null;
+  private altPressed = false;
+
+  /**
+   * Tracks Alt key presses on the window. Alt is the bypass modifier for
+   * strict grid alignment during module drags.
+   */
+  private readonly altKeyDownHandler = (event: KeyboardEvent) => {
+    if (event.key !== 'Alt' || event.repeat) return;
+    // Never hijack Alt while typing (special characters on some layouts).
+    if (isTextEntryTarget(event.target)) return;
+    // Suppress browser menu-bar focus (e.g. Firefox) on Alt press.
+    event.preventDefault();
+    this.altPressed = true;
+  };
+
+  private readonly altKeyUpHandler = (event: KeyboardEvent) => {
+    if (event.key === 'Alt') this.altPressed = false;
+  };
+
+  private readonly blurHandler = () => {
+    this.altPressed = false;
+  };
+
+  /** True while Alt is held — bypasses grid snapping during drags. */
+  public isAltPressed(): boolean {
+    return this.altPressed;
+  }
 
   private readonly wheelHandler = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
@@ -55,10 +92,6 @@ export class EventManager {
     this.options.onViewportChange();
   };
 
-  private readonly dragEndHandler = () => {
-    this.options.onViewportChange();
-  };
-
   private readonly resizeHandler = () => {
     this.options.onResize();
   };
@@ -73,6 +106,10 @@ export class EventManager {
     if (event.button !== 2) return;
 
     this.contextMenuStart = { x: event.clientX, y: event.clientY };
+    this.panState = {
+      startClient: { x: event.clientX, y: event.clientY },
+      startStage: { x: this.stage.x(), y: this.stage.y() },
+    };
     this.contextMenuTimer = window.setTimeout(() => {
       this.contextMenuTimer = null;
 
@@ -94,7 +131,16 @@ export class EventManager {
   };
 
   private readonly mouseMoveHandler = (event: MouseEvent) => {
-    if (event.button !== 2 || !this.contextMenuStart) return;
+    if (event.buttons === 2 && this.panState) {
+      // Right-button drag: pan the viewport 1:1 with the cursor.
+      this.stage.position({
+        x: this.panState.startStage.x + (event.clientX - this.panState.startClient.x),
+        y: this.panState.startStage.y + (event.clientY - this.panState.startClient.y),
+      });
+      this.options.onViewportChange();
+    }
+
+    if (!this.contextMenuStart) return;
 
     const deltaX = Math.abs(event.clientX - this.contextMenuStart.x);
     const deltaY = Math.abs(event.clientY - this.contextMenuStart.y);
@@ -105,8 +151,12 @@ export class EventManager {
     }
   };
 
-  private readonly mouseUpHandler = () => {
+  private readonly mouseUpHandler = (event: MouseEvent) => {
     this.clearContextMenuTimer();
+    if (event.button === 2) {
+      this.panState = null;
+      this.options.onViewportChange();
+    }
   };
 
   private attached = false;
@@ -122,16 +172,18 @@ export class EventManager {
     if (this.attached) return;
     this.attached = true;
 
-    // Route Konva dragging through the right mouse button (pan).
-    Konva.dragButtons = [2];
-
+    // Left button (default) stays reserved for Konva node dragging
+    // (modules); the stage itself is never draggable.
     this.container.addEventListener('contextmenu', this.contextMenuHandler);
     this.container.addEventListener('mousedown', this.mouseDownHandler);
     this.container.addEventListener('mousemove', this.mouseMoveHandler);
     this.container.addEventListener('mouseup', this.mouseUpHandler);
 
+    window.addEventListener('keydown', this.altKeyDownHandler);
+    window.addEventListener('keyup', this.altKeyUpHandler);
+    window.addEventListener('blur', this.blurHandler);
+
     this.stage.on('wheel', this.wheelHandler);
-    this.stage.on('dragend', this.dragEndHandler);
 
     window.addEventListener('resize', this.resizeHandler);
   }
@@ -142,14 +194,18 @@ export class EventManager {
     this.attached = false;
 
     this.clearContextMenuTimer();
+    this.panState = null;
 
     this.container.removeEventListener('contextmenu', this.contextMenuHandler);
     this.container.removeEventListener('mousedown', this.mouseDownHandler);
     this.container.removeEventListener('mousemove', this.mouseMoveHandler);
     this.container.removeEventListener('mouseup', this.mouseUpHandler);
 
+    window.removeEventListener('keydown', this.altKeyDownHandler);
+    window.removeEventListener('keyup', this.altKeyUpHandler);
+    window.removeEventListener('blur', this.blurHandler);
+
     this.stage.off('wheel', this.wheelHandler);
-    this.stage.off('dragend', this.dragEndHandler);
 
     window.removeEventListener('resize', this.resizeHandler);
   }

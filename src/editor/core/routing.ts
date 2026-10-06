@@ -5,21 +5,37 @@ import { pointerScenePosition } from "./pointer";
 import { GridManager } from "./grid";
 import { composeNetPath } from "./render/orthogonal-path";
 import { createPreviewWire } from "./render/wire";
-import { setPortHighlighted } from "./render/module-node";
 import { isSameEndpoint } from "@/shared/utils/netlist";
 import type { NetEndpoint } from "@/shared/types/netlist";
 import type { Pos } from "@/shared/types/manifest";
 
+/**
+ * Either end of an interactive route: a module port, or a tap onto an
+ * existing net (a junction point on its trunk/branch polyline).
+ */
+export type RoutePoint =
+  | { kind: "port"; endpoint: NetEndpoint; position: Pos; node: Konva.Group }
+  | { kind: "net"; netId: string; position: Pos };
+
 export interface RoutingManagerOptions {
   /** Layer for the dashed routing preview (the interaction layer). */
   layer: Konva.Layer;
-  gridSize: number;
+  /** Live base grid size (scene units) — allows settings changes mid-session. */
+  getGridSize: () => number;
   /** Resolves a module port's current scene position. */
   getPortPosition: (designator: string, portId: string) => Pos | null;
-  /** Commits a finished net; returns true when accepted. */
-  onCommit: (start: NetEndpoint, waypoints: Pos[], end: NetEndpoint) => boolean;
+  /** Resolves the tap point of a net closest to a scene position. */
+  getNetJunction: (netId: string, scene: Pos) => Pos | null;
+  /** Commits a finished route; returns true when accepted. */
+  onCommit: (start: RoutePoint, waypoints: Pos[], end: RoutePoint) => boolean;
   /** Fired whenever interactive routing starts/ends. */
   onRoutingChange: (active: boolean) => void;
+  /** Fired when a route begins; the designer highlights legal targets. */
+  onRouteStart: (start: RoutePoint) => void;
+  /** Fired when a route ends (commit/cancel); the designer clears highlights. */
+  onRouteEnd: () => void;
+  /** Applies/clears the hovered-port visual (the designer owns highlight state). */
+  setPortHover: (endpoint: NetEndpoint, hovered: boolean) => void;
   /** Routing is editor-only; gates all interaction when false. */
   isEnabled: () => boolean;
 }
@@ -32,13 +48,21 @@ interface PortHit {
   node: Konva.Group;
 }
 
+/** A hovered or clicked wire resolved from a `.wire-group` node. */
+interface WireHit {
+  netId: string;
+  position: Pos;
+}
+
 /**
  * Interactive net routing engine.
  *
  * Active while the wire tool is selected. Hovering a port highlights it;
- * clicking a port starts routing (from an input OR an output); empty-canvas
- * clicks append grid-snapped waypoints; clicking a second port commits the
- * net through `onCommit` (the designer validates and orients it).
+ * clicking a port starts routing (from an input OR an output); clicking an
+ * existing wire starts routing from that net (or taps the net when finishing
+ * from a free input port); empty-canvas clicks append grid-snapped waypoints;
+ * clicking a second endpoint commits through `onCommit`, which the designer
+ * validates against the 1-output : n-inputs rule.
  */
 export class RoutingManager {
   private readonly stage: Konva.Stage;
@@ -46,7 +70,7 @@ export class RoutingManager {
   private readonly options: RoutingManagerOptions;
 
   private enabled = false;
-  private pending: { start: PortHit; waypoints: Pos[] } | null = null;
+  private pending: { start: RoutePoint; waypoints: Pos[] } | null = null;
   private hovered: PortHit | null = null;
   private readonly preview = createPreviewWire();
 
@@ -62,12 +86,24 @@ export class RoutingManager {
     // Left button only; right-button click ends a pan gesture.
     if (e.evt.button !== 0) return;
 
-    const hit = this.findPortHit();
-    if (hit) {
+    const portHit = this.findPortHit();
+    if (portHit) {
       if (this.pending) {
-        this.finish(hit);
+        this.finish({ kind: "port", ...portHit });
       } else {
-        this.start(hit);
+        this.start({ kind: "port", ...portHit });
+      }
+      return;
+    }
+
+    const wireHit = this.findWireHit();
+    if (wireHit) {
+      if (this.pending) {
+        // Net → net is never legal: every existing net already owns a driver.
+        if (this.pending.start.kind === "net") return;
+        this.finish({ kind: "net", ...wireHit });
+      } else {
+        this.start({ kind: "net", ...wireHit });
       }
       return;
     }
@@ -78,8 +114,8 @@ export class RoutingManager {
     if (!scene) return;
 
     this.pending.waypoints.push({
-      x: GridManager.snap(scene.x, this.options.gridSize),
-      y: GridManager.snap(scene.y, this.options.gridSize),
+      x: GridManager.snap(scene.x, this.options.getGridSize()),
+      y: GridManager.snap(scene.y, this.options.getGridSize()),
     });
     this.updatePreview();
   };
@@ -109,13 +145,14 @@ export class RoutingManager {
   /** Cancels the active route and clears all transient state. */
   public cancel(): void {
     if (this.hovered) {
-      setPortHighlighted(this.hovered.node, this.hovered.endpoint.portId, false);
+      this.options.setPortHover(this.hovered.endpoint, false);
       this.hovered = null;
     }
 
     if (this.pending) {
       this.pending = null;
       this.preview.points([]);
+      this.options.onRouteEnd();
       this.options.onRoutingChange(false);
     }
   }
@@ -126,24 +163,26 @@ export class RoutingManager {
 
   // ----------------------------------------------------------------- private
 
-  private start(hit: PortHit): void {
-    this.pending = { start: hit, waypoints: [] };
-    this.preview.points([hit.position.x, hit.position.y]);
+  private start(start: RoutePoint): void {
+    this.pending = { start, waypoints: [] };
+    this.preview.points([start.position.x, start.position.y]);
+    this.options.onRouteStart(start);
     this.options.onRoutingChange(true);
   }
 
-  private finish(hit: PortHit): void {
+  private finish(end: RoutePoint): void {
     if (!this.pending) return;
     const { start, waypoints } = this.pending;
 
-    // Attempt the commit; routing ends either way (rejected nets simply drop).
-    this.options.onCommit(start.endpoint, waypoints, hit.endpoint);
+    // Attempt the commit; routing ends either way (rejected routes drop).
+    this.options.onCommit(start, waypoints, end);
     this.clearPending();
   }
 
   private clearPending(): void {
     this.pending = null;
     this.preview.points([]);
+    this.options.onRouteEnd();
     this.options.onRoutingChange(false);
   }
 
@@ -152,12 +191,12 @@ export class RoutingManager {
     const hit = this.findPortHit();
 
     if (this.hovered && (!hit || !isSameEndpoint(this.hovered.endpoint, hit.endpoint))) {
-      setPortHighlighted(this.hovered.node, this.hovered.endpoint.portId, false);
+      this.options.setPortHover(this.hovered.endpoint, false);
       this.hovered = null;
     }
 
     if (hit && !this.hovered) {
-      setPortHighlighted(hit.node, hit.endpoint.portId, true);
+      this.options.setPortHover(hit.endpoint, true);
       this.hovered = hit;
     }
   }
@@ -171,8 +210,8 @@ export class RoutingManager {
 
     this.preview.points(
       composeNetPath(this.pending.start.position, this.pending.waypoints, {
-        x: GridManager.snap(scene.x, this.options.gridSize),
-        y: GridManager.snap(scene.y, this.options.gridSize),
+        x: GridManager.snap(scene.x, this.options.getGridSize()),
+        y: GridManager.snap(scene.y, this.options.getGridSize()),
       })
     );
   }
@@ -204,6 +243,36 @@ export class RoutingManager {
       position,
       node: node as Konva.Group,
     };
+  }
+
+  /** Resolves the net under the cursor and its closest tap point, or null. */
+  private findWireHit(): WireHit | null {
+    const pos = this.stage.getPointerPosition();
+    if (!pos) return null;
+
+    const shape = this.stage.getIntersection(pos);
+    if (!shape) return null;
+
+    // Only net polylines are valid taps (handles/junction dots excluded).
+    const name = shape.name();
+    if (name !== "wire-trunk" && name !== "wire-branch") return null;
+
+    let node: Konva.Node | null = shape;
+    while (node && node.name() !== "wire-group") {
+      node = node.getParent();
+    }
+    if (!node) return null;
+
+    const netId: unknown = node.getAttr("netId");
+    if (typeof netId !== "string") return null;
+
+    const scene = pointerScenePosition(this.stage);
+    if (!scene) return null;
+
+    const position = this.options.getNetJunction(netId, scene);
+    if (!position) return null;
+
+    return { netId, position };
   }
 }
 

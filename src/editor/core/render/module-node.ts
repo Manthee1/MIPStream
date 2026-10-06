@@ -112,15 +112,53 @@ export function setNodeSelected(group: Konva.Group, selected: boolean): void {
   body.strokeScaleEnabled(false);
 }
 
-/** Toggles the hover highlight on a module port (used during wire routing). */
-export function setPortHighlighted(group: Konva.Group, portId: string, highlighted: boolean): void {
+/** Delete-tool hover feedback on a module node's body. */
+export function setNodeDangerHover(group: Konva.Group, danger: boolean): void {
+  const body = group.findOne(".module-body");
+  if (!(body instanceof Konva.Shape)) return;
+
+  const theme = readRenderTheme();
+  body.stroke(danger ? theme.danger : theme.bodyStroke);
+  body.strokeWidth(danger ? SELECTED_STROKE_WIDTH : 1.5);
+  body.strokeScaleEnabled(false);
+}
+
+/** Visual states a port can render in while interacting with the canvas. */
+export type PortHighlightState = "idle" | "hover" | "valid";
+
+/**
+ * Applies a highlight state to a module port:
+ * - `hover`: enlarged port under the cursor while routing.
+ * - `valid`: success-colored ring marking a legally connectable target.
+ * - `idle`: normal rendering.
+ */
+export function setPortHighlighted(
+  group: Konva.Group,
+  portId: string,
+  state: PortHighlightState | boolean
+): void {
   const circle = group.getChildren(
     (node) => node.name() === "port" && node.getAttr("portId") === portId
   )[0];
   if (!(circle instanceof Konva.Circle)) return;
 
-  circle.radius(highlighted ? PORT_RADIUS * 1.5 : PORT_RADIUS);
-  circle.strokeWidth(highlighted ? 2 : 1);
+  const normalized: PortHighlightState =
+    typeof state === "boolean" ? (state ? "hover" : "idle") : state;
+
+  if (normalized === "valid") {
+    const theme = readRenderTheme();
+    circle.fill(theme.valid);
+    circle.stroke(theme.valid);
+    circle.radius(PORT_RADIUS * 1.5);
+    circle.strokeWidth(2);
+    return;
+  }
+
+  const theme = readRenderTheme();
+  circle.fill(theme.accent);
+  circle.stroke(theme.bodyStroke);
+  circle.radius(normalized === "hover" ? PORT_RADIUS * 1.5 : PORT_RADIUS);
+  circle.strokeWidth(normalized === "hover" ? 2 : 1);
 }
 
 /**

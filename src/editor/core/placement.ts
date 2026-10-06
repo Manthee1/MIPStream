@@ -9,7 +9,8 @@ import { createGhostNode } from "./render/ghost";
 export interface PlacementManagerOptions {
   /** Layer the ghost preview renders on (the interaction layer). */
   layer: Konva.Layer;
-  gridSize: number;
+  /** Live base grid size (scene units) — allows settings changes mid-session. */
+  getGridSize: () => number;
   /** Stamps a module instance; returns the assigned designator or null. */
   onPlaced: (typeId: string, position: Point, rotation: number) => string | null;
   /** Placement is editor-only; gates all interaction when false. */
@@ -39,8 +40,8 @@ export class PlacementManager {
     if (!scene) return;
 
     this.ghost.position({
-      x: GridManager.snap(scene.x, this.options.gridSize),
-      y: GridManager.snap(scene.y, this.options.gridSize),
+      x: GridManager.snap(scene.x, this.options.getGridSize()),
+      y: GridManager.snap(scene.y, this.options.getGridSize()),
     });
     // Re-show if previously hidden by a canvas mouseleave.
     this.ghost.visible(true);
@@ -58,8 +59,8 @@ export class PlacementManager {
     this.options.onPlaced(
       this.typeId,
       {
-        x: GridManager.snap(scene.x, this.options.gridSize),
-        y: GridManager.snap(scene.y, this.options.gridSize),
+        x: GridManager.snap(scene.x, this.options.getGridSize()),
+        y: GridManager.snap(scene.y, this.options.getGridSize()),
       },
       this.rotation
     );

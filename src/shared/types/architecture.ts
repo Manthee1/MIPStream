@@ -56,6 +56,18 @@ export interface PipelineStageConfig {
   color?: string;
 }
 
+/**
+ * Schematic canvas grid configuration for the architecture.
+ */
+export interface GridSettings {
+  /** Master visibility toggle — independent of the render style. */
+  show: boolean;
+  /** Render style when shown. */
+  style: 'lines' | 'dots';
+  /** Base grid size in scene units — drives placement and movement snapping. */
+  size: number;
+}
+
 export interface ArchitectureConfiguration {
   pipeline: {
     enabled: boolean;
@@ -69,6 +81,11 @@ export interface ArchitectureConfiguration {
     }[];
   };
   isa: ISADefinition;
+  /**
+   * Schematic editor grid configuration.
+   * Falls back to the editor defaults when absent (legacy projects).
+   */
+  grid?: GridSettings;
 }
 
 export interface ArchitectureConfig {

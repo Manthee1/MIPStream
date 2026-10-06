@@ -58,7 +58,7 @@ export class ShortcutManager {
   private readonly tracker: ContextTracker;
 
   private readonly keydownHandler = (event: KeyboardEvent) => {
-    if (this.isTextEntryTarget(event.target)) return;
+    if (isTextEntryTarget(event.target)) return;
 
     const key = event.key.toLowerCase();
 
@@ -96,17 +96,17 @@ export class ShortcutManager {
     this.attached = false;
     window.removeEventListener('keydown', this.keydownHandler);
   }
+}
 
-  /**
-   * Keys typed into inputs, textareas, or contenteditable regions must never
-   * trigger canvas shortcuts.
-   */
-  private isTextEntryTarget(target: EventTarget | null): boolean {
-    if (!(target instanceof HTMLElement)) return false;
-    return (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.isContentEditable
-    );
-  }
+/**
+ * Keys typed into inputs, textareas, or contenteditable regions must never
+ * trigger canvas-level key handling.
+ */
+export function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return (
+    target.tagName === 'INPUT' ||
+    target.tagName === 'TEXTAREA' ||
+    target.isContentEditable
+  );
 }

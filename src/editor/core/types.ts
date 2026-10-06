@@ -1,6 +1,7 @@
 /** @format */
 
 import type { SerializedNet } from "@/shared/types/netlist";
+import type { GridSettings } from "@/shared/types/architecture";
 
 export type EditorTool = 'select' | 'wire' | 'place' | 'delete';
 export type EditorMode = 'viewer' | 'editor';
@@ -22,7 +23,8 @@ export interface PlacementState {
 export interface DesignerConfig {
   container: HTMLDivElement;
   mode: EditorMode;
-  gridSize: number;
+  /** Initial grid settings (visibility, style, and the snapping grid size). */
+  gridSettings: GridSettings;
   onViewportChange?: (state: ViewportState) => void;
   onToolChange?: (tool: EditorTool) => void;
   onSelectionChange?: (ids: string[]) => void;

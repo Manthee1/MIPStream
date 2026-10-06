@@ -92,6 +92,10 @@ export interface RenderTheme {
   text: string;
   /** Accent used for ports and control points. */
   accent: string;
+  /** Highlight color for legally connectable targets while routing. */
+  valid: string;
+  /** Highlight color for delete-tool hover feedback. */
+  danger: string;
 }
 
 /** Runtime mode the module is being drawn for. */

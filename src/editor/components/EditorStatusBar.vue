@@ -30,7 +30,7 @@ const placementLabel = computed(() => {
         Placing: {{ placementLabel }} — R: rotate · Esc: cancel
       </n-text>
       <n-text v-else-if="routing" type="primary" class="text-[10px] uppercase tracking-wider font-bold">
-        Routing net — click a port to connect · Esc: cancel
+        Routing net — click a port or a wire to connect · Esc: cancel
       </n-text>
     </div>
     <div>
