@@ -1,5 +1,7 @@
 /** @format */
 
+import type { SerializedNet } from "@/shared/types/netlist";
+
 export type EditorTool = 'select' | 'wire' | 'place' | 'delete';
 export type EditorMode = 'viewer' | 'editor';
 
@@ -25,6 +27,8 @@ export interface DesignerConfig {
   onToolChange?: (tool: EditorTool) => void;
   onSelectionChange?: (ids: string[]) => void;
   onPlacementChange?: (state: PlacementState | null) => void;
+  onRoutingChange?: (active: boolean) => void;
+  onNetlistChange?: (nets: SerializedNet[]) => void;
 }
 
 export interface Point {

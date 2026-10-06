@@ -112,6 +112,17 @@ export function setNodeSelected(group: Konva.Group, selected: boolean): void {
   body.strokeScaleEnabled(false);
 }
 
+/** Toggles the hover highlight on a module port (used during wire routing). */
+export function setPortHighlighted(group: Konva.Group, portId: string, highlighted: boolean): void {
+  const circle = group.getChildren(
+    (node) => node.name() === "port" && node.getAttr("portId") === portId
+  )[0];
+  if (!(circle instanceof Konva.Circle)) return;
+
+  circle.radius(highlighted ? PORT_RADIUS * 1.5 : PORT_RADIUS);
+  circle.strokeWidth(highlighted ? 2 : 1);
+}
+
 /**
  * Scene (world) position of a module port, computed through the live Konva
  * transform so it stays correct even while the node is mid-drag.

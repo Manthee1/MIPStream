@@ -7,8 +7,13 @@ import { EventManager } from './events';
 import { ContextTracker, ShortcutManager } from './keyboard';
 import { PlacementManager } from './placement';
 import { setPlacementListener } from './placement-bridge';
+import { RoutingManager } from './routing';
 import { getManifest, hydrateModule } from '@/shared/manifestRegistry';
-import type { SerializedModule, Pos } from '@/shared/types/manifest';
+import type { SerializedModule, Pos, PortDefinition, HydratedModule } from '@/shared/types/manifest';
+import type { NetEndpoint, SerializedNet } from '@/shared/types/netlist';
+import { isSameEndpoint, netDrivingInput } from '@/shared/utils/netlist';
+import { composeNetPath } from './render/orthogonal-path';
+import { createWireNode, updateWireNode, setWireSelected } from './render/wire';
 import { createModuleNode, setNodeSelected, nodePortWorldPosition } from './render/module-node';
 
 /**
@@ -29,6 +34,7 @@ export class SchematicDesigner {
   private contextTracker: ContextTracker;
   private shortcutManager: ShortcutManager;
   private placementManager: PlacementManager;
+  private routingManager: RoutingManager;
 
   private mode: EditorMode;
   private activeTool: EditorTool = 'select';
@@ -36,7 +42,11 @@ export class SchematicDesigner {
 
   private readonly selection = new Set<string>();
   private readonly moduleNodes = new Map<string, Konva.Group>();
+  private readonly hydratedModules = new Map<string, HydratedModule>();
   private moduleCounter = 0;
+  private readonly nets = new Map<string, SerializedNet>();
+  private readonly wireNodes = new Map<string, Konva.Line>();
+  private netCounter = 0;
   private placement: PlacementState | null = null;
 
   private config: DesignerConfig;
@@ -82,6 +92,23 @@ export class SchematicDesigner {
       isEnabled: () => this.mode === 'editor',
     });
 
+    // Interactive net routing: port hit-testing, waypoint previews, commits.
+    this.routingManager = new RoutingManager(this.stage, {
+      layer: this.interactionLayer,
+      gridSize: this.gridSize,
+      getPortPosition: (designator, portId) => this.getPortWorldPosition(designator, portId),
+      onCommit: (start, waypoints, end) => this.addNet(start, waypoints, end),
+      onRoutingChange: (active) => {
+        if (active) {
+          this.contextTracker.enable('schematic:routing');
+        } else {
+          this.contextTracker.disable('schematic:routing');
+        }
+        this.notifyRoutingChange();
+      },
+      isEnabled: () => this.mode === 'editor',
+    });
+
     if (this.mode === 'editor') {
       this.contextTracker.enable('schematic:editor');
       this.registerDefaultShortcuts();
@@ -105,10 +132,9 @@ export class SchematicDesigner {
       key: 'escape',
       contexts: ['schematic:placing', 'schematic:routing', 'schematic:selection'],
       handler: () => {
-        if (
-          this.contextTracker.isActive('schematic:placing') ||
-          this.contextTracker.isActive('schematic:routing')
-        ) {
+        if (this.contextTracker.isActive('schematic:routing')) {
+          this.routingManager.cancel();
+        } else if (this.contextTracker.isActive('schematic:placing')) {
           this.cancelPlacement();
         } else {
           this.clearSelection();
@@ -160,6 +186,9 @@ export class SchematicDesigner {
       case 'delete': container.style.cursor = 'not-allowed'; break;
       case 'place': container.style.cursor = 'cell'; break;
     }
+
+    // Net routing is active only while the wire tool is selected.
+    this.routingManager.setEnabled(tool === 'wire');
   }
 
   public getTool(): EditorTool {
@@ -176,8 +205,13 @@ export class SchematicDesigner {
   public select(id: string): void {
     this.selection.add(id);
     this.contextTracker.enable('schematic:selection');
+
     const node = this.moduleNodes.get(id);
     if (node) setNodeSelected(node, true);
+
+    const wire = this.wireNodes.get(id);
+    if (wire) setWireSelected(wire, true);
+
     this.notifySelectionChange();
   }
 
@@ -185,6 +219,9 @@ export class SchematicDesigner {
     for (const id of this.selection) {
       const node = this.moduleNodes.get(id);
       if (node) setNodeSelected(node, false);
+
+      const wire = this.wireNodes.get(id);
+      if (wire) setWireSelected(wire, false);
     }
     this.selection.clear();
     this.contextTracker.disable('schematic:selection');
@@ -196,12 +233,14 @@ export class SchematicDesigner {
   }
 
   /**
-   * Removes every selected item. Modules are destroyed from the canvas;
-   * net deletion is wired up in Stage 5.
+   * Removes every selected item. Selection entries may be module designators
+   * ("u*") or net ids ("n*"); nets are removed when the entry is not a module.
    */
   public deleteSelected(): void {
     for (const id of Array.from(this.selection)) {
-      this.removeModule(id);
+      if (!this.removeModule(id)) {
+        this.removeNet(id);
+      }
     }
     this.notifySelectionChange();
   }
@@ -276,6 +315,7 @@ export class SchematicDesigner {
     const node = createModuleNode(hydrated, this.mode === 'editor' ? 'editor' : 'viewer');
     this.logicLayer.add(node);
     this.moduleNodes.set(designator, node);
+    this.hydratedModules.set(designator, hydrated);
 
     // Basic click-to-select in editor mode with the select tool active.
     node.on('click', () => {
@@ -283,6 +323,9 @@ export class SchematicDesigner {
       this.clearSelection();
       this.select(designator);
     });
+
+    // Keep attached wires glued to their ports while the module is dragged.
+    node.on('dragmove', () => this.rerenderNetsForDesignator(designator));
 
     return designator;
   }
@@ -292,8 +335,17 @@ export class SchematicDesigner {
     const node = this.moduleNodes.get(designator);
     if (!node) return false;
 
+    // Attached nets dangle without their module: remove them first.
+    for (const net of this.allNets()) {
+      const attached =
+        net.source.designator === designator ||
+        net.targets.some((target) => target.designator === designator);
+      if (attached) this.removeNet(net.id);
+    }
+
     node.destroy();
     this.moduleNodes.delete(designator);
+    this.hydratedModules.delete(designator);
 
     if (this.selection.delete(designator) && this.selection.size === 0) {
       this.contextTracker.disable('schematic:selection');
@@ -316,6 +368,112 @@ export class SchematicDesigner {
     const node = this.moduleNodes.get(designator);
     if (!node) return null;
     return nodePortWorldPosition(node, portId);
+  }
+
+  // -------------------------------------------------------------------- nets
+
+  /**
+   * Validates and commits a net between two module ports. The net is oriented
+   * so the source is always the output port. Rejects invalid connections:
+   * unknown ports, output-to-output, input-to-input, the same port twice, or
+   * an input that is already driven (one driver per input).
+   */
+  public addNet(start: NetEndpoint, waypoints: Pos[], end: NetEndpoint): boolean {
+    const startPort = this.resolvePort(start);
+    const endPort = this.resolvePort(end);
+    if (!startPort || !endPort) return false;
+
+    // Orient so the source is the output side; reject mismatched directions.
+    let source = start;
+    let target = end;
+    if (startPort.direction === 'input' && endPort.direction === 'output') {
+      source = end;
+      target = start;
+    } else if (startPort.direction !== 'output' || endPort.direction !== 'input') {
+      return false;
+    }
+
+    if (isSameEndpoint(source, target)) return false;
+    if (netDrivingInput(this.allNets(), target)) return false;
+
+    const sourcePos = this.getPortWorldPosition(source.designator, source.portId);
+    const targetPos = this.getPortWorldPosition(target.designator, target.portId);
+    if (!sourcePos || !targetPos) return false;
+
+    const net: SerializedNet = {
+      id: `n${++this.netCounter}`,
+      source,
+      targets: [target],
+    };
+    if (waypoints.length > 0) net.waypoints = waypoints;
+
+    const wire = createWireNode(net.id, composeNetPath(sourcePos, waypoints, targetPos));
+    this.logicLayer.add(wire);
+    this.nets.set(net.id, net);
+    this.wireNodes.set(net.id, wire);
+
+    wire.on('click', () => {
+      if (this.mode !== 'editor' || this.activeTool !== 'select') return;
+      this.clearSelection();
+      this.select(net.id);
+    });
+
+    this.notifyNetlistChange();
+    return true;
+  }
+
+  /** Removes a net wire from the canvas and the netlist. */
+  public removeNet(id: string): boolean {
+    const wire = this.wireNodes.get(id);
+    if (!wire) return false;
+
+    wire.destroy();
+    this.wireNodes.delete(id);
+    this.nets.delete(id);
+
+    if (this.selection.delete(id) && this.selection.size === 0) {
+      this.contextTracker.disable('schematic:selection');
+    }
+
+    this.notifyNetlistChange();
+    return true;
+  }
+
+  /** All committed nets, in creation order. */
+  public getNets(): SerializedNet[] {
+    return this.allNets();
+  }
+
+  /** Recomputes every wire attached to a module; called during node drag. */
+  private rerenderNetsForDesignator(designator: string): void {
+    for (const net of this.nets.values()) {
+      const attached =
+        net.source.designator === designator ||
+        net.targets.some((target) => target.designator === designator);
+      if (!attached) continue;
+
+      const wire = this.wireNodes.get(net.id);
+      if (!wire) continue;
+
+      const sourcePos = this.getPortWorldPosition(net.source.designator, net.source.portId);
+      const target = net.targets[0];
+      if (!target) continue;
+      const targetPos = this.getPortWorldPosition(target.designator, target.portId);
+      if (!sourcePos || !targetPos) continue;
+
+      updateWireNode(wire, composeNetPath(sourcePos, net.waypoints ?? [], targetPos));
+    }
+  }
+
+  /** Resolves a net endpoint against its hydrated module's port definition. */
+  private resolvePort(endpoint: NetEndpoint): PortDefinition | null {
+    const hydrated = this.hydratedModules.get(endpoint.designator);
+    if (!hydrated) return null;
+    return hydrated.ports.find((port) => port.id === endpoint.portId) ?? null;
+  }
+
+  private allNets(): SerializedNet[] {
+    return Array.from(this.nets.values());
   }
 
   // ---------------------------------------------------------------- viewport
@@ -354,8 +512,21 @@ export class SchematicDesigner {
     }
   }
 
+  private notifyRoutingChange(): void {
+    if (this.config.onRoutingChange) {
+      this.config.onRoutingChange(this.contextTracker.isActive('schematic:routing'));
+    }
+  }
+
+  private notifyNetlistChange(): void {
+    if (this.config.onNetlistChange) {
+      this.config.onNetlistChange(this.allNets());
+    }
+  }
+
   public destroy(): void {
     setPlacementListener(null);
+    this.routingManager.setEnabled(false);
     this.placementManager.cancel();
     this.shortcutManager.detach();
     this.eventManager.detach();

@@ -11,6 +11,7 @@ let designer: SchematicDesigner | null = null;
 const activeTool = ref<EditorTool>('select');
 const viewport = ref<ViewportState>({ x: 0, y: 0, zoom: 1 });
 const placement = ref<PlacementState | null>(null);
+const isRouting = ref(false);
 
 onMounted(() => {
   if (canvasContainer.value) {
@@ -26,6 +27,9 @@ onMounted(() => {
       },
       onPlacementChange: (state) => {
         placement.value = state;
+      },
+      onRoutingChange: (active) => {
+        isRouting.value = active;
       }
     });
   }
@@ -54,7 +58,7 @@ const handleToolChange = (tool: EditorTool) => {
       class="flex-1 w-full h-full cursor-default"
     ></div>
 
-    <EditorStatusBar :viewport="viewport" :placement="placement" />
+    <EditorStatusBar :viewport="viewport" :placement="placement" :routing="isRouting" />
   </div>
 </template>
 

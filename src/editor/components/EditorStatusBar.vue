@@ -7,6 +7,7 @@ import { getManifest } from '@/shared/manifestRegistry';
 const props = defineProps<{
   viewport: ViewportState;
   placement: PlacementState | null;
+  routing: boolean;
 }>();
 
 /** Human-readable label of the module currently being placed. */
@@ -27,6 +28,9 @@ const placementLabel = computed(() => {
       </n-text>
       <n-text v-if="placementLabel" type="primary" class="text-[10px] uppercase tracking-wider font-bold">
         Placing: {{ placementLabel }} — R: rotate · Esc: cancel
+      </n-text>
+      <n-text v-else-if="routing" type="primary" class="text-[10px] uppercase tracking-wider font-bold">
+        Routing net — click a port to connect · Esc: cancel
       </n-text>
     </div>
     <div>

@@ -3,6 +3,7 @@
 import Konva from "konva";
 import { Point } from "./types";
 import { GridManager } from "./grid";
+import { pointerScenePosition } from "./pointer";
 import { createGhostNode } from "./render/ghost";
 
 export interface PlacementManagerOptions {
@@ -34,7 +35,7 @@ export class PlacementManager {
   private readonly mouseMoveHandler = () => {
     if (!this.ghost) return;
 
-    const scene = this.pointerScenePosition();
+    const scene = pointerScenePosition(this.stage);
     if (!scene) return;
 
     this.ghost.position({
@@ -51,7 +52,7 @@ export class PlacementManager {
     // Left button only; right-button click may end a pan gesture.
     if (e.evt.button !== 0) return;
 
-    const scene = this.pointerScenePosition();
+    const scene = pointerScenePosition(this.stage);
     if (!scene) return;
 
     this.options.onPlaced(
@@ -143,17 +144,5 @@ export class PlacementManager {
     this.stage.off("mousemove", this.mouseMoveHandler);
     this.stage.off("click", this.clickHandler);
     this.stage.off("mouseleave", this.mouseLeaveHandler);
-  }
-
-  /** Container-relative pointer position converted to scene coordinates. */
-  private pointerScenePosition(): Point | null {
-    const pointer = this.stage.getPointerPosition();
-    if (!pointer) return null;
-
-    const scale = this.stage.scaleX();
-    return {
-      x: (pointer.x - this.stage.x()) / scale,
-      y: (pointer.y - this.stage.y()) / scale,
-    };
   }
 }
