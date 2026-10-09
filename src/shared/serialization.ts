@@ -1,30 +1,34 @@
-import { ArchitectureConfig, ArchitectureConfiguration, SerializedNet } from "./types/architecture";
-import { HydratedModule } from "./types/manifest";
+/** @format */
+
+import { ArchitectureConfig, ArchitectureConfiguration } from "./types/architecture";
+import type { SerializedModule, HydratedModule } from "./types/manifest";
+import type { SerializedNet } from "./types/netlist";
 import { hydrateModule } from "./manifestRegistry";
 
 /**
  * Converts a live diagram state into a serializable configuration.
- * Strips runtime-only data like evaluation functions.
+ * Strips runtime-only data like evaluation functions. Hydrated modules are
+ * accepted directly — their runtime extras are picked away.
  */
 export function serializeArchitecture(
   name: string,
   description: string,
-  modules: HydratedModule[],
+  modules: SerializedModule[],
   nets: SerializedNet[],
   configuration: ArchitectureConfiguration
 ): ArchitectureConfig {
   return {
     name,
     description,
-    modules: modules.map(m => ({
-      id: m.designator,
-      typeId: m.typeId,
-      position: m.position,
-      rotation: m.rotation,
-      config: m.config,
+    modules: modules.map((module) => ({
+      designator: module.designator,
+      typeId: module.typeId,
+      position: { x: module.position.x, y: module.position.y },
+      rotation: module.rotation,
+      config: JSON.parse(JSON.stringify(module.config ?? {})),
     })),
-    nets: JSON.parse(JSON.stringify(nets)), // Ensure deep copy of the net tree
-    configuration: JSON.parse(JSON.stringify(configuration)),
+    nets: JSON.parse(JSON.stringify(nets ?? [])), // Deep copy of the net tree
+    configuration: JSON.parse(JSON.stringify(configuration ?? {})),
   };
 }
 
@@ -36,9 +40,9 @@ export function deserializeArchitecture(config: ArchitectureConfig): {
   modules: HydratedModule[];
   nets: SerializedNet[];
 } {
-  const modules = config.modules.map(m => hydrateModule(m));
+  const modules = (config.modules ?? []).map((module) => hydrateModule(module));
   return {
     modules,
-    nets: config.nets || [],
+    nets: config.nets ?? [],
   };
 }

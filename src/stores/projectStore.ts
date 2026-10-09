@@ -35,6 +35,12 @@ export const useProjectStore = defineStore('project', {
             this.projectSaved = false;
         },
 
+        /** Marks the current project as having unsaved changes (e.g. canvas edits). */
+        markUnsaved() {
+            if (!this.currentProject) return;
+            this.projectSaved = false;
+        },
+
         async updateRecentProjects() {
             this.recentProjects = await getProjects(10, { by: 'updatedAt', type: 'desc' });
         }

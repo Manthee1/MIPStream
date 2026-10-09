@@ -1,18 +1,33 @@
 <script setup lang="ts">
-import { computed, h } from 'vue';
+import { computed, h, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, useMessage, NButtonGroup } from 'naive-ui';
+import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup } from 'naive-ui';
 import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconTool, IconPlayerStop, IconPlayerSkipForward } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
 import useTheme from '../../composables/useTheme';
+import { useProjectSave } from '../../composables/useProjectSave';
+import { useKeyboard } from '../../composables/useKeyboard';
 
 const uiStore = useUIStore();
 const projectStore = useProjectStore();
 const router = useRouter();
 const route = useRoute();
-const message = useMessage();
 const { isDark, toggleTheme } = useTheme();
+
+const { saveCurrentProject } = useProjectSave();
+const { setShortcut, removeShortcut } = useKeyboard();
+
+// Global save shortcut: Ctrl+S (Windows/Linux) and Cmd+S (macOS). Registered
+// here so it also works outside the workspace (e.g. the "no project" notice).
+onMounted(() => {
+  setShortcut('CTRL S', () => { void saveCurrentProject(); }, 'Save Project', 'Saves the current project.');
+  setShortcut('META S', () => { void saveCurrentProject(); }, 'Save Project', 'Saves the current project.');
+});
+onUnmounted(() => {
+  removeShortcut('CTRL S');
+  removeShortcut('META S');
+});
 
 const hasProject = computed(() => !!projectStore.currentProject);
 const isWorkspace = computed(() => route.path === '/workspace');
@@ -21,8 +36,8 @@ const currentProjectName = computed(() => projectStore.currentProject?.name || '
 const handleFileMenu = (key: string) => {
   if (key === 'new') uiStore.showCreateProjectModal = true;
   else if (key === 'open') uiStore.showOpenProjectModal = true;
-  else if (key === 'save' && projectStore.currentProject) {
-    projectStore.saveProject().then(() => message.success('Project saved')).catch(() => message.error('Failed to save project'));
+  else if (key === 'save') {
+    void saveCurrentProject();
   } else if (key === 'exit') router.push('/');
 };
 
@@ -76,11 +91,7 @@ const helpOptions = [
   { label: 'About', key: 'about' }
 ];
 
-const handleSave = async () => {
-  if (!projectStore.currentProject) return;
-  try { await projectStore.saveProject(); message.success('Project saved'); }
-  catch (err: any) { message.error('Failed to save project: ' + err.message); }
-};
+const handleSave = () => { void saveCurrentProject(); };
 </script>
 
 

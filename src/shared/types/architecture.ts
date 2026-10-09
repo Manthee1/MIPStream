@@ -1,6 +1,5 @@
 import { ModuleManifest, PortDefinition, SerializedModule as BaseSerializedModule, Pos, HydratedModule } from "./manifest";
-
-export type Axis = 'X' | 'Y';
+import type { SerializedNet } from "./netlist";
 
 /**
  * PDL (Processor Description Language) - Defines instruction formats and machine layout.
@@ -28,27 +27,9 @@ export interface SerializedModule extends BaseSerializedModule {
   // Inherits id, typeId, position, rotation, config
 }
 
-export type NetTarget =
-  | { type: 'junction'; index: number }
-  | { type: 'port'; moduleId: string; portId: string };
-
-export interface NetSegment {
-  to: NetTarget;
-  firstAxis: Axis;
-  positions: number[];
-}
-
-export interface NetBranch extends NetSegment {
-  fromJunctionIndex: number;
-}
-
-export interface SerializedNet {
-  id: string;
-  driver: { moduleId: string; portId: string };
-  junctions: [number, number][];
-  trunk: NetSegment;
-  branches: NetBranch[];
-}
+// Canonical serialized net shape used by the schematic editor and persisted
+// with projects: source/targets endpoints plus routing waypoints and branches.
+export type { SerializedNet };
 
 export interface PipelineStageConfig {
   id: string;

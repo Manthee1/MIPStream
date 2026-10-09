@@ -79,6 +79,9 @@ export class SchematicDesigner {
   private netCounter = 0;
   private placement: PlacementState | null = null;
 
+  /** True while a saved architecture is being restored (not a user edit). */
+  private loading = false;
+
   /** Position snapshot of a multi-selected module group while dragging. */
   private dragSnapshot: Map<string, Point> | null = null;
 
@@ -428,27 +431,30 @@ export class SchematicDesigner {
    * @returns the assigned designator (e.g. "u3"), or null for an unknown typeId.
    */
   public addModule(typeId: string, position: Point, rotation = 0): string | null {
-    const manifest = getManifest(typeId);
-    if (!manifest) return null;
+    if (!getManifest(typeId)) return null;
 
     const designator = `u${++this.moduleCounter}`;
-    const serialized: SerializedModule = {
+    this.instantiateModule({
       designator,
       typeId,
       position: { x: position.x, y: position.y },
       rotation,
       config: {},
-    };
+    });
+    this.notifyDocumentChange();
 
+    return designator;
+  }
+
+  /** Hydrates and renders a module instance, wiring interactions onto the node. */
+  private instantiateModule(serialized: SerializedModule): void {
     const hydrated = hydrateModule(serialized);
     const node = createModuleNode(hydrated, this.mode === 'editor' ? 'editor' : 'viewer');
     this.logicLayer.add(node);
-    this.moduleNodes.set(designator, node);
-    this.hydratedModules.set(designator, hydrated);
+    this.moduleNodes.set(serialized.designator, node);
+    this.hydratedModules.set(serialized.designator, hydrated);
 
-    this.attachModuleInteractions(node, designator);
-
-    return designator;
+    this.attachModuleInteractions(node, serialized.designator);
   }
 
   /** Wires up hover, click, and drag interactions for a module node. */
@@ -540,6 +546,7 @@ export class SchematicDesigner {
     const hydrated = this.hydratedModules.get(designator);
     if (!node || !hydrated) return;
     hydrated.position = { x: node.x(), y: node.y() };
+    this.notifyDocumentChange();
   }
 
   /** Removes a module node from the canvas and all internal tracking. */
@@ -562,6 +569,7 @@ export class SchematicDesigner {
       this.contextTracker.disable('schematic:selection');
     }
 
+    this.notifyDocumentChange();
     return true;
   }
 
@@ -799,6 +807,137 @@ export class SchematicDesigner {
   /** All committed nets, in creation order. */
   public getNets(): SerializedNet[] {
     return this.allNets();
+  }
+
+  // ----------------------------------------------------------------- persist
+
+  /**
+   * Serializable snapshot of every module on the canvas (designator, type,
+   * position, rotation, and user config). Together with `getNets()` this is
+   * the complete persisted architecture document.
+   */
+  public getSerializedModules(): SerializedModule[] {
+    return Array.from(this.hydratedModules.values()).map((module) => ({
+      designator: module.designator,
+      typeId: module.typeId,
+      position: { x: module.position.x, y: module.position.y },
+      rotation: module.rotation,
+      config: JSON.parse(JSON.stringify(module.config ?? {})),
+    }));
+  }
+
+  /**
+   * Restores a serialized architecture onto the canvas: rehydrates modules,
+   * rebuilds wire nodes, and recomputes every net's rendered geometry.
+   * Unknown module types and nets with unavailable endpoints are skipped and
+   * reported as warnings instead of aborting the whole load. Designator
+   * counters are restored so newly created elements never collide with the
+   * restored ids.
+   */
+  public loadArchitecture(arch: { modules?: SerializedModule[]; nets?: SerializedNet[] }): string[] {
+    const warnings: string[] = [];
+
+    this.loading = true;
+    try {
+      for (const serialized of arch.modules ?? []) {
+        if (!getManifest(serialized.typeId)) {
+          warnings.push(`Skipped module "${serialized.designator}" — unknown type "${serialized.typeId}".`);
+          continue;
+        }
+        if (this.hydratedModules.has(serialized.designator)) {
+          warnings.push(`Skipped duplicate module designator "${serialized.designator}".`);
+          continue;
+        }
+
+        const module: SerializedModule = {
+          designator: serialized.designator,
+          typeId: serialized.typeId,
+          position: { x: serialized.position.x, y: serialized.position.y },
+          rotation: serialized.rotation ?? 0,
+          config: JSON.parse(JSON.stringify(serialized.config ?? {})),
+        };
+
+        try {
+          this.instantiateModule(module);
+        } catch (error) {
+          warnings.push(`Skipped module "${serialized.designator}" — ${(error as Error).message}`);
+          continue;
+        }
+        this.moduleCounter = Math.max(this.moduleCounter, idNumber(serialized.designator));
+      }
+
+      for (const net of arch.nets ?? []) {
+        if (this.nets.has(net.id)) {
+          warnings.push(`Skipped duplicate net id "${net.id}".`);
+          continue;
+        }
+
+        const sourcePort = this.resolvePort(net.source);
+        if (!sourcePort || sourcePort.direction !== 'output') {
+          warnings.push(`Skipped net "${net.id}" — its source port is unavailable.`);
+          continue;
+        }
+
+        // Keep only targets that still exist, are inputs, and are not already
+        // driven (one driver per input).
+        const targets = (net.targets ?? []).filter((target) => {
+          const port = this.resolvePort(target);
+          return !!port && port.direction === 'input' && !netDrivingInput(this.allNets(), target);
+        });
+        if (targets.length === 0) {
+          warnings.push(`Skipped net "${net.id}" — no valid target ports.`);
+          continue;
+        }
+        if (targets.length < (net.targets ?? []).length) {
+          warnings.push(`Net "${net.id}" — some targets were unavailable and got dropped.`);
+        }
+
+        const restored: SerializedNet = {
+          id: net.id,
+          source: { ...net.source },
+          targets: targets.map((target) => ({ ...target })),
+        };
+        if (net.waypoints) {
+          restored.waypoints = net.waypoints.map((point) => ({ ...point }));
+        }
+        // Rebuild fan-out branches so they stay aligned with the surviving
+        // targets (branches[i] routes targets[i + 1]).
+        if (net.branches) {
+          const branches: NetBranch[] = [];
+          for (let index = 1; index < restored.targets.length; index++) {
+            const target = restored.targets[index];
+            const originalIndex = (net.targets ?? []).findIndex((candidate) =>
+              isSameEndpoint(candidate, target)
+            );
+            const branch = originalIndex >= 1 ? net.branches[originalIndex - 1] : undefined;
+            if (branch && isSameEndpoint(branch.target, target)) {
+              branches.push({
+                target: { ...branch.target },
+                junction: { ...branch.junction },
+                ...(branch.waypoints
+                  ? { waypoints: branch.waypoints.map((point) => ({ ...point })) }
+                  : {}),
+              });
+            }
+          }
+          if (branches.length > 0) restored.branches = branches;
+        }
+
+        const wire = createWireNode(restored.id, [], []);
+        this.logicLayer.add(wire);
+        this.nets.set(restored.id, restored);
+        this.wireNodes.set(restored.id, wire);
+        this.attachWireInteractions(wire, restored.id);
+        this.recomposeNet(restored);
+        this.netCounter = Math.max(this.netCounter, idNumber(restored.id));
+      }
+
+      this.logicLayer.batchDraw();
+    } finally {
+      this.loading = false;
+    }
+
+    return warnings;
   }
 
   /** Recomputes every wire attached to a module; called during node drag. */
@@ -1164,6 +1303,18 @@ export class SchematicDesigner {
     if (this.config.onNetlistChange) {
       this.config.onNetlistChange(this.allNets());
     }
+    this.notifyDocumentChange();
+  }
+
+  /**
+   * Notifies the host of a committed document mutation (module or netlist
+   * change). Suppressed while a saved architecture is being restored.
+   */
+  private notifyDocumentChange(): void {
+    if (this.loading) return;
+    if (this.config.onDocumentChange) {
+      this.config.onDocumentChange();
+    }
   }
 
   public destroy(): void {
@@ -1178,5 +1329,11 @@ export class SchematicDesigner {
     this.eventManager.detach();
     this.stage.destroy();
   }
+}
+
+/** Numeric suffix of a designator like "u12" or "n3" (0 when absent). */
+function idNumber(id: string): number {
+  const match = /^(?:u|n)(\d+)$/.exec(id);
+  return match ? parseInt(match[1], 10) : 0;
 }
 

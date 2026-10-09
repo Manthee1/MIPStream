@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { SchematicDesigner } from '../core/designer';
+import { setActiveDesigner } from '../core/designer-bridge';
 import { EditorTool, ViewportState, PlacementState } from '../core/types';
 import type { GridSettings } from '@/shared/types/architecture';
 import { useProjectStore } from '@/stores/projectStore';
@@ -30,7 +31,7 @@ onMounted(() => {
     ? { ...DEFAULT_GRID_SETTINGS, ...stored }
     : { ...DEFAULT_GRID_SETTINGS };
 
-  designer = new SchematicDesigner({
+  const instance = new SchematicDesigner({
     container: canvasContainer.value,
     mode: 'editor',
     gridSettings: gridSettings.value,
@@ -45,12 +46,28 @@ onMounted(() => {
     },
     onRoutingChange: (active) => {
       isRouting.value = active;
+    },
+    onDocumentChange: () => {
+      projectStore.markUnsaved();
     }
   });
+  designer = instance;
+
+  // Restore the project's saved architecture onto the canvas.
+  const architecture = projectStore.currentProject?.architecture;
+  if (architecture && (architecture.modules?.length || architecture.nets?.length)) {
+    const warnings = instance.loadArchitecture(architecture);
+    if (warnings.length > 0) console.warn('Architecture restored with warnings:', warnings);
+  }
+
+  // Expose the designer to app-level flows (e.g. Ctrl+S save).
+  setActiveDesigner(instance);
 });
 
 onBeforeUnmount(() => {
+  setActiveDesigner(null);
   designer?.destroy();
+  designer = null;
 });
 
 const handleToolChange = (tool: EditorTool) => {

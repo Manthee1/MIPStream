@@ -31,6 +31,8 @@ export interface DesignerConfig {
   onPlacementChange?: (state: PlacementState | null) => void;
   onRoutingChange?: (active: boolean) => void;
   onNetlistChange?: (nets: SerializedNet[]) => void;
+  /** Fires once per committed document mutation (modules or nets). */
+  onDocumentChange?: () => void;
 }
 
 export interface Point {
