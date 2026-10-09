@@ -2,10 +2,12 @@ import {
   ModuleManifest,
   SerializedModule,
   HydratedModule,
-  PortDefinition
+  PortDefinition,
+  ModuleCategory
 } from "./types/manifest";
 
 const manifestRegistry = new Map<string, ModuleManifest>();
+export const moduleCategories : ModuleCategory[] = ["logic", "memory", "iO", "custom"]
 
 /**
  * Registers a module manifest in the global registry.
