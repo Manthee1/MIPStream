@@ -123,6 +123,21 @@ export interface ModuleRenderOutput {
 }
 
 /**
+ * Props contract for a manifest's simulator panel.
+ *
+ * The simulator host supplies the resolved config, the module's live state
+ * (the engine-owned storage created via `createInitialState` — the same
+ * buffers the engine evaluates against), and a `revision` counter it bumps
+ * on every sampling frame so panels re-render external engine updates.
+ * Panels mutate the shared buffers directly and emit `update` afterwards.
+ */
+export interface ModulePanelProps<TConfig = Record<string, unknown>, TState = unknown> {
+  config: TConfig;
+  state: TState;
+  revision?: number;
+}
+
+/**
  * The static definition of a logic component type.
  */
 export interface ModuleManifest<TConfig = any> {
@@ -161,6 +176,16 @@ export interface ModuleManifest<TConfig = any> {
    * Factory for simulation evaluation functions.
    */
   createEvaluators: (config: TConfig) => ModuleEvaluators;
+
+  /**
+   * Optional factory for a module's internal storage (register banks,
+   * memory arrays). The engine calls this once per module instance and then
+   * passes the returned state reference back **through the config** when
+   * invoking `createEvaluators`, so the returned evaluation closures capture
+   * it. Manifests/components never own state beyond this pure initialization
+   * — all runtime state lives in the engine.
+   */
+  createInitialState?: (config: TConfig) => unknown;
 }
 
 /**

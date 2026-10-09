@@ -1,7 +1,10 @@
+/** @format */
+
 import { ModuleManifest, ModuleEvaluators } from "../../types/manifest";
 import description from "./description.md?raw";
 import icon from "./icon.svg?raw";
-import Panel from "./Panel.vue";
+import { drawShifterBody } from "./draw";
+import { widthMask } from "../../utils/bit-ops";
 
 export type ShifterMode = "logical_left" | "logical_right" | "arithmetic_right";
 
@@ -16,8 +19,8 @@ export const ShifterManifest: ModuleManifest<ShifterConfig> = {
   label: "Shifter",
   description,
   icon,
-  panel: Panel,
   category: "logic",
+  render: drawShifterBody,
 
   defaultConfig: {
     bitWidth: 32,
@@ -57,23 +60,24 @@ export const ShifterManifest: ModuleManifest<ShifterConfig> = {
   ],
 
   createEvaluators: (config): ModuleEvaluators => {
+    const mask = widthMask(config.bitWidth);
+    const shamt = config.shamt & 0x1f;
     return {
       inputPorts: ["in"],
       outputPorts: ["out"],
       evaluate: (inputs: Uint32Array): Uint32Array => {
-        const value = inputs[0];
-        const shamt = config.shamt & 0x1F; // Max 31 for 32-bit
+        const value = (inputs[0] >>> 0) & mask;
         const outputs = new Uint32Array(1);
 
         switch (config.mode) {
           case "logical_left":
-            outputs[0] = (value << shamt) >>> 0;
+            outputs[0] = ((value << shamt) & mask) >>> 0;
             break;
           case "logical_right":
-            outputs[0] = (value >>> shamt) >>> 0;
+            outputs[0] = ((value >>> shamt) & mask) >>> 0;
             break;
           case "arithmetic_right":
-            outputs[0] = (value >> shamt) >>> 0;
+            outputs[0] = ((value >> shamt) & mask) >>> 0;
             break;
           default:
             outputs[0] = value >>> 0;
