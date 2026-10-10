@@ -940,6 +940,96 @@ export class SchematicDesigner {
     return warnings;
   }
 
+  // ----------------------------------------------------------------- config
+
+  /** Read-only access to a module instance (e.g. for Inspector panels). */
+  public getModule(designator: string): HydratedModule | null {
+    return this.hydratedModules.get(designator) ?? null;
+  }
+
+  /**
+   * Applies a new configuration to a module instance: rehydrates it (ports
+   * and evaluators are rebuilt from the new config), re-renders its node in
+   * place, and reconciles every net attached to it — endpoints whose ports
+   * no longer exist after the change are dropped, and nets left without a
+   * valid source or with no targets are removed entirely.
+   */
+  public setModuleConfig(designator: string, config: Record<string, unknown>): boolean {
+    const hydrated = this.hydratedModules.get(designator);
+    const node = this.moduleNodes.get(designator);
+    if (!hydrated || !node) return false;
+
+    const serialized: SerializedModule = {
+      designator,
+      typeId: hydrated.typeId,
+      position: { x: hydrated.position.x, y: hydrated.position.y },
+      rotation: hydrated.rotation,
+      config: JSON.parse(JSON.stringify(config)) as Record<string, unknown>,
+    };
+
+    const rehydrated = hydrateModule(serialized);
+    this.hydratedModules.set(designator, rehydrated);
+
+    // Rebuild the node in place, keeping the previous layer order, transform,
+    // and selection highlight.
+    const index = node.zIndex();
+    const x = node.x();
+    const y = node.y();
+    const rotation = node.rotation();
+    const wasSelected = this.selection.has(designator);
+
+    const fresh = createModuleNode(rehydrated, this.mode === 'editor' ? 'editor' : 'viewer');
+    this.logicLayer.add(fresh);
+    node.destroy();
+    fresh.zIndex(index);
+    fresh.position({ x, y });
+    fresh.rotation(rotation);
+    this.moduleNodes.set(designator, fresh);
+    this.attachModuleInteractions(fresh, designator);
+    if (wasSelected) setNodeSelected(fresh, true);
+
+    this.reconcileNetsForModule(designator);
+    this.logicLayer.batchDraw();
+    this.notifyNetlistChange();
+    this.notifyDocumentChange();
+
+    return true;
+  }
+
+  /**
+   * Reconciles every net attached to a module whose port set changed:
+   * targets (and their branches) referencing removed ports are dropped,
+   * and nets left without a valid source or with no targets are removed.
+   */
+  private reconcileNetsForModule(designator: string): void {
+    for (const net of this.allNets()) {
+      const touches =
+        net.source.designator === designator ||
+        net.targets.some((target) => target.designator === designator);
+      if (!touches) continue;
+
+      if (!this.resolvePort(net.source)) {
+        this.removeNet(net.id);
+        continue;
+      }
+
+      const targets = net.targets.filter((target) => !!this.resolvePort(target));
+      if (targets.length === 0) {
+        this.removeNet(net.id);
+        continue;
+      }
+      if (targets.length !== net.targets.length) {
+        net.targets = targets;
+        if (net.branches) {
+          net.branches = net.branches.filter((branch) =>
+            targets.some((target) => isSameEndpoint(target, branch.target))
+          );
+        }
+      }
+      this.recomposeNet(net);
+    }
+  }
+
   /** Recomputes every wire attached to a module; called during node drag. */
   private rerenderNetsForDesignator(designator: string): void {
     for (const net of this.nets.values()) {

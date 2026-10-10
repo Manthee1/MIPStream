@@ -3,9 +3,16 @@
 import { ModuleManifest, ModuleEvaluators, PortDefinition } from "../../types/manifest";
 import description from "./description.md?raw";
 import icon from "./icon.svg?raw";
-import { decodeControl } from "./logic";
+import ControlConfigEditor from "./ControlConfigEditor.vue";
+import {
+  CONTROL_ROWS,
+  CONTROL_SIGNALS,
+  ControlConfig,
+  buildControlTable,
+  opcodeMask,
+} from "./logic";
 
-export interface ControlConfig {}
+export type { ControlConfig, ControlRow, ControlSignalDef } from "./logic";
 
 export const ControlManifest: ModuleManifest<ControlConfig> = {
   typeId: "std.control",
@@ -14,45 +21,49 @@ export const ControlManifest: ModuleManifest<ControlConfig> = {
   icon,
   category: "logic",
 
-  defaultConfig: {},
+  // The signal list + opcode table form one coherent spreadsheet-style
+  // editor, so it replaces the generic schema-driven form entirely.
+  configEditor: ControlConfigEditor,
 
-  generatePorts: (): PortDefinition[] => [
-    { id: "opcode", direction: "input", bits: 6, label: "Opcode", tooltip: "Instruction opcode field", position: { x: -50, y: 0 } },
-    { id: "regDst", direction: "output", bits: 1, label: "RegDst", position: { x: 50, y: -63 } },
-    { id: "aluSrc", direction: "output", bits: 1, label: "ALUSrc", position: { x: 50, y: -45 } },
-    { id: "memToReg", direction: "output", bits: 1, label: "MemtoReg", position: { x: 50, y: -27 } },
-    { id: "regWrite", direction: "output", bits: 1, label: "RegWrite", position: { x: 50, y: -9 } },
-    { id: "memRead", direction: "output", bits: 1, label: "MemRead", position: { x: 50, y: 9 } },
-    { id: "memWrite", direction: "output", bits: 1, label: "MemWrite", position: { x: 50, y: 27 } },
-    { id: "branch", direction: "output", bits: 1, label: "Branch", position: { x: 50, y: 45 } },
-    { id: "aluOp", direction: "output", bits: 2, label: "ALUOp", position: { x: 50, y: 63 } },
-  ],
+  defaultConfig: {
+    opcodeBits: 6,
+    signals: CONTROL_SIGNALS,
+    rows: CONTROL_ROWS,
+  },
 
-  createEvaluators: (): ModuleEvaluators => {
+  generatePorts: (config): PortDefinition[] => {
+    const outputs: PortDefinition[] = config.signals.map((signal, index) => ({
+      id: signal.id,
+      direction: "output",
+      bits: signal.bits,
+      label: signal.label ?? signal.id,
+      tooltip: `Control signal ${signal.id} (${signal.bits} bit${signal.bits > 1 ? "s" : ""})`,
+      position: { x: 50, y: (index - (config.signals.length - 1) / 2) * 18 },
+    }));
+    return [
+      {
+        id: "opcode",
+        direction: "input",
+        bits: config.opcodeBits,
+        label: "Opcode",
+        tooltip: "Instruction opcode field",
+        position: { x: -50, y: 0 },
+      },
+      ...outputs,
+    ];
+  },
+
+  createEvaluators: (config): ModuleEvaluators => {
+    // Compile the user's decode table once into a flat lookup.
+    const table = buildControlTable(config);
+    const signalCount = config.signals.length;
+    const mask = opcodeMask(config.opcodeBits);
     return {
       inputPorts: ["opcode"],
-      outputPorts: [
-        "regDst",
-        "aluSrc",
-        "memToReg",
-        "regWrite",
-        "memRead",
-        "memWrite",
-        "branch",
-        "aluOp",
-      ],
+      outputPorts: config.signals.map((signal) => signal.id),
       evaluate: (inputs: Uint32Array): Uint32Array => {
-        const signals = decodeControl(inputs[0]);
-        return new Uint32Array([
-          signals.regDst,
-          signals.aluSrc,
-          signals.memToReg,
-          signals.regWrite,
-          signals.memRead,
-          signals.memWrite,
-          signals.branch,
-          signals.aluOp,
-        ]);
+        const base = (inputs[0] & mask) * signalCount;
+        return table.slice(base, base + signalCount);
       },
     };
   },

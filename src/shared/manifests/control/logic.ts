@@ -1,81 +1,135 @@
 /** @format */
 
-/** Classic single-cycle MIPS opcode classes. */
-export const OPCODE_RTYPE = 0x00;
-export const OPCODE_LW = 0x23;
-export const OPCODE_SW = 0x2b;
-export const OPCODE_BEQ = 0x04;
+import { widthMask } from "../../utils/bit-ops";
 
-export interface ControlSignals {
-  regDst: number;
-  aluSrc: number;
-  memToReg: number;
-  regWrite: number;
-  memRead: number;
-  memWrite: number;
-  branch: number;
-  aluOp: number;
+/**
+ * Config-driven Control Unit decode table.
+ *
+ * The user defines the set of output control signals (id + width) and a
+ * table mapping opcodes to their signal values; the manifest compiles the
+ * table into a flattened lookup (`Uint32Array`) consumed by the evaluator.
+ * The logic below is pure TypeScript — no Vue reactivity.
+ */
+
+/** One output control signal: a stable port id and its bit width. */
+export interface ControlSignalDef {
+  /** Port id used for wiring (stable, e.g. "regDst"). */
+  id: string;
+  /** Optional column header (defaults to the id). */
+  label?: string;
+  /** Signal width in bits (values are masked to it). */
+  bits: number;
 }
 
-const NO_SIGNALS: ControlSignals = {
-  regDst: 0,
-  aluSrc: 0,
-  memToReg: 0,
-  regWrite: 0,
-  memRead: 0,
-  memWrite: 0,
-  branch: 0,
-  aluOp: 0,
-};
+/** One table row: an opcode and its control signal values. */
+export interface ControlRow {
+  /** Opcode value (masked to the opcode width). */
+  opcode: number;
+  /** Optional row label (e.g. "lw"). */
+  label?: string;
+  /** Signal values keyed by signal id. */
+  values: Record<string, number>;
+}
 
-/** Decodes the 6-bit opcode into the datapath's control signals. */
-export function decodeControl(opcode: number): ControlSignals {
-  switch (opcode & 0x3f) {
-    case OPCODE_RTYPE:
-      return {
-        regDst: 1,
-        aluSrc: 0,
-        memToReg: 0,
-        regWrite: 1,
-        memRead: 0,
-        memWrite: 0,
-        branch: 0,
-        aluOp: 0b10,
-      };
-    case OPCODE_LW:
-      return {
-        regDst: 0,
-        aluSrc: 1,
-        memToReg: 0,
-        regWrite: 1,
-        memRead: 1,
-        memWrite: 0,
-        branch: 0,
-        aluOp: 0b00,
-      };
-    case OPCODE_SW:
-      return {
-        regDst: 0,
-        aluSrc: 1,
-        memToReg: 0,
-        regWrite: 0,
-        memRead: 0,
-        memWrite: 1,
-        branch: 0,
-        aluOp: 0b00,
-      };
-    case OPCODE_BEQ:
-      return {
-        regDst: 0,
-        aluSrc: 0,
-        memToReg: 0,
-        regWrite: 0,
-        memRead: 0,
-        memWrite: 0,
-        branch: 1,
-        aluOp: 0b01,
-      };
-    default:
-      return { ...NO_SIGNALS };
+/** Complete configuration of a control unit instance. */
+export interface ControlConfig {
+  /** Width of the opcode input bus (1..12 bits). */
+  opcodeBits: number;
+  /** Output control signals — these also drive the generated ports. */
+  signals: ControlSignalDef[];
+  /** Opcode decode table. */
+  rows: ControlRow[];
+}
+
+/** Classic single-cycle MIPS control signals (the default set). */
+export const CONTROL_SIGNALS: ControlSignalDef[] = [
+  { id: "regDst", bits: 1 },
+  { id: "aluSrc", bits: 1 },
+  { id: "memToReg", bits: 1 },
+  { id: "regWrite", bits: 1 },
+  { id: "memRead", bits: 1 },
+  { id: "memWrite", bits: 1 },
+  { id: "branch", bits: 1 },
+  { id: "aluOp", bits: 2 },
+];
+
+/** Classic single-cycle MIPS opcode decode table (the default rows). */
+export const CONTROL_ROWS: ControlRow[] = [
+  {
+    opcode: 0x00,
+    label: "R-type",
+    values: { regDst: 1, aluSrc: 0, memToReg: 0, regWrite: 1, memRead: 0, memWrite: 0, branch: 0, aluOp: 0b10 },
+  },
+  {
+    opcode: 0x23,
+    label: "lw",
+    values: { regDst: 0, aluSrc: 1, memToReg: 0, regWrite: 1, memRead: 1, memWrite: 0, branch: 0, aluOp: 0b00 },
+  },
+  {
+    opcode: 0x2b,
+    label: "sw",
+    values: { regDst: 0, aluSrc: 1, memToReg: 0, regWrite: 0, memRead: 0, memWrite: 1, branch: 0, aluOp: 0b00 },
+  },
+  {
+    opcode: 0x04,
+    label: "beq",
+    values: { regDst: 0, aluSrc: 0, memToReg: 0, regWrite: 0, memRead: 0, memWrite: 0, branch: 1, aluOp: 0b01 },
+  },
+];
+
+/** Mask covering the configured opcode width (clamped to 1..12 bits). */
+export function opcodeMask(opcodeBits: number): number {
+  return widthMask(Math.min(12, Math.max(1, opcodeBits)));
+}
+
+/** Config sanity warnings for the editor (duplicates, width overflows). */
+export function controlConfigWarnings(config: ControlConfig): string[] {
+  const warnings: string[] = [];
+
+  const ids = new Set<string>();
+  for (const signal of config.signals) {
+    const id = signal.id.trim();
+    if (!id) warnings.push("A signal is missing its id.");
+    else if (ids.has(id)) warnings.push(`Duplicate signal id "${id}".`);
+    else ids.add(id);
+    if (signal.bits < 1 || signal.bits > 32) {
+      warnings.push(`Signal "${id || "?"}" has an invalid width.`);
+    }
   }
+
+  const mask = opcodeMask(config.opcodeBits);
+  const opcodes = new Set<number>();
+  for (const row of config.rows) {
+    const opcode = row.opcode & mask;
+    if (opcodes.has(opcode)) warnings.push(`Duplicate opcode 0x${opcode.toString(16)}.`);
+    else opcodes.add(opcode);
+    for (const signal of config.signals) {
+      const value = row.values[signal.id] ?? 0;
+      if (value < 0 || value > widthMask(signal.bits)) {
+        warnings.push(
+          `Opcode 0x${opcode.toString(16)}: "${signal.id}" exceeds ${signal.bits} bits.`
+        );
+      }
+    }
+  }
+
+  return warnings;
+}
+
+/**
+ * Compiles the decode table into a flattened row-major lookup: entry
+ * `opcode * signalCount + index` holds the signal's value. Opcodes without
+ * a row decode to all-zero signals.
+ */
+export function buildControlTable(config: ControlConfig): Uint32Array {
+  const signalCount = config.signals.length;
+  const mask = opcodeMask(config.opcodeBits);
+  const table = new Uint32Array((mask + 1) * signalCount);
+  for (const row of config.rows) {
+    const base = (row.opcode & mask) * signalCount;
+    config.signals.forEach((signal, index) => {
+      table[base + index] = (row.values[signal.id] ?? 0) & widthMask(signal.bits);
+    });
+  }
+  return table;
 }

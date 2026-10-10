@@ -41,7 +41,11 @@ export const ShifterManifest: ModuleManifest<ShifterConfig> = {
       key: "mode",
       label: "Mode",
       type: "select",
-      options: ["logical_left", "logical_right", "arithmetic_right"],
+      options: [
+        { label: "Logical Left", value: "logical_left" },
+        { label: "Logical Right", value: "logical_right" },
+        { label: "Arithmetic Right", value: "arithmetic_right" },
+      ],
       default: "logical_left"
     },
     {

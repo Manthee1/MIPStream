@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { SchematicDesigner } from '../core/designer';
 import { setActiveDesigner } from '../core/designer-bridge';
+import { setSelection, bumpDocumentRevision } from '../core/selection-bridge';
 import { EditorTool, ViewportState, PlacementState } from '../core/types';
 import type { GridSettings } from '@/shared/types/architecture';
 import { useProjectStore } from '@/stores/projectStore';
@@ -47,8 +48,12 @@ onMounted(() => {
     onRoutingChange: (active) => {
       isRouting.value = active;
     },
+    onSelectionChange: (ids) => {
+      setSelection(ids);
+    },
     onDocumentChange: () => {
       projectStore.markUnsaved();
+      bumpDocumentRevision();
     }
   });
   designer = instance;
@@ -66,6 +71,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   setActiveDesigner(null);
+  setSelection([]);
   designer?.destroy();
   designer = null;
 });

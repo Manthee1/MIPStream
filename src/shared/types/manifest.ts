@@ -67,15 +67,23 @@ export interface ModuleEvaluators {
 }
 
 
+/** One selectable option of a 'select' schema property. */
+export interface SelectOption {
+  label: string;
+  value: number | string;
+}
+
 export interface ModulePropertySchema {
   key: string; // Config property key
   label: string; // Human-readable label for UI
   type: "number" | "string" | "boolean" | "select"; // Data type
-  default?: any; // Default value if not provided
-  options?: any[]; // For 'select' type, the list of valid options
+  default?: number | string | boolean; // Default value if not provided
+  /** For 'select' type, the list of selectable options. */
+  options?: SelectOption[];
   min?: number; // For 'number' type, minimum value
   max?: number; // For 'number' type, maximum value
   step?: number; // For 'number' type, step increment
+  placeholder?: string; // Optional placeholder for text inputs
   tooltip?: string; // Optional tooltip for UI guidance
 }
 
@@ -138,6 +146,19 @@ export interface ModulePanelProps<TConfig = Record<string, unknown>, TState = un
 }
 
 /**
+ * Props contract for a manifest's custom config editor (rendered by the
+ * designer's Inspector panel when `ModuleManifest.configEditor` is set).
+ * The host supplies the resolved config and applies every emitted update
+ * through the designer's `setModuleConfig` — the editor never mutates the
+ * config object directly.
+ */
+export interface ModuleConfigEditorProps<TConfig = Record<string, unknown>> {
+  config: TConfig;
+  designator?: string;
+  "onUpdate:config"?: (config: TConfig) => void;
+}
+
+/**
  * The static definition of a logic component type.
  */
 export interface ModuleManifest<TConfig = any> {
@@ -152,6 +173,13 @@ export interface ModuleManifest<TConfig = any> {
    * This component will be rendered when the module is inspected during simulation.
    */
   panel?: Component;
+
+  /**
+   * Optional fully custom editor component for the designer's Inspector
+   * panel. When present it replaces the generic schema-driven form — use it
+   * for advanced configurations (e.g. the Control Unit's signal table).
+   */
+  configEditor?: Component;
 
   defaultConfig: TConfig;
 
