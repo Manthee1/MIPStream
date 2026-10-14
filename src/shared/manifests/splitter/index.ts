@@ -4,77 +4,48 @@ import { ModuleManifest, ModuleEvaluators, PortDefinition } from "../../types/ma
 import description from "./description.md?raw";
 import icon from "./icon.svg?raw";
 import { drawSplitterBody } from "./draw";
-import { fieldRanges, parseFieldSpec, splitFields } from "./logic";
-
-export interface SplitterConfig {
-  /** Width of the input bus. */
-  inputBits: number;
-  /** Comma-separated field widths, MSB-first (e.g. "6,5,5,5,5,6"). */
-  fields: string;
-}
-
-/**
- * Resolves the field widths from the config spec, falling back to a single
- * full-width pass-through field when the spec is invalid.
- */
-function resolveFieldWidths(config: SplitterConfig): number[] {
-  return parseFieldSpec(config.fields, config.inputBits) ?? [config.inputBits];
-}
+import SplitterConfigEditor from "./SplitterConfigEditor.vue";
+import { resolveSplitterFields, type SplitterConfig } from "./logic";
+import { clampWiringBits, contiguousField, fieldMappingTooltip, remapFromBus } from "../wiring-logic";
+import { widthMask } from "../../utils/bit-ops";
 
 export const BitSplitterManifest: ModuleManifest<SplitterConfig> = {
   typeId: "std.splitter",
   label: "Bit Splitter",
   description,
   icon,
-  category: "logic",
+  category: "wiring",
   render: drawSplitterBody,
+  configEditor: SplitterConfigEditor,
 
   defaultConfig: {
     inputBits: 32,
-    fields: "16,16",
+    outputs: [contiguousField(31, 16, "f1"), contiguousField(15, 0, "f2")],
   },
 
-  configSchema: [
-    {
-      key: "inputBits",
-      label: "Input Bits",
-      type: "number",
-      min: 1,
-      max: 32,
-      default: 32,
-      tooltip: "Width of the input bus.",
-    },
-    {
-      key: "fields",
-      label: "Field Widths",
-      type: "string",
-      default: "16,16",
-      tooltip: "Comma-separated field widths, MSB first (e.g. 6,5,5,5,5,6). Fields summing to less than the input drop the remaining low bits.",
-    },
-  ],
-
   generatePorts: (config) => {
-    const widths = resolveFieldWidths(config);
-    const ranges = fieldRanges(widths, config.inputBits);
+    const busBits = clampWiringBits(config.inputBits);
+    const fields = resolveSplitterFields(config);
 
     const ports: PortDefinition[] = [
       {
         id: "in",
         direction: "input",
-        bits: config.inputBits,
+        bits: busBits,
         label: "In",
-        position: { x: -50, y: 0 },
+        tooltip: `Input bus [${busBits - 1}:0]`,
+        position: { x: -44, y: 0 },
       },
     ];
 
-    widths.forEach((width, i) => {
+    fields.forEach((field, i) => {
       ports.push({
-        id: `out${i}`,
+        id: `out_${field.id}`,
         direction: "output",
-        bits: width,
-        label: `Out ${i}`,
-        tooltip: `Bits [${ranges[i].hi}:${ranges[i].lo}]`,
-        position: { x: 50, y: (i - (widths.length - 1) / 2) * 20 },
+        bits: field.bits,
+        label: field.label || `Out ${i + 1}`,
+        tooltip: fieldMappingTooltip(field),
+        position: { x: 44, y: (i - (fields.length - 1) / 2) * 20 },
       });
     });
 
@@ -82,12 +53,19 @@ export const BitSplitterManifest: ModuleManifest<SplitterConfig> = {
   },
 
   createEvaluators: (config): ModuleEvaluators => {
-    const widths = resolveFieldWidths(config);
+    const busBits = clampWiringBits(config.inputBits);
+    const fields = resolveSplitterFields(config);
+    const mask = widthMask(busBits);
+
     return {
       inputPorts: ["in"],
-      outputPorts: widths.map((_, i) => `out${i}`),
-      evaluate: (inputs: Uint32Array): Uint32Array =>
-        new Uint32Array(splitFields(inputs[0], widths, config.inputBits)),
+      outputPorts: fields.map((field) => `out_${field.id}`),
+      evaluate: (inputs: Uint32Array): Uint32Array => {
+        const bus = (inputs[0] >>> 0) & mask;
+        const out = new Uint32Array(fields.length);
+        for (let i = 0; i < fields.length; i++) out[i] = remapFromBus(bus, fields[i]);
+        return out;
+      },
     };
   },
 };

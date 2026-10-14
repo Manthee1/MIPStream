@@ -28,6 +28,7 @@ const paletteItems: PaletteItem[] = getAllManifests()
 
 const categoryItemMap: Record<ModuleCategory, PaletteItem[]> = {
   logic: [],
+  wiring: [],
   memory: [],
   iO: [],
   custom: [],

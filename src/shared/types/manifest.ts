@@ -5,7 +5,7 @@ import type { Component } from "vue";
 
 export type PortDirection = "input" | "output";
 
-export type ModuleCategory = "logic" | "memory" | "iO" | "custom";
+export type ModuleCategory = "logic" | "wiring" | "memory" | "iO" | "custom";
 
 export interface Pos {
   x: number;

@@ -4,6 +4,7 @@ import { AdderManifest } from "./adder";
 import { AluControlManifest } from "./alu-control";
 import { AluManifest } from "./alu";
 import { AndGateManifest } from "./logic";
+import { BitMergerManifest } from "./merger";
 import { BitSplitterManifest } from "./splitter";
 import { ConstantManifest } from "./constant";
 import { ControlManifest } from "./control";
@@ -26,6 +27,7 @@ export const StandardManifests = [
   AluControlManifest,
   AluManifest,
   AndGateManifest,
+  BitMergerManifest,
   BitSplitterManifest,
   ConstantManifest,
   ControlManifest,
@@ -54,6 +56,7 @@ export * from "./data-memory";
 export * from "./extender";
 export * from "./instruction-memory";
 export * from "./logic";
+export * from "./merger";
 export * from "./mux";
 export * from "./pc";
 export * from "./register-file";

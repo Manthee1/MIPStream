@@ -1,21 +1,35 @@
 /** @format */
 
-/**
- * Generic bit-field splitter logic. Field widths are listed MSB-first; if
- * the widths sum to less than the input width, the remaining low bits are
- * simply not output.
- */
-export interface FieldRange {
-  hi: number;
-  lo: number;
-}
+import {
+  clampWiringBits,
+  contiguousField,
+  passThroughField,
+  sanitizeWiringFields,
+  wiringFieldWarnings,
+  type WiringField,
+} from "../wiring-logic";
 
 /**
- * Parses a comma-separated field-width spec (e.g. "6,5,5,5,5,6") into
- * MSB-first widths. Returns null when any width is not a positive integer or
- * the total exceeds `inputBits`.
+ * Jumper-mapped bit splitter logic. Each output field taps arbitrary,
+ * individually-mapped input bus bits — overlaps and reordering are both
+ * legal (e.g. one field carrying [31:16] while another mirrors [15:0],
+ * or two fields both tapping [11:0]).
  */
-export function parseFieldSpec(text: string, inputBits: number): number[] | null {
+export interface SplitterConfig {
+  /** Width of the input bus (1-32). */
+  inputBits: number;
+  /** Output fields; `map[o]` is the input bit feeding output bit `o`. */
+  outputs: WiringField[];
+}
+
+export type SplitterField = WiringField;
+
+/**
+ * Parses the legacy comma-separated field-width spec ("6,5,5,5,5,6",
+ * MSB-first). Returns null when any width is not a positive integer or
+ * the total exceeds the bus width.
+ */
+export function parseLegacyFieldSpec(text: string, inputBits: number): number[] | null {
   const parts = text.split(",");
   const widths: number[] = [];
   let total = 0;
@@ -33,28 +47,45 @@ export function parseFieldSpec(text: string, inputBits: number): number[] | null
   return widths;
 }
 
-/** Bit range covered by each field, MSB-first. */
-export function fieldRanges(widths: number[], inputBits: number): FieldRange[] {
-  const ranges: FieldRange[] = [];
-  let hi = inputBits - 1;
-  for (const width of widths) {
-    const lo = hi - width + 1;
-    ranges.push({ hi, lo });
-    hi = lo - 1;
+/**
+ * Resolves the effective output fields from a config, migrating the
+ * legacy `fields: "16,16"` width-spec configs into contiguous
+ * jumper-mapped fields (MSB-first) and falling back to a full-width
+ * pass-through when the config is invalid or empty. The legacy spec
+ * takes precedence when present: it only ever comes from pre-jumper
+ * instances, and the first edit through the new config editor replaces
+ * the whole config (dropping the key).
+ */
+export function resolveSplitterFields(config: SplitterConfig): WiringField[] {
+  const busBits = clampWiringBits(config.inputBits);
+
+  const legacyText = (config as { fields?: unknown }).fields;
+  if (typeof legacyText === "string") {
+    const widths = parseLegacyFieldSpec(legacyText, busBits);
+    if (widths) {
+      const fields: WiringField[] = [];
+      let hi = busBits - 1;
+      widths.forEach((width, i) => {
+        fields.push(contiguousField(hi, hi - width + 1, `f${i + 1}`));
+        hi -= width;
+      });
+      return fields;
+    }
   }
-  return ranges;
+
+  if (Array.isArray(config.outputs) && config.outputs.length > 0) {
+    const fields = sanitizeWiringFields(config.outputs, busBits);
+    if (fields.length > 0) return fields;
+  }
+
+  return [passThroughField(busBits)];
 }
 
-/** Extracts each MSB-first field from an unsigned word. */
-export function splitFields(value: number, widths: number[], inputBits: number): number[] {
-  const v = value >>> 0;
-  const out: number[] = []
-  let hi = inputBits - 1;
-  for (const width of widths) {
-    const lo = hi - width + 1;
-    const mask = width >= 32 ? 0xffffffff : 2 ** width - 1;
-    out.push(((v >>> lo) & mask) >>> 0);
-    hi = lo - 1;
-  }
-  return out;
+/** Config sanity warnings for the editor. */
+export function splitterWarnings(config: SplitterConfig): string[] {
+  return wiringFieldWarnings(
+    resolveSplitterFields(config),
+    clampWiringBits(config.inputBits),
+    true
+  );
 }

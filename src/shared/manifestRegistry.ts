@@ -7,7 +7,7 @@ import {
 } from "./types/manifest";
 
 const manifestRegistry = new Map<string, ModuleManifest>();
-export const moduleCategories : ModuleCategory[] = ["logic", "memory", "iO", "custom"]
+export const moduleCategories : ModuleCategory[] = ["logic", "wiring", "memory", "iO", "custom"]
 
 /**
  * Registers a module manifest in the global registry.
