@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "sim:build": "cd src/core/simulator && make",
-    "sim:clean": "cd src/core/simulator && make clean",
-    "sim:run": "cd src/core/simulator && ./mipstream"
+    "engine:check": "vite build --config vite.engine-check.config.ts && node .engine-check/engine-smoke.js"
   },
   "dependencies": {
     "@tabler/icons-vue": "^3.48.0",

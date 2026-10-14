@@ -2,7 +2,7 @@
 import GoldenLayout from '../../components/layout/GoldenLayout.vue';
 import CodeEditor from '../components/CodeEditor.vue';
 import RegistersPanel from '../components/RegistersPanel.vue';
-import SchematicEditor from '../../editor/components/SchematicEditor.vue';
+import SchematicViewer from '../../editor/components/SchematicViewer.vue';
 import { LayoutConfig } from 'golden-layout';
 
 const config: LayoutConfig = {
@@ -48,7 +48,7 @@ const config: LayoutConfig = {
 };
 
 const components = {
-  Viewer: SchematicEditor, // Reuse editor for now, will lock it later
+  Viewer: SchematicViewer,
   Code: CodeEditor,
   Registers: RegistersPanel,
   Memory: { template: '<div class="p-4 text-secondary opacity-50">Memory Panel Placeholder</div>' }

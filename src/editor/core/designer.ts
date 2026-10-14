@@ -809,6 +809,16 @@ export class SchematicDesigner {
     return this.allNets();
   }
 
+  /** The Konva stage (runtime probing / hit-testing from the viewer). */
+  public getStage(): Konva.Stage {
+    return this.stage;
+  }
+
+  /** A net's rendered wire group, for runtime signal styling. */
+  public getWireNode(netId: string): Konva.Group | null {
+    return this.wireNodes.get(netId) ?? null;
+  }
+
   // ----------------------------------------------------------------- persist
 
   /**

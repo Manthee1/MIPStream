@@ -212,6 +212,43 @@ export function setWireDangerHover(group: Konva.Group, danger: boolean): void {
   }
 }
 
+const WIRE_SIGNAL_ON_WIDTH = 2.5;
+
+/**
+ * Applies the live runtime signal style during simulation: non-zero nets
+ * render in the "signal on" color with a heavier stroke, zero nets render
+ * dimmed (UI_AND_UX §2 — wires change color/thickness based on active
+ * values). A selected wire keeps its selection styling (highest precedence).
+ */
+export function setWireSignalState(
+  group: Konva.Group,
+  active: boolean,
+  selected = false
+): void {
+  const theme = readRenderTheme();
+  const color = selected
+    ? theme.selected
+    : active
+      ? theme.signalOn
+      : theme.signalOff;
+  const width = selected
+    ? WIRE_SELECTED_WIDTH
+    : active
+      ? WIRE_SIGNAL_ON_WIDTH
+      : WIRE_STROKE_WIDTH;
+
+  for (const line of wireGroupLines(group)) {
+    line.stroke(color);
+    line.strokeWidth(width);
+  }
+
+  for (const dot of group.getChildren(
+    (child) => child.name() === "junction-dot"
+  )) {
+    if (dot instanceof Konva.Circle) dot.fill(color);
+  }
+}
+
 /** Creates a draggable waypoint / junction handle square (shown when selected). */
 export function createWaypointHandle(
   position: Pos,

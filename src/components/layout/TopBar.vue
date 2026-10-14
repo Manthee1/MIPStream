@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, h, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup } from 'naive-ui';
-import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconTool, IconPlayerStop, IconPlayerSkipForward } from '@tabler/icons-vue';
+import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup, useMessage } from 'naive-ui';
+import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { useSimulationStore } from '../../stores/simulationStore';
+import { useSimulation } from '../../composables/useSimulation';
 import useTheme from '../../composables/useTheme';
 import { useProjectSave } from '../../composables/useProjectSave';
 import { useKeyboard } from '../../composables/useKeyboard';
@@ -13,10 +15,37 @@ const uiStore = useUIStore();
 const projectStore = useProjectStore();
 const router = useRouter();
 const route = useRoute();
+const message = useMessage();
 const { isDark, toggleTheme } = useTheme();
 
 const { saveCurrentProject } = useProjectSave();
 const { setShortcut, removeShortcut } = useKeyboard();
+
+// Simulation controls (Simulate perspective only).
+const simulationStore = useSimulationStore();
+const {
+  run: runSimulation,
+  pause: pauseSimulation,
+  stop: stopSimulation,
+  step: stepSimulation,
+} = useSimulation();
+
+const isRunning = computed(() => simulationStore.status === 'running');
+const canHalt = computed(() => simulationStore.status !== 'stopped');
+
+const notifyCompileErrors = () => {
+  if (simulationStore.compileErrors.length > 0) {
+    message.error(`Cannot simulate: ${simulationStore.compileErrors[0]}`);
+  }
+};
+
+const handleRun = () => {
+  if (!runSimulation()) notifyCompileErrors();
+};
+
+const handleStep = () => {
+  if (!stepSimulation()) notifyCompileErrors();
+};
 
 // Global save shortcut: Ctrl+S (Windows/Linux) and Cmd+S (macOS). Registered
 // here so it also works outside the workspace (e.g. the "no project" notice).
@@ -129,16 +158,23 @@ const handleSave = () => { void saveCurrentProject(); };
 
 
         <!-- Workspace Specific Simulation Controls -->
-        <n-space :size="4" v-if="hasProject && isWorkspace && uiStore.perspective === 'simulate'">
-          <n-button quaternary circle size="tiny" type="success"><template #icon><n-icon>
-                <IconPlayerPlay />
-              </n-icon></template></n-button>
-          <n-button quaternary circle size="tiny" disabled><template #icon><n-icon>
-                <IconPlayerStop />
-              </n-icon></template></n-button>
-          <n-button quaternary circle size="tiny" type="primary"><template #icon><n-icon>
-                <IconPlayerSkipForward />
-              </n-icon></template></n-button>
+        <n-space :size="4" v-if="hasProject && isWorkspace && uiStore.perspective === 'simulate'" align="center">
+          <n-button quaternary circle size="tiny" type="success" :disabled="isRunning" title="Run (F5)" @click="handleRun">
+            <template #icon><n-icon><IconPlayerPlay /></n-icon></template>
+          </n-button>
+          <n-button quaternary circle size="tiny" :disabled="!isRunning" title="Pause (F6)" @click="pauseSimulation">
+            <template #icon><n-icon><IconPlayerPause /></n-icon></template>
+          </n-button>
+          <n-button quaternary circle size="tiny" type="error" :disabled="!canHalt" title="Stop & Reset" @click="stopSimulation">
+            <template #icon><n-icon><IconPlayerStop /></n-icon></template>
+          </n-button>
+          <n-button quaternary circle size="tiny" type="primary" :disabled="isRunning" title="Step (F10)" @click="handleStep">
+            <template #icon><n-icon><IconPlayerSkipForward /></n-icon></template>
+          </n-button>
+          <n-divider vertical />
+          <n-text depth="2" class="text-xs font-medium tabular-nums">
+            Cycle {{ simulationStore.cycleCount }}
+          </n-text>
           <n-divider vertical />
         </n-space>
 

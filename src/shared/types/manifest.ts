@@ -104,6 +104,10 @@ export interface RenderTheme {
   valid: string;
   /** Highlight color for delete-tool hover feedback. */
   danger: string;
+  /** Live runtime color for nets carrying a non-zero value. */
+  signalOn: string;
+  /** Live runtime color for idle (zero) nets during simulation. */
+  signalOff: string;
 }
 
 /** Runtime mode the module is being drawn for. */

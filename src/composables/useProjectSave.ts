@@ -6,6 +6,34 @@ import { requestArchitectureSnapshot } from "../editor/core/designer-bridge";
 import { serializeArchitecture } from "../shared/serialization";
 
 /**
+ * Pulls the live schematic document (modules + nets) from the active
+ * designer into the project store WITHOUT persisting. Marks the project
+ * unsaved, mirroring explicit-save semantics — persistence still happens on
+ * `saveCurrentProject`.
+ */
+export function syncLiveArchitecture(): boolean {
+  const projectStore = useProjectStore();
+  const project = projectStore.currentProject;
+  if (!project) return false;
+
+  const snapshot = requestArchitectureSnapshot();
+  if (!snapshot) return false;
+
+  projectStore.updateArchitecture((architecture) => {
+    const serialized = serializeArchitecture(
+      architecture.name,
+      architecture.description,
+      snapshot.modules,
+      snapshot.nets,
+      architecture.configuration
+    );
+    architecture.modules = serialized.modules;
+    architecture.nets = serialized.nets;
+  });
+  return true;
+}
+
+/**
  * Project-level save flow: pulls the live schematic state into the project
  * store and persists the whole project row (architecture, program, and
  * settings) to IndexedDB. Shared by the toolbar save button, the File menu,
@@ -24,22 +52,7 @@ export function useProjectSave() {
 
     // Pull the live schematic document into the project before persisting.
     // When no canvas is mounted the stored architecture is saved as-is.
-    const snapshot = requestArchitectureSnapshot();
-    if (snapshot) {
-      projectStore.updateArchitecture((architecture) => {
-        const serialized = serializeArchitecture(
-          architecture.name,
-          architecture.description,
-          snapshot.modules,
-          snapshot.nets,
-          architecture.configuration
-        );
-        // Only the document changes — grid settings and the rest of the
-        // configuration stay untouched.
-        architecture.modules = serialized.modules;
-        architecture.nets = serialized.nets;
-      });
-    }
+    syncLiveArchitecture();
 
     try {
       await projectStore.saveProject();

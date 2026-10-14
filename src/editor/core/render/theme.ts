@@ -22,5 +22,7 @@ export function readRenderTheme(): RenderTheme {
     accent: cssVar("--color-primary", "#5a82d8"),
     valid: cssVar("--color-success", "#10b981"),
     danger: cssVar("--color-danger", "#ef4444"),
+    signalOn: cssVar("--color-success", "#10b981"),
+    signalOff: cssVar("--color-secondary", "#94a3b8"),
   };
 }

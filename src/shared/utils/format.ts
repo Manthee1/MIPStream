@@ -47,3 +47,20 @@ export function formatSize(size: number): string {
 		return (size / 1024 / 1024 / 1024).toFixed(2) + " GB";
 	}
 }
+
+/**
+ * Formats an unsigned word for runtime tooltips: hex, binary (zero-padded to
+ * the bus width), and decimal (UI_AND_UX §2 — hover shows all three radixes).
+ */
+export function formatWord(
+	value: number,
+	bits: number
+): { hex: string; bin: string; dec: string } {
+	const width = Math.min(32, Math.max(1, Math.floor(bits) || 32));
+	const hexDigits = Math.ceil(width / 4);
+	return {
+		hex: `0x${value.toString(16).padStart(hexDigits, "0").toUpperCase()}`,
+		bin: `0b${value.toString(2).padStart(width, "0")}`,
+		dec: `${value >>> 0}`,
+	};
+}

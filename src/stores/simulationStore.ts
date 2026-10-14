@@ -1,38 +1,40 @@
+/** @format */
+
 import { defineStore } from "pinia";
-import { SimulationState } from "../shared/types/architecture";
 
+/** Execution control state (SIMULATOR_OVERVIEW §4 control state machine). */
+export type SimulationStatus = "stopped" | "running" | "paused";
+
+/**
+ * Reactive mirror of the simulation session for the UI. The engine itself
+ * (and its `Uint32Array` signal buffer) intentionally lives OUTSIDE this
+ * store in `useSimulation` — Pinia reactivity must never wrap the hot path.
+ */
 export const useSimulationStore = defineStore("simulation", {
-    state: () => ({
-        // Shared memory buffer index for UI sampling
-        wireValues: new Uint32Array(0),
-        cycleCount: 0,
-        status: "stopped" as "running" | "stopped" | "paused",
-        speed: 10,
-    }),
+  state: () => ({
+    status: "stopped" as SimulationStatus,
+    /** Completed master clock cycles. */
+    cycleCount: 0,
+    /** Target clock frequency for continuous run (cycles per second). */
+    speed: 8,
+    /** Human-readable compile diagnostics from the last compilation. */
+    compileErrors: [] as string[],
+    compileWarnings: [] as string[],
+  }),
 
-    actions: {
-        async step() {
-            // Call headless engine step
-            this.cycleCount++;
-        },
-
-        async run() {
-            this.status = "running";
-            // Simulation loop logic
-        },
-
-        pause() {
-            this.status = "paused";
-        },
-
-        stop() {
-            this.status = "stopped";
-            this.cycleCount = 0;
-        },
-
-        reset() {
-            this.stop();
-            this.wireValues = new Uint32Array(0);
-        }
+  actions: {
+    setStatus(status: SimulationStatus) {
+      this.status = status;
     },
+
+    setCycleCount(count: number) {
+      this.cycleCount = count;
+    },
+
+    setCompileReport(errors: string[], warnings: string[]) {
+      this.compileErrors = errors;
+      this.compileWarnings = warnings;
+    },
+  },
 });
+
