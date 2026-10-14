@@ -108,6 +108,8 @@ export interface RenderTheme {
   signalOn: string;
   /** Live runtime color for idle (zero) nets during simulation. */
   signalOff: string;
+  /** Warning color for lint-flagged ports/nets (bit-width mismatches). */
+  warning: string;
 }
 
 /** Runtime mode the module is being drawn for. */

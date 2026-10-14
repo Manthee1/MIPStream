@@ -3,6 +3,7 @@ import GoldenLayout from '../../components/layout/GoldenLayout.vue';
 import ModulePalette from '../components/ModulePalette.vue';
 import SchematicEditor from '../components/SchematicEditor.vue';
 import InspectorPanel from '../components/InspectorPanel.vue';
+import ProblemsPanel from '../components/ProblemsPanel.vue';
 import { LayoutConfig } from 'golden-layout';
 
 const config: LayoutConfig = {
@@ -16,10 +17,22 @@ const config: LayoutConfig = {
         title: 'Hardware Modules'
       },
       {
-        type: 'component',
-        componentType: 'Editor',
+        type: 'column',
         width: 60,
-        title: 'Schematic'
+        content: [
+          {
+            type: 'component',
+            componentType: 'Editor',
+            height: 72,
+            title: 'Schematic'
+          },
+          {
+            type: 'component',
+            componentType: 'Problems',
+            height: 28,
+            title: 'Problems'
+          }
+        ]
       },
       {
         type: 'component',
@@ -34,6 +47,7 @@ const config: LayoutConfig = {
 const components = {
   Palette: ModulePalette,
   Editor: SchematicEditor,
+  Problems: ProblemsPanel,
   Inspector: InspectorPanel
 };
 </script>

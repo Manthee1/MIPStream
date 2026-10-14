@@ -27,6 +27,7 @@ import {
   setWireSelected,
   setWireHover,
   setWireValidHighlight,
+  setWireWarningState,
   setWireDangerHover,
   createWaypointHandle,
   removeWaypointHandles,
@@ -39,8 +40,14 @@ import {
   setNodeSelected,
   setNodeDangerHover,
   setPortHighlighted,
+  setPortWarning,
   nodePortWorldPosition,
+  type PortHighlightState,
 } from './render/module-node';
+import { showTransientTooltip, destroyTransientTooltip } from './render/tooltip';
+import { getClipboard, setClipboard } from './clipboard';
+import { lintArchitecture } from '@/core/engine/lint';
+import type { LintIssue } from '@/core/engine/lint';
 
 /**
  * Orchestrator for the schematic designer canvas.
@@ -56,6 +63,8 @@ export class SchematicDesigner {
   private gridLayer: Konva.Layer;
   private logicLayer: Konva.Layer;
   private interactionLayer: Konva.Layer;
+  /** Topmost, non-listening layer for runtime port value labels (viewer). */
+  private valueLayer: Konva.Layer;
 
   private gridManager: GridManager;
   private eventManager: EventManager;
@@ -85,10 +94,14 @@ export class SchematicDesigner {
   /** Position snapshot of a multi-selected module group while dragging. */
   private dragSnapshot: Map<string, Point> | null = null;
 
-  /** Ports highlighted as valid route targets (designator:portId keys). */
-  private readonly routeHighlightedPorts = new Set<string>();
-  /** Nets highlighted as valid route targets. */
+  /** Ports highlighted as route targets (designator:portId → highlight state). */
+  private readonly routeHighlightedPorts = new Map<string, PortHighlightState>();
+  /** Nets highlighted as route targets. */
   private readonly routeHighlightedNets = new Set<string>();
+  /** Lint-flagged nets (persistent warning styling until fixed). */
+  private readonly warnedNets = new Set<string>();
+  /** Lint-flagged ports ("designator:portId") — persistent warning rings. */
+  private readonly warnedPorts = new Set<string>();
 
   private config: DesignerConfig;
 
@@ -110,10 +123,15 @@ export class SchematicDesigner {
     this.gridLayer = new Konva.Layer();
     this.logicLayer = new Konva.Layer();
     this.interactionLayer = new Konva.Layer();
+    // Sits above everything so the always-on port value numbers render on
+    // top of the wires. Non-listening: labels never interact, and the layer
+    // must not intercept events aimed at the logic layer below.
+    this.valueLayer = new Konva.Layer({ listening: false });
 
     this.stage.add(this.gridLayer);
     this.stage.add(this.logicLayer);
     this.stage.add(this.interactionLayer);
+    this.stage.add(this.valueLayer);
 
     this.gridManager = new GridManager(this.gridLayer, this.gridSettings);
 
@@ -235,6 +253,21 @@ export class SchematicDesigner {
     this.shortcutManager.register({ key: 'v', contexts: ['schematic:editor'], handler: () => this.setTool('select') });
     this.shortcutManager.register({ key: 'w', contexts: ['schematic:editor'], handler: () => this.setTool('wire') });
     this.shortcutManager.register({ key: 'd', contexts: ['schematic:editor'], handler: () => this.setTool('delete') });
+
+    // Copy/Paste: selected modules plus their fully-internal nets. The
+    // clipboard lives outside the designer (survives perspective switches).
+    this.shortcutManager.register({
+      key: 'c',
+      ctrl: true,
+      contexts: ['schematic:selection'],
+      handler: () => this.copySelection() > 0,
+    });
+    this.shortcutManager.register({
+      key: 'v',
+      ctrl: true,
+      contexts: ['schematic:editor'],
+      handler: () => this.paste() > 0,
+    });
   }
 
   // ------------------------------------------------------------- tool / mode
@@ -326,6 +359,9 @@ export class SchematicDesigner {
     const wire = this.wireNodes.get(id);
     if (wire) {
       setWireSelected(wire, false);
+      // Selection styling is gone — restore the persistent lint warning
+      // styling when the net is flagged.
+      this.applyWireWarning(id);
       removeWaypointHandles(wire);
     }
 
@@ -373,6 +409,102 @@ export class SchematicDesigner {
       }
     }
     this.notifySelectionChange();
+  }
+
+  // --------------------------------------------------------------- copy/paste
+
+  /**
+   * Copies the selected modules and every net fully contained in the
+   * selection (source and all targets inside it). Boundary-crossing nets
+   * are dropped — standard EDA clipboard semantics.
+   * @returns the number of modules copied.
+   */
+  public copySelection(): number {
+    const selected = Array.from(this.selection)
+      .map((id) => this.hydratedModules.get(id))
+      .filter((module): module is HydratedModule => !!module);
+    if (selected.length === 0) return 0;
+
+    const designators = new Set(selected.map((module) => module.designator));
+
+    const modules: SerializedModule[] = selected.map((module) => ({
+      designator: module.designator,
+      typeId: module.typeId,
+      position: { x: module.position.x, y: module.position.y },
+      rotation: module.rotation,
+      config: JSON.parse(JSON.stringify(module.config ?? {})),
+    }));
+
+    const nets: SerializedNet[] = this.allNets()
+      .filter(
+        (net) =>
+          designators.has(net.source.designator) &&
+          net.targets.every((target) => designators.has(target.designator))
+      )
+      .map((net) => JSON.parse(JSON.stringify(net)) as SerializedNet);
+
+    setClipboard(modules, nets);
+    return modules.length;
+  }
+
+  /**
+   * Pastes the clipboard: fresh designators, a grid-snapped offset that
+   * grows per consecutive paste, internal nets remapped onto the fresh
+   * instances, and the pasted set left selected for immediate move/delete.
+   * @returns the number of modules pasted.
+   */
+  public paste(): number {
+    const clip = getClipboard();
+    if (!clip || clip.modules.length === 0) return 0;
+
+    const step = this.getGridSize() * 2;
+    const offset = step * (clip.pasteCount + 1);
+    clip.pasteCount += 1;
+
+    const shift = (point: Pos): Pos => ({ x: point.x + offset, y: point.y + offset });
+
+    this.clearSelection();
+
+    // Stamp modules first, remembering old → new designators.
+    const designatorMap = new Map<string, string>();
+    for (const module of clip.modules) {
+      const designator = `u${++this.moduleCounter}`;
+      designatorMap.set(module.designator, designator);
+      this.instantiateModule({
+        designator,
+        typeId: module.typeId,
+        position: shift(module.position),
+        rotation: module.rotation,
+        config: JSON.parse(JSON.stringify(module.config ?? {})),
+      });
+    }
+
+    // Remap the internal nets onto the fresh instances.
+    const remap = (endpoint: NetEndpoint): NetEndpoint => ({
+      designator: designatorMap.get(endpoint.designator) ?? endpoint.designator,
+      portId: endpoint.portId,
+    });
+    for (const net of clip.nets) {
+      const restored: SerializedNet = {
+        id: `n${++this.netCounter}`,
+        source: remap(net.source),
+        targets: net.targets.map(remap),
+      };
+      if (net.waypoints) restored.waypoints = net.waypoints.map(shift);
+      if (net.branches) {
+        restored.branches = net.branches.map((branch) => ({
+          target: remap(branch.target),
+          junction: shift(branch.junction),
+          ...(branch.waypoints ? { waypoints: branch.waypoints.map(shift) } : {}),
+        }));
+      }
+      this.commitNet(restored);
+    }
+
+    for (const designator of designatorMap.values()) this.select(designator);
+
+    this.notifyDocumentChange();
+    return clip.modules.length;
   }
 
   // --------------------------------------------------------------- placement
@@ -673,8 +805,31 @@ export class SchematicDesigner {
     };
     if (waypoints.length > 0) net.waypoints = waypoints;
 
+    // Width mismatch: the connection is still allowed (the engine and the
+    // lint pass flag it), but surface it immediately next to the target port.
+    const sourcePortDef = this.resolvePort(source);
+    const targetPortDef = this.resolvePort(target);
+    if (sourcePortDef && targetPortDef && sourcePortDef.bits !== targetPortDef.bits) {
+      this.warnWidthMismatch(targetPos, source, target, sourcePortDef.bits, targetPortDef.bits);
+    }
+
     this.commitNet(net);
     return true;
+  }
+
+  /** Shows the transient bit-width mismatch warning next to a target port. */
+  private warnWidthMismatch(
+    targetPos: Pos,
+    source: NetEndpoint,
+    target: NetEndpoint,
+    sourceBits: number,
+    targetBits: number
+  ): void {
+    showTransientTooltip(
+      this.interactionLayer,
+      targetPos,
+      `${sourceBits}-bit ${source.designator}:${source.portId} feeds ${targetBits}-bit ${target.designator}:${target.portId}`
+    );
   }
 
   /**
@@ -731,6 +886,22 @@ export class SchematicDesigner {
     if (waypoints.length > 0) branch.waypoints = waypoints;
     (net.branches ??= []).push(branch);
 
+    // Width mismatch on a junction tap: allowed, but warned like port routes.
+    const sourcePortDef = this.resolvePort(net.source);
+    const targetPortDef = this.resolvePort(target);
+    if (sourcePortDef && targetPortDef && sourcePortDef.bits !== targetPortDef.bits) {
+      const targetPos = this.getPortWorldPosition(target.designator, target.portId);
+      if (targetPos) {
+        this.warnWidthMismatch(
+          targetPos,
+          net.source,
+          target,
+          sourcePortDef.bits,
+          targetPortDef.bits
+        );
+      }
+    }
+
     this.recomposeNet(net);
     this.notifyNetlistChange();
     return true;
@@ -763,10 +934,17 @@ export class SchematicDesigner {
 
     wire.on('mouseleave', () => {
       if (this.mode !== 'editor') return;
-      if (this.activeTool === 'delete') setWireDangerHover(wire, false);
+      if (this.activeTool === 'delete') {
+        setWireDangerHover(wire, false);
+        this.applyWireWarning(netId);
+      }
       if (this.activeTool === 'select') {
         setWireHover(wire, false);
-        setWireSelected(wire, this.selection.has(netId));
+        if (this.selection.has(netId)) {
+          setWireSelected(wire, true);
+        } else {
+          this.applyWireWarning(netId);
+        }
       }
       this.updateCursor();
     });
@@ -817,6 +995,19 @@ export class SchematicDesigner {
   /** A net's rendered wire group, for runtime signal styling. */
   public getWireNode(netId: string): Konva.Group | null {
     return this.wireNodes.get(netId) ?? null;
+  }
+
+  /** A module's rendered node group, for runtime value labels. */
+  public getModuleNode(designator: string): Konva.Group | null {
+    return this.moduleNodes.get(designator) ?? null;
+  }
+
+  /**
+   * The topmost layer that renders the always-on port value numbers above
+   * the wires (Simulate perspective). Non-listening; empty in editor mode.
+   */
+  public getValueLayer(): Konva.Layer {
+    return this.valueLayer;
   }
 
   // ----------------------------------------------------------------- persist
@@ -945,6 +1136,8 @@ export class SchematicDesigner {
       this.logicLayer.batchDraw();
     } finally {
       this.loading = false;
+      // Loading suppresses per-mutation notifications — lint once at the end.
+      this.runLint();
     }
 
     return warnings;
@@ -1226,6 +1419,10 @@ export class SchematicDesigner {
    * - from a free input port → every output port and every existing net,
    * - from an already-driven input port → nothing (delete its net first),
    * - from a net → free input ports.
+   *
+   * Candidates matching the start's width highlight green (`valid`);
+   * direction-legal but width-mismatched ones highlight yellow (`warning`)
+   * — connectable, but committing will flag the mismatch.
    */
   private applyRouteHighlights(start: RoutePoint): void {
     this.clearRouteHighlights();
@@ -1236,57 +1433,80 @@ export class SchematicDesigner {
       if (!port) return;
 
       if (port.direction === 'output') {
-        this.highlightFreeInputs(nets, start.endpoint);
+        this.highlightFreeInputs(nets, start.endpoint, port.bits);
       } else if (!netDrivingInput(nets, start.endpoint)) {
-        this.highlightPortsOfDirection('output');
-        this.highlightAllNets();
+        this.highlightPortsOfDirection('output', port.bits);
+        this.highlightAllNets(port.bits);
       }
     } else {
-      this.highlightFreeInputs(nets, null);
+      // From a net: its source port's width decides candidate compatibility.
+      const sourcePort = this.nets.has(start.netId)
+        ? this.resolvePort(this.nets.get(start.netId)!.source)
+        : null;
+      this.highlightFreeInputs(nets, null, sourcePort?.bits ?? null);
     }
   }
 
-  private highlightFreeInputs(nets: SerializedNet[], exclude: NetEndpoint | null): void {
+  /** Highlights a route-candidate port in `valid` or `warning` state. */
+  private routeState(portBits: number, sourceBits: number | null): 'valid' | 'warning' {
+    return sourceBits === null || portBits === sourceBits ? 'valid' : 'warning';
+  }
+
+  private highlightFreeInputs(
+    nets: SerializedNet[],
+    exclude: NetEndpoint | null,
+    sourceBits: number | null
+  ): void {
     for (const [designator, hydrated] of this.hydratedModules) {
       for (const port of hydrated.ports) {
         if (port.direction !== 'input') continue;
         const endpoint: NetEndpoint = { designator, portId: port.id };
         if (exclude && isSameEndpoint(exclude, endpoint)) continue;
         if (netDrivingInput(nets, endpoint)) continue;
-        this.highlightPortValid(designator, port.id);
+        this.highlightRoutePort(designator, port.id, this.routeState(port.bits, sourceBits));
       }
     }
   }
 
-  private highlightPortsOfDirection(direction: 'input' | 'output'): void {
+  private highlightPortsOfDirection(direction: 'input' | 'output', sourceBits: number | null): void {
     for (const [designator, hydrated] of this.hydratedModules) {
       for (const port of hydrated.ports) {
-        if (port.direction === direction) this.highlightPortValid(designator, port.id);
+        if (port.direction !== direction) continue;
+        this.highlightRoutePort(designator, port.id, this.routeState(port.bits, sourceBits));
       }
     }
   }
 
-  private highlightPortValid(designator: string, portId: string): void {
+  private highlightRoutePort(designator: string, portId: string, state: 'valid' | 'warning'): void {
     const node = this.moduleNodes.get(designator);
     if (!node) return;
-    setPortHighlighted(node, portId, 'valid');
-    this.routeHighlightedPorts.add(`${designator}:${portId}`);
+    setPortHighlighted(node, portId, state);
+    this.routeHighlightedPorts.set(`${designator}:${portId}`, state);
   }
 
-  private highlightAllNets(): void {
+  private highlightAllNets(sourceBits: number | null): void {
     for (const [netId, wire] of this.wireNodes) {
-      setWireValidHighlight(wire, true);
+      const net = this.nets.get(netId);
+      const sourcePort = net ? this.resolvePort(net.source) : null;
+      const mode = !sourcePort
+        ? 'valid'
+        : this.routeState(sourcePort.bits, sourceBits);
+      setWireValidHighlight(wire, mode);
       this.routeHighlightedNets.add(netId);
     }
   }
 
   private clearRouteHighlights(): void {
-    for (const key of this.routeHighlightedPorts) {
+    for (const [key] of this.routeHighlightedPorts) {
       const separator = key.indexOf(':');
       const designator = key.slice(0, separator);
       const portId = key.slice(separator + 1);
       const node = this.moduleNodes.get(designator);
-      if (node) setPortHighlighted(node, portId, 'idle');
+      // Restore the persistent warning ring when the port is lint-flagged.
+      if (node) {
+        if (this.warnedPorts.has(key)) setPortWarning(node, portId, true);
+        else setPortHighlighted(node, portId, 'idle');
+      }
     }
     this.routeHighlightedPorts.clear();
 
@@ -1294,31 +1514,158 @@ export class SchematicDesigner {
       const wire = this.wireNodes.get(netId);
       if (wire) {
         setWireValidHighlight(wire, false);
-        setWireSelected(wire, this.selection.has(netId));
+        if (this.selection.has(netId)) setWireSelected(wire, true);
+        else this.applyWireWarning(netId);
       }
     }
     this.routeHighlightedNets.clear();
   }
 
-  /** Hover feedback that never clobbers an active "valid target" highlight. */
+  /** Hover feedback that never clobbers an active route-target highlight. */
   private setPortHoverState(endpoint: NetEndpoint, hovered: boolean): void {
     const node = this.moduleNodes.get(endpoint.designator);
     if (!node) return;
 
-    const isRouteTarget = this.routeHighlightedPorts.has(
-      `${endpoint.designator}:${endpoint.portId}`
-    );
+    const key = `${endpoint.designator}:${endpoint.portId}`;
+    const routeState = this.routeHighlightedPorts.get(key);
 
     if (hovered) {
       // While a route is pending, only legally connectable targets respond;
-      // invalid ports stay idle (no size-up). Valid targets keep their
-      // green "connectable" highlight instead of the plain hover style.
-      if (this.contextTracker.isActive('schematic:routing') && !isRouteTarget) return;
-      setPortHighlighted(node, endpoint.portId, isRouteTarget ? 'valid' : 'hover');
+      // invalid ports stay idle (no size-up). Route targets keep their
+      // valid/warning highlight instead of the plain hover style.
+      if (this.contextTracker.isActive('schematic:routing') && !routeState) return;
+      setPortHighlighted(node, endpoint.portId, routeState ?? 'hover');
       return;
     }
 
-    setPortHighlighted(node, endpoint.portId, isRouteTarget ? 'valid' : 'idle');
+    if (routeState) {
+      setPortHighlighted(node, endpoint.portId, routeState);
+    } else if (this.warnedPorts.has(key)) {
+      setPortWarning(node, endpoint.portId, true);
+    } else {
+      setPortHighlighted(node, endpoint.portId, 'idle');
+    }
+  }
+
+  // ----------------------------------------------------------------- problems
+
+  /**
+   * Lints the live document and publishes the report: persistent warning
+   * highlights for flagged nets/ports plus the host callback. Runs after
+   * every committed change and once after an architecture loads.
+   */
+  private runLint(): void {
+    if (this.mode !== 'editor') return;
+
+    const issues = lintArchitecture({
+      modules: this.getSerializedModules(),
+      nets: this.allNets(),
+    });
+    this.applyProblemHighlights(issues);
+    if (this.config.onProblemsChange) {
+      this.config.onProblemsChange(issues);
+    }
+  }
+
+  /** Maps lint refs onto persistent warning styles (diffed to avoid churn). */
+  private applyProblemHighlights(issues: LintIssue[]): void {
+    const nextNets = new Set<string>();
+    const nextPorts = new Set<string>();
+    for (const issue of issues) {
+      if (issue.severity === 'info') continue;
+      for (const ref of issue.refs ?? []) {
+        const separator = ref.indexOf(':');
+        if (separator !== -1) nextPorts.add(ref);
+        else if (this.nets.has(ref)) nextNets.add(ref);
+      }
+    }
+
+    for (const netId of nextNets) {
+      if (!this.warnedNets.has(netId)) {
+        this.warnedNets.add(netId);
+        this.applyWireWarning(netId);
+      }
+    }
+    for (const netId of Array.from(this.warnedNets)) {
+      if (!nextNets.has(netId)) {
+        this.warnedNets.delete(netId);
+        this.applyWireWarning(netId);
+      }
+    }
+
+    for (const key of nextPorts) {
+      if (!this.warnedPorts.has(key)) {
+        this.warnedPorts.add(key);
+        this.setPortWarningVisual(key, true);
+      }
+    }
+    for (const key of Array.from(this.warnedPorts)) {
+      if (!nextPorts.has(key)) {
+        this.warnedPorts.delete(key);
+        this.setPortWarningVisual(key, false);
+      }
+    }
+  }
+
+  /** Restores a wire's persistent style: selection > lint warning > default. */
+  private applyWireWarning(netId: string): void {
+    const wire = this.wireNodes.get(netId);
+    if (!wire) return;
+    if (this.routeHighlightedNets.has(netId)) return; // route highlight wins
+    if (this.selection.has(netId)) {
+      setWireSelected(wire, true);
+      return;
+    }
+    setWireWarningState(wire, this.warnedNets.has(netId));
+  }
+
+  /** Applies/clears a port's persistent warning ring (route states win). */
+  private setPortWarningVisual(key: string, warned: boolean): void {
+    if (this.routeHighlightedPorts.has(key)) return;
+    const separator = key.indexOf(':');
+    const designator = key.slice(0, separator);
+    const portId = key.slice(separator + 1);
+    const node = this.moduleNodes.get(designator);
+    if (!node) return;
+    setPortWarning(node, portId, warned);
+  }
+
+  /**
+   * Focuses a lint issue: selects its first locatable element (the module
+   * hosting a flagged port, a module, or a net) and centers the viewport.
+   */
+  public focusProblem(issue: LintIssue): void {
+    for (const ref of issue.refs ?? []) {
+      const separator = ref.indexOf(':');
+      const elementId = separator === -1 ? ref : ref.slice(0, separator);
+
+      const node = this.moduleNodes.get(elementId);
+      if (node) {
+        this.clearSelection();
+        this.select(elementId);
+        this.centerOnScene(node.x(), node.y());
+        return;
+      }
+
+      const wire = this.wireNodes.get(elementId);
+      if (wire) {
+        const bounds = wire.getClientRect({ relativeTo: this.logicLayer });
+        this.clearSelection();
+        this.select(elementId);
+        this.centerOnScene(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+        return;
+      }
+    }
+  }
+
+  /** Pans the viewport so the given scene point sits at the canvas center. */
+  private centerOnScene(x: number, y: number): void {
+    const scale = this.stage.scaleX();
+    this.stage.position({
+      x: this.stage.width() / 2 - x * scale,
+      y: this.stage.height() / 2 - y * scale,
+    });
+    this.notifyViewportChange();
   }
 
   /** Resolves a net endpoint against its hydrated module's port definition. */
@@ -1408,16 +1755,19 @@ export class SchematicDesigner {
 
   /**
    * Notifies the host of a committed document mutation (module or netlist
-   * change). Suppressed while a saved architecture is being restored.
+   * change). Suppressed while a saved architecture is being restored; the
+   * lint report refreshes with every committed mutation.
    */
   private notifyDocumentChange(): void {
     if (this.loading) return;
     if (this.config.onDocumentChange) {
       this.config.onDocumentChange();
     }
+    this.runLint();
   }
 
   public destroy(): void {
+    destroyTransientTooltip();
     setPlacementListener(null);
     setPlacementCancelListener(null);
     pendingPlacementTypeId.value = null;

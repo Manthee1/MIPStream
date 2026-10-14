@@ -2,6 +2,7 @@
 
 import type { SerializedNet } from "@/shared/types/netlist";
 import type { GridSettings } from "@/shared/types/architecture";
+import type { LintIssue } from "@/core/engine/lint";
 
 export type EditorTool = 'select' | 'wire' | 'place' | 'delete';
 export type EditorMode = 'viewer' | 'editor';
@@ -33,6 +34,11 @@ export interface DesignerConfig {
   onNetlistChange?: (nets: SerializedNet[]) => void;
   /** Fires once per committed document mutation (modules or nets). */
   onDocumentChange?: () => void;
+  /**
+   * Fires after each committed change (and once after an architecture load)
+   * with the fresh lint report for the Problems panel.
+   */
+  onProblemsChange?: (issues: LintIssue[]) => void;
 }
 
 export interface Point {

@@ -16,6 +16,7 @@ import type { SerializedNet } from "@/shared/types/netlist";
 import { widthMask } from "@/shared/utils/bit-ops";
 import type { ArchitectureDocument } from "./compile/compiler";
 import { SimulationEngine } from "./engine";
+import { lintArchitecture } from "./lint";
 
 /** Node process API — only the SSR-built smoke bundle actually executes it. */
 declare const process: { exit(code?: number): void };
@@ -100,10 +101,10 @@ const smokeAnd: ModuleManifest<{ bitWidth: number }> = {
   icon: "",
   category: "logic",
   defaultConfig: { bitWidth: 32 },
-  generatePorts: () => [
-    { id: "a", direction: "input", bits: 32, label: "A", position: { x: -40, y: -10 } },
-    { id: "b", direction: "input", bits: 32, label: "B", position: { x: -40, y: 10 } },
-    { id: "out", direction: "output", bits: 32, label: "Out", position: { x: 40, y: 0 } },
+  generatePorts: (config) => [
+    { id: "a", direction: "input", bits: config.bitWidth, label: "A", position: { x: -40, y: -10 } },
+    { id: "b", direction: "input", bits: config.bitWidth, label: "B", position: { x: -40, y: 10 } },
+    { id: "out", direction: "output", bits: config.bitWidth, label: "Out", position: { x: 40, y: 0 } },
   ],
   createEvaluators: (config): ModuleEvaluators => ({
     inputPorts: ["a", "b"],
@@ -280,6 +281,40 @@ accumEngine.step();
 check("accumulator: unconnected out readable (private slot)", accumEngine.getPortValue("acc", "out"), 10);
 const accumState = accumEngine.getModuleState("acc") as AccumulatorState | undefined;
 check("accumulator: engine owns state", accumState?.values?.[0], 10);
+
+// 7. Lint pass: width mismatches carry refs; unconnected ports report as
+//    info; combinational loops report as errors.
+const mismatchDoc: ArchitectureDocument = {
+  modules: [
+    module("w1", "smoke.and", { bitWidth: 32 }),
+    module("w2", "smoke.and", { bitWidth: 16 }),
+  ],
+  nets: [net("n1", ["w1", "out"], ["w2", "a"])],
+};
+
+const lintIssues = lintArchitecture(mismatchDoc);
+check(
+  "lint: width mismatch flagged with refs",
+  lintIssues.some(
+    (issue) =>
+      issue.severity === "warning" &&
+      issue.message.includes("bit-width mismatch") &&
+      (issue.refs ?? []).includes("n1")
+  ),
+  true
+);
+check(
+  "lint: unconnected ports flagged as info",
+  lintIssues.some((issue) => issue.severity === "info" && issue.message.includes("not connected")),
+  true
+);
+check(
+  "lint: loop flagged as error",
+  lintArchitecture(loopDoc).some(
+    (issue) => issue.severity === "error" && issue.message.includes("loop")
+  ),
+  true
+);
 
 console.log("");
 if (failures > 0) {

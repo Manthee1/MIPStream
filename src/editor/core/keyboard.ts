@@ -19,6 +19,13 @@ export interface ShortcutBinding {
   key: string;
   /** Contexts in which this shortcut is active. Empty = global. */
   contexts?: ShortcutContext[];
+  /**
+   * True: the binding only fires while Ctrl (⌘ on macOS) is held — combos
+   * like Ctrl+C/Ctrl+V. False/omitted: only fires with no modifier held,
+   * so plain tool keys ('v', 'w', 'd') never hijack combos or browser
+   * shortcuts, and Alt-grave characters stay untouched.
+   */
+  ctrl?: boolean;
   /** Returns true if the event was handled (consumed). */
   handler: (event: KeyboardEvent) => boolean | void;
 }
@@ -61,9 +68,17 @@ export class ShortcutManager {
     if (isTextEntryTarget(event.target)) return;
 
     const key = event.key.toLowerCase();
+    const comboHeld = event.ctrlKey || event.metaKey;
 
     for (const binding of this.bindings) {
       if (binding.key !== key) continue;
+      // Ctrl bindings need the combo held; plain bindings never swallow
+      // modified keystrokes (plain 'v' must not eat Ctrl+V).
+      if (binding.ctrl === true) {
+        if (!comboHeld) continue;
+      } else if (comboHeld || event.altKey) {
+        continue;
+      }
       if (!this.tracker.matches(binding.contexts)) continue;
 
       const handled = binding.handler(event);

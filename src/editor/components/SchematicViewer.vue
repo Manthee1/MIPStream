@@ -1,21 +1,28 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useMessage } from 'naive-ui';
+import type Konva from 'konva';
 import SchematicEditor from './SchematicEditor.vue';
 import { getActiveDesigner } from '../core/designer-bridge';
+import type { SchematicDesigner } from '../core/designer';
 import { setWireSignalState } from '../core/render/wire';
+import { liftPortValueLabel, setPortValueLabel } from '../core/render/module-node';
 import { ensureCompiled, getEngine } from '@/composables/useSimulation';
+import type { SimulationEngine } from '@/core/engine/engine';
 import { useSimulationStore } from '@/stores/simulationStore';
 import { useTheme } from '@/composables/useTheme';
-import { formatWord } from '@/shared/utils/format';
+import { formatWord, formatPortValue } from '@/shared/utils/format';
 
 /**
  * Runtime view of the architecture (Simulate perspective): the same schematic
- * canvas locked into viewer mode, with two live layers layered on top —
+ * canvas locked into viewer mode, with live layers on top —
  *
  * 1. Signal sampling: a 60fps rAF loop reads the engine's shared `Uint32Array`
  *    and recolors nets (on/off) only when a value actually changed.
- * 2. Port probing: hovering any port shows its live value in hex / binary /
+ * 2. Port value labels: the same loop writes the compact live value beside
+ *    every port (1-bit controls as 0/1, buses as hex) — always visible, not
+ *    only on hover.
+ * 3. Port probing: hovering any port shows its live value in hex / binary /
  *    decimal, exactly as specified in UI_AND_UX §2.
  *
  * The canvas never drives the simulation; it only samples the engine.
@@ -29,6 +36,21 @@ const { isDark } = useTheme();
 /** Last applied per-net value — skips redundant Konva mutations per frame. */
 const lastNetValues = new Map<string, number>();
 
+/** Last applied per-port value — same dirty-check for the value labels. */
+const lastPortValues = new Map<string, number>();
+
+/** One per-port label target, resolved once (the viewer canvas is locked). */
+interface PortLabelTarget {
+  designator: string;
+  portId: string;
+  bits: number;
+  /** The lifted label, living in the top value layer above the wires. */
+  label: Konva.Text;
+}
+
+/** Cached port label targets (null until the first sample; rebuilt if empty). */
+let portLabelTargets: PortLabelTarget[] | null = null;
+
 let frameRequestId: number | null = null;
 
 onMounted(() => {
@@ -41,7 +63,10 @@ onBeforeUnmount(() => {
 });
 
 /** Resolves signal colors from CSS vars — re-apply everything on theme flip. */
-watch(isDark, () => lastNetValues.clear());
+watch(isDark, () => {
+  lastNetValues.clear();
+  lastPortValues.clear();
+});
 
 function notifyCompileErrors(): void {
   if (simulationStore.compileErrors.length > 0) {
@@ -82,6 +107,59 @@ function applySignalStates(): void {
 
     const wire = designer.getWireNode(net.id);
     if (wire) setWireSignalState(wire, value !== 0);
+  }
+
+  applyPortValueLabels(designer, engine);
+}
+
+// ------------------------------------------------------- port value labels
+
+/** Resolves every placed module port into a label target (once per mount). */
+function buildPortLabelTargets(designer: SchematicDesigner): PortLabelTarget[] {
+  const targets: PortLabelTarget[] = [];
+  const valueLayer = designer.getValueLayer();
+  for (const designator of designer.getModuleDesignators()) {
+    const node = designer.getModuleNode(designator);
+    const module = designer.getModule(designator);
+    if (!node || !module) continue;
+    for (const port of module.ports) {
+      if (!port.position) continue;
+      // Lift each label out of the module group into the top value layer so
+      // the numbers render above the wires (wire groups draw after module
+      // groups in the logic layer).
+      const label = liftPortValueLabel(node, port.id, valueLayer);
+      if (!label) continue;
+      targets.push({ designator, portId: port.id, bits: port.bits, label });
+    }
+  }
+  return targets;
+}
+
+/**
+ * Writes the compact live value beside every port — always visible, not only
+ * on hover. Dirty-checked per port so steady states cost nothing; the engine
+ * exposes every port (undriven inputs ride the zero rail, unconnected outputs
+ * ride private slots).
+ */
+function applyPortValueLabels(designer: SchematicDesigner, engine: SimulationEngine): void {
+  if (!portLabelTargets || portLabelTargets.length === 0) {
+    portLabelTargets = buildPortLabelTargets(designer);
+    // A fresh cache repaints every label (also re-resolves theme fills).
+    lastPortValues.clear();
+  }
+
+  for (const target of portLabelTargets) {
+    const value = engine.getPortValue(target.designator, target.portId);
+    if (value === null) {
+      setPortValueLabel(target.label, null);
+      continue;
+    }
+
+    const key = `${target.designator}:${target.portId}`;
+    if (lastPortValues.get(key) === value) continue;
+    lastPortValues.set(key, value);
+
+    setPortValueLabel(target.label, formatPortValue(value, target.bits));
   }
 }
 

@@ -27,10 +27,16 @@ export interface CompiledModule {
   evaluate: (inputs: Uint32Array) => Uint32Array;
 }
 
-/** A compile-time diagnostic for the host UI. */
+/**
+ * A compile-time diagnostic for the host UI.
+ *
+ * `refs` locates the offending elements so hosts can focus/highlight them:
+ * `"u2"` a module designator, `"n3"` a net id, `"u2:out"` a module port.
+ */
 export interface CompileIssue {
   severity: "error" | "warning";
   message: string;
+  refs?: string[];
 }
 
 /** A fully compiled simulation program: everything the run loop needs. */

@@ -26,7 +26,10 @@
 - [ ] **Assembler Integration**: Hooking the dynamic `Assembler` class into the multi-memory architecture.
 
 ## Phase 4: Simulator & UX (Simulate Perspective)
+> See [Draft Plan](./PORT_VALUE_DISPLAY_PLAN.md) for the Per-Port Value Display feature (hierarchical format overrides, Konva label rendering, inspector integration).
+
 - [ ] **Runtime Sync**: Reactive bridge between the Engine's `Uint32Array` and the UI.
+- [ ] **Per-Port Value Display**: Live value labels beside ports in the simulate view (hover tooltip probes already done).
 - [ ] **Educational Layer**: Hover probes and Markdown documentation rendering.
 - [ ] **Golden Layout Migration**: Replacing Dockview with Golden Layout for workspace management.
 - [ ] **Generic Diagnostic Panels**: Data-driven Memory, Register, and Pipeline inspectors in `src/simulator/`.

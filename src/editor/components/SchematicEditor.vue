@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { SchematicDesigner } from '../core/designer';
 import { setActiveDesigner } from '../core/designer-bridge';
 import { setSelection, bumpDocumentRevision } from '../core/selection-bridge';
+import { setProblems, clearProblems } from '../core/problems-bridge';
 import { EditorTool, EditorMode, ViewportState, PlacementState } from '../core/types';
 import type { GridSettings } from '@/shared/types/architecture';
 import { useProjectStore } from '@/stores/projectStore';
@@ -65,6 +66,9 @@ onMounted(() => {
       documentDirty = true;
       projectStore.markUnsaved();
       bumpDocumentRevision();
+    },
+    onProblemsChange: (issues) => {
+      setProblems(issues);
     }
   });
   designer = instance;
@@ -88,6 +92,7 @@ onBeforeUnmount(() => {
 
   setActiveDesigner(null);
   setSelection([]);
+  clearProblems();
   designer?.destroy();
   designer = null;
 });

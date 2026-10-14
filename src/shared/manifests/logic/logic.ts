@@ -4,10 +4,17 @@ import { widthMask } from "../../utils/bit-ops.ts";
 
 export type LogicOp = "and" | "or" | "xor" | "nor";
 
+/**
+ * Logic gates are bit-level primitives: the width is fixed at 1 bit and
+ * intentionally NOT user-configurable (the PC-manifest pattern) — wide
+ * bitwise logic belongs to dedicated bus components (splitter/merger/ALU).
+ */
 export interface LogicGateConfig {
-  bitWidth: number;
   op: LogicOp;
 }
+
+/** Fixed gate width — always 1 bit. */
+export const GATE_BIT_WIDTH = 1;
 
 /** Pure bitwise gate evaluation shared by every gate variant manifest. */
 export function gateEvaluate(a: number, b: number, op: LogicOp, bitWidth: number): number {

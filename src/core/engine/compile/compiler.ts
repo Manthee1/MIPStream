@@ -1,181 +1,41 @@
 /** @format */
 
-import { getManifest } from "@/shared/manifestRegistry";
-import type {
-  ModuleEvaluators,
-  PortDefinition,
-  SerializedModule,
-} from "@/shared/types/manifest";
-import type { SerializedNet } from "@/shared/types/netlist";
-import type { CompiledModule, CompiledSimulation, CompileIssue } from "../types";
+import type { CompileIssue, CompiledModule, CompiledSimulation } from "../types";
 import { WireIndex, ZERO_SLOT, portKey } from "./wire-index";
 import { topologicalSort, type TopoEdge } from "./topological-sort";
+import { resolveArchitecture, type ArchitectureDocument } from "./resolver";
 
-/** Serialized document shape the compiler accepts (modules + nets). */
-export interface ArchitectureDocument {
-  modules?: SerializedModule[];
-  nets?: SerializedNet[];
-}
-
-/** A module resolved against its manifest, ready for wire-slot binding. */
-interface ModuleBuild {
-  designator: string;
-  typeId: string;
-  ports: Map<string, PortDefinition>;
-  evaluators: ModuleEvaluators;
-  /** Internal state created via `createInitialState` (engine-owned). */
-  state: unknown;
-  /** True when the evaluator declares a clock edge (sequential module). */
-  sequential: boolean;
-}
-
-/** A live endpoint reference on a resolved net. */
-interface NetEndpointRef {
-  designator: string;
-  portId: string;
-}
-
-/** A net resolved to its source port plus its surviving target inputs. */
-interface ResolvedNet {
-  source: NetEndpointRef;
-  targets: NetEndpointRef[];
-}
+export type { ArchitectureDocument } from "./resolver";
 
 /**
  * Compiles a serialized architecture into a runnable program
- * (ENGINE_SPEC §2): resolves modules against the manifest registry, binds
- * every port to a flat wire-buffer slot, orders the combinational graph
- * topologically, and flags illegal unbuffered combinational loops as
- * compile errors instead of hanging the evaluation loop.
+ * (ENGINE_SPEC §2). Module/net resolution and netlist validation live in
+ * `resolver.ts` (shared with the designer's lint pass); this stage binds the
+ * validated document to flat wire-buffer slots, builds per-module scratch
+ * buffers, and orders the combinational graph topologically, flagging
+ * illegal unbuffered combinational loops as compile errors instead of
+ * hanging the evaluation loop.
  */
 export function compileArchitecture(document: ArchitectureDocument): CompiledSimulation {
-  const errors: CompileIssue[] = [];
-  const warnings: CompileIssue[] = [];
+  const { builds, resolvedNets, errors, warnings } = resolveArchitecture(document);
   const wireIndex = new WireIndex();
 
-  // --- 1. Resolve modules against the manifest registry.
+  // --- 1. Bind validated nets to wire slots.
 
-  const builds = new Map<string, ModuleBuild>();
-  for (const serialized of document.modules ?? []) {
-    if (builds.has(serialized.designator)) {
-      errors.push({
-        severity: "error",
-        message: `Duplicate module designator "${serialized.designator}" — keeping the first instance.`,
-      });
-      continue;
-    }
-
-    const manifest = getManifest(serialized.typeId);
-    if (!manifest) {
-      errors.push({
-        severity: "error",
-        message: `Module "${serialized.designator}" references unknown type "${serialized.typeId}".`,
-      });
-      continue;
-    }
-
-    // Same resolution rules as `hydrateModule`: defaults + user overrides.
-    const config: Record<string, unknown> = {
-      ...manifest.defaultConfig,
-      ...(serialized.config ?? {}),
-    };
-
-    const ports = new Map<string, PortDefinition>();
-    for (const port of manifest.generatePorts(config)) {
-      ports.set(port.id, port);
-    }
-
-    // Engine-owned internal state, injected back through the config so the
-    // evaluation closures capture it. The injection stays local to the
-    // engine — it must never leak into serialized/persisted configs.
-    const state = manifest.createInitialState?.(config);
-    const evaluators = manifest.createEvaluators(
-      state === undefined ? config : { ...config, state }
-    );
-
-    builds.set(serialized.designator, {
-      designator: serialized.designator,
-      typeId: serialized.typeId,
-      ports,
-      evaluators,
-      state,
-      sequential: evaluators.clockEdge !== undefined,
-    });
-  }
-
-  // --- 2. Resolve nets into wire slots.
-
-  /** port key → net id currently driving that input (one driver per input). */
-  const drivenInputs = new Map<string, string>();
-  const resolvedNets: ResolvedNet[] = [];
-
-  for (const net of document.nets ?? []) {
-    if (wireIndex.netIndexById.has(net.id)) {
-      errors.push({
-        severity: "error",
-        message: `Duplicate net id "${net.id}" — keeping the first net.`,
-      });
-      continue;
-    }
-
-    const sourceBuild = builds.get(net.source.designator);
-    const sourcePort = sourceBuild?.ports.get(net.source.portId);
-    if (!sourceBuild || !sourcePort || sourcePort.direction !== "output") {
-      errors.push({
-        severity: "error",
-        message: `Net "${net.id}" has no valid source port — skipped.`,
-      });
-      continue;
-    }
-
-    // One slot per net. An output port already driving another net reuses
-    // its slot so both nets read the identical driven value.
+  // One slot per net. An output port already driving another net reuses its
+  // slot so both nets read the identical driven value.
+  for (const net of resolvedNets) {
     const sourceSlot =
       wireIndex.getPortSlot(net.source.designator, net.source.portId) ??
       wireIndex.allocateSlot();
-    wireIndex.registerNet(net.id, sourceSlot);
+    wireIndex.registerNet(net.netId, sourceSlot);
     wireIndex.registerPort(net.source.designator, net.source.portId, sourceSlot);
-
-    const targets: NetEndpointRef[] = [];
-    for (const target of net.targets ?? []) {
-      const key = portKey(target.designator, target.portId);
-      if (drivenInputs.has(key)) {
-        errors.push({
-          severity: "error",
-          message: `Input "${key}" is driven by nets "${drivenInputs.get(key)}" and "${net.id}" — keeping the first driver.`,
-        });
-        continue;
-      }
-
-      const targetBuild = builds.get(target.designator);
-      const targetPort = targetBuild?.ports.get(target.portId);
-      if (!targetBuild || !targetPort || targetPort.direction !== "input") {
-        warnings.push({
-          severity: "warning",
-          message: `Net "${net.id}" target "${key}" is unavailable — dropped.`,
-        });
-        continue;
-      }
-
-      if (targetPort.bits !== sourcePort.bits) {
-        warnings.push({
-          severity: "warning",
-          message: `Net "${net.id}": ${sourcePort.bits}-bit "${net.source.designator}:${net.source.portId}" feeds ${targetPort.bits}-bit "${key}" (bit-width mismatch).`,
-        });
-      }
-
-      drivenInputs.set(key, net.id);
+    for (const target of net.targets) {
       wireIndex.registerPort(target.designator, target.portId, sourceSlot);
-      targets.push({ designator: target.designator, portId: target.portId });
     }
-
-    resolvedNets.push({
-      source: { designator: net.source.designator, portId: net.source.portId },
-      targets,
-    });
   }
 
-  // --- 3. Compile modules: slots, scratch buffers, and edge lists.
+  // --- 2. Compile modules: slots, scratch buffers, and edge lists.
 
   const combinational: CompiledModule[] = [];
   const risingModules: CompiledModule[] = [];
@@ -201,6 +61,7 @@ export function compileArchitecture(document: ArchitectureDocument): CompiledSim
           warnings.push({
             severity: "warning",
             message: `Module "${build.designator}" evaluates unknown input port "${portId}" (reads 0).`,
+            refs: [build.designator, portKey(build.designator, portId)],
           });
         }
       } else {
@@ -226,6 +87,7 @@ export function compileArchitecture(document: ArchitectureDocument): CompiledSim
         warnings.push({
           severity: "warning",
           message: `Module "${build.designator}" output "${portId}" is never evaluated (stays 0).`,
+          refs: [portKey(build.designator, portId)],
         });
       }
     }
@@ -260,7 +122,7 @@ export function compileArchitecture(document: ArchitectureDocument): CompiledSim
     }
   }
 
-  // --- 4. Topologically order the combinational graph.
+  // --- 3. Topologically order the combinational graph.
 
   // One edge per net crossing between two combinational modules. Sequential
   // modules are graph boundaries — their outputs are held in the wire buffer
@@ -280,6 +142,7 @@ export function compileArchitecture(document: ArchitectureDocument): CompiledSim
     errors.push({
       severity: "error",
       message: `Unbuffered combinational loop through: ${cyclic.join(", ")}. Insert a stage register to break the cycle.`,
+      refs: cyclic,
     });
   }
 

@@ -24,5 +24,6 @@ export function readRenderTheme(): RenderTheme {
     danger: cssVar("--color-danger", "#ef4444"),
     signalOn: cssVar("--color-success", "#10b981"),
     signalOff: cssVar("--color-secondary", "#94a3b8"),
+    warning: cssVar("--color-warning", "#f59e0b"),
   };
 }

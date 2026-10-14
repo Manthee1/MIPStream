@@ -64,3 +64,14 @@ export function formatWord(
 		dec: `${value >>> 0}`,
 	};
 }
+
+/**
+ * Compact always-on runtime value label for a port (see
+ * docs/roadmap/PORT_VALUE_DISPLAY_PLAN.md): 1-bit control lines render as a
+ * bare bit, wider buses as unpadded hex. The hover tooltip keeps the full
+ * `formatWord` detail (padded hex/binary/decimal).
+ */
+export function formatPortValue(value: number, bits: number): string {
+	if (bits <= 1) return (value & 1).toString();
+	return `0x${(value >>> 0).toString(16)}`;
+}

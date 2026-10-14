@@ -195,12 +195,21 @@ export function setWireHover(group: Konva.Group, hovered: boolean): void {
   }
 }
 
-/** Highlights a wire as a legally connectable target during routing. */
-export function setWireValidHighlight(group: Konva.Group, valid: boolean): void {
+/**
+ * Highlights a wire as a connectable target during routing: green when its
+ * width matches the route start, yellow when the connection would commit a
+ * bit-width mismatch. `false` restores the default accent stroke.
+ */
+export function setWireValidHighlight(
+  group: Konva.Group,
+  mode: "valid" | "warning" | false
+): void {
   const theme = readRenderTheme();
+  const active = mode !== false;
+  const color = !active ? theme.accent : mode === "warning" ? theme.warning : theme.valid;
   for (const line of wireGroupLines(group)) {
-    line.stroke(valid ? theme.valid : theme.accent);
-    line.strokeWidth(valid ? WIRE_SELECTED_WIDTH : WIRE_STROKE_WIDTH);
+    line.stroke(color);
+    line.strokeWidth(active ? WIRE_SELECTED_WIDTH : WIRE_STROKE_WIDTH);
   }
 }
 
@@ -235,6 +244,38 @@ export function setWireSignalState(
     ? WIRE_SELECTED_WIDTH
     : active
       ? WIRE_SIGNAL_ON_WIDTH
+      : WIRE_STROKE_WIDTH;
+
+  for (const line of wireGroupLines(group)) {
+    line.stroke(color);
+    line.strokeWidth(width);
+  }
+
+  for (const dot of group.getChildren(
+    (child) => child.name() === "junction-dot"
+  )) {
+    if (dot instanceof Konva.Circle) dot.fill(color);
+  }
+}
+
+const WIRE_WARNING_WIDTH = 2.5;
+
+/**
+ * Persistent problem styling for a lint-flagged wire (bit-width mismatch):
+ * a yellow stroke until the issue is fixed. Selection styling keeps
+ * precedence; clearing the flag restores the default accent stroke.
+ */
+export function setWireWarningState(
+  group: Konva.Group,
+  warned: boolean,
+  selected = false
+): void {
+  const theme = readRenderTheme();
+  const color = selected ? theme.selected : warned ? theme.warning : theme.accent;
+  const width = selected
+    ? WIRE_SELECTED_WIDTH
+    : warned
+      ? WIRE_WARNING_WIDTH
       : WIRE_STROKE_WIDTH;
 
   for (const line of wireGroupLines(group)) {
