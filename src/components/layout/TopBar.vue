@@ -130,7 +130,7 @@ const handleSave = () => { void saveCurrentProject(); };
     <div class="flex items-center gap-2 min-w-0">
       <div class="flex items-center gap-2 mr-2 shrink-0 cursor-pointer" @click="router.push('/')">
         <img src="../../logo.svg" class="w-5 h-5" alt="Logo" />
-        <n-text strong class="text-sm tracking-tight">MIPStream</n-text>
+        <!-- <n-text strong class="text-sm tracking-tight">MIPStream</n-text> -->
       </div>
       <n-space :size="4" align="center" class="shrink-0">
         <n-dropdown :options="fileOptions" @select="handleFileMenu" trigger="click" placement="bottom-start"><n-button
@@ -159,17 +159,28 @@ const handleSave = () => { void saveCurrentProject(); };
 
         <!-- Workspace Specific Simulation Controls -->
         <n-space :size="4" v-if="hasProject && isWorkspace && uiStore.perspective === 'simulate'" align="center">
-          <n-button quaternary circle size="tiny" type="success" :disabled="isRunning" title="Run (F5)" @click="handleRun">
-            <template #icon><n-icon><IconPlayerPlay /></n-icon></template>
+          <n-button quaternary circle size="tiny" type="success" :disabled="isRunning" title="Run (F5)"
+            @click="handleRun">
+            <template #icon><n-icon>
+                <IconPlayerPlay />
+              </n-icon></template>
           </n-button>
           <n-button quaternary circle size="tiny" :disabled="!isRunning" title="Pause (F6)" @click="pauseSimulation">
-            <template #icon><n-icon><IconPlayerPause /></n-icon></template>
+            <template #icon><n-icon>
+                <IconPlayerPause />
+              </n-icon></template>
           </n-button>
-          <n-button quaternary circle size="tiny" type="error" :disabled="!canHalt" title="Stop & Reset" @click="stopSimulation">
-            <template #icon><n-icon><IconPlayerStop /></n-icon></template>
+          <n-button quaternary circle size="tiny" type="error" :disabled="!canHalt" title="Stop & Reset"
+            @click="stopSimulation">
+            <template #icon><n-icon>
+                <IconPlayerStop />
+              </n-icon></template>
           </n-button>
-          <n-button quaternary circle size="tiny" type="primary" :disabled="isRunning" title="Step (F10)" @click="handleStep">
-            <template #icon><n-icon><IconPlayerSkipForward /></n-icon></template>
+          <n-button quaternary circle size="tiny" type="primary" :disabled="isRunning" title="Step (F10)"
+            @click="handleStep">
+            <template #icon><n-icon>
+                <IconPlayerSkipForward />
+              </n-icon></template>
           </n-button>
           <n-divider vertical />
           <n-text depth="2" class="text-xs font-medium tabular-nums">
