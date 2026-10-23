@@ -103,7 +103,7 @@ All diagram components support two distinct operational modes:
 
 ### Integrated Code Editor
 
-* **Monaco Editor Integration:** Embedded code editor supporting syntax highlighting and real-time syntax error checking.
+* **CodeMirror Editor Integration:** Embedded code editor supporting syntax highlighting and real-time syntax error checking.
 * **Dynamic Assembly Configuration:** Adaptable to match the custom instruction set definitions and memory mappings set in the architecture configuration.
 
 ### Execution Control State Machine
