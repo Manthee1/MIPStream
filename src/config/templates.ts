@@ -1,5 +1,6 @@
 import { ArchitectureConfig } from "../shared/types/architecture";
 import { ProjectEditor } from "../shared/types/project";
+import { MIPS_ASSEMBLER_CONFIG } from "./isa-presets";
 
 export const BLANK_ARCHITECTURE: ArchitectureConfig = {
     name: 'Blank',
@@ -18,27 +19,13 @@ export const BLANK_ARCHITECTURE: ArchitectureConfig = {
             format_name: 'Custom',
             total_bits: 32,
             fields: [],
-            instructions: [],
+            instruction_types: [],
+            instruction_set_config: [],
         }
     }
 };
 
-export const MIPS_ISA_DEFINITION = {
-    format_name: 'MIPS32',
-    total_bits: 32,
-    fields: [
-        { name: 'opcode', bits: 6, type: 'constant' as const },
-        { name: 'rs', bits: 5, type: 'register' as const },
-        { name: 'rt', bits: 5, type: 'register' as const },
-        { name: 'rd', bits: 5, type: 'register' as const },
-        { name: 'shamt', bits: 5, type: 'constant' as const },
-        { name: 'funct', bits: 6, type: 'constant' as const },
-    ],
-    instructions: [
-        { mnemonic: 'ADD', field_values: { opcode: 0, funct: 32 }, operands: ['rd', 'rs', 'rt'] },
-        { mnemonic: 'SUB', field_values: { opcode: 0, funct: 34 }, operands: ['rd', 'rs', 'rt'] },
-    ]
-};
+export const MIPS_ISA_DEFINITION = MIPS_ASSEMBLER_CONFIG;
 
 export const BASIC_MIPS_ARCHITECTURE: ArchitectureConfig = {
     name: 'Basic MIPS',
@@ -58,7 +45,7 @@ export const BASIC_MIPS_ARCHITECTURE: ArchitectureConfig = {
         },
         assembler: {
             mappings: [
-                { editorId: 'main', memoryModuleId: 'imem' }
+                { editorId: 'main', memoryModuleIds: ['imem'] }
             ],
         },
         isa: MIPS_ISA_DEFINITION

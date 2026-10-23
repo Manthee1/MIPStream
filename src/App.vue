@@ -5,6 +5,7 @@ import useTheme from './composables/useTheme.ts'
 import TopBar from './components/layout/TopBar.vue'
 import CreateProjectModal from './components/projects/CreateProjectModal.vue'
 import OpenProjectModal from './components/projects/OpenProjectModal.vue'
+import ArchitectureSettingsModal from './editor/components/settings/ArchitectureSettingsModal.vue'
 import { useUIStore } from './stores/UIStore'
 
 const { isDark } = useTheme()
@@ -89,6 +90,7 @@ window.addEventListener('theme-change', (event: any) => {
 
           <CreateProjectModal v-model:show="uiStore.showCreateProjectModal" />
           <OpenProjectModal v-model:show="uiStore.showOpenProjectModal" />
+          <ArchitectureSettingsModal />
         </NDialogProvider>
       </NNotificationProvider>
     </NMessageProvider>

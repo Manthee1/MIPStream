@@ -14,6 +14,7 @@ export const useUIStore = defineStore('ui', {
         showHelp: false,
         showCreateProjectModal: false,
         showOpenProjectModal: false,
+        showArchitectureSettings: false,
         perspective: 'design' as 'design' | 'simulate',
         settingsWindowConfig: {} as SettingWindowConfig,
         theme: useTheme().theme,
@@ -46,6 +47,14 @@ export const useUIStore = defineStore('ui', {
             }
             projectSettingsWindowConfig.settings = projectStore.currentProject.settings;
             this.openSettings(projectSettingsWindowConfig);
+        },
+
+        openArchitectureSettings() {
+            this.closeSettings();
+            this.showArchitectureSettings = true;
+        },
+        closeArchitectureSettings() {
+            this.showArchitectureSettings = false;
         },
 
         openGeneralSettings() {

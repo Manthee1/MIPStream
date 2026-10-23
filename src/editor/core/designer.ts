@@ -404,11 +404,22 @@ export class SchematicDesigner {
    */
   public deleteSelected(): void {
     for (const id of Array.from(this.selection)) {
+      if (this.isManagedModule(id)) continue;
       if (!this.removeModule(id)) {
         this.removeNet(id);
       }
     }
     this.notifySelectionChange();
+  }
+
+  /**
+   * True when the module is a settings-managed stage boundary register.
+   * Managed registers are created/removed only through the Architecture
+   * Settings and must be skipped by delete/clipboard interactions.
+   */
+  public isManagedModule(designator: string): boolean {
+    const module = this.hydratedModules.get(designator);
+    return module?.typeId === "std.register" && (module.config as Record<string, unknown>)?.managed === true;
   }
 
   // --------------------------------------------------------------- copy/paste
@@ -422,7 +433,9 @@ export class SchematicDesigner {
   public copySelection(): number {
     const selected = Array.from(this.selection)
       .map((id) => this.hydratedModules.get(id))
-      .filter((module): module is HydratedModule => !!module);
+      .filter((module): module is HydratedModule => !!module)
+      // Managed stage registers are not clipboard-copyable.
+      .filter((module) => !this.isManagedModule(module.designator));
     if (selected.length === 0) return 0;
 
     const designators = new Set(selected.map((module) => module.designator));
@@ -594,7 +607,7 @@ export class SchematicDesigner {
     node.on('mouseenter', () => {
       if (this.mode !== 'editor') return;
       if (this.activeTool === 'delete') {
-        setNodeDangerHover(node, true);
+        setNodeDangerHover(node, !this.isManagedModule(designator));
         this.setCursor('crosshair');
       } else if (this.activeTool === 'select') {
         this.setCursor('move');
@@ -613,6 +626,7 @@ export class SchematicDesigner {
     node.on('click', (e) => {
       if (this.mode !== 'editor') return;
       if (this.activeTool === 'delete') {
+        if (this.isManagedModule(designator)) return;
         this.removeModule(designator);
         return;
       }

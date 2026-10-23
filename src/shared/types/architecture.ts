@@ -1,23 +1,15 @@
 import { ModuleManifest, PortDefinition, SerializedModule as BaseSerializedModule, Pos, HydratedModule } from "./manifest";
 import type { SerializedNet } from "./netlist";
+import type { AssemblerConfig } from "./isa";
 
 /**
  * PDL (Processor Description Language) - Defines instruction formats and machine layout.
+ * Reuses the shared assembler model: fields carry explicit bit `ranges`
+ * (overlapping and multi-range fields are legal), plus instruction types and
+ * the concrete instruction set the legacy Assembler consumes directly.
  */
-export interface ISADefinition {
-  format_name: string;
-  total_bits: number;
-  fields: {
-    name: string;
-    bits: number;
-    type: 'constant' | 'register' | 'immediate' | 'address';
-  }[];
-  instructions: {
-    mnemonic: string;
-    field_values: Record<string, number>;
-    operands: string[];
-  }[];
-}
+export type ISADefinition = AssemblerConfig;
+
 
 /**
  * --- 1. SERIALIZED LAYER (Persistence) ---
@@ -56,9 +48,13 @@ export interface ArchitectureConfiguration {
     startStageBoundary?: string;
   };
   assembler: {
+    /**
+     * One editor may assemble its program into multiple instruction
+     * memories (one-to-many): each row carries the target designators.
+     */
     mappings: {
       editorId: string;
-      memoryModuleId: string;
+      memoryModuleIds: string[];
     }[];
   };
   isa: ISADefinition;

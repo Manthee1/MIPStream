@@ -2,7 +2,7 @@
 import { computed, h, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup, useMessage } from 'naive-ui';
-import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward } from '@tabler/icons-vue';
+import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2 } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useSimulationStore } from '../../stores/simulationStore';
@@ -153,7 +153,7 @@ const handleSave = () => { void saveCurrentProject(); };
 
     <!-- Right Section -->
     <div class="flex items-center justify-end gap-2 min-w-0">
-      <n-space :size="8" align="center" class="shrink-0">
+      <div class="flex items-center gap-2 shrink-0">
 
 
 
@@ -186,10 +186,20 @@ const handleSave = () => { void saveCurrentProject(); };
           <n-text depth="2" class="text-xs font-medium tabular-nums">
             Cycle {{ simulationStore.cycleCount }}
           </n-text>
-          <n-divider vertical />
         </n-space>
 
 
+
+        <!-- Architecture Settings -->
+        <template v-if="hasProject && isWorkspace">
+          <n-divider vertical />
+          <n-button quaternary size="tiny" @click="uiStore.openArchitectureSettings" title="Architecture Settings">
+            <template #icon><n-icon>
+                <IconSettings2 />
+              </n-icon></template>
+          </n-button>
+          <n-divider vertical />
+        </template>
 
         <!-- Workspace Specific Perspective Switch -->
         <n-button-group size="tiny" v-if="hasProject && isWorkspace">
@@ -223,12 +233,7 @@ const handleSave = () => { void saveCurrentProject(); };
             <IconMoon v-else />
           </n-icon>
         </n-button>
-        <n-button quaternary size="tiny" @click="uiStore.openGeneralSettings" title="Settings">
-          <template #icon><n-icon>
-              <IconSettings />
-            </n-icon></template>
-        </n-button>
-      </n-space>
+      </div>
     </div>
   </n-layout-header>
 </template>

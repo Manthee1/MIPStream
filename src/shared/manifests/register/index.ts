@@ -8,6 +8,14 @@ import { registerTransfer } from "./logic";
 
 export interface RegisterConfig {
   bitWidth: number;
+  /**
+   * Stage boundary identity for settings-managed pipeline registers.
+   * `managed` marks the register as owned by the Architecture Settings
+   * (non-removable, auto-created); `stageId` is its display label ("IF/ID").
+   */
+  managed?: true;
+  stageIndex?: number;
+  stageId?: string;
 }
 
 export const StageRegisterManifest: ModuleManifest<RegisterConfig> = {

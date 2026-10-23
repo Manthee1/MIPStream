@@ -34,5 +34,15 @@ export function drawStageRegisterBody(
   addBodyText(group, d.x + 8, -5, "D", options, { width: 12 });
   addBodyText(group, q.x - 20, -5, "Q", options, { align: "right", width: 12 });
 
+  // Managed pipeline boundary registers display their stage id ("IF/ID").
+  const stageId = (options.config as RegisterConfig | undefined)?.stageId;
+  if (stageId) {
+    addBodyText(group, 0, bounds.minY + 4, stageId, options, {
+      align: "center",
+      width: bounds.width,
+      bold: true,
+    });
+  }
+
   return { width: bounds.width, height: bounds.height };
 }
