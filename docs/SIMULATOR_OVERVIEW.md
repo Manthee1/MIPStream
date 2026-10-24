@@ -108,15 +108,19 @@ All diagram components support two distinct operational modes:
 
 ### Execution Control State Machine
 
-Program execution is managed via a strict state control interface:
+Program execution is managed via a strict state control interface
+(implemented by `SimulationSession` in `src/core/simulation/`):
 
 | Control Action      | Required Prerequisite State  | Resulting State             | Description                                                                                        |
 | ------------------- | ---------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Load Program**    | Code compiled without errors | Paused (at Instruction 0)   | Assembles code, loads machine bits into mapped Instruction Memory, and primes execution at PC = 0. |
-| **Start Program**   | Unloaded or Stopped          | Running                     | Assembles/loads code and immediately begins continuous clock cycle execution.                      |
-| **Restart Program** | Program must be Loaded       | Paused (at Instruction 0)   | Resets Program Counter, registers, and memory flags to initial loaded state.                       |
-| **Stop Program**    | Program must be Running      | Stopped                     | Terminates simulation execution cycle completely.                                                  |
+| **Load Program**    | Code assembled without errors (any state) | Paused (at Instruction 0)   | Assembles code, loads machine bits into mapped Instruction Memory, and primes execution at PC = 0. |
+| **Start Program**   | Unloaded, Stopped or Finished — or Paused (resume) | Running                     | Assembles/loads code and immediately begins continuous clock cycle execution; from Paused it resumes in place. |
+| **Restart Program** | Program must be Loaded       | Paused (at Instruction 0)   | Resets Program Counter, registers, and memory to the initial loaded state; re-assembles only when the source changed since the last load. |
+| **Stop Program**    | Running, Paused or Finished  | Stopped                     | Terminates the session; register/memory state is preserved for post-mortem inspection (only Load/Start/Restart rebuild it). |
 | **Pause Program**   | Program must be Running      | Paused                      | Temporarily halts clock cycle processing at the current instruction state.                         |
 | **Next Step**       | Program must be Paused       | Paused (advanced by 1 step) | Executes a single clock cycle / pipeline step and returns to a paused state.                       |
+| **Program Finished** | Running (automatic)         | Finished                    | The run loop halts by itself when the program counter runs past the last assembled instruction; the final state is preserved and Restart/Load remain available. |
 
 *Note: The simulator operates on a forward-only execution model; step-back/backtracking capabilities are not supported.*
+
+*Implementation notes:* the session's ground state is **Unloaded** (nothing compiled in, or invalidated by an architecture edit). Mapping-less netlists (plain logic circuits with no assembler mappings) load trivially, never halt on their own, and stay fully runnable/steppable. Halt detection is a controller-layer check over the first `std.pc` module; a dedicated `halt` mnemonic and pipeline in-flight draining extend the same seam later.

@@ -140,15 +140,16 @@ export function normalizeAssemblerConfig(raw: unknown): AssemblerConfig {
 
 /** Canonical MIPS32 preset for the Architecture Settings ISA section. */
 export const MIPS_ASSEMBLER_CONFIG: AssemblerConfig = {
+  // Ranges are LSB-indexed and inclusive (real MIPS32 bit positions).
   fields: [
-    { field: "opcode", label: "Operation Code", def_type: "raw_value", bits: 6, ranges: [[0, 5]] },
-    { field: "rs", label: "Source Register", def_type: "register", bits: 5, ranges: [[6, 10]] },
-    { field: "rt", label: "Target Register", def_type: "register", bits: 5, ranges: [[11, 15]] },
-    { field: "rd", label: "Destination Register", def_type: "register", bits: 5, ranges: [[16, 20]] },
-    { field: "imm", label: "Immediate Value", def_type: "raw_value", bits: 16, ranges: [[16, 31]] },
-    { field: "shamt", label: "Shift Amount", def_type: "raw_value", bits: 5, ranges: [[21, 25]] },
-    { field: "funct", label: "Function Code", def_type: "raw_value", bits: 6, ranges: [[26, 31]] },
-    { field: "address", label: "Jump Address", def_type: "raw_value", bits: 26, ranges: [[6, 31]] },
+    { field: "opcode", label: "Operation Code", def_type: "raw_value", bits: 6, ranges: [[26, 31]] },
+    { field: "rs", label: "Source Register", def_type: "register", bits: 5, ranges: [[21, 25]] },
+    { field: "rt", label: "Target Register", def_type: "register", bits: 5, ranges: [[16, 20]] },
+    { field: "rd", label: "Destination Register", def_type: "register", bits: 5, ranges: [[11, 15]] },
+    { field: "imm", label: "Immediate Value", def_type: "raw_value", bits: 16, ranges: [[0, 15]] },
+    { field: "shamt", label: "Shift Amount", def_type: "raw_value", bits: 5, ranges: [[6, 10]] },
+    { field: "funct", label: "Function Code", def_type: "raw_value", bits: 6, ranges: [[0, 5]] },
+    { field: "address", label: "Jump Address", def_type: "raw_value", bits: 26, ranges: [[0, 25]] },
   ],
   instruction_types: [
     {
@@ -156,7 +157,7 @@ export const MIPS_ASSEMBLER_CONFIG: AssemblerConfig = {
       description: "Register-type instruction",
       fields: ["opcode", "rs", "rt", "rd", "shamt", "funct"],
       default_field_values: { opcode: 0 },
-      default_operands: [["rs"], ["rt"], ["rd"]],
+      default_operands: [["rd"], ["rs"], ["rt"]],
     },
     { type: "I", description: "Immediate-type instruction", fields: ["opcode", "rs", "rt", "imm"] },
     { type: "J", description: "Jump-type instruction", fields: ["opcode", "address"] },
@@ -166,18 +167,18 @@ export const MIPS_ASSEMBLER_CONFIG: AssemblerConfig = {
       field_values: { opcode: 0x00, funct: 0x20 },
       mnemonic: "add",
       type: "R",
-      operands: [["rs"], ["rt"], ["rd"]],
+      operands: [["rd"], ["rs"], ["rt"]],
       description: "Add two registers and store the result in a destination register.",
     },
     {
       mnemonic: "addi",
       type: "I",
-      operands: [["rs"], ["rt"], ["imm"]],
+      operands: [["rt"], ["rs"], ["imm"]],
       description: "Add an immediate value to a register and store the result in a destination register.",
       field_values: { opcode: 0x08 },
     },
     {
-      field_values: { opcode: 0x23 },
+      field_values: { opcode: 0x04 },
       mnemonic: "beq",
       type: "I",
       operands: [["rs"], ["rt"], ["imm", "label_relative"]],
@@ -201,7 +202,7 @@ export const MIPS_ASSEMBLER_CONFIG: AssemblerConfig = {
       field_values: { opcode: 0x00, funct: 0x00 },
       mnemonic: "nop",
       type: "R",
-      operands: [["rs"], ["rt"], ["rd"]],
+      operands: [],
       description:
         "No operation. This instruction does nothing and is often used for timing or alignment purposes.",
     },

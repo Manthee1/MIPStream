@@ -28,8 +28,8 @@ and the CPU itself. Audit summary:
 | Hardware manifests (PC, imem, dmem, regfile, ALU, ALU-control, control, muxes, adder, extender, splitter, merger) | Implemented | `src/shared/manifests/index.ts` |
 | Run/pause/step/stop control loop | Implemented | `src/composables/useSimulation.ts` |
 | ISA/PDL data model + MIPS preset + settings UI | Implemented | `src/shared/types/isa.ts`, `src/config/isa-presets.ts` |
-| Assembler that consumes the PDL | **Missing** | only `src/legacy/core/Assembler.ts` (not in the build) |
-| Load Program (assemble → write imem → reset) | **Missing** | no write-back path in active code |
+| Assembler that consumes the PDL | Implemented | `src/core/assembler/**`, `npm run assembler:check` |
+| Load Program (assemble → write imem → reset) | Implemented | `src/core/simulation/**`, `npm run simulation:check` |
 | MIPS single-cycle datapath | **Missing** | `BASIC_MIPS_ARCHITECTURE` has `modules: []`, `nets: []` |
 | Real assembly editor panel | **Missing** | `CodeEditor.vue` is a static placeholder |
 | Live regfile/imem/dmem panels in the Simulate layout | **Missing** | panels exist per-manifest but layout uses placeholders |
@@ -67,36 +67,55 @@ Conversely, these are **slated for deletion, never to be built upon**:
 
 ## Phase 1: Config-driven assembler (pure TypeScript)
 
+> **Status: Complete (2026-10-24).** Implemented in `src/core/assembler/`
+> (tokenize / sections / data-section / labels / operands / encoder / index)
+> with a typed diagnostic contract in `src/shared/utils/errors.ts`
+> (`AssemblerDiagnostic`: code + 1-based line + 0-based column range — the
+> CodeMirror lint shape). Self-check: `npm run assembler:check` (golden
+> bit-exact R/I encodings against real MIPS32, forward/backward branches,
+> `.data` layout, register alias forms, multi-range scatter fields, type
+> default layering, and every diagnostic class); `npm run check` runs engine +
+> assembler checks. The MIPS preset was corrected to real MIPS32 semantics as
+> part of this phase: field `ranges` rewritten LSB-indexed (they were authored
+> MSB-indexed, inverting every field position under the LSB contract),
+> `beq` opcode `0x23` → `0x04` (it collided with `lw`), `add`/`addi` operand
+> order → `rd, rs, rt` / `rt, rs, imm`, and `nop` → zero operands.
+> `assemble()` never throws — it returns diagnostics; failed lines keep their
+> word slot so `pcLineMap` stays aligned. Documented handoff notes in
+> `index.ts`: `label_absolute` uses instruction-index (word) addressing, and
+> data labels map to byte offsets that Phase 2 must reconcile with the
+> word-addressed dmem. `src/shared/utils/instructions.ts` deleted (superseded).
+
 Re-implement the assembler outside `src/legacy/`, consuming the architecture's
 `AssemblerConfig` (PDL) — no MIPS constants in code. The legacy
 `Assembler.ts` is the behavioural reference for pass structure; its imports
 are broken by design (pave-over), so port the logic, not the code.
 
-- [ ] **New module** `src/core/assembler/` (framework-free, same dependency
+- [x] **New module** `src/core/assembler/` (framework-free, same dependency
       rules as `src/core/engine/`): parser, label resolution, encoder,
       diagnostics, entry point `assemble(source, config)`.
-- [ ] **Parsing pass** — comments, `.data`/`.text` sections, label
+- [x] **Parsing pass** — comments, `.data`/`.text` sections, label
       definitions, data directives (`.word`/`.byte`/`.half`), instruction lines
       split into mnemonic + operands.
-- [ ] **Label pass** — build `label → instruction index` and
+- [x] **Label pass** — build `label → instruction index` and
       `label → data address` maps (full pre-pass so forward branches resolve).
-- [ ] **Encoding pass** — per instruction: map operands to fields using the
+- [x] **Encoding pass** — per instruction: map operands to fields using the
       operand type vocabulary (`register`, `raw_value`, `label_absolute`,
       `label_relative`, `memory_address`), then fold values into the field
       `ranges` (LSB-indexed, inclusive, multi-range legal).
-- [ ] **Register resolution** — `$t0`/`$s0` and raw `R1`/`R2` forms, driven by
+- [x] **Register resolution** — `$t0`/`$s0` and raw `R1`/`R2` forms, driven by
       the shared register tables (`src/shared/utils/registers.ts`), not
       hardcoded lists.
-- [ ] **Diagnostics** — typed errors carrying **line and column range**
+- [x] **Diagnostics** — typed errors carrying **line and column range**
       (extend the `lineNumber`-only shape in `src/shared/utils/errors.ts`),
       designed up front as the CodeMirror lint/gutter contract so the later
       editor integration consumes them without a reformatting pass. Classes:
       unknown mnemonic, operand count/type mismatch, undefined label,
       out-of-range immediate or branch offset, invalid register.
-- [ ] **Output contract** — `{ instructions, pcLineMap, labels, memory,
+- [x] **Output contract** — `{ instructions, pcLineMap, labels, memory,
       dataMemoryReferences }` mirroring the legacy output shape; `pcLineMap`
       is the future current-instruction highlighter's data source.
-- [ ] **Self-check** — extend the engine-check harness (or add an
+- [x] **Self-check** — extend the engine-check harness (or add an
       `assembler:check` script) with golden encode cases for R/I/J-format
       instructions, labels, `.data` layout, and every error class.
 
@@ -105,26 +124,56 @@ bit-exact words; every diagnostic class has a test.
 
 ## Phase 2: Load Program & the full control state machine
 
+> **Status: Complete (2026-10-24).** Implemented as a framework-free control
+> core in `src/core/simulation/` (`types.ts` / `program-loader.ts` /
+> `simulation-session.ts`) with `useSimulation.ts` rewritten as the thin
+> Vue/Pinia adapter. Statuses: `unloaded | paused | running | stopped |
+> finished` (see SIMULATOR_OVERVIEW §4, updated with the Finished state).
+> Halt = PC running past the last assembled instruction, checked at the
+> controller layer per cycle (a `halt` mnemonic joins in Phase 3 at the same
+> seam; pipeline in-flight draining deferred). Self-check:
+> `npm run simulation:check` (101 checks — image write-through incl.
+> one-to-many mappings and `.data` LE word packing, capacity/mapping
+> validation, the full transition table, empty- and mapping-less-program
+> semantics, and Rig B: a minimal executable datapath over the real pure
+> logic modules that runs preset-ISA `add` programs with per-cycle memory
+> transitions, exact halt timing, restart and batched `advance()`).
+> `npm run check` now chains engine + assembler + simulation checks.
+> Conventions recorded: `.data` images are written to **every** `std.dmem`
+> in mapping order (explicit data-memory mapping deferred); Stop preserves
+> state for post-mortem inspection (the old reset-on-Stop moved to Restart);
+> Next Step auto-loads when unloaded so mapping-less netlists stay
+> steppable. **Phase 3 handoff (found early):** the classic single-cycle
+> writeback wiring (regfile → ALU → regfile.wd) is a module-granularity
+> combinational cycle under the engine's topological sort and will NOT
+> compile — the datapath design must resolve this (e.g. an edge-triggered
+> register-file write path). Also note: level-sensitive modules commit
+> writes during the post-load settle, so instruction 0's side-effects are
+> visible immediately after Load (final states and cycle counts stay exact).
+
 Implement the missing first row of the control table in
 [SIMULATOR_OVERVIEW.md](../SIMULATOR_OVERVIEW.md) §4, plus program
 termination — currently nothing exists between "assemble" and "engine".
 
-- [ ] **`loadProgram()`** in `useSimulation.ts`: assemble every editor whose
+- [x] **`loadProgram()`** in `useSimulation.ts`: assemble every editor whose
       `assembler.mappings` row targets instruction memories → write the
       `instructions` image into each mapped `std.imem`'s engine-owned
       `WordMemoryState` → write the `.data` image into data memory →
       `reset()` → status **paused at instruction 0**.
-- [ ] **Engine write-back seam** — a typed API on `SimulationEngine`
+- [x] **Engine write-back seam** — a typed API on `SimulationEngine`
       (e.g. `writeModuleState(designator, state)`) instead of ad-hoc buffer
-      poking; keep the hot path allocation-free.
-- [ ] **Control state machine** — move from the collapsed run/pause/stop/step
+      poking; keep the hot path allocation-free. *(Implemented as
+      `mutateModuleState` — in-place mutation, never replaces the
+      closure-captured state object — plus a public `settle()`.)*
+- [x] **Control state machine** — move from the collapsed run/pause/stop/step
       to the documented table: Load / Start / Restart / Stop / Pause /
       Next Step, with correct prerequisites and resulting states.
-- [ ] **Halt semantics** — decide and implement "program finished" detection
+- [x] **Halt semantics** — decide and implement "program finished" detection
       (candidates: PC running past the last assembled instruction, a dedicated
       `halt` mnemonic, or a `$finish` convention). The run loop must stop and
-      report completion instead of spinning forever.
-- [ ] **Restart** — reset PC/registers/memory flags to the *loaded* state;
+      report completion instead of spinning forever. *(Chosen: PC-past-end at
+      the controller layer; `halt` mnemonic to extend it in Phase 3.)*
+- [x] **Restart** — reset PC/registers/memory flags to the *loaded* state;
       re-assemble only when the source changed since the last load.
 
 **Exit criteria:** from a headless harness, a project with the preset MIPS

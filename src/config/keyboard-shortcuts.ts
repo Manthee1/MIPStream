@@ -1,6 +1,6 @@
 /** @format */
 
-import { pause, run, step } from "../composables/useSimulation";
+import { pauseProgram, startProgram, stepProgram } from "../composables/useSimulation";
 import { useUIStore } from "../stores/UIStore";
 
 /**
@@ -21,19 +21,19 @@ function simulateOnly(action: () => boolean | void): () => void {
 }
 
 keyboardShortcuts["F5"] = {
-  action: simulateOnly(run),
-  label: "Run Simulation",
-  description: "Starts or resumes continuous clock execution.",
+  action: simulateOnly(startProgram),
+  label: "Start / Resume Simulation",
+  description: "Loads the program (when needed) and starts continuous clock execution.",
 };
 
 keyboardShortcuts["F6"] = {
-  action: simulateOnly(pause),
+  action: simulateOnly(pauseProgram),
   label: "Pause Simulation",
   description: "Pauses continuous execution at the current cycle.",
 };
 
 keyboardShortcuts["F10"] = {
-  action: simulateOnly(step),
+  action: simulateOnly(stepProgram),
   label: "Step Simulation",
   description: "Executes a single clock cycle while paused.",
 };

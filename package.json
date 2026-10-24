@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "engine:check": "vite build --config vite.engine-check.config.ts && node .engine-check/engine-smoke.js"
+    "engine:check": "vite build --config vite.engine-check.config.ts && node .engine-check/engine-smoke.js",
+    "assembler:check": "vite build --config vite.assembler-check.config.ts && node .assembler-check/assembler-smoke.js",
+    "simulation:check": "vite build --config vite.simulation-check.config.ts && node .simulation-check/simulation-smoke.js",
+    "check": "npm run engine:check && npm run assembler:check && npm run simulation:check"
   },
   "dependencies": {
     "@tabler/icons-vue": "^3.48.0",

@@ -282,6 +282,20 @@ check("accumulator: unconnected out readable (private slot)", accumEngine.getPor
 const accumState = accumEngine.getModuleState("acc") as AccumulatorState | undefined;
 check("accumulator: engine owns state", accumState?.values?.[0], 10);
 
+// 6b. Write-back seam: `mutateModuleState` mutates engine-owned state in
+//     place and reports unknown or stateless designators.
+const seamApplied = accumEngine.mutateModuleState<AccumulatorState>("acc", (state) => {
+    state.values[2] = 42;
+});
+check("seam: mutateModuleState applies in place", seamApplied, true);
+check(
+    "seam: mutated state visible through getModuleState",
+    (accumEngine.getModuleState("acc") as AccumulatorState | undefined)?.values?.[2],
+    42
+);
+check("seam: unknown designator returns false", accumEngine.mutateModuleState("ghost", () => {}), false);
+check("seam: stateless module returns false", counter.mutateModuleState("u1", () => {}), false);
+
 // 7. Lint pass: width mismatches carry refs; unconnected ports report as
 //    info; combinational loops report as errors.
 const mismatchDoc: ArchitectureDocument = {

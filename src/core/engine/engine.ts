@@ -66,6 +66,21 @@ export class SimulationEngine {
     return this.compiled.moduleStates.get(designator);
   }
 
+  /**
+   * In-place mutation of a module's engine-owned internal state — the typed
+   * write-back seam for program loading (imem/dmem images) and debugger-style
+   * edits. Never replaces the state object (the evaluation closures captured
+   * it) and never touches the wire buffer, so the `step()` hot path is
+   * unaffected. Returns false when the designator is unknown or the module
+   * is stateless.
+   */
+  public mutateModuleState<T>(designator: string, mutator: (state: T) => void): boolean {
+    const state = this.compiled.moduleStates.get(designator);
+    if (state === undefined) return false;
+    mutator(state as T);
+    return true;
+  }
+
   // ---------------------------------------------------------------- execution
 
   /**
@@ -110,8 +125,14 @@ export class SimulationEngine {
    * state. Runs after compilation/reset — exactly like real hardware, where
    * the logic settles between clock edges — so the very first rising edge
    * samples steady-state inputs instead of an all-zero buffer.
+   *
+   * Also part of the load-time contract: program loading writes memory images
+   * through `mutateModuleState` and then re-propagates with `settle()` so the
+   * fetch path presents the first instruction before any cycle is executed.
+   * Note that level-sensitive modules (register file, data memory) commit
+   * their asserted writes during every propagation pass, including this one.
    */
-  private settle(): void {
+  public settle(): void {
     this.runCombinational(this.compiled.combinationalOrder);
   }
 

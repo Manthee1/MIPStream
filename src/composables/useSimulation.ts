@@ -3,23 +3,30 @@
 import { watch } from "vue";
 import { SimulationEngine } from "@/core/engine/engine";
 import type { ArchitectureDocument } from "@/core/engine/compile/compiler";
+import { buildLoadPlan, scanSimulationTargets, type BuiltPlan } from "@/core/simulation/program-loader";
+import { SimulationSession } from "@/core/simulation/simulation-session";
 import { requestArchitectureSnapshot } from "@/editor/core/designer-bridge";
 import { documentRevision } from "@/editor/core/selection-bridge";
 import { useProjectStore } from "@/stores/projectStore";
 import { useSimulationStore } from "@/stores/simulationStore";
 
 /**
- * Single owner of the simulation engine lifecycle (STYLE_GUIDE §4):
+ * Single owner of the simulation session lifecycle (STYLE_GUIDE §4) — the
+ * thin Vue adapter over the framework-free control state machine
+ * (`src/core/simulation/simulation-session.ts`):
  *
- * - The `SimulationEngine` instance lives at module scope — never inside Vue
- *   reactivity or Pinia state, so the `Uint32Array` hot path stays raw.
- * - `run()` drives cycles through `requestAnimationFrame` toward the store's
- *   target frequency; the UI samples the buffer on its own display-rate loop.
- * - The compiled program is invalidated whenever the schematic document
- *   changes (revision bump) and is rebuilt lazily on the next control call.
+ * - The `SimulationSession` (and its engine) lives at module scope — never
+ *   inside Vue reactivity or Pinia state, so the `Uint32Array` hot path
+ *   stays raw.
+ * - `runFrame` drives cycles through `requestAnimationFrame` toward the
+ *   store's target frequency via `session.advance()`; the UI samples the
+ *   buffer on its own display-rate loop.
+ * - The compiled engine is invalidated whenever the schematic document
+ *   changes (revision bump) and is rebuilt lazily on the next control call;
+ *   a loaded program is dropped with it (status → `unloaded`).
  */
 
-let engine: SimulationEngine | null = null;
+let session: SimulationSession | null = null;
 let compiledRevision = -1;
 let frameRequestId: number | null = null;
 let lastFrameTime = 0;
@@ -35,18 +42,26 @@ function currentDocument(): ArchitectureDocument {
   return { modules: architecture?.modules ?? [], nets: architecture?.nets ?? [] };
 }
 
+/** Mirrors the session (or its absence) into the store. */
+function mirrorSession(): void {
+  const store = useSimulationStore();
+  store.setStatus(session?.status ?? "unloaded");
+  store.setCycleCount(session?.cycleCount ?? 0);
+}
+
 /**
- * (Re)compiles the program when missing or stale. True when runnable; false
- * when compile errors block execution (reported through the store).
+ * (Re)compiles the engine when missing or stale. True when runnable; false
+ * when compile errors block execution (reported through the store). A
+ * recompile discards any loaded program — the session starts fresh.
  */
 export function ensureCompiled(): boolean {
   const store = useSimulationStore();
 
-  if (engine && compiledRevision === documentRevision.value) {
-    return !engine.hasErrors;
+  if (session && compiledRevision === documentRevision.value) {
+    return !session.engine.hasErrors;
   }
 
-  engine = new SimulationEngine(currentDocument());
+  const engine = new SimulationEngine(currentDocument());
   compiledRevision = documentRevision.value;
   store.setCompileReport(
     engine.errors.map((issue) => issue.message),
@@ -54,25 +69,46 @@ export function ensureCompiled(): boolean {
   );
 
   if (engine.hasErrors) {
-    // A broken program cannot run; fall back to a halted session.
+    // A broken netlist cannot run; fall back to a halted session.
     stopLoop();
+    session = null;
     store.setStatus("stopped");
     store.setCycleCount(0);
     return false;
   }
 
-  // A fresh program starts from its initial state at cycle 0.
-  store.setCycleCount(0);
+  session = new SimulationSession(engine, scanSimulationTargets(currentDocument()));
+  mirrorSession();
   return true;
 }
 
-// Any committed architecture edit invalidates the compiled program and
-// pauses an active run — the next control call recompiles fresh.
+/** Assembles the mapped editors into a load plan for the current session. */
+function buildCurrentPlan(): BuiltPlan | null {
+  const project = useProjectStore().currentProject;
+  if (!project || !session) return null;
+  return buildLoadPlan({
+    configuration: project.architecture.configuration,
+    editors: project.software.editors,
+    targets: session.simulationTargets,
+  });
+}
+
+/** True when any editor's source changed since the program was loaded. */
+function sourcesChanged(): boolean {
+  if (!session) return false;
+  const editors = useProjectStore().currentProject?.software.editors ?? [];
+  const loaded = session.loadedSources;
+  if (editors.length !== loaded.size) return true;
+  return editors.some((entry) => loaded.get(entry.id) !== entry.sourceCode);
+}
+
+// Any committed architecture edit invalidates the compiled engine and the
+// loaded program — the next control call recompiles fresh.
 watch(documentRevision, () => {
-  if (frameRequestId !== null) {
-    stopLoop();
-    useSimulationStore().setStatus("paused");
-  }
+  stopLoop();
+  session = null;
+  compiledRevision = -1;
+  mirrorSession();
 });
 
 function startLoop(): void {
@@ -93,8 +129,8 @@ function stopLoop(): void {
 function runFrame(now: number): void {
   frameRequestId = null;
   const store = useSimulationStore();
-  const activeEngine = engine;
-  if (!activeEngine || store.status !== "running") return;
+  const activeSession = session;
+  if (!activeSession || store.status !== "running") return;
 
   const elapsedSeconds = Math.max(0, (now - lastFrameTime) / 1000);
   lastFrameTime = now;
@@ -108,72 +144,138 @@ function runFrame(now: number): void {
   if (cycles > frameBudget) cycles = frameBudget;
   cycleDebt -= cycles;
 
-  for (let i = 0; i < cycles; i++) activeEngine.step();
+  activeSession.advance(cycles);
+  store.setCycleCount(activeSession.cycleCount);
 
-  store.setCycleCount(activeEngine.cycleCount);
+  // The program finished: stop by itself and report the completion cycle.
+  if (activeSession.status === "finished") {
+    store.setHaltedAtCycle(activeSession.cycleCount);
+    return;
+  }
+
   frameRequestId = requestAnimationFrame(runFrame);
 }
 
-/**
- * Starts or resumes continuous execution. True when running; false when
- * compile errors block it (see `simulationStore.compileErrors`).
- */
-export function run(): boolean {
-  const store = useSimulationStore();
-  if (store.status === "running") return true;
-  if (!ensureCompiled()) return false;
+// --------------------------------------------------------------- control API
 
+/** Stores a built plan's load report; true when the load succeeded. */
+function reportLoad(built: BuiltPlan, ok: boolean, loadErrors: string[]): boolean {
+  const store = useSimulationStore();
+  store.setLoadReport([...built.loadErrors, ...loadErrors], built.plan.assemblerDiagnostics);
+  store.setHaltedAtCycle(null);
+  mirrorSession();
+  return ok;
+}
+
+/**
+ * Load Program: assemble every mapped editor, write the images into the
+ * engine's memories, and pause at instruction 0. True when a program is
+ * loaded; failures surface through `simulationStore.loadErrors` and
+ * `simulationStore.assemblerDiagnostics`.
+ */
+export function loadProgram(): boolean {
+  if (!ensureCompiled()) return false;
+  const built = buildCurrentPlan();
+  if (!built || !session) return false;
+
+  stopLoop();
+  const report = session.load(built.plan);
+  return reportLoad(built, report.ok, report.loadErrors);
+}
+
+/**
+ * Start Program: resume when paused; otherwise assemble, load and run the
+ * current source (spec: "assembles/loads code and immediately begins").
+ */
+export function startProgram(): boolean {
+  if (!ensureCompiled() || !session) return false;
+
+  if (session.status !== "paused" && session.status !== "running") {
+    const built = buildCurrentPlan();
+    if (!built) return false;
+    const report = session.load(built.plan);
+    if (!reportLoad(built, report.ok, report.loadErrors)) return false;
+  }
+
+  if (!session.start()) return false;
+  const store = useSimulationStore();
+  store.setHaltedAtCycle(null);
   store.setStatus("running");
   startLoop();
   return true;
 }
 
-/** Pauses a running simulation at the current cycle. */
-export function pause(): boolean {
-  const store = useSimulationStore();
-  if (store.status !== "running") return false;
-
+/** Pause Program: halts continuous execution at the current cycle. */
+export function pauseProgram(): boolean {
+  if (!session?.pause()) return false;
   stopLoop();
-  store.setStatus("paused");
+  mirrorSession();
   return true;
 }
 
 /**
- * Halts the session and rewinds to the initial compiled state (fresh
- * registers/memory, cycle 0). Enabled while running or paused.
+ * Stop Program: terminates the session. State (registers, memory, cycle
+ * count) is preserved for inspection; only Load/Start/Restart rebuild it.
  */
-export function stop(): boolean {
-  const store = useSimulationStore();
-  if (store.status === "stopped") return false;
-
+export function stopProgram(): boolean {
+  if (!session?.stop()) return false;
   stopLoop();
-  engine?.reset();
-  store.setStatus("stopped");
-  store.setCycleCount(0);
+  mirrorSession();
   return true;
 }
 
 /**
- * Executes exactly one master clock cycle; only while not running.
- * Enters the paused state (SIMULATOR_OVERVIEW §4: step keeps the program paused).
+ * Next Step: executes one clock cycle and re-pauses. Auto-loads first when
+ * no program is loaded yet (equivalent to Load + Step — this is also what
+ * keeps mapping-less netlists steppable); rejected while running/finished.
  */
-export function step(): boolean {
+export function stepProgram(): boolean {
+  if (!ensureCompiled() || !session) return false;
+
+  if (session.status === "unloaded" || session.status === "stopped") {
+    const built = buildCurrentPlan();
+    if (!built) return false;
+    const report = session.load(built.plan);
+    if (!reportLoad(built, report.ok, report.loadErrors)) return false;
+  }
+
+  const result = session.step();
+  if (result === null) return false;
   const store = useSimulationStore();
-  if (store.status === "running") return false;
-  if (!ensureCompiled()) return false;
+  if (result === "finished") store.setHaltedAtCycle(session.cycleCount);
+  store.setStatus(result);
+  store.setCycleCount(session.cycleCount);
+  return true;
+}
 
-  const activeEngine = engine;
-  if (!activeEngine) return false;
+/**
+ * Restart Program: rewind to the loaded state (fresh registers/memory,
+ * images re-applied, paused at instruction 0). Re-assembles only when the
+ * source changed since the last load.
+ */
+export function restartProgram(): boolean {
+  if (!ensureCompiled() || !session) return false;
+  if (!session.hasProgram || session.status === "stopped" || session.status === "unloaded") {
+    return false;
+  }
 
-  activeEngine.step();
-  store.setStatus("paused");
-  store.setCycleCount(activeEngine.cycleCount);
+  stopLoop();
+  if (sourcesChanged()) {
+    const built = buildCurrentPlan();
+    if (!built) return false;
+    const report = session.load(built.plan);
+    return reportLoad(built, report.ok, report.loadErrors);
+  }
+  if (!session.restart()) return false;
+  const store = useSimulationStore();
+  store.setHaltedAtCycle(null);
+  mirrorSession();
   return true;
 }
 
 /** Live engine for read-only sampling (null before the first compile). */
 export function getEngine(): SimulationEngine | null {
-  return engine;
+  return session?.engine ?? null;
 }
 
 /**
@@ -182,10 +284,12 @@ export function getEngine(): SimulationEngine | null {
  */
 export function useSimulation() {
   return {
-    run,
-    pause,
-    stop,
-    step,
+    loadProgram,
+    startProgram,
+    pauseProgram,
+    stopProgram,
+    stepProgram,
+    restartProgram,
     ensureCompiled,
     getEngine,
   };

@@ -24,27 +24,32 @@ const { setShortcut, removeShortcut } = useKeyboard();
 // Simulation controls (Simulate perspective only).
 const simulationStore = useSimulationStore();
 const {
-  run: runSimulation,
-  pause: pauseSimulation,
-  stop: stopSimulation,
-  step: stepSimulation,
+  startProgram: startSimulation,
+  pauseProgram: pauseSimulation,
+  stopProgram: stopSimulation,
+  stepProgram: stepSimulation,
 } = useSimulation();
 
 const isRunning = computed(() => simulationStore.status === 'running');
-const canHalt = computed(() => simulationStore.status !== 'stopped');
+const canHalt = computed(() => ['paused', 'running', 'finished'].includes(simulationStore.status));
 
-const notifyCompileErrors = () => {
+const notifySimulationErrors = () => {
   if (simulationStore.compileErrors.length > 0) {
     message.error(`Cannot simulate: ${simulationStore.compileErrors[0]}`);
+  } else if (simulationStore.assemblerDiagnostics.length > 0) {
+    const first = simulationStore.assemblerDiagnostics[0];
+    message.error(`Assembly error (line ${first.line}): ${first.message}`);
+  } else if (simulationStore.loadErrors.length > 0) {
+    message.error(simulationStore.loadErrors[0]);
   }
 };
 
 const handleRun = () => {
-  if (!runSimulation()) notifyCompileErrors();
+  if (!startSimulation()) notifySimulationErrors();
 };
 
 const handleStep = () => {
-  if (!stepSimulation()) notifyCompileErrors();
+  if (!stepSimulation()) notifySimulationErrors();
 };
 
 // Global save shortcut: Ctrl+S (Windows/Linux) and Cmd+S (macOS). Registered
@@ -170,7 +175,7 @@ const handleSave = () => { void saveCurrentProject(); };
                 <IconPlayerPause />
               </n-icon></template>
           </n-button>
-          <n-button quaternary circle size="tiny" type="error" :disabled="!canHalt" title="Stop & Reset"
+          <n-button quaternary circle size="tiny" type="error" :disabled="!canHalt" title="Stop Program"
             @click="stopSimulation">
             <template #icon><n-icon>
                 <IconPlayerStop />

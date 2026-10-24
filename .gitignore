@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 .engine-check
+.assembler-check
+.simulation-check
 *.local
 
 # Editor directories and files
