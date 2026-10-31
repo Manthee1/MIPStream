@@ -3,7 +3,12 @@
 > **Status:** Active plan, written 2026-10-31 from a review of
 > `TODO.kanban.md` against the post-Phase-4 state of the tree (engine,
 > assembler, program loader and the CodeMirror foundation are implemented and
-> verified). **Phase 1 completed 2026-10-31** (see §3). Related documents:
+> verified). **Phase 1 completed 2026-10-31** (see §3). **Phase 2 completed
+> 2026-10-31** (see §3). **Resynced 2026-10-31**: two newly added board
+> tasks — editor add/link in architecture settings (`-4179`) and the stage
+> instruction visualizer bar (`-4978`), both high — are folded into §2/§3,
+> and the Phase 1/2 completions were moved to the kanban's Done column (and
+> dropped from the open tables below). Related documents:
 > [MIPS_END_TO_END_PLAN.md](./MIPS_END_TO_END_PLAN.md) (the completed
 > Phases 1–4), [DESIGN_SPECIFICATION.md](../DESIGN_SPECIFICATION.md) §12
 > (planned-feature design intent), [SIMULATOR_OVERVIEW.md](../SIMULATOR_OVERVIEW.md)
@@ -29,11 +34,14 @@ That framing drives the priority vocabulary used throughout:
 
 | Priority | Definition | Count |
 | --- | --- | --- |
-| **High** | Correctness bugs that silently produce wrong results, data-loss risk, bugs that block the primary workflow, or foundational refactors that gate other work | 10 |
+| **High** | Correctness bugs that silently produce wrong results, data-loss risk, bugs that block the primary workflow, or foundational refactors that gate other work | 6 |
 | **Medium** | Core QoL / power features that improve trust or workflow but have workarounds | 13 |
-| **Low** | Polish, layout cosmetics, and distribution | 10 |
+| **Low** | Polish, layout cosmetics, and distribution | 9 |
 
-Completed tasks (viewer panning, MIPS template) are excluded from the plan.
+Completed tasks (viewer panning, MIPS template, and the Phase 1/2 batches —
+`-12`, `-3`, `-6`, `-461`, `-10`, `-9`, `-22`, `-290`) are excluded from the
+plan; they live in the Done column of `TODO.kanban.md` and in the phase notes
+in §3.
 
 ## 2. Priority assignments
 
@@ -43,14 +51,10 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 
 | Task | ID | Why high |
 | --- | --- | --- |
-| Merger multi-drive rejection | `-12` | **Highest severity on the board**: wiring multiple inputs to one merger output is currently accepted, warned, and evaluated as a wired OR — the simulator *silently produces wrong results*, which is fatal for a teaching tool. |
-| Wire ghost fidelity | `-3` | Affects every routing action; the committed wire can take the opposite bend from the preview, undermining trust in the core editing verb. Fix is localized (commit from the `RoutingManager` preview polyline). |
 | Net deletion granularity | `-2` | Destructive UX bug: deleting one segment removes the whole net. |
-| Theme switch redraw | `-6` | Small fix (`render/theme.ts` + `useTheme`); currently requires a page reload and hits every user who toggles dark mode. |
-| Diagram bottom-bar spill | `-461` | Actively blocks resizing the viewer in the *primary* (Simulate) perspective. |
-| Splitter over-wide auto-map warning | `-10` | Silent failure — an over-wide `x:y` range maps nothing with no signal to the user. Small fix, same file (`wiring-logic.ts`) as the merger fix. |
 | Assembly editor richness | `-0` | Remaining subtasks (linting, highlighting, current-instruction highlight, autocomplete, go-to-definition) are the main student-facing gap in the primary loop. |
-| Grid & geometry standardization | `-290` | Hard, but foundational: port misalignment causes the everyday "janky bends" pain, and every routing feature built before it would need rework. |
+| Editor add/link in architecture settings | `-4179` | **New (2026-10-31)**: blank architectures currently have no code editor and no way to add one or map it to an IMem — this blocks the primary loop (assemble → load → run) for every non-template architecture and gates the rest of the editor work. Small fix (easy). |
+| Stage instruction visualizer bar | `-4978` | **New (2026-10-31)**: the top-of-diagram pipeline strip ("which instruction is in which stage") is the flagship student-facing visualization, correlating with the pipeline stage config. |
 | Undo/redo | `-4` | Hard, but an editor without undo feels unsafe; also cheaper to build *before* more mutation paths exist (each new editing feature is one more command to invert). |
 | Autosave | `-17` | The largest data-loss risk in the app; the explicit-save funnel (`useProjectSave`) already exists to debounce onto. |
 
@@ -70,7 +74,6 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 | Resume where you left off | `-15` | URL route/params persistence. |
 | Per-project layout persistence | `-16` | **Dependency** for multiple base layouts (`-21`) and project export (`-26`). |
 | Recent Projects table | `-24` | Home-page table with search/sort/actions. |
-| Mode-switch keyboard shortcut | `-22` | Trivial effort, clear QoL. |
 | Simulation-only mode / architecture switching | `-108` | Large (hard) workflow feature; do late in the designer cycle so the dynamic panel mount/unmount is not built against a moving target. |
 
 ### Low
@@ -78,7 +81,6 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 | Task | ID | Notes |
 | --- | --- | --- |
 | Net styles | `-208` | Cosmetic; rides along with multi-select work. |
-| Stage-register deletion guard error | `-9` | Tiny fix; cheap to do early opportunistically despite low priority. |
 | View menu panel toggles | `-19` | After layout persistence. |
 | Reset layout button | `-20` | With the View menu. |
 | Multiple base layouts | `-21` | After layout persistence (`-16`). |
@@ -119,6 +121,14 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 
 ### Phase 2 — Grid & geometry standardization (`-290`, high/hard)
 
+> **Status:** ✅ **Completed 2026-10-31.** Snap unit fixed at `GRID_UNIT = 1`
+> (zoom-independent — snapping no longer follows the zoom-promoted visual
+> grid), grid-size config removed (`GridSettings` = show/style only, legacy
+> stored `size` stripped on load), origin cross always marks the canvas
+> center, control unit on the common 20-unit pitch, ALU fractional sloped-edge
+> ports and notch snapped to whole units. Validated via `npm run check`
+> (Rigs C/D re-render the shipped datapath) and `vue-tsc` (no new errors).
+
 Standardize on a fixed 1-unit grid, align all ports and symbol outlines to
 whole units across the manifests, add the canvas center indicator, and make
 translation zoom-independent. **Do this before any further routing work** —
@@ -137,38 +147,52 @@ doing them twice.
 
 ### Phase 4 — Simulate-mode core loop (student-facing value)
 
-9. **Assembly editor subtasks** (`-0`), in order of decreasing leverage:
-   linting/inline error highlighting first (the diagnostics contract already
-   exists), then per-ISA syntax highlighting, then current-instruction
-   highlighting (`pcLineMap` already ships from the assembler), then
-   autocomplete, and `Ctrl+Click` go-to-definition last.
-10. **Hover highlight + educational tooltips** (`-532`) — extends the existing
+9. **Editor add/link in architecture settings** (`-4179`, new) — blank
+   architectures currently cannot gain a code editor or map one to an IMem.
+   Do this first in the phase: it gates every other item below for
+   non-template architectures. Small (easy): a settings control to add
+   editors and their IMem mappings, plus warnings for editors with no IMem
+   assigned.
+10. **Assembly editor subtasks** (`-0`), in order of decreasing leverage:
+    linting/inline error highlighting first (the diagnostics contract already
+    exists), then per-ISA syntax highlighting, then current-instruction
+    highlighting (`pcLineMap` already ships from the assembler), then
+    autocomplete, and `Ctrl+Click` go-to-definition last.
+11. **Stage instruction visualizer bar** (`-4978`, new) — the top strip
+    showing each instruction moving through the pipeline stages left-to-right,
+    driven by the pipeline stage config (stage order/naming, display toggle,
+    and start-stage boundary as specced in
+    [SIMULATOR_OVERVIEW.md](../SIMULATOR_OVERVIEW.md) §2); instructions render
+    as written in the editor with light normalization, scaled to fit the
+    cell. Pairs naturally with the current-instruction highlight from `-0`
+    (same `pcLineMap` seam).
+12. **Hover highlight + educational tooltips** (`-532`) — extends the existing
     tooltip/probe infrastructure to nets and modules.
 
 ### Phase 5 — Project management & data safety
 
-11. **Autosave** (`-17`) — debounced save through the existing
+13. **Autosave** (`-17`) — debounced save through the existing
     `useProjectSave` funnel; removes the biggest data-loss risk.
-12. **Resume where you left off** (`-15`), **Recent Projects table** (`-24`),
+14. **Resume where you left off** (`-15`), **Recent Projects table** (`-24`),
     **per-project layout persistence** (`-16`) — `-16` unblocks `-21` and
     `-26`.
 
 ### Phase 6 — Designer power features
 
-13. **Stage register pins + reset pin** (`-7`, `-8`) — one `configEditor`
+15. **Stage register pins + reset pin** (`-7`, `-8`) — one `configEditor`
     effort reusing the control-unit table pattern.
-14. **ALU/ALU-control configurable operations** (`-13`) — same table-editor
+16. **ALU/ALU-control configurable operations** (`-13`) — same table-editor
     pattern; generalizes the §4.8 encoding tables.
-15. **Control unit port labels** (`-87`).
-16. **Simulation-only mode / architecture switching** (`-108`) — the largest
+17. **Control unit port labels** (`-87`).
+18. **Simulation-only mode / architecture switching** (`-108`) — the largest
     workflow item; done once panels and editor richness are stable.
 
 ### Phase 7 — Templates, View menu, cosmetics
 
-17. **Architecture templates / import / export** (`-14`) — design the
+19. **Architecture templates / import / export** (`-14`) — design the
     persistence service so the same adapter can later back the Electron file
     path.
-18. **View menu** (`-19`, `-20`, `-21` — `-21` after `-16`), **floating
+20. **View menu** (`-19`, `-20`, `-21` — `-21` after `-16`), **floating
     simulation controls** (`-23`), **coordinates readout** (`-190`).
 
 ### Phase 8 — Electron distribution (`-25`, `-26`, `-27`)
