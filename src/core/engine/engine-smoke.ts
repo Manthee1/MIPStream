@@ -14,6 +14,15 @@ import type {
 } from "@/shared/types/manifest";
 import type { SerializedNet } from "@/shared/types/netlist";
 import { widthMask } from "@/shared/utils/bit-ops";
+import {
+  clampWiringBits,
+  contiguousField,
+  remapFromBus,
+} from "@/shared/manifests/wiring-logic";
+import {
+  resolveSplitterFields,
+  type SplitterConfig,
+} from "@/shared/manifests/splitter/logic";
 import type { ArchitectureDocument } from "./compile/compiler";
 import { SimulationEngine } from "./engine";
 import { lintArchitecture } from "./lint";
@@ -280,6 +289,50 @@ const smokeMerger: ModuleManifest<{ outputBits: number }> = {
   }),
 };
 
+// Stand-in for the real std.splitter manifest, but driven by the production
+// jumper-mapped mapping logic (`splitter/logic` + `wiring-logic`): overlap —
+// one input bit feeding several output fields — is legal for the splitter
+// (the merger's one-driver-per-bit rule is merger-only).
+const smokeSplitter: ModuleManifest<SplitterConfig> = {
+  typeId: "std.splitter",
+  label: "Bit Splitter",
+  description: "",
+  icon: "",
+  category: "wiring",
+  defaultConfig: { inputBits: 32, outputs: [contiguousField(31, 0, "f1")] },
+  generatePorts: (config) => {
+    const fields = resolveSplitterFields(config);
+    return [
+      {
+        id: "in",
+        direction: "input",
+        bits: clampWiringBits(config.inputBits),
+        label: "In",
+        position: { x: -44, y: 0 },
+      },
+      ...fields.map((field, i) => ({
+        id: `out_${field.id}`,
+        direction: "output" as const,
+        bits: field.bits,
+        label: field.label || `Out ${i + 1}`,
+        position: { x: 44, y: (i - (fields.length - 1) / 2) * 20 },
+      })),
+    ];
+  },
+  createEvaluators: (config): ModuleEvaluators => {
+    const fields = resolveSplitterFields(config);
+    const mask = widthMask(clampWiringBits(config.inputBits));
+    return {
+      inputPorts: ["in"],
+      outputPorts: fields.map((field) => `out_${field.id}`),
+      evaluate: (inputs) => {
+        const bus = (inputs[0] >>> 0) & mask;
+        return new Uint32Array(fields.map((field) => remapFromBus(bus, field)));
+      },
+    };
+  },
+};
+
 registerManifest(smokeConstant);
 registerManifest(smokeAdder);
 registerManifest(smokeAnd);
@@ -289,6 +342,7 @@ registerManifest(smokeAccumulator);
 registerManifest(smokeHybridReg);
 registerManifest(smokeHybridMem);
 registerManifest(smokeMerger);
+registerManifest(smokeSplitter);
 
 // ---------------------------------------------------------------- scenarios
 
@@ -574,6 +628,45 @@ check(
   "lint: disjoint merger mapping not flagged",
   lintArchitecture(mergerCleanDoc).some((issue) =>
     issue.message.includes("more than one input")
+  ),
+  false
+);
+
+// 9. Splitter one-to-many (overlap): several output fields may tap the same
+//    input bus bit — the jumper-mapped splitter treats overlaps as legal
+//    (the merger's one-driver-per-bit rule is merger-only). Verified against
+//    the production mapping logic: an overlapping/mirrored config compiles
+//    clean, evaluates correctly, and the merger lint does not fire.
+const splitterOverlapDoc: ArchitectureDocument = {
+  modules: [
+    module("c1", "smoke.constant", { value: 0xdeadbeef }),
+    module("s1", "std.splitter", {
+      inputBits: 32,
+      outputs: [
+        contiguousField(31, 0, "full"), // taps the whole bus
+        contiguousField(7, 0, "low"), // overlaps `full` — one-to-many
+      ],
+    }),
+  ],
+  nets: [net("n1", ["c1", "out"], ["s1", "in"])],
+};
+const splitterEngine = new SimulationEngine(splitterOverlapDoc);
+check("splitter: overlapping mirrored config compiles clean", splitterEngine.hasErrors, false);
+splitterEngine.settle();
+check(
+  "splitter: mirrored field taps the full bus",
+  splitterEngine.getPortValue("s1", "out_full"),
+  0xdeadbeef
+);
+check(
+  "splitter: overlapping low field mirrors the low byte",
+  splitterEngine.getPortValue("s1", "out_low"),
+  0xef
+);
+check(
+  "lint: splitter overlap not flagged (merger one-driver rule is merger-only)",
+  lintArchitecture(splitterOverlapDoc).some(
+    (issue) => issue.message.includes("more than one input")
   ),
   false
 );

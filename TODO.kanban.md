@@ -35,31 +35,14 @@ Tags: `uiux` `simulation` `simulator` `feat`
 Make the name/label of each control unit signal visible so a user doesn't need to hover over a port to see its name.
 Tags: `control-unit` `designer` `fix`
 
-#### Feat: Add the ability to configure net styles
-<!-- id: task-1792877912661-208 -->
-Add the ability to change the style of a net to dotted, dashed, solid or other options. Should also work when selecting multiple nets at once.
-Tags: `feat` `designer` `control-unit`
-<!-- priority: low -->
-
 ### Editing & Interaction
 
-#### Fix: Net deletion granularity
+#### Rewrite: KiCad-style floating nets & connectivity warnings
 <!-- id: task-1792838400000-2 -->
-Deleting a net should remove only the selected segment, not the entire net.
-Tags: `fix` `designer`
-<!-- priority: high -->
-
-#### Feat: Edit history
-<!-- id: task-1792838400000-4 -->
-Implement undo/redo for the schematic editor.
-Tags: `feat` `designer`
-<!-- priority: high -->
+Rework how nets are modeled and validated, KiCad-style: wires become free-standing geometry that does not have to terminate at a module port — a net may exist with no driver and/or no targets, and connectivity problems (unterminated segments, missing drivers, width mismatches) surface as Problems-panel warnings instead of model-level rejections. This supersedes the original "delete only the selected segment" request: whole-net deletion stays until this lands, and segment-level delete/split is reintroduced on top of the new model afterwards. Deliberately deferred — it changes fundamental wiring logic (`addRoute`/`addNet` validation, `pruneNetForRemovedModule`, `reconcileNetsForModule`, engine compile/lint).
+Tags: `feat` `designer` `wiring`
+<!-- priority: low -->
 <!-- workload: hard -->
-
-#### Feat/Fix: Fine-grained wire routing on drag
-<!-- id: task-1792838400000-5 -->
-Currently only works when dragging modules; should also work when holding `Alt` and dragging a wire.
-Tags: `feat-fix` `designer`
 
 ### Stage Registers
 
@@ -72,13 +55,6 @@ Tags: `feat` `designer` `stage-registers`
 <!-- id: task-1792838400000-8 -->
 Add an optional reset pin on top of the stage register, togglable from configuration.
 Tags: `feat` `designer` `stage-registers`
-
-### Bit Splitter / Merger
-
-#### Fix: Splitter one-to-many mapping
-<!-- id: task-1792838400000-11 -->
-Allow wiring a single input pin to multiple output pins; currently only one-to-one mapping is supported.
-Tags: `fix` `designer` `splitter-merger`
 
 ### ALU & ALU Control Unit
 
@@ -97,12 +73,6 @@ Tags: `feat` `designer` `alu`
 - [ ] Export produces a single file containing the architecture configuration plus all templates from that table; import restores both to the state they were in when exported
 - [ ] On Electron, expose this as "Save architecture as" / "Load architecture" backed by the local file system
 Tags: `feat` `designer` `import-export`
-
-#### Enable multi select when holding CTRL
-<!-- id: task-1793270909936-93 -->
-<!-- group:  -->
-While holding CTRL, clicking on multiple modules/netlist segments, it should select them.
-Tags: `designer` `QOL`
 
 #### Improve Cordinates functionality
 <!-- id: task-1793271154991-190 -->
@@ -238,6 +208,34 @@ Tags: `fix` `project-management` `mips`
 
 ### Architecture Designer
 
+#### Feat: Edit history
+<!-- id: task-1792838400000-4 -->
+Implement undo/redo for the schematic editor.
+- [x] Done (Phase 3, 2026-10-31): memento history over the `notifyDocumentChange` commit seam (`src/editor/core/history.ts`, pure TS) — whole-document snapshots, one entry per committed gesture; multi-delete, paste and the architecture-settings cascade coalesce into single entries (`runBatched`), and undoing a settings entry also restores the prior architecture configuration via `onConfigurationRestore`. Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y (ShortcutManager gained `shift` matching) plus toolbar buttons via the new `history-bridge`. Session-scoped: cleared by a perspective switch (F4) or project load.
+Tags: `feat` `designer`
+<!-- priority: high -->
+<!-- workload: hard -->
+
+#### Feat/Fix: Fine-grained wire routing on drag
+<!-- id: task-1792838400000-5 -->
+Currently only works when dragging modules; should also work when holding `Alt` and dragging a wire.
+- [x] Done (Phase 3, 2026-10-31): free-form mode (resolved with the maintainer) — Alt+drag, or dragging an already free-form polyline, moves the grabbed segment in both axes without auto-inserted orthogonal bends (diagonal legs allowed). Fixed anchors stay glued via spliced-in movable vertices; junction dots ride diagonal segments (distance test); free-form polylines render verbatim (`composeNetPathVerbatim`) and persist per-polyline `freeform` flags.
+Tags: `feat-fix` `designer`
+
+#### Enable multi select when holding CTRL
+<!-- id: task-1793270909936-93 -->
+<!-- group:  -->
+While holding CTRL, clicking on multiple modules/netlist segments, it should select them.
+- [x] Done (Phase 3, 2026-10-31): Ctrl/⌘+click now toggles modules and nets exactly like Shift+click, and Ctrl/⌘ marquee drags are additive. Group drag, multi-delete, multi-copy and the Inspector's multi-selection view already handled N selected items.
+Tags: `designer` `QOL`
+
+#### Feat: Add the ability to configure net styles
+<!-- id: task-1792877912661-208 -->
+Add the ability to change the style of a net to dotted, dashed, solid or other options. Should also work when selecting multiple nets at once.
+- [x] Done (Phase 3, 2026-10-31): optional `style` ('solid' | 'dashed' | 'dotted', default solid — fully back-compat) on `SerializedNet`; dash rendering in `render/wire.ts` survives the selection/hover/lint/signal stylers and theme rebuilds; `setNetStyle` restyles a whole multi-selection as ONE document change; the Inspector gained a "Wire style" section for net selections (shows "mixed" until one is picked); styles survive save/load, copy/paste and paste-offset moves.
+Tags: `feat` `designer` `control-unit`
+<!-- priority: low -->
+
 #### Fix: Wire ghost fidelity
 <!-- id: task-1792838400000-3 -->
 Final wires should follow the dashed routing ghost exactly; they sometimes route the opposite way instead using a reversed 90 degree bend.
@@ -266,6 +264,12 @@ Tags: `fix` `designer` `splitter-merger`
 <!-- id: task-1792838400000-12 -->
 Disallow wiring multiple inputs to the same output pin. Currently this is accepted, warned about, and treated as a wired OR — not the expected behavior.
 - [x] Done (Phase 1, 2026-10-31): every output bit now accepts exactly one driver — the jumper board rejects occupied output bits, `mergerErrors` blocks committing overlapping configs (red error, no emit), and engine lint flags multi-driven merger bits in the Problems panel.
+Tags: `fix` `designer` `splitter-merger`
+
+#### Fix: Splitter one-to-many mapping
+<!-- id: task-1792838400000-11 -->
+Allow wiring a single input pin to multiple output pins; currently only one-to-one mapping is supported.
+- [x] Done (Phase 3, 2026-10-31): already implemented — the splitter editor passes `bus-fan-in-allowed` to the jumper board, which permits one input bit to drive several output fields; `wiring-logic` treats splitter overlaps as legal (unlike the merger, where they are a hard error) and the splitter evaluator resolves overlapping mappings per field. Now covered by the engine smoke rig (`npm run engine:check`): an overlapping/mirrored splitter config compiles clean, evaluates correctly, and the merger multi-driver lint does not fire for splitter configs.
 Tags: `fix` `designer` `splitter-merger`
 
 #### Improve grid funcionality

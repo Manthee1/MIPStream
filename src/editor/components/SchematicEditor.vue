@@ -9,6 +9,7 @@ import { EditorTool, EditorMode, ViewportState, PlacementState } from '../core/t
 import type { GridSettings } from '@/shared/types/architecture';
 import { useProjectStore } from '@/stores/projectStore';
 import { syncLiveArchitecture } from '@/composables/useProjectSave';
+import { setHistoryAvailability } from '../core/history-bridge';
 import EditorToolbar from './EditorToolbar.vue';
 import EditorStatusBar from './EditorStatusBar.vue';
 
@@ -80,14 +81,25 @@ onMounted(() => {
     },
     onUserError: (text) => {
       message.error(text);
+    },
+    onHistoryChange: (canUndo, canRedo) => {
+      setHistoryAvailability(canUndo, canRedo);
+    },
+    onConfigurationRestore: (configuration) => {
+      // Undoing a settings batch restores the prior configuration so the
+      // canvas and `architecture.configuration` never drift apart.
+      projectStore.updateArchitecture((architecture) => {
+        architecture.configuration = configuration;
+      });
     }
   });
   designer = instance;
 
-  // Restore the project's saved architecture onto the canvas.
+  // Restore the project's saved architecture onto the canvas. It is the
+  // undo baseline: nothing can be undone back before it.
   const architecture = projectStore.currentProject?.architecture;
   if (architecture && (architecture.modules?.length || architecture.nets?.length)) {
-    const warnings = instance.loadArchitecture(architecture);
+    const warnings = instance.loadArchitecture(architecture, { resetHistory: true });
     if (warnings.length > 0) console.warn('Architecture restored with warnings:', warnings);
   }
 
@@ -111,6 +123,7 @@ onBeforeUnmount(() => {
 
   setActiveDesigner(null);
   setSelection([]);
+  setHistoryAvailability(false, false);
   clearProblems();
   designer?.destroy();
   designer = null;

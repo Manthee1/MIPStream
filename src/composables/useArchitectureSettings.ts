@@ -45,51 +45,68 @@ export function useArchitectureSettings() {
   function commit(): void {
     if (!draft.value || !projectStore.currentProject) return;
 
+    const designer = getActiveDesigner();
+    // Undoing a settings batch restores the prior configuration alongside
+    // the document, so the canvas and configuration can never drift apart.
+    const previousConfiguration = designer
+      ? (JSON.parse(
+          JSON.stringify(projectStore.currentProject.architecture.configuration ?? {})
+        ) as ArchitectureConfiguration)
+      : undefined;
+
     projectStore.updateArchitecture((architecture) => {
       architecture.configuration = draft.value as ArchitectureConfiguration;
 
-      const designer = getActiveDesigner();
-      const stageModules = designer ? designer.getSerializedModules() : architecture.modules;
-      const plan = planStageRegisterSync(stageModules, draft.value!.pipeline.stages);
+      const applySync = () => {
+        const stageModules = designer ? designer.getSerializedModules() : architecture.modules;
+        const plan = planStageRegisterSync(stageModules, draft.value!.pipeline.stages);
 
-      for (const designator of plan.remove) {
-        if (designer) {
-          designer.removeModule(designator);
-        } else {
-          architecture.modules = architecture.modules.filter((module) => module.designator !== designator);
-        }
-      }
-
-      for (const { designator, stageId, stageIndex } of plan.relabel) {
-        const target = designer
-          ? designer.getModule(designator)
-          : architecture.modules.find((module) => module.designator === designator);
-        if (!target) continue;
-        if (designer) {
-          designer.setModuleConfig(designator, { ...(target.config ?? {}), stageId, stageIndex, managed: true });
-        } else {
-          target.config = { ...(target.config ?? {}), stageId, stageIndex, managed: true };
-        }
-      }
-
-      for (const index of plan.create) {
-        const patch = stageRegisterConfig(draft.value!.pipeline.stages, index);
-        const position = { x: 80 + (index * 130), y: 80 + (index % 2) * 80 };
-
-        if (designer) {
-          const designator = designer.addModule("std.register", position, 0);
-          if (designator) {
-            designer.setModuleConfig(designator, { ...patch, managed: true, stageId: boundaryId(draft.value!.pipeline.stages, index) });
+        for (const designator of plan.remove) {
+          if (designer) {
+            designer.removeModule(designator);
+          } else {
+            architecture.modules = architecture.modules.filter((module) => module.designator !== designator);
           }
-        } else {
-          architecture.modules.push({
-            designator: `stage-reg-${index}-${Date.now()}`,
-            typeId: "std.register",
-            position,
-            rotation: 0,
-            config: { ...patch, managed: true, stageId: boundaryId(draft.value!.pipeline.stages, index) },
-          });
         }
+
+        for (const { designator, stageId, stageIndex } of plan.relabel) {
+          const target = designer
+            ? designer.getModule(designator)
+            : architecture.modules.find((module) => module.designator === designator);
+          if (!target) continue;
+          if (designer) {
+            designer.setModuleConfig(designator, { ...(target.config ?? {}), stageId, stageIndex, managed: true });
+          } else {
+            target.config = { ...(target.config ?? {}), stageId, stageIndex, managed: true };
+          }
+        }
+
+        for (const index of plan.create) {
+          const patch = stageRegisterConfig(draft.value!.pipeline.stages, index);
+          const position = { x: 80 + (index * 130), y: 80 + (index % 2) * 80 };
+
+          if (designer) {
+            const designator = designer.addModule("std.register", position, 0);
+            if (designator) {
+              designer.setModuleConfig(designator, { ...patch, managed: true, stageId: boundaryId(draft.value!.pipeline.stages, index) });
+            }
+          } else {
+            architecture.modules.push({
+              designator: `stage-reg-${index}-${Date.now()}`,
+              typeId: "std.register",
+              position,
+              rotation: 0,
+              config: { ...patch, managed: true, stageId: boundaryId(draft.value!.pipeline.stages, index) },
+            });
+          }
+        }
+      };
+
+      if (designer) {
+        // One undo entry covering the canvas cascade AND the configuration.
+        designer.withSettingsBatch(applySync, previousConfiguration!);
+      } else {
+        applySync();
       }
     });
     uiStore.closeArchitectureSettings();

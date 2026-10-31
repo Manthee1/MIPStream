@@ -26,6 +26,12 @@ export interface ShortcutBinding {
    * shortcuts, and Alt-grave characters stay untouched.
    */
   ctrl?: boolean;
+  /**
+   * true: only fires while Shift is held; false: only without Shift;
+   * omitted: either (ignored). Evaluated only for `ctrl` bindings so plain
+   * tool keys keep their existing modifier semantics.
+   */
+  shift?: boolean;
   /** Returns true if the event was handled (consumed). */
   handler: (event: KeyboardEvent) => boolean | void;
 }
@@ -73,9 +79,12 @@ export class ShortcutManager {
     for (const binding of this.bindings) {
       if (binding.key !== key) continue;
       // Ctrl bindings need the combo held; plain bindings never swallow
-      // modified keystrokes (plain 'v' must not eat Ctrl+V).
+      // modified keystrokes (plain 'v' must not eat Ctrl+V). An explicit
+      // shift requirement disambiguates pairs like Ctrl+Z / Ctrl+Shift+Z.
       if (binding.ctrl === true) {
         if (!comboHeld) continue;
+        if (binding.shift === true && !event.shiftKey) continue;
+        if (binding.shift === false && event.shiftKey) continue;
       } else if (comboHeld || event.altKey) {
         continue;
       }

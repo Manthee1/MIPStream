@@ -16,11 +16,11 @@ import { MarqueeManager } from './selection';
 import { WireDragManager, NetGeometry } from './wire-drag';
 import { getManifest, hydrateModule } from '@/shared/manifestRegistry';
 import type { SerializedModule, Pos, PortDefinition, HydratedModule } from '@/shared/types/manifest';
-import type { NetEndpoint, SerializedNet, NetBranch } from '@/shared/types/netlist';
+import type { NetEndpoint, SerializedNet, NetBranch, NetStyle } from '@/shared/types/netlist';
 import { isSameEndpoint, netDrivingInput } from '@/shared/utils/netlist';
-import type { GridSettings } from '@/shared/types/architecture';
+import type { GridSettings, ArchitectureConfiguration } from '@/shared/types/architecture';
 import { closestPointOnPolyline, rectsIntersect, SceneRect } from '@/shared/utils/geometry';
-import { composeNetPath } from './render/orthogonal-path';
+import { composeNetPath, composeNetPathVerbatim } from './render/orthogonal-path';
 import {
   createWireNode,
   updateWireNode,
@@ -29,6 +29,7 @@ import {
   setWireValidHighlight,
   setWireWarningState,
   setWireDangerHover,
+  setWireStyle,
   createWaypointHandle,
   removeWaypointHandles,
   getWaypointHandlePosition,
@@ -46,6 +47,7 @@ import {
 } from './render/module-node';
 import { showTransientTooltip, destroyTransientTooltip } from './render/tooltip';
 import { getClipboard, setClipboard } from './clipboard';
+import { HistoryManager, historyEntryEquals, HistoryEntry } from './history';
 import { lintArchitecture } from '@/core/engine/lint';
 import type { LintIssue } from '@/core/engine/lint';
 
@@ -90,6 +92,21 @@ export class SchematicDesigner {
 
   /** True while a saved architecture is being restored (not a user edit). */
   private loading = false;
+
+  /**
+   * Memento history over committed documents. `lastCommitted` is the
+   * snapshot of the state at the last commit boundary (i.e. the pre-mutation
+   * state of the *next* mutation); it is pushed onto the undo stack by the
+   * mutation that follows it. `restoring` suppresses recording while an
+   * undo/redo application replays an entry; the batching fields coalesce
+   * multi-mutation gestures (multi-delete, paste, settings cascades) into
+   * a single entry.
+   */
+  private readonly history = new HistoryManager();
+  private lastCommitted: HistoryEntry | null = null;
+  private restoring = false;
+  private historyBatching = false;
+  private historyBatchMutated = false;
 
   /** Position snapshot of a multi-selected module group while dragging. */
   private dragSnapshot: Map<string, Point> | null = null;
@@ -145,6 +162,10 @@ export class SchematicDesigner {
     });
     this.contextTracker = new ContextTracker();
     this.shortcutManager = new ShortcutManager(this.contextTracker);
+    this.history.onChange = () => this.notifyHistoryChange();
+    // Baseline for a blank canvas: the first placement is undoable back to
+    // empty. A project load resets this baseline (loadArchitecture).
+    this.lastCommitted = this.captureHistoryEntry();
 
     this.eventManager.attach();
 
@@ -171,6 +192,7 @@ export class SchematicDesigner {
       getGridSize: () => this.getGridSize(),
       getNet: (netId) => this.nets.get(netId) ?? null,
       getNetGeometry: (netId) => this.getNetGeometry(netId),
+      isAltPressed: () => this.eventManager.isAltPressed(),
       onDragUpdate: (netId, draft) => this.recomposeNet(draft),
       onDragCommit: (netId, draft) => this.commitWireDrag(netId, draft),
       isEnabled: () => this.mode === 'editor' && this.activeTool === 'select',
@@ -272,6 +294,35 @@ export class SchematicDesigner {
       ctrl: true,
       contexts: ['schematic:editor'],
       handler: () => this.paste() > 0,
+    });
+
+    // Undo/redo over the committed-document history. Shift matching on the
+    // Ctrl+Z pair distinguishes plain undo from Ctrl+Shift+Z redo.
+    this.shortcutManager.register({
+      key: 'z',
+      ctrl: true,
+      shift: false,
+      contexts: ['schematic:editor'],
+      handler: () => {
+        this.undo();
+      },
+    });
+    this.shortcutManager.register({
+      key: 'z',
+      ctrl: true,
+      shift: true,
+      contexts: ['schematic:editor'],
+      handler: () => {
+        this.redo();
+      },
+    });
+    this.shortcutManager.register({
+      key: 'y',
+      ctrl: true,
+      contexts: ['schematic:editor'],
+      handler: () => {
+        this.redo();
+      },
     });
   }
 
@@ -408,18 +459,22 @@ export class SchematicDesigner {
    * ("u*") or net ids ("n*"); nets are removed when the entry is not a module.
    */
   public deleteSelected(): void {
-    let managedBlocked: string | null = null;
-    for (const id of Array.from(this.selection)) {
-      if (this.isManagedModule(id)) {
-        managedBlocked ??= id;
-        continue;
+    // Multi-delete fans out into several removeModule/removeNet calls;
+    // commit the whole gesture as a single undo entry.
+    this.runBatched(() => {
+      let managedBlocked: string | null = null;
+      for (const id of Array.from(this.selection)) {
+        if (this.isManagedModule(id)) {
+          managedBlocked ??= id;
+          continue;
+        }
+        if (!this.removeModule(id)) {
+          this.removeNet(id);
+        }
       }
-      if (!this.removeModule(id)) {
-        this.removeNet(id);
-      }
-    }
-    if (managedBlocked) this.notifyManagedDelete(managedBlocked);
-    this.notifySelectionChange();
+      if (managedBlocked) this.notifyManagedDelete(managedBlocked);
+      this.notifySelectionChange();
+    });
   }
 
   /**
@@ -501,48 +556,182 @@ export class SchematicDesigner {
 
     const shift = (point: Pos): Pos => ({ x: point.x + offset, y: point.y + offset });
 
-    this.clearSelection();
+    // Stamping modules + remapping nets fans out into many committed calls;
+    // commit the whole paste gesture as a single undo entry.
+    this.runBatched(() => {
+      this.clearSelection();
 
-    // Stamp modules first, remembering old → new designators.
-    const designatorMap = new Map<string, string>();
-    for (const module of clip.modules) {
-      const designator = `u${++this.moduleCounter}`;
-      designatorMap.set(module.designator, designator);
-      this.instantiateModule({
-        designator,
-        typeId: module.typeId,
-        position: shift(module.position),
-        rotation: module.rotation,
-        config: JSON.parse(JSON.stringify(module.config ?? {})),
-      });
-    }
-
-    // Remap the internal nets onto the fresh instances.
-    const remap = (endpoint: NetEndpoint): NetEndpoint => ({
-      designator: designatorMap.get(endpoint.designator) ?? endpoint.designator,
-      portId: endpoint.portId,
-    });
-    for (const net of clip.nets) {
-      const restored: SerializedNet = {
-        id: `n${++this.netCounter}`,
-        source: remap(net.source),
-        targets: net.targets.map(remap),
-      };
-      if (net.waypoints) restored.waypoints = net.waypoints.map(shift);
-      if (net.branches) {
-        restored.branches = net.branches.map((branch) => ({
-          target: remap(branch.target),
-          junction: shift(branch.junction),
-          ...(branch.waypoints ? { waypoints: branch.waypoints.map(shift) } : {}),
-        }));
+      // Stamp modules first, remembering old → new designators.
+      const designatorMap = new Map<string, string>();
+      for (const module of clip.modules) {
+        const designator = `u${++this.moduleCounter}`;
+        designatorMap.set(module.designator, designator);
+        this.instantiateModule({
+          designator,
+          typeId: module.typeId,
+          position: shift(module.position),
+          rotation: module.rotation,
+          config: JSON.parse(JSON.stringify(module.config ?? {})),
+        });
       }
-      this.commitNet(restored);
+
+      // Remap the internal nets onto the fresh instances.
+      const remap = (endpoint: NetEndpoint): NetEndpoint => ({
+        designator: designatorMap.get(endpoint.designator) ?? endpoint.designator,
+        portId: endpoint.portId,
+      });
+      for (const net of clip.nets) {
+        const restored: SerializedNet = {
+          id: `n${++this.netCounter}`,
+          source: remap(net.source),
+          targets: net.targets.map(remap),
+          style: net.style,
+        };
+        if (net.waypoints) restored.waypoints = net.waypoints.map(shift);
+        if (net.branches) {
+          restored.branches = net.branches.map((branch) => ({
+            target: remap(branch.target),
+            junction: shift(branch.junction),
+            ...(branch.waypoints ? { waypoints: branch.waypoints.map(shift) } : {}),
+          }));
+        }
+        this.commitNet(restored);
+      }
+
+      for (const designator of designatorMap.values()) this.select(designator);
+
+      this.notifyDocumentChange();
+    });
+
+    return clip.modules.length;
+  }
+
+  // ----------------------------------------------------------------- history
+
+  /** Serializable pre-mutation snapshot for the undo stack. */
+  private captureHistoryEntry(): HistoryEntry {
+    return {
+      modules: this.getSerializedModules(),
+      nets: JSON.parse(JSON.stringify(this.allNets())) as SerializedNet[],
+      moduleCounter: this.moduleCounter,
+      netCounter: this.netCounter,
+    };
+  }
+
+  /**
+   * Runs `action`, coalescing every document mutation it commits into a
+   * single history entry (the pre-batch state). Used for gestures that fan
+   * out into several designer calls: multi-delete, paste, and the
+   * architecture-settings cascade.
+   */
+  private runBatched(action: () => void, configuration?: ArchitectureConfiguration): void {
+    if (this.historyBatching) {
+      // Already inside a batch — fold into the enclosing entry.
+      action();
+      return;
+    }
+    const pre = this.lastCommitted;
+    this.historyBatchMutated = false;
+    this.historyBatching = true;
+    try {
+      action();
+    } finally {
+      this.historyBatching = false;
+    }
+    if (!pre || !this.historyBatchMutated) return;
+    this.history.push(configuration ? { ...pre, configuration } : pre);
+    this.lastCommitted = this.captureHistoryEntry();
+  }
+
+  /**
+   * Wraps an architecture-settings cascade so it commits as ONE undo entry
+   * that also restores the prior configuration when undone.
+   */
+  public withSettingsBatch(action: () => void, configuration: ArchitectureConfiguration): void {
+    this.runBatched(action, configuration);
+  }
+
+  public canUndo(): boolean {
+    return this.history.canUndo();
+  }
+
+  public canRedo(): boolean {
+    return this.history.canRedo();
+  }
+
+  /** Undoes the last committed document change (editor mode only). */
+  public undo(): void {
+    if (this.mode !== 'editor' || this.loading) return;
+    this.cancelTransientInteraction();
+    const entry = this.history.undo(this.captureHistoryEntry());
+    this.applyHistoryEntry(entry);
+  }
+
+  /** Redoes the most recently undone change (editor mode only). */
+  public redo(): void {
+    if (this.mode !== 'editor' || this.loading) return;
+    this.cancelTransientInteraction();
+    const entry = this.history.redo(this.captureHistoryEntry());
+    this.applyHistoryEntry(entry);
+  }
+
+  /** Drops any in-flight placement/routing before swapping the document. */
+  private cancelTransientInteraction(): void {
+    if (this.contextTracker.isActive('schematic:routing')) {
+      this.routingManager.cancel();
+    }
+    this.cancelPlacement();
+  }
+
+  /** Replaces the document with a history entry's contents. */
+  private applyHistoryEntry(entry: HistoryEntry | null): void {
+    if (!entry) return;
+
+    this.clearDocument();
+    this.restoring = true;
+    try {
+      // Validation/linking is reused; entries came from a live document.
+      this.loadArchitecture({ modules: entry.modules, nets: entry.nets });
+      this.moduleCounter = entry.moduleCounter;
+      this.netCounter = entry.netCounter;
+      this.lastCommitted = entry;
+    } finally {
+      this.restoring = false;
     }
 
-    for (const designator of designatorMap.values()) this.select(designator);
+    if (entry.configuration) {
+      this.config.onConfigurationRestore?.(entry.configuration);
+    }
+    // Marks the project unsaved and bumps the revision — without recording
+    // (restoring guards recordHistory); lint already ran inside load.
+    this.config.onDocumentChange?.();
+    this.notifySelectionChange();
+  }
 
-    this.notifyDocumentChange();
-    return clip.modules.length;
+  /** Destroys every canvas element and resets all tracked document state. */
+  private clearDocument(): void {
+    for (const node of Array.from(this.moduleNodes.values())) node.destroy();
+    this.moduleNodes.clear();
+    this.hydratedModules.clear();
+
+    for (const wire of Array.from(this.wireNodes.values())) wire.destroy();
+    this.wireNodes.clear();
+    this.nets.clear();
+
+    this.selection.clear();
+    this.contextTracker.disable('schematic:selection');
+
+    this.warnedNets.clear();
+    this.warnedPorts.clear();
+    this.routeHighlightedPorts.clear();
+    this.routeHighlightedNets.clear();
+  }
+
+  /** Publishes undo/redo availability to the host. */
+  private notifyHistoryChange(): void {
+    if (this.config.onHistoryChange) {
+      this.config.onHistoryChange(this.history.canUndo(), this.history.canRedo());
+    }
   }
 
   // --------------------------------------------------------------- placement
@@ -659,7 +848,9 @@ export class SchematicDesigner {
         return;
       }
       if (this.activeTool !== 'select') return;
-      if (e.evt.shiftKey) {
+      // Shift / Ctrl (⌘ on macOS) toggle the item; a plain click replaces
+      // the selection with just this item.
+      if (e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey) {
         this.toggleSelection(designator);
       } else {
         this.clearSelection();
@@ -706,8 +897,13 @@ export class SchematicDesigner {
 
     node.on('dragend', () => {
       if (this.dragSnapshot) {
-        for (const id of this.dragSnapshot.keys()) this.commitModulePosition(id);
-        this.dragSnapshot = null;
+        // Group drag: every member's position commits through its own call;
+        // commit the whole gesture as a single undo entry.
+        const snapshot = this.dragSnapshot;
+        this.runBatched(() => {
+          for (const id of snapshot.keys()) this.commitModulePosition(id);
+          this.dragSnapshot = null;
+        });
       } else {
         this.commitModulePosition(designator);
       }
@@ -951,7 +1147,7 @@ export class SchematicDesigner {
 
   /** Creates the wire group for a net and registers all interactions. */
   private commitNet(net: SerializedNet): void {
-    const wire = createWireNode(net.id, [], []);
+    const wire = createWireNode(net.id, [], [], net.style ?? 'solid');
     this.logicLayer.add(wire);
     this.nets.set(net.id, net);
     this.wireNodes.set(net.id, wire);
@@ -998,7 +1194,9 @@ export class SchematicDesigner {
         return;
       }
       if (this.activeTool !== 'select') return;
-      if (e.evt.shiftKey) {
+      // Shift / Ctrl (⌘ on macOS) toggle the net; a plain click replaces
+      // the selection with just this net.
+      if (e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey) {
         this.toggleSelection(netId);
       } else {
         this.clearSelection();
@@ -1027,6 +1225,32 @@ export class SchematicDesigner {
   /** All committed nets, in creation order. */
   public getNets(): SerializedNet[] {
     return this.allNets();
+  }
+
+  /** A net's stored render style, or null when the net does not exist. */
+  public getNetStyle(netId: string): NetStyle | null {
+    return this.nets.get(netId)?.style ?? null;
+  }
+
+  /**
+   * Applies a render style to the given nets. Nets already styled that way
+   * are skipped, and one notification covers the whole batch so a
+   * multi-select restyle commits as a single document change.
+   * @returns the number of nets actually restyled.
+   */
+  public setNetStyle(netIds: string[], style: NetStyle): number {
+    let changed = 0;
+    for (const netId of netIds) {
+      const net = this.nets.get(netId);
+      if (!net || net.style === style) continue;
+      net.style = style;
+
+      const wire = this.wireNodes.get(netId);
+      if (wire) setWireStyle(wire, style);
+      changed += 1;
+    }
+    if (changed > 0) this.notifyNetlistChange();
+    return changed;
   }
 
   /** The Konva stage (runtime probing / hit-testing from the viewer). */
@@ -1077,7 +1301,10 @@ export class SchematicDesigner {
    * counters are restored so newly created elements never collide with the
    * restored ids.
    */
-  public loadArchitecture(arch: { modules?: SerializedModule[]; nets?: SerializedNet[] }): string[] {
+  public loadArchitecture(
+    arch: { modules?: SerializedModule[]; nets?: SerializedNet[] },
+    options: { resetHistory?: boolean } = {}
+  ): string[] {
     const warnings: string[] = [];
 
     this.loading = true;
@@ -1139,6 +1366,7 @@ export class SchematicDesigner {
           id: net.id,
           source: { ...net.source },
           targets: targets.map((target) => ({ ...target })),
+          style: net.style,
         };
         if (net.waypoints) {
           restored.waypoints = net.waypoints.map((point) => ({ ...point }));
@@ -1166,7 +1394,7 @@ export class SchematicDesigner {
           if (branches.length > 0) restored.branches = branches;
         }
 
-        const wire = createWireNode(restored.id, [], []);
+        const wire = createWireNode(restored.id, [], [], restored.style ?? 'solid');
         this.logicLayer.add(wire);
         this.nets.set(restored.id, restored);
         this.wireNodes.set(restored.id, wire);
@@ -1180,6 +1408,14 @@ export class SchematicDesigner {
       this.loading = false;
       // Loading suppresses per-mutation notifications — lint once at the end.
       this.runLint();
+    }
+
+    if (options.resetHistory) {
+      // A freshly loaded project is the undo baseline: nothing to undo back
+      // to, and no stale entries referring to a different document.
+      this.history.clear();
+      this.lastCommitted = this.captureHistoryEntry();
+      this.notifyHistoryChange();
     }
 
     return warnings;
@@ -1316,7 +1552,9 @@ export class SchematicDesigner {
       return;
     }
 
-    const trunk = composeNetPath(sourcePos, net.waypoints ?? [], targetPos);
+    const trunk = net.freeform
+      ? composeNetPathVerbatim(sourcePos, net.waypoints ?? [], targetPos)
+      : composeNetPath(sourcePos, net.waypoints ?? [], targetPos);
     const branches: BranchGeometry[] = (net.branches ?? []).map((branch) => {
       const branchTargetPos = this.getPortWorldPosition(
         branch.target.designator,
@@ -1324,7 +1562,9 @@ export class SchematicDesigner {
       );
       return {
         points: branchTargetPos
-          ? composeNetPath(branch.junction, branch.waypoints ?? [], branchTargetPos)
+          ? branch.freeform
+            ? composeNetPathVerbatim(branch.junction, branch.waypoints ?? [], branchTargetPos)
+            : composeNetPath(branch.junction, branch.waypoints ?? [], branchTargetPos)
           : [],
         junction: branch.junction,
       };
@@ -1340,6 +1580,7 @@ export class SchematicDesigner {
 
     net.waypoints = draft.waypoints;
     net.branches = draft.branches;
+    net.freeform = draft.freeform;
     this.recomposeNet(net);
 
     // Refresh the editing handles when the dragged net is selected.
@@ -1776,7 +2017,7 @@ export class SchematicDesigner {
 
       const stale = this.wireNodes.get(netId);
       if (!stale) continue;
-      const fresh = createWireNode(netId, [], []);
+      const fresh = createWireNode(netId, [], [], net.style ?? 'solid');
       this.logicLayer.add(fresh);
       stale.destroy();
       this.wireNodes.set(netId, fresh);
@@ -1878,7 +2119,30 @@ export class SchematicDesigner {
     if (this.config.onDocumentChange) {
       this.config.onDocumentChange();
     }
+    this.recordHistory();
     this.runLint();
+  }
+
+  /**
+   * Pushes the pre-mutation state onto the undo stack and refreshes the
+   * commit baseline. No-op mutations (e.g. a drop in place) refresh the
+   * baseline without polluting history.
+   */
+  private recordHistory(): void {
+    if (this.restoring) return;
+
+    const next = this.captureHistoryEntry();
+    if (this.historyBatching) {
+      // The batch wrapper pushes its own single entry when it completes.
+      this.historyBatchMutated = true;
+      this.lastCommitted = next;
+      return;
+    }
+
+    if (this.lastCommitted && !historyEntryEquals(this.lastCommitted, next)) {
+      this.history.push(this.lastCommitted);
+    }
+    this.lastCommitted = next;
   }
 
   public destroy(): void {

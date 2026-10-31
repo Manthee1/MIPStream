@@ -17,6 +17,8 @@ export interface WireDragManagerOptions {
   getNet: (netId: string) => SerializedNet | null;
   /** Resolves a net's rendered polylines (scene space). */
   getNetGeometry: (netId: string) => NetGeometry | null;
+  /** Live Alt-key state (free-form drag modifier, like module drags). */
+  isAltPressed: () => boolean;
   /** Live re-render from a draft net while a segment drag is in flight. */
   onDragUpdate: (netId: string, draft: SerializedNet) => void;
   /** Commits the dragged geometry into the netlist on drag end. */
@@ -50,8 +52,18 @@ interface DragState {
   startCoord: number;
   /** Pointer scene position recorded at drag start. */
   startPointer: Pos;
+  /**
+   * Free-form (Alt) mode: the grabbed segment follows the cursor in both
+   * axes with no auto-inserted orthogonal bends — diagonal legs allowed.
+   * Fixed at grab time (Alt state or the polyline already being free-form).
+   */
+  freeform: boolean;
+  /** Start positions of the dragged segment's two vertices. */
+  segmentStart: [Pos, Pos];
   /** Trunk branches whose junction dot sits on the dragged segment. */
   junctionBranches: number[];
+  /** Start positions of those riding junction dots, by branch index. */
+  junctionStarts: Map<number, Pos>;
   /** Whether bend vertices for fixed endpoints have been inserted. */
   bendsInserted: boolean;
   /** Working copy of the net mutated during the drag. */
@@ -67,6 +79,11 @@ const EPSILON = 0.51;
  * fixed anchor (a port or a junction), a new bend is inserted automatically
  * so the path stays orthogonal. Junction dots sitting on the dragged segment
  * ride along with it.
+ *
+ * Holding Alt — or dragging a polyline that is already free-form — switches
+ * to free-form mode: the grabbed segment follows the cursor in both axes
+ * with no bend insertion, so diagonal legs are allowed and the net keeps
+ * rendering verbatim after the drag (`freeform` on the net/branch).
  */
 export class WireDragManager {
   private readonly stage: Konva.Stage;
@@ -139,11 +156,22 @@ export class WireDragManager {
     // Horizontal segments drag vertically (axis y), vertical ones horizontally.
     const axis: DragState["axis"] = a.y === b.y ? "y" : "x";
 
+    // Free-form (Alt) mode: explicitly requested, or the polyline already
+    // carries diagonal geometry from a previous free-form drag.
+    const polylineFreeform =
+      kind === "trunk" ? net.freeform === true : net.branches?.[branchIndex]?.freeform === true;
+    const freeform = polylineFreeform || this.options.isAltPressed();
+
     // Trunk drags carry junction dots sitting on the dragged segment.
     const junctionBranches: number[] = [];
+    const junctionStarts = new Map<number, Pos>();
     if (kind === "trunk") {
       net.branches?.forEach((branch, index) => {
-        if (pointOnSegment(branch.junction, a, b)) junctionBranches.push(index);
+        // Distance test covers axis-aligned AND diagonal (free-form) segments.
+        if (distanceToSegment(branch.junction, a, b) < EPSILON) {
+          junctionBranches.push(index);
+          junctionStarts.set(index, { ...branch.junction });
+        }
       });
     }
 
@@ -156,10 +184,26 @@ export class WireDragManager {
       axis,
       startCoord: axis === "y" ? a.y : a.x,
       startPointer: scene,
+      freeform,
+      segmentStart: [
+        { ...vertices[segIndex].pos },
+        { ...vertices[segIndex + 1].pos },
+      ],
       junctionBranches,
+      junctionStarts,
       bendsInserted: false,
       draft: cloneNet(net),
     };
+
+    if (freeform) {
+      // The draft must render verbatim from the first move, and the commit
+      // must persist the free-form rendering mode.
+      if (kind === "trunk") {
+        this.drag.draft.freeform = true;
+      } else if (this.drag.draft.branches?.[branchIndex]) {
+        this.drag.draft.branches[branchIndex].freeform = true;
+      }
+    }
   };
 
   private readonly mouseMoveHandler = () => {
@@ -168,6 +212,11 @@ export class WireDragManager {
 
     const scene = pointerScenePosition(this.stage);
     if (!scene) return;
+
+    if (state.freeform) {
+      this.applyFreeFormDrag(state, scene);
+      return;
+    }
 
     const delta =
       state.axis === "y"
@@ -211,6 +260,72 @@ export class WireDragManager {
 
     this.updateDraftWaypoints(state);
     this.options.onDragUpdate(state.netId, state.draft);
+  }
+
+  /**
+   * Free-form (Alt) drag: the grabbed segment follows the cursor in both
+   * axes with NO auto-inserted orthogonal bends — adjacent legs may go
+   * diagonal. Fixed anchors (ports/junctions) stay glued; a movable vertex
+   * is spliced in at each fixed end on the first move so the anchor is not
+   * detached. Junction dots riding the trunk segment translate with it.
+   */
+  private applyFreeFormDrag(state: DragState, scene: Pos): void {
+    if (!state.bendsInserted) {
+      this.insertFreeFormAnchors(state);
+      // After splicing, the dragged segment's vertices start at the anchor
+      // positions — capture them as the translation origin.
+      state.segmentStart = [
+        { ...state.vertices[state.segIndex].pos },
+        { ...state.vertices[state.segIndex + 1].pos },
+      ];
+      state.bendsInserted = true;
+    }
+
+    const snap = this.options.getGridSize();
+    const dx = GridManager.snap(scene.x - state.startPointer.x, snap);
+    const dy = GridManager.snap(scene.y - state.startPointer.y, snap);
+
+    const [a, b] = state.segmentStart;
+    const i = state.segIndex;
+    if (!state.vertices[i].fixed) {
+      state.vertices[i].pos = { x: a.x + dx, y: a.y + dy };
+    }
+    if (!state.vertices[i + 1].fixed) {
+      state.vertices[i + 1].pos = { x: b.x + dx, y: b.y + dy };
+    }
+
+    // Junction dots riding the dragged trunk segment translate with it.
+    for (const [branchIndex, start] of state.junctionStarts) {
+      const branch = state.draft.branches?.[branchIndex];
+      if (branch) branch.junction = { x: start.x + dx, y: start.y + dy };
+    }
+
+    this.updateDraftWaypoints(state);
+    this.options.onDragUpdate(state.netId, state.draft);
+  }
+
+  /**
+   * Free-form variant of `insertBends`: a movable vertex is spliced in at
+   * each fixed end of the dragged segment so the anchor stays glued while
+   * the vertex translates with the cursor (the leg may go diagonal).
+   */
+  private insertFreeFormAnchors(state: DragState): void {
+    const vertices = state.vertices;
+
+    if (vertices[state.segIndex].fixed) {
+      vertices.splice(state.segIndex + 1, 0, {
+        pos: { ...vertices[state.segIndex].pos },
+        fixed: false,
+      });
+      state.segIndex += 1;
+    }
+
+    if (vertices[state.segIndex + 1].fixed) {
+      vertices.splice(state.segIndex + 1, 0, {
+        pos: { ...vertices[state.segIndex + 1].pos },
+        fixed: false,
+      });
+    }
   }
 
   /**
@@ -295,25 +410,6 @@ function findNearestSegment(
   }
 
   return { segIndex, distance: best };
-}
-
-/** True when point `p` lies on the axis-aligned segment `ab` (with tolerance). */
-function pointOnSegment(p: Pos, a: Pos, b: Pos): boolean {
-  if (a.y === b.y) {
-    return (
-      Math.abs(p.y - a.y) < EPSILON &&
-      p.x >= Math.min(a.x, b.x) - EPSILON &&
-      p.x <= Math.max(a.x, b.x) + EPSILON
-    );
-  }
-  if (a.x === b.x) {
-    return (
-      Math.abs(p.x - a.x) < EPSILON &&
-      p.y >= Math.min(a.y, b.y) - EPSILON &&
-      p.y <= Math.max(a.y, b.y) + EPSILON
-    );
-  }
-  return false;
 }
 
 /** Deep-copies a net's routing geometry (connectivity is shared by reference). */

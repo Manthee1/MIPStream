@@ -13,7 +13,7 @@ export interface MarqueeManagerOptions {
   layer: Konva.Layer;
   /** Gates all interaction (editor mode + select tool). */
   isEnabled: () => boolean;
-  /** Fired when a marquee drag completes. `additive` = Shift held. */
+  /** Fired when a marquee drag completes. `additive` = Shift/Ctrl held. */
   onSelect: (rect: SceneRect, additive: boolean) => void;
   /** Fired on a left click (not drag) over empty canvas. */
   onEmptyClick: (additive: boolean) => void;
@@ -50,7 +50,7 @@ export class MarqueeManager {
     const scene = pointerScenePosition(this.stage);
     if (!scene) return;
 
-    this.pending = { start: scene, additive: e.evt.shiftKey };
+    this.pending = { start: scene, additive: e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey };
   };
 
   private readonly mouseMoveHandler = () => {

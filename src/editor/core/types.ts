@@ -1,7 +1,7 @@
 /** @format */
 
 import type { SerializedNet } from "@/shared/types/netlist";
-import type { GridSettings } from "@/shared/types/architecture";
+import type { GridSettings, ArchitectureConfiguration } from "@/shared/types/architecture";
 import type { LintIssue } from "@/core/engine/lint";
 
 export type EditorTool = 'select' | 'wire' | 'place' | 'delete';
@@ -45,6 +45,17 @@ export interface DesignerConfig {
    * toast/message; the designer itself stays UI-framework-free.
    */
   onUserError?: (message: string) => void;
+  /**
+   * Fires whenever the undo/redo stacks change, with fresh availability.
+   * The host syncs it into the history bridge for the toolbar.
+   */
+  onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void;
+  /**
+   * Fires when undoing a settings batch restores a prior architecture
+   * configuration alongside the document. The host must write it back
+   * into the project store so the canvas and configuration stay in sync.
+   */
+  onConfigurationRestore?: (configuration: ArchitectureConfiguration) => void;
 }
 
 export interface Point {

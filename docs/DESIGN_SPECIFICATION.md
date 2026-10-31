@@ -143,13 +143,14 @@ matters.
 | Compile → topological sort → cycle-accurate stepping | Implemented | `src/core/engine`; 19/19 self-checks pass |
 | Designer lint shared with engine resolver | Implemented | `src/core/engine/lint.ts` |
 | Schematic editing, routing, wire dragging, clipboard | Implemented | `src/editor/core` |
+| Editor undo/redo history | Implemented | `src/editor/core/history.ts`, toolbar via `history-bridge.ts` (§6.17) |
 | Architecture settings (pipeline, assembler mapping, ISA) | Implemented | `src/editor/components/settings` |
 | Managed pipeline stage registers | Implemented | `src/shared/utils/stage-registers.ts` |
 | Simulate perspective with live signal overlay | Implemented | `src/simulator`, `SchematicViewer.vue` |
 | Assembly editor in the Simulate perspective | Implemented | `CodeEditor.vue` — CodeMirror 6 instance with token-synced theme, Load action and diagnostics strip (`useCodeMirror.ts`) |
 | Assembler execution path | Implemented | `src/core/assembler/**` (config-driven, Phase 1), wired to the UI through `buildLoadPlan` and the editor diagnostics list |
 | Monaco language services | Superseded | `src/config/monaco*` is legacy-only and slated for deletion; CodeMirror 6 is the editor stack |
-| Undo/redo, autosave, layout persistence, export/import | Planned | `todo.md` |
+| Undo/redo, autosave, layout persistence, export/import | Partially planned | undo/redo implemented (§6.17); autosave, layout persistence and export/import remain in `todo.md` |
 
 ---
 
@@ -1024,11 +1025,12 @@ than an immediate action, so destructive edits require a deliberate click.
 ### 6.5 Selection, clipboard and deletion
 
 Selection is a `Set<string>` of designators (modules) and net ids (wires).
-The select tool click-toggles modules; dragging over empty canvas draws a
-marquee that selects modules intersecting the rectangle (additive with a
-modifier). The selection context (`schematic:selection`) gates the
-Delete/Backspace and copy shortcuts, so they only fire while something is
-selected.
+A plain select-tool click replaces the selection with the clicked item;
+Shift **or** Ctrl/⌘ click toggles the clicked item in or out (Phase 3), and
+dragging over empty canvas draws a marquee that selects modules intersecting
+the rectangle — additive when Shift or Ctrl/⌘ is held. The selection context
+(`schematic:selection`) gates the Delete/Backspace and copy shortcuts, so they
+only fire while something is selected.
 
 Clipboard (`clipboard.ts`) lives **outside** the designer so it survives
 perspective switches. Copy serialises the selected modules plus every net whose
@@ -1097,6 +1099,17 @@ With the select tool, hovering a wire segment or waypoint exposes drag handles.
 corners follow" interaction, and it is the mechanism by which fine-grained
 routing adjustments are made after a net exists.
 
+Holding **Alt** at grab — or grabbing a polyline that already carries diagonal
+geometry — switches to *free-form* mode: the grabbed segment follows the
+cursor in both axes with **no** automatic bend insertion, so adjacent legs may
+go diagonal. Fixed anchors (ports, junctions) stay glued; on the first move a
+movable vertex is spliced in at each fixed end so the anchor is not detached,
+and junction dots riding the segment translate with it. The committed draft
+persists a `freeform` flag (trunk or per-branch) and renders verbatim through
+`composeNetPathVerbatim` — straight segments through the anchors, no L-corner
+re-composition — so the hand-drawn geometry survives reloads, theme rebuilds
+and later module drags (whose anchors simply stretch the legs).
+
 ### 6.10 Route highlighting and width validation
 
 While a route is in progress, the designer highlights every legally connectable
@@ -1154,12 +1167,13 @@ dangling connections.
 
 ### 6.15 Bridges and the revision counter
 
-Four tiny modules decouple the designer from the panels that display its state:
+Five tiny modules decouple the designer from the panels that display its state:
 
 | Bridge | Exposes | Consumers |
 | --- | --- | --- |
 | `designer-bridge` | `setActiveDesigner` / `requestArchitectureSnapshot` | save flow, simulation compile source |
 | `selection-bridge` | `selectedIds`, `documentRevision` | Inspector panel, simulation invalidation |
+| `history-bridge` | `canUndo`, `canRedo` | Editor toolbar buttons |
 | `placement-bridge` | `requestPlacement` / `pendingPlacementTypeId` | Module palette |
 | `problems-bridge` | `problems` | Problems panel |
 
@@ -1178,7 +1192,40 @@ new elements cannot collide. Loading suppresses per-mutation notifications and
 lints once at the end. `getSerializedModules()` plus `getNets()` produce the
 snapshot that `serializeArchitecture` persists (§3.8); `SchematicEditor.vue`
 pulls that snapshot into the project store on unmount so a perspective switch
-never loses unsaved canvas edits.
+never loses unsaved canvas edits. Passing `resetHistory` establishes the undo
+baseline (§6.17): a freshly loaded project cannot be undone past itself.
+
+### 6.17 Undo/redo history
+
+Undo/redo is memento-style history over whole-document snapshots, not a
+command stack: with ~12 mutation paths (add/remove/move modules, routes,
+segment drags, waypoint handles, config reconciliation, paste, managed
+register sync) and more coming, inverting every one of them would make each
+future feature retroactively undoable, while snapshots make every feature
+*born undoable* — the document is small (JSON modules + nets), so snapshots
+are cheap. `history.ts` is pure TypeScript (no Vue), with a 100-entry limit
+per direction.
+
+The commit point is the existing `notifyDocumentChange` seam: each committed
+user gesture notifies exactly once (drags commit on release), so the designer
+keeps a `lastCommitted` snapshot (the pre-mutation state) and pushes it onto
+the undo stack on the mutation that follows. Structural equality detects
+no-op mutations (e.g. a drop in place) and skips them. Gestures that fan out
+into several committed calls — multi-delete, paste, and the
+architecture-settings cascade — run inside a batch (`runBatched`) and commit
+as ONE entry; settings batches additionally carry the prior
+`ArchitectureConfiguration`, and undoing one restores it through the
+`onConfigurationRestore` callback so the canvas and configuration never
+drift. Undo/redo clear the canvas (`clearDocument`) and replay through
+`loadArchitecture`, restoring designator counters, lint state and selection.
+Anchors: Ctrl+Z (undo), Ctrl+Shift+Z / Ctrl+Y (redo) via the ShortcutManager
+(gained explicit `shift` matching so the pair disambiguates), plus toolbar
+buttons fed by `history-bridge`.
+
+Known limitations: history lives on the designer instance, so the F4
+perspective switch (which unmounts the canvas) clears it — unlike the
+module-level clipboard — and config-only edits (grid, ISA changes without
+canvas effects) are not part of document history.
 
 ---
 
@@ -1815,7 +1862,7 @@ file; the "Affected" column names the modules from §2.2 that would change.
 | Wires match the dashed ghost exactly | The committed wire can occasionally choose the opposite orthogonal direction from the preview; the fix is to commit from the exact polyline the `RoutingManager` previews (§6.8). | `routing.ts` |
 | Stage registers with configurable pins | Let a stage register expose a user-configured set of input/output pin pairs (in/out always together), in the style of the control unit's table editor. Requires a `configEditor` for `std.register` and config-driven `generatePorts`. | `register/index.ts`, new config editor |
 | Toggleable reset pin on stage registers | Add an optional reset input drawn from the top of the symbol; evaluation resets on the clock edge when asserted. | `register` manifest, `createEvaluators` |
-| Undo/redo | A command history over the designer's committed mutations (`notifyDocumentChange` is the natural commit point); needs inverse operations for add/remove/move/route/config and must exclude managed-register reconciliation noise. | `designer.ts`, new `history.ts`, bridges |
+| Undo/redo | **Implemented (2026-10-31, §6.17)** as memento history over the `notifyDocumentChange` commit seam: whole-document snapshots (`history.ts`), gesture batching (`runBatched`) for multi-delete/paste/settings cascades, and configuration restore for settings batches. | `designer.ts`, `history.ts`, `history-bridge.ts` |
 | Theme switch updates the diagram immediately | Re-resolve `RenderTheme` and redraw the canvas on theme change rather than requiring a reload (§10.4). | `render/theme.ts`, `SchematicEditor.vue`, `useTheme` |
 | Splitter/merger: warn on oversized auto-map | When an automatic `x:y` mapping exceeds the configured output width it currently fails silently; surface a warning in the config editor. | `wiring-logic.ts`, `SplitterConfigEditor.vue`, `MergerConfigEditor.vue` |
 | Splitter: one input pin → multiple outputs | Relax the one-to-one constraint so a bus bit can fan out to several splitter outputs (the current model rejects it). | `wiring-logic.ts`, splitter editor |
@@ -1823,7 +1870,7 @@ file; the "Affected" column names the modules from §2.2 that would change.
 | Configurable ALU / ALU-control operations | Make the ALU operation set and the ALU-control signal mapping user-editable with a reset-to-default, defaulting to the standard 4-bit map (`0000` AND … `1110` NOP). This generalises the two encoding tables in §4.8 from constants to config. | `alu/index.ts`, `alu-control/index.ts`, new config editors |
 | Import/export/"save as template" | New IndexedDB table for user templates; single-file export of architecture + templates; "save as template" writes the current architecture to the table. | `db/tables.ts`, `services`, new modal |
 | Error when deleting a managed stage register | `isManagedModule` already *prevents* deletion silently; the intent is an explanatory error rather than a no-op. | `designer.ts`, `ProblemsPanel` |
-| Fine-grained routing with Alt held | Wire dragging while holding Alt should behave like module dragging (per-segment, not auto-orthogonal). | `wire-drag.ts`, `routing.ts` |
+| Fine-grained routing with Alt held | **Implemented (2026-10-31, §6.9)** as free-form mode: Alt+drag moves the grabbed segment in both axes without auto-inserted orthogonal bends (diagonal legs allowed); free-form polylines render verbatim (`composeNetPathVerbatim`) and persist `freeform` flags. | `wire-drag.ts`, `orthogonal-path.ts`, `netlist.ts` |
 
 ### 12.3 Project management
 

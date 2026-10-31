@@ -4,11 +4,17 @@
 > `TODO.kanban.md` against the post-Phase-4 state of the tree (engine,
 > assembler, program loader and the CodeMirror foundation are implemented and
 > verified). **Phase 1 completed 2026-10-31** (see §3). **Phase 2 completed
-> 2026-10-31** (see §3). **Resynced 2026-10-31**: two newly added board
+> 2026-10-31** (see §3). **Phase 3 completed 2026-10-31** (see §3).
+> **Resynced 2026-10-31**: two newly added board
 > tasks — editor add/link in architecture settings (`-4179`) and the stage
 > instruction visualizer bar (`-4978`), both high — are folded into §2/§3,
 > and the Phase 1/2 completions were moved to the kanban's Done column (and
-> dropped from the open tables below). Related documents:
+> dropped from the open tables below). **Resync follow-up (2026-10-31):**
+> `-11` (splitter one-to-many) closed out — the feature was already
+> implemented and is now covered by the engine smoke rig — and `-2` was
+> rewritten from a segment-deletion bug into a deferred KiCad-style
+> net-model rewrite (floating nets + connectivity warnings), demoted to
+> low/hard. Related documents:
 > [MIPS_END_TO_END_PLAN.md](./MIPS_END_TO_END_PLAN.md) (the completed
 > Phases 1–4), [DESIGN_SPECIFICATION.md](../DESIGN_SPECIFICATION.md) §12
 > (planned-feature design intent), [SIMULATOR_OVERVIEW.md](../SIMULATOR_OVERVIEW.md)
@@ -34,14 +40,16 @@ That framing drives the priority vocabulary used throughout:
 
 | Priority | Definition | Count |
 | --- | --- | --- |
-| **High** | Correctness bugs that silently produce wrong results, data-loss risk, bugs that block the primary workflow, or foundational refactors that gate other work | 6 |
-| **Medium** | Core QoL / power features that improve trust or workflow but have workarounds | 13 |
+| **High** | Correctness bugs that silently produce wrong results, data-loss risk, bugs that block the primary workflow, or foundational refactors that gate other work | 4 |
+| **Medium** | Core QoL / power features that improve trust or workflow but have workarounds | 10 |
 | **Low** | Polish, layout cosmetics, and distribution | 9 |
 
-Completed tasks (viewer panning, MIPS template, and the Phase 1/2 batches —
-`-12`, `-3`, `-6`, `-461`, `-10`, `-9`, `-22`, `-290`) are excluded from the
-plan; they live in the Done column of `TODO.kanban.md` and in the phase notes
-in §3.
+Completed tasks (viewer panning, MIPS template, the Phase 1/2 batches —
+`-12`, `-3`, `-6`, `-461`, `-10`, `-9`, `-22`, `-290` — the already-implemented
+splitter fan-in `-11`, closed during this resync, and the Phase 3 batch —
+`-93`, `-208`, `-4`, `-5` — completed 2026-10-31) are
+excluded from the plan; they live in the Done column of `TODO.kanban.md` and
+in the phase notes in §3.
 
 ## 2. Priority assignments
 
@@ -51,20 +59,15 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 
 | Task | ID | Why high |
 | --- | --- | --- |
-| Net deletion granularity | `-2` | Destructive UX bug: deleting one segment removes the whole net. |
 | Assembly editor richness | `-0` | Remaining subtasks (linting, highlighting, current-instruction highlight, autocomplete, go-to-definition) are the main student-facing gap in the primary loop. |
 | Editor add/link in architecture settings | `-4179` | **New (2026-10-31)**: blank architectures currently have no code editor and no way to add one or map it to an IMem — this blocks the primary loop (assemble → load → run) for every non-template architecture and gates the rest of the editor work. Small fix (easy). |
 | Stage instruction visualizer bar | `-4978` | **New (2026-10-31)**: the top-of-diagram pipeline strip ("which instruction is in which stage") is the flagship student-facing visualization, correlating with the pipeline stage config. |
-| Undo/redo | `-4` | Hard, but an editor without undo feels unsafe; also cheaper to build *before* more mutation paths exist (each new editing feature is one more command to invert). |
 | Autosave | `-17` | The largest data-loss risk in the app; the explicit-save funnel (`useProjectSave`) already exists to debounce onto. |
 
 ### Medium
 
 | Task | ID | Notes |
 | --- | --- | --- |
-| Splitter one-to-many mapping | `-11` | Relaxing the one-to-one constraint; pairs with the merger/splitter wiring-logic pass. |
-| Ctrl multi-select | `-93` | Basic editor expectation; bumped from its original `low`. |
-| Fine-grained wire routing with Alt | `-5` | Depends on the final geometry model. |
 | Stage register configurable pins | `-7` | Reuses the control-unit table-editor pattern. |
 | Stage register reset pin | `-8` | Do together with `-7` (same manifest, same editor). |
 | ALU / ALU-control configurable ops | `-13` | Generalizes the §4.8 encoding tables to config; same table-editor pattern again. |
@@ -80,7 +83,7 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 
 | Task | ID | Notes |
 | --- | --- | --- |
-| Net styles | `-208` | Cosmetic; rides along with multi-select work. |
+| Floating nets & connectivity warnings (rewrite) | `-2` | **Rewritten 2026-10-31** from the old segment-deletion bug: KiCad-style net model — driverless/unconnected segments allowed, Problems-panel warnings instead of hard errors. Hard; deferred — whole-net deletion stays until it lands. |
 | View menu panel toggles | `-19` | After layout persistence. |
 | Reset layout button | `-20` | With the View menu. |
 | Multiple base layouts | `-21` | After layout persistence (`-16`). |
@@ -132,33 +135,75 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 Standardize on a fixed 1-unit grid, align all ports and symbol outlines to
 whole units across the manifests, add the canvas center indicator, and make
 translation zoom-independent. **Do this before any further routing work** —
-it changes the coordinate system that segment deletion, junction geometry,
-and fine-grained dragging all sit on top of; building those first would mean
-doing them twice.
+it changes the coordinate system that the connectivity rewrite (`-2`),
+junction geometry, and fine-grained dragging all sit on top of; building
+those first would mean doing them twice.
 
 ### Phase 3 — Routing & interaction polish (on the final geometry)
 
-6. **Net deletion granularity** (`-2`) — segment identity layered over
-   `SerializedNet` waypoint/branch geometry.
-7. **Ctrl multi-select** (`-93`), then **undo/redo** (`-4`) — build the
-   command history over `notifyDocumentChange` before adding further mutation
-   paths; net styles (`-208`) can ride along with multi-select.
-8. **Alt fine-grained wire drag** (`-5`) and **splitter one-to-many** (`-11`).
+> **Status:** ✅ **Completed 2026-10-31** — all four remaining items in four
+> batches (multi-select, net styles, undo/redo, Alt free-form wire drag).
+> Validated with `npm run check` (all rigs green) and `vue-tsc` (no new type
+> errors against the 317-error legacy baseline). Two of the originally planned
+> items had already been closed out during the 2026-10-31 resync: splitter
+> one-to-many (`-11`) was already implemented and is now covered by the engine
+> smoke rig, and net deletion granularity (`-2`) was rewritten into a deferred
+> KiCad-style net-model rewrite — see the Low table and §4.
+
+1. ✅ **Ctrl multi-select** (`-93`) — Ctrl/⌘ click toggles modules and nets
+   exactly like Shift, and Ctrl/⌘ marquee drags are additive
+   (`designer.ts` click handlers, `selection.ts` marquee). The existing
+   group drag, multi-delete, multi-copy and Inspector multi-selection view
+   already supported N selected items, so this was a two-file change.
+2. ✅ **Net styles** (`-208`, riding along with multi-select) — optional
+   `style` on `SerializedNet` (`'solid' | 'dashed' | 'dotted'`, default
+   solid, fully back-compat for saved projects and the engine rigs); dash
+   patterns in `render/wire.ts` that survive the selection/hover/lint/signal
+   stylers and theme rebuilds; `setNetStyle` commits a whole multi-select
+   restyle as ONE document change (single history entry by design); an
+   Inspector "Wire style" radio section for net selections (mixed styles
+   shown as indeterminate); styles survive save/load, copy/paste and
+   paste-offset moves.
+3. ✅ **Undo/redo** (`-4`) — memento history, not a command stack
+   (`src/editor/core/history.ts`, pure TS, 100 entries per direction): every
+   committed user gesture maps 1:1 onto a whole-document snapshot entry
+   through the existing `notifyDocumentChange` seam, so all future features
+   are born undoable. Multi-delete, paste and the architecture-settings
+   cascade coalesce into single entries (`runBatched` /
+   `withSettingsBatch`); undoing a settings entry restores the prior
+   `ArchitectureConfiguration` through the new `onConfigurationRestore`
+   callback, so canvas and configuration never drift. Structural equality
+   skips no-op mutations (a drop in place); a project load resets the
+   baseline (`loadArchitecture` `resetHistory`). Ctrl+Z / Ctrl+Shift+Z /
+   Ctrl+Y — `ShortcutManager` gained explicit `shift` matching so the
+   Ctrl+Z pair disambiguates — plus toolbar buttons fed by the new
+   `history-bridge`. Known limitation: history is per-designer, so the F4
+   perspective switch clears it (unlike the module-level clipboard).
+4. ✅ **Alt fine-grained wire drag** (`-5`) — resolved with the maintainer as
+   *free-form segment drag*: Alt+drag (or dragging an already free-form
+   polyline) translates the grabbed segment in both axes with no
+   auto-inserted orthogonal bends, so diagonal legs are allowed. Fixed
+   anchors (ports/junctions) stay glued via spliced-in movable vertices;
+   junction dots ride diagonal segments (distance test replaces the
+   axis-aligned containment test). Committed drafts persist per-polyline
+   `freeform` flags and render verbatim via the new
+   `composeNetPathVerbatim` (`orthogonal-path.ts`), so hand-drawn geometry
+   survives reloads, theme rebuilds and later module drags.
 
 ### Phase 4 — Simulate-mode core loop (student-facing value)
 
-9. **Editor add/link in architecture settings** (`-4179`, new) — blank
+6. **Editor add/link in architecture settings** (`-4179`, new) — blank
    architectures currently cannot gain a code editor or map one to an IMem.
    Do this first in the phase: it gates every other item below for
    non-template architectures. Small (easy): a settings control to add
    editors and their IMem mappings, plus warnings for editors with no IMem
    assigned.
-10. **Assembly editor subtasks** (`-0`), in order of decreasing leverage:
-    linting/inline error highlighting first (the diagnostics contract already
-    exists), then per-ISA syntax highlighting, then current-instruction
-    highlighting (`pcLineMap` already ships from the assembler), then
-    autocomplete, and `Ctrl+Click` go-to-definition last.
-11. **Stage instruction visualizer bar** (`-4978`, new) — the top strip
+7. **Assembly editor subtasks** (`-0`), in order of decreasing leverage:
+   linting/inline error highlighting first (the diagnostics contract already
+   exists), then per-ISA syntax highlighting, then current-instruction
+   highlighting (`pcLineMap` already ships from the assembler), then
+   autocomplete, and `Ctrl+Click` go-to-definition last.
+8. **Stage instruction visualizer bar** (`-4978`, new) — the top strip
     showing each instruction moving through the pipeline stages left-to-right,
     driven by the pipeline stage config (stage order/naming, display toggle,
     and start-stage boundary as specced in
@@ -166,33 +211,33 @@ doing them twice.
     as written in the editor with light normalization, scaled to fit the
     cell. Pairs naturally with the current-instruction highlight from `-0`
     (same `pcLineMap` seam).
-12. **Hover highlight + educational tooltips** (`-532`) — extends the existing
+9. **Hover highlight + educational tooltips** (`-532`) — extends the existing
     tooltip/probe infrastructure to nets and modules.
 
 ### Phase 5 — Project management & data safety
 
-13. **Autosave** (`-17`) — debounced save through the existing
+10. **Autosave** (`-17`) — debounced save through the existing
     `useProjectSave` funnel; removes the biggest data-loss risk.
-14. **Resume where you left off** (`-15`), **Recent Projects table** (`-24`),
+11. **Resume where you left off** (`-15`), **Recent Projects table** (`-24`),
     **per-project layout persistence** (`-16`) — `-16` unblocks `-21` and
     `-26`.
 
 ### Phase 6 — Designer power features
 
-15. **Stage register pins + reset pin** (`-7`, `-8`) — one `configEditor`
+12. **Stage register pins + reset pin** (`-7`, `-8`) — one `configEditor`
     effort reusing the control-unit table pattern.
-16. **ALU/ALU-control configurable operations** (`-13`) — same table-editor
+13. **ALU/ALU-control configurable operations** (`-13`) — same table-editor
     pattern; generalizes the §4.8 encoding tables.
-17. **Control unit port labels** (`-87`).
-18. **Simulation-only mode / architecture switching** (`-108`) — the largest
+14. **Control unit port labels** (`-87`).
+15. **Simulation-only mode / architecture switching** (`-108`) — the largest
     workflow item; done once panels and editor richness are stable.
 
 ### Phase 7 — Templates, View menu, cosmetics
 
-19. **Architecture templates / import / export** (`-14`) — design the
+16. **Architecture templates / import / export** (`-14`) — design the
     persistence service so the same adapter can later back the Electron file
     path.
-20. **View menu** (`-19`, `-20`, `-21` — `-21` after `-16`), **floating
+17. **View menu** (`-19`, `-20`, `-21` — `-21` after `-16`), **floating
     simulation controls** (`-23`), **coordinates readout** (`-190`).
 
 ### Phase 8 — Electron distribution (`-25`, `-26`, `-27`)
@@ -209,12 +254,12 @@ through churn.
    can; the Phase 1 batch exists to clear every known "silently wrong" bug
    first.
 2. **Geometry before routing features.** The grid/port-alignment overhaul
-   (`-290`) is the single biggest rework-avoidance decision on the board:
-   segment identity, junction handling, and fine-grained dragging all encode
-   coordinates that the standardization changes.
+   (`-290`) is the single biggest rework-avoidance decision on the board: the
+   deferred connectivity rewrite (`-2`), junction handling, and fine-grained
+   dragging all encode coordinates that the standardization changes.
 3. **Undo/redo before more mutation paths.** Every new editing capability
-   (segment deletion, net styles, stage-register pins) adds a command the
-   history must invert — building history early means features are born
+   (the connectivity rewrite, net styles, stage-register pins) adds a command
+   the history must invert — building history early means features are born
    undoable instead of retrofitted.
 4. **Layout persistence before layouts and export.** Multiple base layouts
    (`-21`) and project export including Golden Layout state (`-26`) both

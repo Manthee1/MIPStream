@@ -14,10 +14,14 @@ import {
   IconBinaryTree, 
   IconTrash,
   IconGridDots,
+  IconArrowBackUp,
+  IconArrowForwardUp,
   Icon
 } from '@tabler/icons-vue';
 import { EditorTool } from '../core/types';
 import type { GridSettings } from '@/shared/types/architecture';
+import { canUndo, canRedo } from '../core/history-bridge';
+import { getActiveDesigner } from '../core/designer-bridge';
 
 const props = defineProps<{
   activeTool: EditorTool;
@@ -40,6 +44,10 @@ const tools : Array<{id: EditorTool, label:string, icon: Icon}> =[
 const updateGrid = (patch: Partial<GridSettings>): void => {
   emit('update:gridSettings', { ...props.gridSettings, ...patch });
 };
+
+/** Undoes/redoes the last committed document change on the active designer. */
+const undo = (): void => getActiveDesigner()?.undo();
+const redo = (): void => getActiveDesigner()?.redo();
 </script>
 
 <template>
@@ -58,6 +66,39 @@ const updateGrid = (patch: Partial<GridSettings>): void => {
           </n-button>
         </template>
         {{ tool.label }}
+      </n-tooltip>
+    </n-space>
+
+    <div class="w-px h-6 bg-border-color mx-2"></div>
+
+    <n-space :size="4">
+      <n-tooltip placement="bottom">
+        <template #trigger>
+          <n-button
+            secondary
+            size="small"
+            :disabled="!canUndo"
+            @click="undo"
+            class="!rounded-none h-10 w-10 p-0"
+          >
+            <component :is="IconArrowBackUp" size="20" />
+          </n-button>
+        </template>
+        Undo (Ctrl+Z)
+      </n-tooltip>
+      <n-tooltip placement="bottom">
+        <template #trigger>
+          <n-button
+            secondary
+            size="small"
+            :disabled="!canRedo"
+            @click="redo"
+            class="!rounded-none h-10 w-10 p-0"
+          >
+            <component :is="IconArrowForwardUp" size="20" />
+          </n-button>
+        </template>
+        Redo (Ctrl+Y)
       </n-tooltip>
     </n-space>
 

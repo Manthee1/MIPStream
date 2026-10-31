@@ -2,6 +2,7 @@
 
 import Konva from "konva";
 import type { Pos } from "@/shared/types/manifest";
+import type { NetStyle } from "@/shared/types/netlist";
 import { readRenderTheme } from "./theme";
 
 const WIRE_STROKE_WIDTH = 2;
@@ -9,6 +10,13 @@ const WIRE_SELECTED_WIDTH = 3;
 const WIRE_HIT_STROKE_WIDTH = 12;
 const JUNCTION_RADIUS = 3.5;
 const WAYPOINT_HANDLE_SIZE = 8;
+
+/** Dash pattern per net style; `undefined` renders a solid line. */
+const WIRE_DASH_PATTERNS: Record<NetStyle, number[] | undefined> = {
+  solid: undefined,
+  dashed: [6, 4],
+  dotted: [1.5, 3.5],
+};
 
 /** Geometry of one fan-out branch: its polyline plus its trunk junction. */
 export interface BranchGeometry {
@@ -25,12 +33,14 @@ export interface BranchGeometry {
 export function createWireNode(
   netId: string,
   trunkPoints: number[],
-  branches: BranchGeometry[]
+  branches: BranchGeometry[],
+  style: NetStyle = "solid"
 ): Konva.Group {
   const theme = readRenderTheme();
 
   const group = new Konva.Group({ name: "wire-group" });
   group.setAttr("netId", netId);
+  group.setAttr("netStyle", style);
 
   const trunk = new Konva.Line({
     points: trunkPoints,
@@ -41,10 +51,11 @@ export function createWireNode(
     hitStrokeWidth: WIRE_HIT_STROKE_WIDTH,
     name: "wire-trunk",
   });
+  applyWireDash(trunk, style);
   group.add(trunk);
 
   branches.forEach((branch, index) => {
-    group.add(createBranchLine(index, branch.points, theme.accent));
+    group.add(createBranchLine(index, branch.points, theme.accent, style));
     group.add(
       createJunctionDot(index, branch.junction, theme.accent, theme.bodyStroke)
     );
@@ -53,11 +64,26 @@ export function createWireNode(
   return group;
 }
 
+/** Applies the net's dash pattern (round caps make dotted strokes legible). */
+function applyWireDash(line: Konva.Line, style: NetStyle): void {
+  line.dash(WIRE_DASH_PATTERNS[style] ?? null);
+  line.lineCap(style === "dotted" ? "round" : "square");
+}
+
+/** Applies a persistent net style (dash pattern) to a wire group in place.
+ *  Color/width stylers (selection, hover, lint, signal) only touch stroke,
+ *  so the dash survives them; theme rebuilds re-create nodes with it. */
+export function setWireStyle(group: Konva.Group, style: NetStyle): void {
+  group.setAttr("netStyle", style);
+  for (const line of wireGroupLines(group)) applyWireDash(line, style);
+}
+
 /** Creates one fan-out branch line, tagged with its branch index. */
 function createBranchLine(
   index: number,
   points: number[],
-  accent: string
+  accent: string,
+  style: NetStyle
 ): Konva.Line {
   const line = new Konva.Line({
     points,
@@ -68,6 +94,7 @@ function createBranchLine(
     hitStrokeWidth: WIRE_HIT_STROKE_WIDTH,
     name: "wire-branch",
   });
+  applyWireDash(line, style);
   line.setAttr("branchIndex", index);
   return line;
 }
@@ -141,7 +168,8 @@ export function updateWireNode(
     if (line instanceof Konva.Line) {
       line.points(branch.points);
     } else {
-      group.add(createBranchLine(index, branch.points, theme.accent));
+      const style = (group.getAttr("netStyle") ?? "solid") as NetStyle;
+      group.add(createBranchLine(index, branch.points, theme.accent, style));
     }
 
     const dot = branchChild(group, "junction-dot", index);

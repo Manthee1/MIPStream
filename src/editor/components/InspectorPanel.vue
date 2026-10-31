@@ -2,10 +2,11 @@
 /** @format */
 
 import { computed, reactive, watch } from 'vue';
-import { NEmpty, NInput, NScrollbar, NTag, NText } from 'naive-ui';
+import { NEmpty, NInput, NRadio, NRadioGroup, NScrollbar, NTag, NText } from 'naive-ui';
 import { selectedIds, documentRevision } from '../core/selection-bridge';
 import { getActiveDesigner } from '../core/designer-bridge';
 import type { HydratedModule, PortDefinition } from '@/shared/types/manifest';
+import type { NetStyle } from '@/shared/types/netlist';
 import ConfigForm from './config/ConfigForm.vue';
 
 /**
@@ -49,6 +50,28 @@ watch(
     for (const key of Object.keys(labelDrafts)) delete labelDrafts[key];
   }
 );
+
+/** Ids of the selected nets (selection ids without a module node are nets). */
+const selectedNetIds = computed<string[]>(() => {
+  void documentRevision.value;
+  const designer = getActiveDesigner();
+  if (selectedIds.value.length === 0) return [];
+  return selectedIds.value.filter((id) => !!designer?.getWireNode(id));
+});
+
+/** Uniform style across the selected nets, or null when they are mixed. */
+const netStyle = computed<NetStyle | null>(() => {
+  void documentRevision.value;
+  const designer = getActiveDesigner();
+  if (!designer || selectedNetIds.value.length === 0) return null;
+  const styles = selectedNetIds.value.map((id) => designer.getNetStyle(id) ?? 'solid');
+  return styles.every((style) => style === styles[0]) ? styles[0] : null;
+});
+
+/** Applies one wire style to every selected net (multi-select included). */
+function applyNetStyle(style: NetStyle): void {
+  getActiveDesigner()?.setNetStyle(selectedNetIds.value, style);
+}
 
 function commitPortLabel(port: PortDefinition): void {
   const module = selected.value;
@@ -100,10 +123,35 @@ function applyFullConfig(config: unknown): void {
       </div>
 
       <!-- Multi-selection: configuration requires exactly one module -->
-      <div v-else-if="!selected" class="p-4 flex flex-col gap-1">
-        <n-text class="text-sm">{{ selectedIds.length }} element{{ selectedIds.length === 1 ? '' : 's' }} selected</n-text>
-        <n-text depth="3" class="text-xs">{{ selectedLabels.join(', ') }}</n-text>
-        <n-text depth="3" class="text-xs mt-2">Select a single component to configure it.</n-text>
+      <div v-else-if="!selected" class="p-4 flex flex-col gap-4">
+        <div class="flex flex-col gap-1">
+          <n-text class="text-sm">{{ selectedIds.length }} element{{ selectedIds.length === 1 ? '' : 's' }} selected</n-text>
+          <n-text depth="3" class="text-xs">{{ selectedLabels.join(', ') }}</n-text>
+        </div>
+
+        <!-- Wire style applies to every selected net, multi-select included -->
+        <div v-if="selectedNetIds.length > 0" class="flex flex-col gap-2">
+          <n-text strong class="text-xs uppercase tracking-widest opacity-50">Wire style</n-text>
+          <n-radio-group
+            size="small"
+            :value="netStyle ?? undefined"
+            @update:value="applyNetStyle($event as NetStyle)"
+          >
+            <div class="flex gap-3">
+              <n-radio value="solid">Solid</n-radio>
+              <n-radio value="dashed">Dashed</n-radio>
+              <n-radio value="dotted">Dotted</n-radio>
+            </div>
+          </n-radio-group>
+          <n-text v-if="!netStyle" depth="3" class="text-xs">
+            Mixed styles — picking one applies it to all selected nets.
+          </n-text>
+          <n-text v-else-if="selectedIds.length !== selectedNetIds.length" depth="3" class="text-xs">
+            Applies to the {{ selectedNetIds.length }} selected net{{ selectedNetIds.length === 1 ? '' : 's' }}.
+          </n-text>
+        </div>
+
+        <n-text v-if="selectedNetIds.length === 0" depth="3" class="text-xs">Select a single component to configure it.</n-text>
       </div>
 
       <!-- Single module -->

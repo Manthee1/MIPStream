@@ -15,6 +15,24 @@ function cornerBetween(from: Pos, to: Pos): Pos {
 }
 
 /**
+ * Composes the polyline for a free-form (Alt-dragged) path: straight segments
+ * through the anchors, without the orthogonal L-corner insertion. Used by
+ * nets whose geometry was hand-dragged diagonally and must render verbatim.
+ */
+export function composeNetPathVerbatim(source: Pos, waypoints: Pos[], target: Pos): number[] {
+  const anchors = [source, ...waypoints, target];
+  const deduped: number[] = [];
+
+  for (const anchor of anchors) {
+    const last = deduped.length - 1;
+    if (last >= 0 && deduped[last] === anchor.x && deduped[last - 1] === anchor.y) continue;
+    deduped.push(anchor.x, anchor.y);
+  }
+
+  return deduped;
+}
+
+/**
  * Composes the polyline points for a net path: source → waypoints → target,
  * each consecutive pair joined by an orthogonal L-segment. Consecutive
  * duplicate points are collapsed for clean rendering.
