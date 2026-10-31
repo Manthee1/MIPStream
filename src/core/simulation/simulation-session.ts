@@ -1,6 +1,7 @@
 /** @format */
 
 import type { SimulationEngine } from "@/core/engine/engine";
+import type { WordMemoryState } from "@/shared/manifests/word-memory";
 import { applyLoadPlan } from "./program-loader";
 import type { LoadPlan, LoadReport, SimulationStatus, SimulationTargets } from "./types";
 
@@ -13,15 +14,19 @@ import type { LoadPlan, LoadReport, SimulationStatus, SimulationTargets } from "
  * Halt semantics: after every executed cycle the PC (first `std.pc`) is
  * sampled; when it runs past the last loaded instruction word the session
  * reports `finished` instead of spinning forever. A dedicated `halt`
- * mnemonic (Phase 3) will extend this same controller-layer check, not
- * replace it. Single-cycle semantics — pipeline in-flight draining is a
- * later extension at this seam.
+ * instruction extends this same controller-layer seam: when the word about
+ * to execute is the ISA's `halt` encoding (derived by the loader onto the
+ * plan — no opcode constant lives here), the session finishes just before
+ * executing it, the natural terminator for programs that never run past
+ * their last instruction (loops). Single-cycle semantics — pipeline
+ * in-flight draining is a later extension at this seam.
  *
- * Load attribution note: level-sensitive modules (register file, data
- * memory) commit their asserted writes during every propagation pass —
- * including the settle right after loading. The first instruction's
- * side-effects are therefore visible immediately after Load; final states
- * and cycle counts stay exact (one instruction per cycle for a single-cycle
+ * Load attribution note: register-file and data-memory writes are hybrid
+ * commits — sampled at the rising clock edge, never during the settle right
+ * after loading. Load therefore presents instruction 0 computed but NOT
+ * executed; its side-effects land on the first clock edge. Instruction k's
+ * writeback commits on the edge entering cycle k+1, so final states and
+ * cycle counts stay exact (one instruction per cycle for a single-cycle
  * datapath).
  */
 export class SimulationSession {
@@ -151,13 +156,16 @@ export class SimulationSession {
     /**
      * Batch execution for the adapter's frame loop: up to `cycles` clock
      * cycles, stopping early when the program halts. Returns the number of
-     * cycles actually executed.
+     * cycles actually executed — a tick that finishes on the dedicated
+     * halt word executes no cycle and is not counted.
      */
     advance(cycles: number): number {
         if (this.statusValue !== "running" || cycles <= 0) return 0;
         let executed = 0;
         while (executed < cycles && this.statusValue === "running") {
+            const cyclesBefore = this.engine.cycleCount;
             this.tick();
+            if (this.engine.cycleCount === cyclesBefore) break; // halt word — no cycle ran
             executed++;
         }
         return executed;
@@ -165,8 +173,14 @@ export class SimulationSession {
 
     // ------------------------------------------------------------------ halt
 
-    /** Executes one cycle and runs the halt check. */
+    /** Executes one cycle and runs the halt checks. */
     private tick(): void {
+        // Dedicated halt word: finish just BEFORE executing it — it decodes
+        // to no-op control signals anyway, so no state ever changes.
+        if (this.isHaltInstruction()) {
+            this.statusValue = "finished";
+            return;
+        }
         this.engine.step();
         if (this.isHalted()) this.statusValue = "finished";
     }
@@ -184,5 +198,27 @@ export class SimulationSession {
         const pc = this.engine.getPortValue(this.targets.pcDesignator, "q");
         if (pc === null) return false;
         return (pc >>> 2) >= this.plan.instructionCount;
+    }
+
+    /**
+     * Halt-word check: the instruction about to execute is the ISA's
+     * `halt` encoding. Reads the program image through the engine-owned
+     * memory state (the same image Load wrote) from the first mapped
+     * instruction memory, at the current PC.
+     */
+    private isHaltInstruction(): boolean {
+        const plan = this.plan;
+        if (plan === null || plan.haltWord === null || plan.entries.length === 0) return false;
+        if (this.targets.pcDesignator === null) return false;
+        const pc = this.engine.getPortValue(this.targets.pcDesignator, "q");
+        if (pc === null || (pc >>> 2) >= plan.instructionCount) return false;
+        const designator =
+            plan.entries[0].imemImages.size > 0
+                ? [...plan.entries[0].imemImages.keys()][0]
+                : this.targets.instructionMemories[0];
+        if (designator === undefined) return false;
+        const memory = this.engine.getModuleState(designator) as WordMemoryState | undefined;
+        if (memory === undefined) return false;
+        return (memory.words[pc >>> 2] >>> 0) === plan.haltWord;
     }
 }

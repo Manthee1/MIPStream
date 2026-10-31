@@ -64,6 +64,30 @@ export interface ModuleEvaluators {
    * Presence of this field indicates a sequential/synchronous module.
    */
   clockEdge?: ClockEdge;
+
+  /**
+   * Optional edge-clocked commit for hybrid modules — asynchronous read +
+   * synchronous write, the real-hardware register-file / data-memory pattern.
+   *
+   * The module stays combinational for its read evaluator (`evaluate`), so
+   * its read outputs are topologically ordered like any other combinational
+   * logic. The listed ports, however, are sampled at the clock edge (steady
+   * from the last propagation pass) and handed to `commit`, which
+   * side-effects the captured internal state. A port may appear in BOTH
+   * `inputPorts` and `clocked.inputPorts` (e.g. a memory address feeding the
+   * read evaluator and the write commit); ports consumed *only* by the
+   * clocked commit are edge-sampled boundaries, not combinational
+   * dependencies — a net feeding only such a port never forms a
+   * combinational loop (the classic single-cycle writeback path).
+   */
+  clocked?: {
+    /** Ports sampled at the clock edge, in `commit` input order. */
+    inputPorts: string[];
+    /** Edge the commit runs on. */
+    clockEdge: ClockEdge;
+    /** Side-effects the captured internal state; returns nothing. */
+    commit: (inputs: Uint32Array) => void;
+  };
 }
 
 

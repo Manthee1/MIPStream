@@ -13,7 +13,7 @@ Digital logic schematic editor and computer architecture simulator.
 - UI/Layout: Radix Vue, Tailwind CSS v4, Golden Layout
 - Graphics: Konva (via vue-konva)
 - Persistence: JsStore (IndexedDB)
-- Editor: Monaco
+- Editor: CodeMirror
 
 ## Usage
 1. `npm install`

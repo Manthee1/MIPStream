@@ -38,9 +38,13 @@ export function lintArchitecture(document: ArchitectureDocument): LintIssue[] {
   for (const net of resolvedNets) {
     if (!combinationalIds.has(net.source.designator)) continue;
     for (const target of net.targets) {
-      if (combinationalIds.has(target.designator)) {
-        edges.push({ from: net.source.designator, to: target.designator });
-      }
+      if (!combinationalIds.has(target.designator)) continue;
+      // Clocked-only inputs of a hybrid module are edge-sampled boundaries —
+      // the same exemption the compiler applies, kept in lockstep via the
+      // resolver's `clockedOnlyInputs` so lint never flags a netlist the
+      // engine accepts (the single-cycle writeback path).
+      if (builds.get(target.designator)?.clockedOnlyInputs.has(target.portId)) continue;
+      edges.push({ from: net.source.designator, to: target.designator });
     }
   }
 

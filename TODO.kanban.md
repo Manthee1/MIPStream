@@ -1,26 +1,43 @@
-# MipStream Board
+<!-- This is a Kanban Board file created with MD Kanban extension -->
+<!-- GitHub: https://github.com/jebakumarj/md-kanban -->
+<!-- VS Code Extension: Search "MD Kanban" in the extension store (ID: jeddak.md-kanban) -->
 
-Tag legend: `feat` = new functionality, `fix` = fix for existing (often broken) behavior, `feat-fix` = both.
+# MipStream Board
 
 ## Simulator
 
 #### Feat: Assembly code editor panel
 <!-- id: task-1792838400000-0 -->
 Add a CodeMirror-based editor as a dedicated panel in Simulator mode (follows the general architecture configurator, which is already done). Must work generically with any ISA definition provided to it.
+- [x] CodeMirror 6 foundation (Phase 4): line numbers, history, token-synced theme, two-way `sourceCode` binding
+- [x] Diagnostics strip (line + column, click-to-reveal) consuming the Phase 1 assembler contract
 - [ ] Syntax highlighting and autocomplete
 - [ ] Linting and inline error highlighting
 - [ ] `Ctrl+Click` go-to-definition
 - [ ] Highlighting of the currently simulated instruction
 - [ ] Other common code-editor conveniences
-- [ ] Include a compile button in the panel
+- [x] Include a compile button in the panel
 Tags: `feat` `simulator`
 
 #### Fix: Schematic viewer panning
 <!-- id: task-1792838400000-1 -->
 Allow panning/scrolling around the schematic in the simulator's viewer mode.
+- [x] Done (Phase 4): left-drag pans in viewer mode (`EventManager.canPanWithPrimary`), wheel zoom and right-drag pan were already active
 Tags: `fix` `simulator`
 
 ## Architecture Designer
+
+### Control Unit
+
+#### Feat: Show output port labels
+<!-- id: task-1792877672095-87 -->
+Make the name/label of each control unit signal visible so a user doesn't need to hover over a port to see its name.
+Tags: `control-unit` `designer` `fix`
+
+#### Feat: Add the ability to configure net styles
+<!-- id: task-1792877912661-208 -->
+Add the ability to change the style of a net to dotted, dashed, solid or other options. Should also work when selecting multiple nets at once.
+Tags: `feat` `designer` `control-unit`
 
 ### Editing & Interaction
 
@@ -103,6 +120,34 @@ Tags: `feat` `designer` `alu`
 - [ ] On Electron, expose this as "Save architecture as" / "Load architecture" backed by the local file system
 Tags: `feat` `designer` `import-export`
 
+#### Enable multi select when holding CTRL
+<!-- id: task-1793270909936-93 -->
+<!-- group:  -->
+While holding CTRL, clicking on multiple modules/netlist segments, it should select them.
+Tags: `designer` `QOL`
+<!-- priority: low -->
+
+#### Improve Cordinates functionality
+<!-- id: task-1793271154991-190 -->
+<!-- group:  -->
+The designers cordinates are not very usable and specify the cordinates of the screen and not the mouse.
+Tags: `QOL` `designer`
+<!-- priority: low -->
+<!-- workload: easy -->
+
+#### Improve grid funcionality
+<!-- id: task-1793273338293-290 -->
+<!-- group:  -->
+The grid is usable but needs some QOF fixes and improvements.
+- There needs to be a clear indicator of where the absolute center of the canvas is
+- The module's ports are not aligned with the actual grid size making it janky to connect them, introducing unnecessay bends. Ideally should be fixed by removing the grid size config, standardizing it to 1 units, and changing all the module ports to be aligned on a whole unit, ideally the schematic symbol of the module should also be drawn aligned whole unit too. This will most likely require changing almost every module manifest.
+- Change moving elements to translate them irrespective of zoom/scale of the canvas. Should conform the size of one unit. Meaning when zoomed out the translation will look finer, and zoomed in it will look more dramatic with visible grid snaping.
+- [ ] Add a Canvas Center indicator
+- [ ] Remove the grid size config fields and set a fixed size of 1 unit
+- [ ] Standardize all port locations and schematic symbols to use whole units
+Tags: `feat-fix` `QOL` `designer`
+<!-- workload: hard -->
+
 ## Project Management
 
 #### Feat: Resume where you left off
@@ -123,7 +168,21 @@ Tags: `feat` `project-management`
 #### Fix: MIPS single-cycle template
 <!-- id: task-1792838400000-18 -->
 Update the architecture template to match the updated architecture configuration and modules.
+- [x] Done (Phase 3, 2026-10-24): `mips-basic` ships the golden single-cycle datapath (`src/config/mips-single-cycle-datapath.ts`), validated headlessly by Rig C/D in `npm run simulation:check`
 Tags: `fix` `project-management` `mips`
+
+#### Feat: Architecture Simulation Project Integration & Workflow Refinement
+<!-- id: task-1793439728114-108 -->
+Introduce a Simulation-Only project Mode and a dynamic architecture switching workflow to streamline the user experience when testing code against different hardware models. By decoupling code execution from circuit editing, the interface will simplify into an IDE-focused visualizer when full schematic access is not required. Swapping architectures directly from the topbar will trigger compatibility checks that dynamically adjust the active UI panels—protecting editor buffers and alerting users whenever hardware shifts remove or add components like Instruction Memory, Data Memory, or Register Files.
+- [ ] Extend project configuration schema with a project_mode ("full" vs. "simulation_only") property and persist it.
+- [ ] Conditionally hide the Designer View toggle and skip designer initialization when "project_mode" is set to "simulation_only".
+- [ ] Add an architecture info badge displaying current metadata directly into the topbar.
+- [ ] Implement a topbar quick-select dropdown for swapping the active architecture (can be a more styleized popup panel with search functionality).
+- [ ] Create a pre-switch validation utility that compares current and target architecture manifests to detect incoming panel additions or removals.
+- [ ] Implement a warning confirmation modal alerting users when an architecture switch will drop un-supported panels or un-link code editors due to missing Instruction Memory. The editor warning should be red since the code should get removed, while the panel warning can be yellow since they don't have saveable state anyway.
+- [ ] Refactor the simulation UI layout engine to dynamically mount or unmount panels based on the target architecture's active capabilities.
+- [ ] Handle safe state preservation, un-linking, or cleanup of active code buffers and breakpoints during dynamic layout transitions.
+Tags: `QOL` `uiux` `simulator` `feat`
 
 ## UI/UX
 
@@ -164,6 +223,17 @@ Replace the Recent Projects section with a searchable, sortable table.
 - [ ] Sortable by every column
 - [ ] Search bar (by project name) at the top
 Tags: `feat` `uiux` `project-management`
+
+#### Fix: Diagram visualization bottom bar spils over
+<!-- id: task-1793274872122-461 -->
+The Visualization diagram in simulation mode has a bottom bar that spills over to the components bellow and subsequently makes it unresizable from the bottom.
+Tags: `fix` `uiux`
+
+#### Feat: Diagarm educational element info
+<!-- id: task-1793275237015-532 -->
+- Higlight the netlist or module currently being hoverd over to better see where it connects or ends.
+- Show a tooltip of information about the netlist or module. Module will show its normal manifest and or architecture specific info while the netlist will show its value in different formats and list what modules it connects
+Tags: `feat` `mips` `uiux`
 
 ## Electron App
 

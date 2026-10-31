@@ -167,12 +167,100 @@ const smokeAccumulator: ModuleManifest<{ slots: number; state?: AccumulatorState
   },
 };
 
+// Hybrid store manifests: asynchronous read + rising-edge-clocked write —
+// the real register-file / data-memory pattern. The clocked-only inputs
+// (write address / data / enable) are edge-sampled, so the classic
+// single-cycle writeback loop (store → logic → store.wd) is NOT a
+// combinational cycle.
+interface HybridStoreState {
+  values: Uint32Array;
+}
+
+function hybridStoreState(slots: number): HybridStoreState {
+  return { values: new Uint32Array(slots) };
+}
+
+const smokeHybridReg: ModuleManifest<{ slots: number; state?: HybridStoreState }> = {
+  typeId: "smoke.hybridreg",
+  label: "Hybrid Register File",
+  description: "",
+  icon: "",
+  category: "memory",
+  defaultConfig: { slots: 4 },
+  createInitialState: (config) => hybridStoreState(config.slots),
+  generatePorts: () => [
+    { id: "rs", direction: "input", bits: 32, label: "RS", position: { x: -40, y: -30 } },
+    { id: "rt", direction: "input", bits: 32, label: "RT", position: { x: -40, y: -10 } },
+    { id: "rd", direction: "input", bits: 32, label: "RD", position: { x: -40, y: 10 } },
+    { id: "wd", direction: "input", bits: 32, label: "WD", position: { x: 40, y: 10 } },
+    { id: "we", direction: "input", bits: 32, label: "WE", position: { x: 0, y: 40 } },
+    { id: "readA", direction: "output", bits: 32, label: "Read A", position: { x: 40, y: -30 } },
+    { id: "readB", direction: "output", bits: 32, label: "Read B", position: { x: 40, y: -10 } },
+  ],
+  createEvaluators: (config): ModuleEvaluators => {
+    const state = (config.state as HybridStoreState) ?? hybridStoreState(config.slots);
+    const slot = (address: number) => address % state.values.length;
+    return {
+      inputPorts: ["rs", "rt"],
+      outputPorts: ["readA", "readB"],
+      evaluate: (inputs) =>
+        new Uint32Array([state.values[slot(inputs[0])], state.values[slot(inputs[1])]]),
+      clocked: {
+        inputPorts: ["rd", "wd", "we"],
+        clockEdge: "rising",
+        commit: (inputs) => {
+          if (inputs[2] & 1) state.values[slot(inputs[0])] = inputs[1] >>> 0;
+        },
+      },
+    };
+  },
+};
+
+const smokeHybridMem: ModuleManifest<{ slots: number; state?: HybridStoreState }> = {
+  typeId: "smoke.hybridmem",
+  label: "Hybrid Memory",
+  description: "",
+  icon: "",
+  category: "memory",
+  defaultConfig: { slots: 4 },
+  createInitialState: (config) => hybridStoreState(config.slots),
+  generatePorts: () => [
+    { id: "addr", direction: "input", bits: 32, label: "Addr", position: { x: -40, y: -20 } },
+    { id: "wd", direction: "input", bits: 32, label: "WD", position: { x: -40, y: 20 } },
+    { id: "memWrite", direction: "input", bits: 32, label: "Write", position: { x: 0, y: 40 } },
+    { id: "memRead", direction: "input", bits: 32, label: "Read", position: { x: 20, y: 40 } },
+    { id: "rdata", direction: "output", bits: 32, label: "RData", position: { x: 40, y: 0 } },
+  ],
+  // Control ports are 32-bit in this mirror so the 32-bit smoke constant
+  // drives them without a width-mismatch warning (commits mask with & 1).
+  createEvaluators: (config): ModuleEvaluators => {
+    const state = (config.state as HybridStoreState) ?? hybridStoreState(config.slots);
+    const slot = (address: number) => address % state.values.length;
+    return {
+      // `addr` feeds BOTH evaluators — the shared-port pattern.
+      inputPorts: ["addr", "memRead"],
+      outputPorts: ["rdata"],
+      evaluate: (inputs) =>
+        new Uint32Array([inputs[1] & 1 ? state.values[slot(inputs[0])] : 0]),
+      clocked: {
+        inputPorts: ["addr", "wd", "memWrite"],
+        clockEdge: "rising",
+        commit: (inputs) => {
+          if (inputs[2] & 1) state.values[slot(inputs[0])] = inputs[1] >>> 0;
+        },
+      },
+    };
+  },
+};
+
 registerManifest(smokeConstant);
 registerManifest(smokeAdder);
 registerManifest(smokeAnd);
 registerManifest(makeRegister("rising"));
 registerManifest(makeRegister("both"));
 registerManifest(smokeAccumulator);
+registerManifest(smokeHybridReg);
+registerManifest(smokeHybridMem);
 
 // ---------------------------------------------------------------- scenarios
 
@@ -295,6 +383,88 @@ check(
 );
 check("seam: unknown designator returns false", accumEngine.mutateModuleState("ghost", () => {}), false);
 check("seam: stateless module returns false", counter.mutateModuleState("u1", () => {}), false);
+
+// 6c. Hybrid module (async read + rising-clocked write): the classic
+//     single-cycle writeback loop (store → adder → store.wd) must compile,
+//     commits must happen only at the rising edge (never during settle), and
+//     a value written at edge k must be readable in the pass of cycle k.
+const hybridDoc: ArchitectureDocument = {
+  modules: [
+    module("hAddr", "smoke.constant", { value: 0 }),
+    module("hOne", "smoke.constant", { value: 1 }),
+    module("hyb", "smoke.hybridreg", { slots: 4 }),
+    module("inc", "smoke.adder"),
+  ],
+  nets: [
+    net("h1", ["hAddr", "out"], ["hyb", "rs"], ["hyb", "rt"], ["hyb", "rd"]),
+    net("h2", ["hyb", "readA"], ["inc", "a"]),
+    net("h3", ["hOne", "out"], ["inc", "b"]),
+    net("h4", ["inc", "sum"], ["hyb", "wd"]),
+    net("h5", ["hOne", "out"], ["hyb", "we"]),
+  ],
+};
+
+const hybridEngine = new SimulationEngine(hybridDoc);
+check("hybrid: writeback loop compiles clean", hybridEngine.hasErrors, false);
+check("hybrid: no warnings", hybridEngine.warnings.length, 0);
+const hybridValue = () => (hybridEngine.getModuleState("hyb") as HybridStoreState).values[0];
+check("hybrid: settle commits nothing", hybridValue(), 0);
+check("hybrid: write data staged on wires", hybridEngine.getPortValue("hyb", "wd"), 1);
+hybridEngine.step();
+check("hybrid: commit at rising edge 1", hybridValue(), 1);
+check("hybrid: pass of cycle 1 reads the new value", hybridEngine.getPortValue("hyb", "readA"), 1);
+hybridEngine.step();
+check("hybrid: adjacent read-after-write (state = 2)", hybridValue(), 2);
+hybridEngine.reset();
+check("hybrid: reset rewinds the store", hybridValue(), 0);
+
+// 6d. Shared port: `addr` feeding BOTH the combinational read evaluator and
+//     the clocked commit of one module (the data-memory pattern). Also
+//     proves settle never commits an asserted clocked write, and that the
+//     lint pass accepts the hybrid writeback loop (6c) without a false
+//     combinational-loop error.
+const hybridMemDoc: ArchitectureDocument = {
+  modules: [
+    module("mAddr", "smoke.constant", { value: 0 }),
+    module("mVal", "smoke.constant", { value: 0x2a }),
+    module("mWrite", "smoke.constant", { value: 1 }),
+    module("mRead", "smoke.constant", { value: 1 }),
+    module("mem", "smoke.hybridmem", { slots: 4 }),
+  ],
+  nets: [
+    net("m1", ["mAddr", "out"], ["mem", "addr"]),
+    net("m2", ["mVal", "out"], ["mem", "wd"]),
+    net("m3", ["mWrite", "out"], ["mem", "memWrite"]),
+    net("m4", ["mRead", "out"], ["mem", "memRead"]),
+  ],
+};
+
+const hybridMemEngine = new SimulationEngine(hybridMemDoc);
+check("hybrid-mem: compiles clean", hybridMemEngine.hasErrors, false);
+hybridMemEngine.mutateModuleState<HybridStoreState>("mem", (state) => {
+  state.values[0] = 5;
+});
+hybridMemEngine.settle();
+check("hybrid-mem: combinational read reflects state", hybridMemEngine.getPortValue("mem", "rdata"), 5);
+check(
+  "hybrid-mem: settle does not commit the asserted write",
+  (hybridMemEngine.getModuleState("mem") as HybridStoreState).values[0],
+  5
+);
+hybridMemEngine.step();
+check(
+  "hybrid-mem: shared port committed at the edge",
+  (hybridMemEngine.getModuleState("mem") as HybridStoreState).values[0],
+  0x2a
+);
+check("hybrid-mem: rdata reads the committed value in the pass", hybridMemEngine.getPortValue("mem", "rdata"), 0x2a);
+check(
+  "lint: hybrid writeback loop not flagged",
+  lintArchitecture(hybridDoc).some(
+    (issue) => issue.severity === "error" && issue.message.includes("loop")
+  ),
+  false
+);
 
 // 7. Lint pass: width mismatches carry refs; unconnected ports report as
 //    info; combinational loops report as errors.

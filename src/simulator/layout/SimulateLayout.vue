@@ -1,9 +1,98 @@
 <script setup lang="ts">
+import { defineComponent, h, markRaw, type Component } from 'vue';
+import { NEmpty } from 'naive-ui';
 import GoldenLayout from '../../components/layout/GoldenLayout.vue';
 import CodeEditor from '../components/CodeEditor.vue';
-import RegistersPanel from '../components/RegistersPanel.vue';
+import ModulePanelHost from '../components/ModulePanelHost.vue';
 import SchematicViewer from '../../editor/components/SchematicViewer.vue';
-import { LayoutConfig } from 'golden-layout';
+import { LayoutConfig, type ComponentItemConfig } from 'golden-layout';
+import { useProjectStore } from '../../stores/projectStore';
+import { getManifest } from '../../shared/manifestRegistry';
+
+/**
+ * Simulate perspective layout (Phase 4). Panel discovery is data-driven:
+ * every architecture module whose manifest ships a simulator panel
+ * (`ModuleManifest.panel`) is mounted through the generic `ModulePanelHost`,
+ * and one editor tab is created per assembler-mapping editor id — so any
+ * architecture (not just the MIPS template) gets its panels for free.
+ *
+ * The layout is a static-at-mount snapshot: SimulateLayout remounts on every
+ * perspective switch (`Workspace.vue`), which is exactly when the
+ * architecture could have changed.
+ */
+
+const projectStore = useProjectStore();
+const architecture = projectStore.currentProject?.architecture;
+const editors = projectStore.currentProject?.software?.editors ?? [];
+
+/** Wrapper factory — Golden Layout instantiates components with no props. */
+function bindProps<T extends Record<string, unknown>>(
+  name: string,
+  component: Component,
+  props: T,
+): Component {
+  return markRaw(defineComponent({
+    name,
+    render: () => h(component, props),
+  }));
+}
+
+const EmptyPanels = markRaw(defineComponent({
+  name: 'EmptyPanels',
+  render: () => h(
+    'div',
+    { class: 'h-full w-full flex items-center justify-center bg-surface' },
+    h(NEmpty, { description: 'No panel-capable modules in this architecture.' }),
+  ),
+}));
+
+// -------------------------------------------------------- panel tab set
+
+const components: Record<string, Component> = { Viewer: SchematicViewer };
+
+const panelTabs: ComponentItemConfig[] = (
+  architecture?.modules ?? []
+)
+  .map((module) => ({ module, manifest: getManifest(module.typeId) }))
+  .filter((entry) => entry.manifest?.panel)
+  .map(({ module, manifest }) => {
+    const componentType = `Panel-${module.designator}`;
+    components[componentType] = bindProps(
+      `PanelHost-${module.designator}`,
+      ModulePanelHost,
+      { designator: module.designator },
+    );
+    // Disambiguate titles when several panel-capable modules share a label.
+    const label = manifest!.label;
+    const duplicates = (architecture?.modules ?? []).filter(
+      (candidate) => getManifest(candidate.typeId)?.label === label,
+    ).length > 1;
+    return {
+      type: 'component' as const,
+      componentType,
+      title: duplicates ? `${label} (${module.designator})` : label,
+    };
+  });
+
+if (panelTabs.length === 0) {
+  components['PanelsEmpty'] = EmptyPanels;
+  panelTabs.push({ type: 'component', componentType: 'PanelsEmpty', title: 'Panels' });
+}
+
+// -------------------------------------------------------- editor tab set
+
+const mappings = architecture?.configuration?.assembler?.mappings ?? [];
+const mappedEditorIds = [...new Set(mappings.map((mapping) => mapping.editorId))];
+const editorIds = mappedEditorIds.length > 0 ? mappedEditorIds : editors.map((entry) => entry.id);
+
+const editorTabs: ComponentItemConfig[] = editorIds.map((editorId) => {
+  const componentType = `Code-${editorId}`;
+  components[componentType] = bindProps(`CodeEditor-${editorId}`, CodeEditor, { editorId });
+  const name = editors.find((entry) => entry.id === editorId)?.name ?? editorId;
+  return { type: 'component' as const, componentType, title: name };
+});
+
+// ----------------------------------------------------------- root config
 
 const config: LayoutConfig = {
   root: {
@@ -17,41 +106,22 @@ const config: LayoutConfig = {
             type: 'component',
             componentType: 'Viewer',
             title: 'Architecture View',
-            height: 70
+            height: 70,
           },
           {
             type: 'stack',
             height: 30,
-            content: [
-              {
-                type: 'component',
-                componentType: 'Registers',
-                title: 'Registers'
-              },
-              {
-                type: 'component',
-                componentType: 'Memory',
-                title: 'Memory'
-              }
-            ]
-          }
-        ]
+            content: panelTabs,
+          },
+        ],
       },
-      {
-        type: 'component',
-        componentType: 'Code',
-        width: 30,
-        title: 'Assembly Editor'
-      }
-    ]
-  }
-};
-
-const components = {
-  Viewer: SchematicViewer,
-  Code: CodeEditor,
-  Registers: RegistersPanel,
-  Memory: { template: '<div class="p-4 text-secondary opacity-50">Memory Panel Placeholder</div>' }
+      ...(editorTabs.length === 1
+        ? [{ ...editorTabs[0], width: 30 }]
+        : editorTabs.length > 1
+          ? [{ type: 'stack' as const, width: 30, content: editorTabs }]
+          : []),
+    ],
+  },
 };
 </script>
 

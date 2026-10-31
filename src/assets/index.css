@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind v4 theme bridge. The app's design tokens are raw CSS variables in
+ * :root / .dark so both Naive UI (via NConfigProvider) and plain CSS can read
+ * them. `@theme inline` maps them onto utility names (bg-app, bg-surface,
+ * bg-element, text-primary, text-secondary, border-border-color, …) without
+ * re-emitting variables — the utilities always follow the active light/dark
+ * token set.
+ */
+@theme inline {
+    --color-app: var(--bg-app);
+    --color-surface: var(--bg-surface);
+    --color-element: var(--bg-element);
+    --color-primary: var(--text-primary);
+    --color-secondary: var(--text-secondary);
+    --color-border-color: var(--border-color);
+}
+
 @custom-variant dark (&:where(.theme-dark, .theme-dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 :root {

@@ -146,9 +146,9 @@ matters.
 | Architecture settings (pipeline, assembler mapping, ISA) | Implemented | `src/editor/components/settings` |
 | Managed pipeline stage registers | Implemented | `src/shared/utils/stage-registers.ts` |
 | Simulate perspective with live signal overlay | Implemented | `src/simulator`, `SchematicViewer.vue` |
-| Assembly editor in the Simulate perspective | Partial | `src/simulator/components/CodeEditor.vue` is a static placeholder |
-| Assembler execution path | Partial | Reference implementation in `src/legacy/core/Assembler.ts`, not wired to the active UI |
-| Monaco language services | Partial | `src/config/monaco*` exists but is consumed only by the legacy tree |
+| Assembly editor in the Simulate perspective | Implemented | `CodeEditor.vue` — CodeMirror 6 instance with token-synced theme, Load action and diagnostics strip (`useCodeMirror.ts`) |
+| Assembler execution path | Implemented | `src/core/assembler/**` (config-driven, Phase 1), wired to the UI through `buildLoadPlan` and the editor diagnostics list |
+| Monaco language services | Superseded | `src/config/monaco*` is legacy-only and slated for deletion; CodeMirror 6 is the editor stack |
 | Undo/redo, autosave, layout persistence, export/import | Planned | `todo.md` |
 
 ---
@@ -1454,11 +1454,18 @@ highlighter's data source.
 
 ### 8.9 Diagnostics
 
-Assembler errors accumulate in an `AssemblerErrorList`; a non-empty list causes
-`assemble` to throw. Errors carry a type (`SYNTAX_ERROR` and friends) and a
-1-based line number, so the editor can annotate the offending source line. The
-validation covered includes unknown mnemonics, operand-count mismatches, invalid
-registers/values, undefined labels, and out-of-range branch offsets.
+The implemented assembler (`src/core/assembler/`) never throws: `assemble()`
+returns its output alongside a typed `AssemblerDiagnostic` list
+(`src/shared/utils/errors.ts`) carrying a machine-readable code, a 1-based
+line and a 0-based column range — the CodeMirror lint shape, consumed
+verbatim by the editor's diagnostics strip (§9.8). Failed lines keep their
+word slot so `pcLineMap` stays aligned with the source. The validation
+covered includes unknown mnemonics, operand-count/type mismatches, invalid
+registers, undefined labels, and out-of-range immediates or branch offsets —
+every class has a golden test in `npm run assembler:check`. (The legacy
+reference accumulated errors in an `AssemblerErrorList` and threw on a
+non-empty list; it survives in `src/legacy/` only as the behavioural
+reference.)
 
 ### 8.10 Integration status
 
@@ -1467,19 +1474,28 @@ This section is the honest record of where the PDL/assembler currently stands:
 - The `AssemblerConfig` model and its MIPS preset are **implemented** and used
   by the ISA settings UI and validation (`src/config/isa-presets.ts`,
   `src/shared/utils/isa-validation.ts`).
-- The assembler itself is **Partial**: `src/legacy/core/Assembler.ts` is a
-  complete-looking reference implementation, but its imports resolve into the
-  incomplete legacy tree (`../assets/js/utils`, `../utils/errors`), so it is not
-  part of the running build and cannot currently execute.
-- The active Simulate perspective's code editor is a placeholder (§9.8), so the
-  program→memory write-back path (assemble → load `imem`) is not yet wired into
-  the new UI. The instruction-memory panel can edit words manually (§9.5).
-- The Monaco language services (`src/config/monaco*`) are likewise legacy-only
-  and undeclared as a dependency (§2.1).
+- The assembler itself is **implemented** (Phase 1): `src/core/assembler/**`
+  is a framework-free, config-driven re-implementation (same four-pass
+  structure as §8.6) that never throws and returns the typed diagnostics of
+  §8.9, golden-tested bit-exact against real MIPS32 encodings by
+  `npm run assembler:check`. `src/legacy/core/Assembler.ts` survives only as
+  the behavioural reference and is slated for deletion.
+- The program→memory write-back path is **implemented** (Phase 2):
+  `buildLoadPlan` (`src/core/simulation/program-loader.ts`) assembles every
+  mapped editor and writes the instruction/data images into the engine-owned
+  memory state; `SimulationSession` implements the full control table
+  (SIMULATOR_OVERVIEW §4), validated end-to-end on the shipped single-cycle
+  datapath by Rigs C/D in `npm run simulation:check`.
+- The Simulate perspective's CodeMirror editor (§9.8) binds the mapped
+  `ProjectEditor` and surfaces those diagnostics verbatim (error strip with
+  click-to-reveal). The instruction-memory panel can still edit words
+  manually (§9.5).
+- The Monaco language services (`src/config/monaco*`) are superseded (§1.6) —
+  legacy-only, undeclared as a dependency (§2.1), and slated for deletion.
 
-The intended direction is a CodeMirror-based editor with per-ISA syntax
-highlighting, completion, lint, go-to-definition and live instruction
-highlighting (Planned, §12.1).
+The remaining direction is editor *richness* on the existing CodeMirror
+instance — per-ISA syntax highlighting, completion, lint, go-to-definition
+and live instruction highlighting (Planned, §12.1).
 
 ---
 
@@ -1573,32 +1589,40 @@ functions plus the keyboard map:
 | `stop()` | — | running or paused | `reset()`, `stopped`, cycle 0 |
 
 A failed compile (engine errors) blocks `run()`/`step()` and reports the first
-error through a notification. The engine is forward-only (§1.4, §5.11); `stop()`
-is a reset to the initial compiled state, not a rewind to a prior cycle. The
-fuller Load/Start/Restart/Stop/Pause/Next-Step table documented in
-`docs/SIMULATOR_OVERVIEW.md` describes the intended control semantics; the
-current implementation collapses "load program" and "start" into `run()` until
-the assembler write-back path exists (§8.10).
+error through a notification. The engine is forward-only (§1.4, §5.11). The
+full Load/Start/Restart/Stop/Pause/Next-Step control table in
+`docs/SIMULATOR_OVERVIEW.md` §4 is implemented by the framework-free
+`SimulationSession` (`src/core/simulation/`), adapted to Vue by
+`useSimulation.ts`, and surfaced in the TopBar and the editor panel's Load
+action.
 
 ### 9.7 Toolbar and shortcuts
 
-While in the Simulate perspective, the `TopBar` renders run/pause/step controls
-and the design/simulate switch; F5/F6/F10 are registered in
+While in the Simulate perspective, the `TopBar` renders the full control set —
+Assemble/Load, Run, Pause, Stop, Restart and Step — over the Phase 2 control
+state machine (`useSimulation.ts`), plus the cycle counter with the
+finished-at annotation. The editor panel carries its own Assemble/Load button
+next to the code it applies to. F5 (Start/Resume), F6 (Pause), F7 (Assemble
+and Load), F9 (Restart) and F10 (Step) are registered in
 `src/config/keyboard-shortcuts.ts` and are gated to fire only in the Simulate
 perspective. A floating, draggable simulation control bar that can dock to the
 top bar is a Planned refinement (§12.4).
 
 ### 9.8 Current limitations
 
-- `CodeEditor.vue` and `RegistersPanel.vue` are static placeholders: they render
-  sample MIPS text and a three-row table rather than the live editor and register
-  state. The Memory panel in the layout is likewise a placeholder div.
-- The live register-file/memory panels are implemented at the manifest level
-  (§9.5) but are not yet mounted into the Simulate layout; wiring them is the
-  missing step between "manifests can render state" and "the simulator shows it".
-- Consequently the end-to-end assemble → load → run loop is not yet demonstrable
-  in the active UI, although each of its components (assembler reference, engine,
-  panels) exists.
+- The end-to-end assemble → load → run loop is live in the UI (Phase 4): the
+  CodeMirror editor binds the mapped `ProjectEditor`, the manifest panels
+  (register file / instruction memory / data memory) are mounted through the
+  generic `ModulePanelHost`, and the diagnostics strip renders assembler
+  errors with click-to-reveal. Editor *richness* — syntax highlighting,
+  completion, lint gutter decorations, go-to-definition, current-instruction
+  highlighting — is deferred (each attaches to the existing CodeMirror
+  instance as an extension).
+- Per-module panel visibility toggles for architecture creators (§3
+  "Component Panels") are not yet modeled in the configuration; every
+  panel-capable module currently gets a panel tab in the Simulate layout.
+- Net routing waypoints are not yet authored in the shipped template, so the
+  Design perspective's orthogonal routing polish remains a visual-pass step.
 
 ---
 
@@ -1704,12 +1728,14 @@ select/insert/update/delete/count operations used by `ProjectRepository`.
 ### 11.3 Templates and project creation
 
 `src/config/templates.ts` defines two project templates — `blank` (empty
-architecture, one empty `main.s` editor) and `mips-basic` (a single-cycle MIPS
-configuration with a five-stage pipeline, an `imem` mapping and a starter
-program) — and the two underlying `ArchitectureConfig` values `BLANK_ARCHITECTURE`
-and `BASIC_MIPS_ARCHITECTURE`. `insertProject` deep-copies the chosen
-architecture and settings into a fresh project so templates are never mutated
-by reference.
+architecture, one empty `main.s` editor) and `mips-basic` (a complete
+single-cycle MIPS datapath — the golden 18-module / 33-net netlist defined
+in `src/config/mips-single-cycle-datapath.ts` — with a five-stage
+pipeline configuration, an `imem` mapping, the MIPS ISA preset and a
+starter program) — and the two underlying `ArchitectureConfig` values
+`BLANK_ARCHITECTURE` and `BASIC_MIPS_ARCHITECTURE`. `insertProject`
+deep-copies the chosen architecture and settings into a fresh project so
+templates are never mutated by reference.
 
 ### 11.4 The save flow
 
@@ -1806,7 +1832,7 @@ file; the "Affected" column names the modules from §2.2 that would change.
 | Remember where the user left off | Persist the current project and perspective in URL route + params and restore on load (§11.1). | `router.ts`, `UIStore` |
 | Remember Golden Layout state per project | Save/restore each project's panel positions, sizes and collapsed state alongside the project. | `GoldenLayout.vue`, `db`, project store |
 | Autosave | Debounced background save; interacts with `projectSaved` and the explicit-save funnel (§11.4). | `useProjectSave.ts`, `projectStore` |
-| Update the MIPS single-cycle template | Bring `BASIC_MIPS_ARCHITECTURE` in line with the current configuration/module set (its `modules`/`nets` are still empty). | `config/templates.ts` |
+| ~~Update the MIPS single-cycle template~~ **Done (Phase 3, 2026-10-24)** — `BASIC_MIPS_ARCHITECTURE` now ships the golden single-cycle datapath (`src/config/mips-single-cycle-datapath.ts`), validated headlessly by Rig C in `npm run simulation:check`. | | `config/templates.ts` |
 
 ### 12.4 UI/UX
 

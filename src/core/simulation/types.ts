@@ -45,6 +45,12 @@ export interface LoadPlan {
     entries: LoadPlanEntry[];
     /** Halt threshold: the longest instruction image, in words. */
     instructionCount: number;
+    /**
+     * The ISA's `halt` instruction word, encoded by `buildLoadPlan` from the
+     * assembler config — the dedicated program terminator. Null when the ISA
+     * defines no operand-less `halt`, leaving PC-past-end as the only halt.
+     */
+    haltWord: number | null;
     /** Every editor's assembler diagnostics — empty when all assembled clean. */
     assemblerDiagnostics: AssemblerDiagnostic[];
 }

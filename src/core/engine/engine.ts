@@ -88,12 +88,15 @@ export class SimulationEngine {
    *
    * 1. Rising edge — sequential modules update under simultaneous-edge
    *    semantics: every module samples its inputs before anyone writes.
+   *    Hybrid modules (register files, data memories) commit their asserted
+   *    writes here too — sampled from the last propagation pass, so a value
+   *    written at edge k is readable in the pass of cycle k.
    * 2. Combinational propagation — the single topologically ordered pass
-   *    settles all combinational logic. Level-sensitive writes (register
-   *    files, data memory) commit during this pass, exactly once per cycle.
+   *    settles all combinational logic, including the asynchronous read
+   *    ports of hybrid modules.
    * 3. Falling edge + final stabilization — only when falling/both-edge
    *    modules exist; otherwise nothing changed, so the second pass would
-   *    only re-commit identical writes and is skipped.
+   *    only re-evaluate identical values and is skipped.
    */
   public step(): void {
     const { risingModules, bothModules, fallingModules, combinationalOrder } =
@@ -129,8 +132,9 @@ export class SimulationEngine {
    * Also part of the load-time contract: program loading writes memory images
    * through `mutateModuleState` and then re-propagates with `settle()` so the
    * fetch path presents the first instruction before any cycle is executed.
-   * Note that level-sensitive modules (register file, data memory) commit
-   * their asserted writes during every propagation pass, including this one.
+   * Clocked commits (hybrid register-file / data-memory writes) never run
+   * here — settle is combinational only — so loading presents instruction 0
+   * without executing it; its side-effects land on the first clock edge.
    */
   public settle(): void {
     this.runCombinational(this.compiled.combinationalOrder);

@@ -78,20 +78,29 @@ export const RegisterFileManifest: ModuleManifest<RegisterFileConfig> = {
     const state = config.state ?? createRegisterFileState(config.registerCount);
     const mask = widthMask(config.bitWidth);
     return {
-      inputPorts: ["rs", "rt", "rd", "wd", "we"],
+      // Asynchronous read ports — combinational, so the register file's read
+      // outputs participate in the datapath's propagation pass.
+      inputPorts: ["rs", "rt"],
       outputPorts: ["readA", "readB"],
-      evaluate: (inputs: Uint32Array): Uint32Array => {
-        // Reads use the values held before this evaluation so a register
-        // written in the same cycle still reads its old value.
-        const readA = readRegister(state, inputs[0], mask);
-        const readB = readRegister(state, inputs[1], mask);
-        // Writes commit while RegWrite is asserted during the engine's
-        // propagation pass — exactly once per clock cycle thanks to the
-        // engine's single topological pass.
-        if (inputs[4] & 1) {
-          writeRegister(state, inputs[2], inputs[3], mask);
-        }
-        return new Uint32Array([readA, readB]);
+      evaluate: (inputs: Uint32Array): Uint32Array =>
+        new Uint32Array([
+          readRegister(state, inputs[0], mask),
+          readRegister(state, inputs[1], mask),
+        ]),
+      // Synchronous write port — commits at the rising clock edge, exactly
+      // like a real hardware register file. The write inputs are
+      // edge-sampled, so the classic single-cycle writeback path
+      // (regfile → ALU → writeback mux → regfile.wd) is a clock boundary,
+      // not a combinational loop; a value written at edge k is readable in
+      // the propagation pass of cycle k.
+      clocked: {
+        inputPorts: ["rd", "wd", "we"],
+        clockEdge: "rising",
+        commit: (inputs: Uint32Array): void => {
+          if (inputs[2] & 1) {
+            writeRegister(state, inputs[0], inputs[1], mask);
+          }
+        },
       },
     };
   },

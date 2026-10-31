@@ -2,7 +2,7 @@
 import { computed, h, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup, useMessage } from 'naive-ui';
-import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2 } from '@tabler/icons-vue';
+import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2, IconDatabaseImport, IconRestore } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useSimulationStore } from '../../stores/simulationStore';
@@ -28,10 +28,14 @@ const {
   pauseProgram: pauseSimulation,
   stopProgram: stopSimulation,
   stepProgram: stepSimulation,
+  loadProgram: loadSimulation,
+  restartProgram: restartSimulation,
 } = useSimulation();
 
 const isRunning = computed(() => simulationStore.status === 'running');
 const canHalt = computed(() => ['paused', 'running', 'finished'].includes(simulationStore.status));
+// Restart requires a loaded program (SIMULATOR_OVERVIEW §4 control table).
+const canRestart = computed(() => ['paused', 'running', 'finished'].includes(simulationStore.status));
 
 const notifySimulationErrors = () => {
   if (simulationStore.compileErrors.length > 0) {
@@ -50,6 +54,14 @@ const handleRun = () => {
 
 const handleStep = () => {
   if (!stepSimulation()) notifySimulationErrors();
+};
+
+const handleLoad = () => {
+  if (!loadSimulation()) notifySimulationErrors();
+};
+
+const handleRestart = () => {
+  if (!restartSimulation()) notifySimulationErrors();
 };
 
 // Global save shortcut: Ctrl+S (Windows/Linux) and Cmd+S (macOS). Registered
@@ -164,6 +176,12 @@ const handleSave = () => { void saveCurrentProject(); };
 
         <!-- Workspace Specific Simulation Controls -->
         <n-space :size="4" v-if="hasProject && isWorkspace && uiStore.perspective === 'simulate'" align="center">
+          <n-button quaternary circle size="tiny" type="info" title="Assemble and Load (F7)"
+            @click="handleLoad">
+            <template #icon><n-icon>
+                <IconDatabaseImport />
+              </n-icon></template>
+          </n-button>
           <n-button quaternary circle size="tiny" type="success" :disabled="isRunning" title="Run (F5)"
             @click="handleRun">
             <template #icon><n-icon>
@@ -181,6 +199,12 @@ const handleSave = () => { void saveCurrentProject(); };
                 <IconPlayerStop />
               </n-icon></template>
           </n-button>
+          <n-button quaternary circle size="tiny" :disabled="!canRestart" title="Restart Program (F9)"
+            @click="handleRestart">
+            <template #icon><n-icon>
+                <IconRestore />
+              </n-icon></template>
+          </n-button>
           <n-button quaternary circle size="tiny" type="primary" :disabled="isRunning" title="Step (F10)"
             @click="handleStep">
             <template #icon><n-icon>
@@ -190,6 +214,9 @@ const handleSave = () => { void saveCurrentProject(); };
           <n-divider vertical />
           <n-text depth="2" class="text-xs font-medium tabular-nums">
             Cycle {{ simulationStore.cycleCount }}
+            <template v-if="simulationStore.haltedAtCycle !== null">
+              · finished @ {{ simulationStore.haltedAtCycle }}
+            </template>
           </n-text>
         </n-space>
 

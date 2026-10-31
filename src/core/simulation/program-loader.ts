@@ -107,7 +107,23 @@ export function buildLoadPlan({ configuration, editors, targets }: LoadPlanInput
         });
     }
 
-    return { plan: { entries, instructionCount, assemblerDiagnostics }, loadErrors };
+    return { plan: { entries, instructionCount, haltWord: deriveHaltWord(configuration), assemblerDiagnostics }, loadErrors };
+}
+
+/**
+ * Encodes the ISA's `halt` mnemonic (when defined) into its machine word —
+ * the controller-layer program terminator carried on the LoadPlan. Fully
+ * config-driven: no opcode constant lives in the session. An ISA without an
+ * operand-less `halt` (or one that fails to encode) leaves halt detection
+ * on PC-past-end alone.
+ */
+function deriveHaltWord(configuration: ArchitectureConfiguration): number | null {
+    const halt = configuration.isa.instruction_set_config.find(
+        (instruction) => instruction.mnemonic.toLowerCase() === "halt",
+    );
+    if (halt === undefined) return null;
+    const probe = assemble("halt", configuration.isa);
+    return probe.ok && probe.instructions.length === 1 ? (probe.instructions[0] >>> 0) : null;
 }
 
 /**

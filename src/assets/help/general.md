@@ -38,29 +38,30 @@ MIPStream is a web-based simulator designed to help users understand and experim
    - Use `.data` and `.text` sections to define variables and instructions.
 
 3. **Assemble and Load**:
-   - Click the **Assemble and Load** button (or press `F6`) to assemble your code and load it into the simulator.
+   - Click the **Load** button in the editor panel (or press `F7`) to assemble your code and load it into the simulator.
+   - Assembler errors are listed below the editor — click one to jump to its position in the code.
 
 4. **Run the Simulation**:
-   - Use the **Run** button (or press `F5`) to start the simulation.
-   - Adjust the simulation speed using the slider.
+   - Use the **Run** button in the top bar (or press `F5`) to start the simulation.
 
 5. **Pause, Resume, or Step**:
-   - Pause the simulation with the **Pause** button (`F8`).
-   - Resume the simulation with the same button.
-   - Use the **Step** button (`F9`) to execute one instruction at a time.
+   - Pause the simulation with the **Pause** button (`F6`).
+   - Resume it with the **Run** button.
+   - Use the **Step** button (`F10`) to execute one clock cycle at a time.
 
-6. **Stop the Simulation**:
-   - Stop the simulation with the **Stop** button (`Shift + F5`).
+6. **Restart or Stop the Simulation**:
+   - Rewind to the loaded state with the **Restart** button (`F9`).
+   - Stop the simulation with the **Stop** button (state is preserved for inspection).
 
 ---
 
 ## **Keyboard Shortcuts**
-Here are some useful shortcuts to control the simulator:
-- **Assemble and Load**: `F6`
+Here are some useful shortcuts to control the simulator (active in the Simulate perspective):
+- **Assemble and Load**: `F7`
 - **Run Simulation**: `F5`
-- **Pause/Resume Simulation**: `F8`
-- **Step Through Simulation**: `F9`
-- **Stop Simulation**: `Shift + F5`
+- **Pause Simulation**: `F6`
+- **Step Through Simulation**: `F10`
+- **Restart Program**: `F9`
 - **Open General Settings**: `Ctrl + ,`
 - **Open Project Settings**: `Ctrl + Alt + ,`
 - **Open Help Window**: `Ctrl + H`

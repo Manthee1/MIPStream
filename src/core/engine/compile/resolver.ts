@@ -26,6 +26,14 @@ export interface ModuleBuild {
   state: unknown;
   /** True when the evaluator declares a clock edge (sequential module). */
   sequential: boolean;
+  /**
+   * Input ports consumed ONLY by the evaluator's clocked commit (present in
+   * `clocked.inputPorts` but not the combinational `inputPorts`). They are
+   * sampled at the clock edge, so a net feeding only such a port is an edge
+   * boundary, not a combinational dependency — shared by the compiler's
+   * topological ordering and the designer lint so the two never drift.
+   */
+  clockedOnlyInputs: Set<string>;
 }
 
 /** A live endpoint reference on a resolved net. */
@@ -106,6 +114,15 @@ export function resolveArchitecture(
       state === undefined ? config : { ...config, state }
     );
 
+    // Ports consumed only by the clocked commit (hybrid modules): they are
+    // edge-sampled, not combinational dependencies.
+    const combinationalInputs = new Set(evaluators.inputPorts);
+    const clockedOnlyInputs = new Set(
+      (evaluators.clocked?.inputPorts ?? []).filter(
+        (portId) => !combinationalInputs.has(portId)
+      )
+    );
+
     builds.set(serialized.designator, {
       designator: serialized.designator,
       typeId: serialized.typeId,
@@ -113,6 +130,7 @@ export function resolveArchitecture(
       evaluators,
       state,
       sequential: evaluators.clockEdge !== undefined,
+      clockedOnlyInputs,
     });
   }
 

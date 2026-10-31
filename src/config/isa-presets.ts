@@ -171,6 +171,13 @@ export const MIPS_ASSEMBLER_CONFIG: AssemblerConfig = {
       description: "Add two registers and store the result in a destination register.",
     },
     {
+      field_values: { opcode: 0x00, funct: 0x2a },
+      mnemonic: "slt",
+      type: "R",
+      operands: [["rd"], ["rs"], ["rt"]],
+      description: "Set the destination register to 1 if rs is less than rt (signed), else 0.",
+    },
+    {
       mnemonic: "addi",
       type: "I",
       operands: [["rt"], ["rs"], ["imm"]],
@@ -205,6 +212,14 @@ export const MIPS_ASSEMBLER_CONFIG: AssemblerConfig = {
       operands: [],
       description:
         "No operation. This instruction does nothing and is often used for timing or alignment purposes.",
+    },
+    {
+      field_values: { opcode: 0x3f },
+      mnemonic: "halt",
+      type: "J",
+      operands: [],
+      description:
+        "Stop the program: the simulator finishes just before this instruction executes. It decodes to all-zero control signals, so the datapath treats it as a safe no-op.",
     },
   ],
 };

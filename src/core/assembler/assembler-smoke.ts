@@ -92,6 +92,18 @@ function checkDiagnostic(
     checkHex("addi $t0, $t1, 65535 (unsigned edge) → 0x2128ffff", result.instructions[2], 0x2128ffff);
 }
 
+// R-type: slt (funct 0x2a) — set-less-than.
+{
+    const result = assembleOk(".text\nslt $t0, $t1, $t2\n");
+    checkHex("slt $t0, $t1, $t2 → 0x012a402a", result.instructions[0], 0x012a402a);
+}
+
+// J-type halt: a single opcode word — the controller-layer terminator.
+{
+    const result = assembleOk(".text\nhalt\n");
+    checkHex("halt → 0xfc000000", result.instructions[0], 0xfc000000);
+}
+
 // Memory operands: lw/sw effective addresses.
 {
     const result = assembleOk(".text\nlw $t0, 4($sp)\nsw $s1, 8($sp)\n");

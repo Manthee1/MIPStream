@@ -182,59 +182,169 @@ register state — before any UI is involved.
 
 ## Phase 3: Build the single-cycle MIPS datapath template
 
-`BASIC_MIPS_ARCHITECTURE` (`src/config/templates.ts`) is currently an empty
-shell. Build the real CPU once, by hand, in the Design perspective — this
-doubles as the end-to-end exercise of every manifest and the engine.
+`BASIC_MIPS_ARCHITECTURE` (`src/config/templates.ts`) was an empty
+shell. Build the real CPU once — this doubles as the end-to-end exercise
+of every manifest and the engine.
 
-- [ ] **Place the datapath modules** — PC, instruction memory, register file,
-      control unit, ALU control, ALU, writeback mux, ALU-src mux, branch
-      adder, PC+4 adder, sign extender, data memory, and the
-      splitter/merger needed to dissect the instruction word into fields.
-- [ ] **Wire the complete netlist** — fetch path, decode/control fan-out,
-      execute path, memory path, writeback path, and the
-      next-PC mux selection (PC+4 / branch target). Use the Problems panel
-      (shared engine lint) until zero errors/warnings.
-- [ ] **Configure components** — control-unit decode table for the preset
-      instruction set (`add`, `addi`, `lw`, `sw`, `beq`, `nop`), imem word
-      count, dmem word count, regfile width.
-- [ ] **Freeze the template** — serialize the finished diagram
-      (`serializeArchitecture`) into `BASIC_MIPS_ARCHITECTURE`'s
-      `modules`/`nets`, keeping the already-correct `configuration`
-      (pipeline off, `main → imem` mapping, MIPS ISA preset).
-- [ ] **Starter program** — replace the template's placeholder source with a
-      meaningful default (`.data` + `.text` skeleton, or the classic
-      multiply example from the legacy store).
+> **Status: Complete (2026-10-24).** The template ships a complete,
+> lint-clean, machine-validated single-cycle datapath. **Deviation from the
+> original approach (deliberate):** the netlist was authored as typed
+> framework-free data in `src/config/mips-single-cycle-datapath.ts`
+> (18 modules / 33 nets, classic P&H left-to-right layout) rather than
+> drawn first in the Design perspective — so the *shipped* template object
+> itself is executable by a headless golden rig (**Rig C** in
+> `npm run simulation:check`: the mips-basic template's own architecture +
+> configuration + starter program, run through mirror manifests over the
+> real pure logic). The Design perspective remains the visual-verification
+> / polish step (positions are authored; routing waypoints are optional).
+>
+> **Writeback-cycle resolution (the Phase 2 handoff):** the engine gained a
+> **hybrid module capability** — `ModuleEvaluators.clocked` (an
+> edge-sampled `commit` alongside the combinational read evaluator; a port
+> may feed both). The compiler emits the commit as a zero-output entry in
+> the clocked edge lists and exempts clocked-only input nets from the
+> topological sort, and the designer lint applies the same exemption via
+> the resolver's `clockedOnlyInputs` (one source, two consumers). The
+> register file and data memory are now hybrid (async read /
+> rising-clocked write — real hardware semantics): the writeback path
+> (`reg → alu → wbMux → reg.wd`) is a clock boundary, not a combinational
+> loop, and instruction k's writeback commits on the edge entering cycle
+> k+1 — adjacent read-after-write and exact cycle counts hold (Rig B
+> updated; engine-smoke §6c/§6d added). Rejected alternatives, for the
+> record: an external latch module loses instruction 0's writeback
+> (falling-edge) or makes every instruction miss the previous
+> instruction's write (rising-edge).
+>
+> **Also in this phase:** the `halt` instruction joined at the promised
+> controller-layer seam (preset entry, opcode `0x3f`; `buildLoadPlan`
+> encodes it onto `LoadPlan.haltWord`; the session finishes *before*
+> executing it — the natural terminator for loops; PC-past-end remains the
+> fallback). `slt` was added to the preset (the datapath already decoded
+> it); the control table gained its missing `addi` row, and **Rig C caught
+> and fixed a real default-table bug: `lw` had `memToReg: 0`** (the
+> writeback mux selected the ALU's address instead of the loaded word).
+> Rig C golden coverage: arithmetic with adjacent read-after-write, `slt`,
+> `$zero` write attempts, `lw`/`sw` with `.data` labels, `beq`
+> taken/not-taken/backward (exact 13-cycle loop count), the halt word
+> (exact timing), PC-past-end with past-end no-op proof, full reload
+> semantics, and the shipped starter program (square-by-repeated-addition,
+> 38 cycles, exact final register/memory state). `npm run check` — engine
+> (incl. hybrid) + assembler (incl. `slt`/`halt` goldens) + simulation all
+> green; `vue-tsc --noEmit` zero new errors (stash-baseline diff 317 = 317).
+
+- [x] **Place the datapath modules** — PC, PC+4 adder (+ constant 4),
+      instruction memory, splitter (opcode/rs/rt/rd/funct/imm — the rd and
+      imm fields deliberately overlap), register file, control unit, ALU
+      control, ALU, ALU-src mux, writeback mux, register-destination mux
+      (5-bit), branch adder, branch AND gate, shift-left-2, sign extender,
+      data memory, and the next-PC mux.
+- [x] **Wire the complete netlist** — fetch path, decode/control fan-out,
+      execute path, memory path, writeback path, and the next-PC mux
+      selection (PC+4 / branch target `(PC+4) + signext(imm)<<2`). Zero
+      errors *and* zero warnings, asserted by Rig C; the shared engine lint
+      accepts the hybrid writeback loop (engine-smoke §6c/§6d).
+- [x] **Configure components** — control-unit decode table for the preset
+      instruction set (`add`, `addi`, `lw`, `sw`, `beq`, `nop`, plus `slt`
+      and the row-less `halt`), imem 256 words, dmem 256 words, regfile
+      32×32.
+- [x] **Freeze the template** — the datapath data module is imported
+      directly into `BASIC_MIPS_ARCHITECTURE`'s `modules`/`nets` (the same
+      object, reference-asserted by Rig C), keeping the already-correct
+      `configuration` (pipeline off, `main → imem` mapping, MIPS ISA
+      preset). Designators `imem` (mapping target) and `pc` (halt
+      detection) are documented as load-bearing.
+- [x] **Starter program** — square-by-repeated-addition (`.data` value/
+      result, `lw`/`addi`/`add`/`slt`/`beq` loop/`sw`/`halt`), executed by
+      Rig C to its exact final state (49, 38 cycles).
 
 **Exit criteria:** opening a new project from the template shows a complete,
 lint-clean single-cycle datapath whose designators match the assembler mapping
-targets.
+targets. *(Machine-checked headlessly; the visual pass in the Design
+perspective is the remaining human step.)*
 
 ## Phase 4: Finish the Simulate perspective (minimal, not fancy)
 
 The minimum UI needed to exercise Phases 1–3 — built on permanent foundations
 (no-throwaway rule above), never as interim scaffolding.
 
-- [ ] **CodeMirror 6 editor skeleton** — install `codemirror` (plus
+> **Status: Complete (2026-10-29).** Pure UI — zero changes under `src/core/**`
+> (the 276 harness checks and the vue-tsc baseline 317 are untouched). What
+> shipped:
+>
+> - **CodeMirror 6 editor** — `codemirror` + `@codemirror/view/state/commands`
+>   installed; `CodeEditor.vue` (placeholder deleted) hosts a `basicSetup`
+>   instance via the new `useCodeMirror` composable: line numbers, history,
+>   active-line, a token-driven jagged theme in a `Compartment` (retheming
+>   never rebuilds the document), and the diagnostics-reveal primitive
+>   (1-based line / 0-based column range — consuming the Phase 1 contract
+>   verbatim). Theme flips ride the app-wide `theme-change` window event
+>   (the `App.vue` pattern — `useTheme()` refs are per-instance and would
+>   never fire). The instance binds the mapped `ProjectEditor.sourceCode`
+>   two-way; edits mark the project unsaved.
+> - **Load + diagnostics** — an Assemble/Load button in the editor panel
+>   header (plus TopBar) and a diagnostics strip under the editor rendering
+>   `assemblerDiagnostics` + `loadErrors`, click-to-reveal in the editor.
+> - **Manifest panels mounted** — new generic `ModulePanelHost.vue` resolves
+>   module → manifest → `manifest.panel`, supplies the resolved config
+>   (defaults + instance config, engine-injected `state` stripped) plus the
+>   engine-owned live state via `getModuleState`, and a sampling revision
+>   counter (`useEngineRevision` — bumps only when status/cycle-count
+>   changed, honoring the `ModulePanelProps` contract without idle 60fps
+>   table re-renders). `SimulateLayout.vue` discovers panel tabs
+>   **data-driven** (any architecture's panel-capable modules get tabs; one
+>   editor tab per assembler-mapping editor id) — Golden Layout components
+>   receive no props, so per-module wrappers bind `designator`/`editorId`.
+>   The throwaway `RegistersPanel.vue` was deleted.
+> - **Viewer panning** — `EventManager` gained `canPanWithPrimary`; in viewer
+>   mode (where module nodes are non-draggable and the left button was dead)
+>   left-drag now pans 1:1, mirroring the right-button pan. Wheel zoom and
+>   right-drag were already active in viewer mode.
+> - **Control set** — TopBar gained Load (F7) and Restart (F9) beside
+>   Run/Pause/Stop/Step with table-correct disabled predicates, plus the
+>   finished-at-cycle annotation. Help docs' stale legacy shortcut tables
+>   (F6/F8/F9/Shift-F5) were rewritten to the real bindings.
+> - **Tailwind theme bridge** — a `@theme inline` block in `index.css` maps
+>   the app tokens onto utility names (`bg-surface`, `bg-app`,
+>   `border-border-color`, …); these classes were previously inert (no
+>   `@theme` existed — backgrounds came from `golden-layout-theme.css`).
+> - **Packaging** — CodeMirror is chunked as `vendor_codemirror` in
+>   `vite.config.ts` manualChunks: adding it to `vendor_misc` pushed that
+>   chunk from 4.88 MB past the configured 5 MB PWA precache cap
+>   (`workbox.maximumFileSizeToCacheInBytes`), which vite-plugin-pwa treats
+>   as a hard build error. Isolated chunk: 380 kB; `vendor_misc` back to
+>   4.89 MB; build exit 0.
+>
+> Validation: `npm run check` all green (engine + assembler + simulation);
+> `vue-tsc --noEmit` 317 = baseline (zero new errors, rigorous grep diff);
+> `npx vite build` exit 0 (verified against the stash-baseline tree, which
+> also builds — the only build regression was the precache cap, fixed by the
+> chunk split). README stack line updated (Monaco → CodeMirror). **Remaining
+> human step:** the live visual pass — new project from "MIPS Single Cycle",
+> Load/Run/Step, watch the panels, flip the theme, pan the viewer. Phase 5's
+> golden suite already overlaps Rig C; the plan's Goal is now one manual pass
+> away.
+
+- [x] **CodeMirror 6 editor skeleton** — install `codemirror` (plus
       `@codemirror/view`, `@codemirror/state`) and replace the `CodeEditor.vue`
       placeholder with a bare CodeMirror instance: line numbers, edit history,
       theme synced to the app's light/dark tokens. **No interim plain-text
       editor** — the skeleton is the foundation every later feature is
       attached to as an extension, so nothing here is discarded later.
-- [ ] **Editor wiring** — bind the instance to the project editor's
+- [x] **Editor wiring** — bind the instance to the project editor's
       `sourceCode` (`ProjectEditor` already exists in the model), add an
       **Assemble/Load button**, and surface Phase 1 diagnostics (line + column)
       as an error list rendered beside the editor. Rich features
       (highlighting, lint decorations, completion, go-to-def) are later
       extensions on this same instance.
-- [ ] **Mount the live data panels** — replace the placeholder Registers and
+- [x] **Mount the live data panels** — replace the placeholder Registers and
       Memory panels in `SimulateLayout.vue` with the existing manifest panels
       (`register-file/Panel.vue`, `instruction-memory/Panel.vue`,
       `data-memory/Panel.vue`), driven by the engine's `moduleStates` and the
       revision counter.
-- [ ] **Viewer panning** — enable panning in viewer mode (the `EventManager`
+- [x] **Viewer panning** — enable panning in viewer mode (the `EventManager`
       machinery already exists; this is the todo "schematic viewer panning"
       item and a predicate change, not new machinery).
-- [ ] **Control buttons** — surface Load/Run/Restart/Pause/Step/Stop in the
+- [x] **Control buttons** — surface Load/Run/Restart/Pause/Step/Stop in the
       TopBar, mapped onto the Phase 2 state machine.
 
 **Exit criteria:** a user can write code, load it, run/step it, and watch the
@@ -245,16 +355,44 @@ register and memory panels update — entirely in the active UI.
 Prove correctness against known MIPS semantics. Bugs found here loop back
 into Phases 1–3.
 
-- [ ] **Golden program suite** — R-type arithmetic, `addi`, `lw`/`sw` with
+> **Status: Complete (2026-10-29).** Audit outcome: the golden program suite
+> was already machine-checked by Rig C in `npm run simulation:check` (the
+> shipped mips-basic template's own architecture + configuration run through
+> the real pure logic) — R-type arithmetic with adjacent read-after-write,
+> `addi`, `lw`/`sw` through `.data` labels, `beq` taken/not-taken and
+> forward/backward (with bit-exact offset goldens in `assembler:check`),
+> `slt`, `$zero` write absorption, the `halt` word, PC-past-end with a
+> past-end no-op proof, full reload semantics, and the shipped starter
+> program to its exact 38-cycle final state. The one genuine gap was
+> **cycle-level expectations**: cycle *counts* were exact but per-cycle
+> register/memory transitions were only proven on Rig B's minimal netlist.
+> **Rig D** was added to `simulation-smoke.ts` for exactly that: a mixed
+> program (arithmetic, `lw`/`sw`, not-taken + taken-forward branches, a
+> deliberately skipped instruction) stepped ONE cycle at a time through the
+> golden datapath, asserting the exact register, memory and PC state after
+> every cycle — one instruction per cycle (7 instructions / 7 cycles), each
+> writeback committing on the edge entering the next cycle (the `sw` store
+> visible exactly one cycle after the `add` result it stores; instruction 0
+> computed-but-not-executed after Load), a not-taken branch falling through,
+> a taken forward branch landing on its target, the skipped instruction
+> provably never executed, and the halt word finishing without consuming a
+> cycle. **Fix loop: zero mismatches — every check green on the first run.**
+> Validation: `npm run check` (engine + assembler + simulation, now incl.
+> Rig D), `vue-tsc --noEmit` at the 317 pre-existing baseline, `npx vite
+> build` exit 0. The user completed the live UI pass on the MIPS Single
+> Cycle template (Load/Run/Step, panels, program edits reflecting correctly)
+> on 2026-10-29 — the Goal section is true.
+
+- [x] **Golden program suite** — R-type arithmetic, `addi`, `lw`/`sw` with
       `.data` labels, `beq` taken and not-taken, forward and backward branch
       offsets, `slt`, `$zero` write attempts, and running past the last
       instruction (halt path).
-- [ ] **Cycle-level expectations** — for single-cycle MIPS, one instruction
+- [x] **Cycle-level expectations** — for single-cycle MIPS, one instruction
       per cycle; verify per-cycle register/memory transitions, not just the
       final state.
-- [ ] **Fix loop** — triage every mismatch to the assembler, the datapath
+- [x] **Fix loop** — triage every mismatch to the assembler, the datapath
       wiring, or the engine, and re-run until green.
-- [ ] **Record the results** — update this document and the status tables in
+- [x] **Record the results** — update this document and the status tables in
       [DESIGN_SPECIFICATION.md](../DESIGN_SPECIFICATION.md) §1.6/§8.10/§9.8
       (Partial → Implemented), and tick the corresponding `todo.md` items.
 
@@ -262,7 +400,7 @@ into Phases 1–3.
 
 ---
 
-## Deferred until after the MVP (tracked in `todo.md`, not here)
+## Deferred until after the MVP (tracked in `TODO.kanban.md`, not here)
 
 CodeMirror editor features (highlighting, autocomplete, lint, go-to-def,
 current-instruction highlighting), pipelined MIPS variants and stage-register

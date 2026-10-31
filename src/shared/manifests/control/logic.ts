@@ -55,15 +55,24 @@ export const CONTROL_SIGNALS: ControlSignalDef[] = [
 
 /** Classic single-cycle MIPS opcode decode table (the default rows). */
 export const CONTROL_ROWS: ControlRow[] = [
+  // `nop` (opcode 0, funct 0) rides this row too: regWrite 1 with rd = 0
+  // is absorbed by the register file's hardwired $zero. Opcodes without a
+  // row (e.g. the assembler's `halt`) decode to all-zero signals — no
+  // writes, no branch — so unknown instructions are datapath-safe no-ops.
   {
     opcode: 0x00,
     label: "R-type",
     values: { regDst: 1, aluSrc: 0, memToReg: 0, regWrite: 1, memRead: 0, memWrite: 0, branch: 0, aluOp: 0b10 },
   },
   {
+    opcode: 0x08,
+    label: "addi",
+    values: { regDst: 0, aluSrc: 1, memToReg: 0, regWrite: 1, memRead: 0, memWrite: 0, branch: 0, aluOp: 0b00 },
+  },
+  {
     opcode: 0x23,
     label: "lw",
-    values: { regDst: 0, aluSrc: 1, memToReg: 0, regWrite: 1, memRead: 1, memWrite: 0, branch: 0, aluOp: 0b00 },
+    values: { regDst: 0, aluSrc: 1, memToReg: 1, regWrite: 1, memRead: 1, memWrite: 0, branch: 0, aluOp: 0b00 },
   },
   {
     opcode: 0x2b,

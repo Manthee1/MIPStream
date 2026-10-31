@@ -102,17 +102,24 @@ export const DataMemoryManifest: ModuleManifest<DataMemoryConfig> = {
     const state = config.state ?? createWordMemoryState(config.wordCount);
     const mask = widthMask(config.bitWidth);
     return {
-      inputPorts: ["addr", "wd", "memWrite", "memRead"],
+      // Asynchronous read — combinational, gated by MemRead. `addr` is
+      // shared with the clocked write commit below (one address input
+      // feeding both evaluators).
+      inputPorts: ["addr", "memRead"],
       outputPorts: ["rdata"],
-      evaluate: (inputs: Uint32Array): Uint32Array => {
-        // Reads settle from the values held before this evaluation; a write
-        // commits while MemWrite is asserted during the engine's propagation
-        // pass — exactly once per clock cycle.
-        const rdata = inputs[3] & 1 ? readWord(state, inputs[0], mask) : 0;
-        if (inputs[2] & 1) {
-          writeWord(state, inputs[0], inputs[1], mask);
-        }
-        return new Uint32Array([rdata]);
+      evaluate: (inputs: Uint32Array): Uint32Array =>
+        new Uint32Array([inputs[1] & 1 ? readWord(state, inputs[0], mask) : 0]),
+      // Synchronous write — commits at the rising clock edge, exactly like
+      // real hardware data memory. `addr`/`wd`/`memWrite` are edge-sampled;
+      // a value written at edge k is readable in the pass of cycle k.
+      clocked: {
+        inputPorts: ["addr", "wd", "memWrite"],
+        clockEdge: "rising",
+        commit: (inputs: Uint32Array): void => {
+          if (inputs[2] & 1) {
+            writeWord(state, inputs[0], inputs[1], mask);
+          }
+        },
       },
     };
   },

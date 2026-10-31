@@ -6,7 +6,7 @@
  * with the real MIPS preset (no UI dependencies). Execute via
  * `npm run simulation:check`.
  *
- * Two rigs:
+ * Four rigs:
  * - Rig A (no PC): image write-through, one-to-many mappings, `.data`
  *   packing, capacity/validation errors, the full control state machine,
  *   empty-program halt.
@@ -14,6 +14,13 @@
  *   dmem netlist that executes real preset-ISA `add` programs — per-cycle
  *   memory transitions, PC-past-end halt at the exact cycle, restart
  *   semantics and batched advance.
+ * - Rig C (golden single-cycle datapath): the shipped mips-basic template's
+ *   own architecture + configuration, running golden programs over the whole
+ *   preset ISA to exact final states and cycle counts.
+ * - Rig D (Phase 5 cycle-level trace): a mixed program stepped ONE cycle at
+ *   a time through the golden datapath — exact register/memory/PC state
+ *   asserted after every cycle (one instruction per cycle, hybrid writeback
+ *   timing, halt word consuming no cycle).
  */
 
 import { MIPS_ASSEMBLER_CONFIG } from "@/config/isa-presets";
@@ -35,6 +42,18 @@ import {
 import { registerTransfer } from "@/shared/manifests/register/logic";
 import { resolveSplitterFields, type SplitterConfig } from "@/shared/manifests/splitter/logic";
 import { clampWiringBits, contiguousField, remapFromBus } from "@/shared/manifests/wiring-logic";
+import {
+    buildControlTable,
+    CONTROL_ROWS,
+    CONTROL_SIGNALS,
+    type ControlConfig,
+} from "@/shared/manifests/control/logic";
+import { decodeAluControl } from "@/shared/manifests/alu-control/logic";
+import { aluEvaluate } from "@/shared/manifests/alu/logic";
+import { selectMuxInput } from "@/shared/manifests/mux/logic";
+import { gateEvaluate } from "@/shared/manifests/logic/logic";
+import { MIPS_SINGLE_CYCLE_MODULES, MIPS_SINGLE_CYCLE_NETS } from "@/config/mips-single-cycle-datapath";
+import { PROJECT_TEMPLATES } from "@/config/templates";
 import type {
     ModuleEvaluators,
     ModuleManifest,
@@ -209,12 +228,15 @@ const mirrorDmem: ModuleManifest<{ wordCount: number; bitWidth: number; state?: 
         const state = config.state ?? createWordMemoryState(config.wordCount);
         const mask = widthMask(config.bitWidth);
         return {
-            inputPorts: ["addr", "wd", "memWrite", "memRead"],
+            inputPorts: ["addr", "memRead"],
             outputPorts: ["rdata"],
-            evaluate: (inputs) => {
-                const rdata = inputs[3] & 1 ? readWord(state, inputs[0], mask) : 0;
-                if (inputs[2] & 1) writeWord(state, inputs[0], inputs[1], mask);
-                return new Uint32Array([rdata]);
+            evaluate: (inputs) => new Uint32Array([inputs[1] & 1 ? readWord(state, inputs[0], mask) : 0]),
+            clocked: {
+                inputPorts: ["addr", "wd", "memWrite"],
+                clockEdge: "rising",
+                commit: (inputs) => {
+                    if (inputs[2] & 1) writeWord(state, inputs[0], inputs[1], mask);
+                },
             },
         };
     },
@@ -267,13 +289,19 @@ const mirrorRegfile: ModuleManifest<{
         const state = config.state ?? createRegisterFileState(config.registerCount);
         const mask = widthMask(config.bitWidth);
         return {
-            inputPorts: ["rs", "rt", "rd", "wd", "we"],
+            inputPorts: ["rs", "rt"],
             outputPorts: ["readA", "readB"],
-            evaluate: (inputs) => {
-                const readA = readRegister(state, inputs[0], mask);
-                const readB = readRegister(state, inputs[1], mask);
-                if (inputs[4] & 1) writeRegister(state, inputs[2], inputs[3], mask);
-                return new Uint32Array([readA, readB]);
+            evaluate: (inputs) =>
+                new Uint32Array([
+                    readRegister(state, inputs[0], mask),
+                    readRegister(state, inputs[1], mask),
+                ]),
+            clocked: {
+                inputPorts: ["rd", "wd", "we"],
+                clockEdge: "rising",
+                commit: (inputs) => {
+                    if (inputs[2] & 1) writeRegister(state, inputs[0], inputs[1], mask);
+                },
             },
         };
     },
@@ -323,6 +351,199 @@ const mirrorSplitter: ModuleManifest<SplitterConfig> = {
     },
 };
 
+// Rig C mirrors: the remaining real typeIds the single-cycle datapath uses.
+// Same pattern as above — manifest metadata restated, evaluation delegated to
+// the REAL pure logic modules (buildControlTable, decodeAluControl,
+// aluEvaluate, selectMuxInput, gateEvaluate); the extender/shifter bodies
+// are restated inline (their manifests embed them).
+
+const mirrorControl: ModuleManifest<ControlConfig> = {
+    typeId: "std.control",
+    label: "Control Unit",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: { opcodeBits: 6, signals: CONTROL_SIGNALS, rows: CONTROL_ROWS },
+    generatePorts: (config) => {
+        const outputs = config.signals.map((signal, index) => ({
+            id: signal.id,
+            direction: "output" as const,
+            bits: signal.bits,
+            label: signal.label ?? signal.id,
+            position: { x: 50, y: (index - (config.signals.length - 1) / 2) * 18 },
+        }));
+        return [
+            { id: "opcode", direction: "input" as const, bits: config.opcodeBits, label: "Opcode", position: { x: -50, y: 0 } },
+            ...outputs,
+        ];
+    },
+    createEvaluators: (config): ModuleEvaluators => {
+        const table = buildControlTable(config);
+        const signalCount = config.signals.length;
+        const mask = widthMask(config.opcodeBits);
+        return {
+            inputPorts: ["opcode"],
+            outputPorts: config.signals.map((signal) => signal.id),
+            evaluate: (inputs) => {
+                const base = (inputs[0] & mask) * signalCount;
+                return table.slice(base, base + signalCount);
+            },
+        };
+    },
+};
+
+const mirrorAluControl: ModuleManifest<Record<string, never>> = {
+    typeId: "std.alu-control",
+    label: "ALU Control",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: {},
+    generatePorts: () => [
+        { id: "aluop", direction: "input", bits: 2, label: "ALUOp", position: { x: -40, y: -10 } },
+        { id: "funct", direction: "input", bits: 6, label: "Funct", position: { x: -40, y: 10 } },
+        { id: "operation", direction: "output", bits: 4, label: "Op", position: { x: 40, y: 0 } },
+    ],
+    createEvaluators: (): ModuleEvaluators => ({
+        inputPorts: ["aluop", "funct"],
+        outputPorts: ["operation"],
+        evaluate: (inputs) => new Uint32Array([decodeAluControl(inputs[0], inputs[1])]),
+    }),
+};
+
+const mirrorAlu: ModuleManifest<{ bitWidth: number }> = {
+    typeId: "std.alu",
+    label: "ALU",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: { bitWidth: 32 },
+    generatePorts: (config) => [
+        { id: "a", direction: "input", bits: config.bitWidth, label: "A", position: { x: -60, y: -20 } },
+        { id: "b", direction: "input", bits: config.bitWidth, label: "B", position: { x: -60, y: 20 } },
+        { id: "op", direction: "input", bits: 4, label: "Op", position: { x: -25, y: 45 } },
+        { id: "result", direction: "output", bits: config.bitWidth, label: "Result", position: { x: 60, y: 0 } },
+        { id: "zero", direction: "output", bits: 1, label: "Zero", position: { x: 30, y: 45 } },
+    ],
+    createEvaluators: (config): ModuleEvaluators => ({
+        inputPorts: ["a", "b", "op"],
+        outputPorts: ["result", "zero"],
+        evaluate: (inputs) => {
+            const { result, zero } = aluEvaluate(inputs[0], inputs[1], inputs[2], config.bitWidth);
+            return new Uint32Array([result, zero]);
+        },
+    }),
+};
+
+const mirrorMux2: ModuleManifest<{ bitWidth: number; numInputs: number }> = {
+    typeId: "std.mux2",
+    label: "Mux 2:1",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: { bitWidth: 32, numInputs: 2 },
+    generatePorts: (config) => [
+        { id: "in0", direction: "input", bits: config.bitWidth, label: "In 0", position: { x: -40, y: -10 } },
+        { id: "in1", direction: "input", bits: config.bitWidth, label: "In 1", position: { x: -40, y: 10 } },
+        { id: "sel", direction: "input", bits: 1, label: "Sel", position: { x: 0, y: 40 } },
+        { id: "out", direction: "output", bits: config.bitWidth, label: "Out", position: { x: 40, y: 0 } },
+    ],
+    createEvaluators: (config): ModuleEvaluators => ({
+        inputPorts: ["in0", "in1", "sel"],
+        outputPorts: ["out"],
+        evaluate: (inputs) => new Uint32Array([selectMuxInput(inputs, inputs[2], config.numInputs)]),
+    }),
+};
+
+const mirrorExtender: ModuleManifest<{ inputBits: number; outputBits: number; isSigned: boolean }> = {
+    typeId: "std.extender",
+    label: "Bit Extender",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: { inputBits: 16, outputBits: 32, isSigned: true },
+    generatePorts: (config) => [
+        { id: "in", direction: "input", bits: config.inputBits, label: "In", position: { x: -48, y: 0 } },
+        { id: "out", direction: "output", bits: config.outputBits, label: "Out", position: { x: 48, y: 0 } },
+    ],
+    createEvaluators: (config): ModuleEvaluators => {
+        const hiMask = widthMask(config.outputBits);
+        const loMask = widthMask(config.inputBits);
+        return {
+            inputPorts: ["in"],
+            outputPorts: ["out"],
+            evaluate: (inputs) => {
+                const value = (inputs[0] >>> 0) & loMask;
+                let out = value;
+                if (config.isSigned && ((value >>> (config.inputBits - 1)) & 1) === 1) {
+                    out = (value | (hiMask & ~loMask)) >>> 0;
+                }
+                return new Uint32Array([(out & hiMask) >>> 0]);
+            },
+        };
+    },
+};
+
+const mirrorShifter: ModuleManifest<{
+    bitWidth: number;
+    mode: "logical_left" | "logical_right" | "arithmetic_right";
+    shamt: number;
+}> = {
+    typeId: "std.shifter",
+    label: "Shifter",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: { bitWidth: 32, mode: "logical_left", shamt: 0 },
+    generatePorts: (config) => [
+        { id: "in", direction: "input", bits: config.bitWidth, label: "In", position: { x: -40, y: 0 } },
+        { id: "out", direction: "output", bits: config.bitWidth, label: "Out", position: { x: 40, y: 0 } },
+    ],
+    createEvaluators: (config): ModuleEvaluators => {
+        const mask = widthMask(config.bitWidth);
+        const shamt = config.shamt & 0x1f;
+        return {
+            inputPorts: ["in"],
+            outputPorts: ["out"],
+            evaluate: (inputs) => {
+                const value = (inputs[0] >>> 0) & mask;
+                let out: number;
+                switch (config.mode) {
+                    case "logical_left":
+                        out = (value << shamt) & mask;
+                        break;
+                    case "logical_right":
+                        out = value >>> shamt;
+                        break;
+                    case "arithmetic_right":
+                        out = value >> shamt;
+                        break;
+                }
+                return new Uint32Array([(out & mask) >>> 0]);
+            },
+        };
+    },
+};
+
+const mirrorAnd: ModuleManifest<{ op: "and" }> = {
+    typeId: "std.and",
+    label: "AND Gate",
+    description: "",
+    icon: "",
+    category: "logic",
+    defaultConfig: { op: "and" },
+    generatePorts: () => [
+        { id: "a", direction: "input", bits: 1, label: "A", position: { x: -44, y: -10 } },
+        { id: "b", direction: "input", bits: 1, label: "B", position: { x: -44, y: 10 } },
+        { id: "out", direction: "output", bits: 1, label: "Out", position: { x: 44, y: 0 } },
+    ],
+    createEvaluators: (): ModuleEvaluators => ({
+        inputPorts: ["a", "b"],
+        outputPorts: ["out"],
+        evaluate: (inputs) => new Uint32Array([gateEvaluate(inputs[0], inputs[1], "and", 1)]),
+    }),
+};
+
 registerManifest(mirrorConstant);
 registerManifest(mirrorAdder);
 registerManifest(mirrorImem);
@@ -330,6 +551,13 @@ registerManifest(mirrorDmem);
 registerManifest(mirrorPc);
 registerManifest(mirrorRegfile);
 registerManifest(mirrorSplitter);
+registerManifest(mirrorControl);
+registerManifest(mirrorAluControl);
+registerManifest(mirrorAlu);
+registerManifest(mirrorMux2);
+registerManifest(mirrorExtender);
+registerManifest(mirrorShifter);
+registerManifest(mirrorAnd);
 
 // ---------------------------------------------------------------- Rig A
 // No PC: image write-through, one-to-many mappings, `.data` packing,
@@ -494,18 +722,56 @@ check("no-mapping: step does not halt", sessionA.step(), "paused");
 check("no-mapping: start → running", sessionA.start(), true);
 check("no-mapping: advance runs freely", sessionA.advance(5), 5);
 
+// Dedicated halt instruction: the session finishes just BEFORE executing
+// the ISA's halt word (derived onto the plan by buildLoadPlan — no opcode
+// constant lives in the session). PC-past-end remains the fallback halt.
+const haltDoc: ArchitectureDocument = {
+    modules: [
+        module("pcH", "std.pc"),
+        module("fourH", "std.constant", { value: 4, bitWidth: 32 }),
+        module("pcAddH", "std.adder"),
+        module("imemH", "std.imem", { wordCount: 8, bitWidth: 32 }),
+    ],
+    nets: [
+        net("hA", ["pcH", "q"], ["imemH", "addr"], ["pcAddH", "a"]),
+        net("hB", ["fourH", "out"], ["pcAddH", "b"]),
+        net("hC", ["pcAddH", "sum"], ["pcH", "d"]),
+    ],
+};
+
+const haltEngine = new SimulationEngine(haltDoc);
+const haltSession = new SimulationSession(haltEngine, scanSimulationTargets(haltDoc));
+const haltPlan = buildLoadPlan({
+    configuration: configuration([{ editorId: "main", memoryModuleIds: ["imemH"] }]),
+    editors: [editor("main", ".text\nnop\nnop\nhalt\n")],
+    targets: haltSession.simulationTargets,
+});
+check("halt: plan carries the derived halt word", haltPlan.plan.haltWord, 0xfc000000);
+check("halt: loads clean", haltSession.load(haltPlan.plan).ok, true);
+check("halt: step 1 executes nop 1", haltSession.step(), "paused");
+check("halt: step 2 executes nop 2", haltSession.step(), "paused");
+check("halt: finishes before executing the halt word", haltSession.step(), "finished");
+check("halt: halted at exactly 2 cycles", haltSession.cycleCount, 2);
+check("halt: PC parked on the halt word", haltEngine.getPortValue("pcH", "q"), 8);
+check("halt: step rejected while finished", haltSession.step(), null);
+check("halt: restart → paused at 0", haltSession.restart(), true);
+check("halt: start → running", haltSession.start(), true);
+check("halt: advance stops at the halt word", haltSession.advance(16), 2);
+check("halt: finished after batched run", haltSession.status, "finished");
+
 // ---------------------------------------------------------------- Rig B
 // Minimal executable datapath: PC + PC+4 adder loop + imem + splitter
 // (rs/rt/rd + the add-funct bit) + regfile + ALU adder + dmem. Each cycle
-// the instruction at the PC writes rs+rt into dmem word 0 (memWrite is the
-// add funct bit, so the empty word past the program writes nothing) and
-// writes a constant into the instruction's rd register.
-//
-// NOTE (Phase 3 handoff): the classic single-cycle writeback wiring
-// (regfile → ALU → regfile.wd) is a module-granularity combinational cycle
-// under the engine's topological sort and will NOT compile — the real
-// datapath design must resolve this (e.g. an edge-triggered write path).
-// This rig therefore drives the regfile's write inputs from constants.
+// the instruction at the PC commits rs+rt into dmem word 0 at the rising
+// clock edge (memWrite is the add funct bit, so the empty word past the
+// program writes nothing) and commits a constant into the instruction's
+// rd register. The register file and data memory are hybrid modules (async
+// read + rising-clocked write), so the regfile → ALU → dmem.wd path is an
+// edge boundary, not a combinational loop, and every write commits exactly
+// once per cycle: the post-load settle stages instruction 0's datapath
+// without committing it, and its side-effects land on the first clock edge.
+// This rig still drives regfile.wd from a constant — the full datapath
+// with a real writeback mux is the Phase 3 golden rig.
 
 const rigBDoc: ArchitectureDocument = {
     modules: [
@@ -593,27 +859,35 @@ checkHex(
     0x01694020
 );
 
-// Debugger-style preload + re-settle: level-sensitive modules commit during
-// every propagation pass, so instruction 0's effect needs its operands in
-// place before the post-load settle to be observable.
+// Debugger-style preload + re-settle: hybrid commits happen at the rising
+// edge, so preloaded operands must be in place before the post-load settle
+// stages instruction 0's write data — its effects land on the first edge.
 preloadRegisters();
 rigBEngine.settle();
 check("rig B: paused at instruction 0", sessionB.status, "paused");
 check("rig B: PC at 0", rigBEngine.getPortValue("pc", "q"), 0);
-check("rig B: first add visible after settle (5+7)", dmemWord(0), 12);
-check("rig B: rd register written (constant)", registerValue(8), 0x2a);
+// Hybrid semantics: the post-load settle computes instruction 0's datapath
+// (write data staged on the wires) but commits nothing.
+check("rig B: load settle commits nothing (dmem)", dmemWord(0), 0);
+check("rig B: load settle commits nothing (regfile)", registerValue(8), 0);
+check("rig B: instruction 0 write data staged (5+7)", rigBEngine.getPortValue("dmem", "wd"), 12);
+check("rig B: instruction 0 write enables staged", rigBEngine.getPortValue("reg", "we"), 1);
 
-// Per-cycle execution: one instruction per cycle, exact halt timing.
+// Per-cycle execution: one instruction per cycle, exact halt timing. The
+// commit for instruction k lands on the rising edge entering cycle k+1.
 check("rig B: step 1 → paused", sessionB.step(), "paused");
 check("rig B: cycle 1", sessionB.cycleCount, 1);
 check("rig B: PC 4", rigBEngine.getPortValue("pc", "q"), 4);
-check("rig B: second add (7+9)", dmemWord(0), 16);
+check("rig B: first add committed at edge 1 (5+7)", dmemWord(0), 12);
+check("rig B: rd register written at edge 1 (constant)", registerValue(8), 0x2a);
 check("rig B: step 2 → paused", sessionB.step(), "paused");
-check("rig B: third add (9+5)", dmemWord(0), 14);
+check("rig B: second add committed at edge 2 (7+9)", dmemWord(0), 16);
 check("rig B: step 3 → finished (PC past end)", sessionB.step(), "finished");
+check("rig B: third add committed at edge 3 (9+5)", dmemWord(0), 14);
 check("rig B: halted at exactly 3 cycles", sessionB.cycleCount, 3);
 check("rig B: PC 12", rigBEngine.getPortValue("pc", "q"), 12);
-check("rig B: empty word past the program writes nothing", dmemWord(0), 14);
+check("rig B: past-end word decodes to no-op (we deasserted)", rigBEngine.getPortValue("reg", "we"), 0);
+check("rig B: past-end word decodes to no-op (memWrite deasserted)", rigBEngine.getPortValue("dmem", "memWrite"), 0);
 check("rig B: source registers unchanged", registerValue(9), 5);
 check("rig B: final register state ($t0)", registerValue(8), 0x2a);
 check("rig B: step rejected while finished", sessionB.step(), null);
@@ -630,7 +904,7 @@ check(
     (rigBEngine.getModuleState("imem") as WordMemoryState).words[0] === 0x012a4020,
     true
 );
-check("rig B: restart settle runs instruction 0 with zero registers", dmemWord(0), 0);
+check("rig B: restart settle commits nothing", dmemWord(0), 0);
 
 // Run to completion through the batched advance() path.
 preloadRegisters();
@@ -640,6 +914,248 @@ check("rig B: advance stops exactly at halt", sessionB.advance(16), 3);
 check("rig B: finished after batched run", sessionB.status, "finished");
 check("rig B: final memory state after re-run", dmemWord(0), 14);
 check("rig B: final register state after re-run", registerValue(8), 0x2a);
+
+// ---------------------------------------------------------------- Rig C
+// The golden single-cycle datapath: THE shipped template — the mips-basic
+// project template's own architecture (netlist + configuration) and starter
+// program, compiled with the mirror manifests above. Proves the writeback
+// path compiles (the Phase 2 blocker), then runs golden programs covering
+// the whole preset ISA: arithmetic with adjacent read-after-write
+// dependencies, slt, $zero write attempts, lw/sw with .data labels, beq
+// taken/not-taken/backward, the halt word, and PC-past-end.
+
+const mipsTemplate = PROJECT_TEMPLATES.find((template) => template.id === "mips-basic");
+check("rig C: mips-basic template found", mipsTemplate !== undefined, true);
+check(
+    "rig C: template ships the golden datapath by reference",
+    mipsTemplate?.architecture.modules === MIPS_SINGLE_CYCLE_MODULES &&
+        mipsTemplate.architecture.nets === MIPS_SINGLE_CYCLE_NETS,
+    true,
+);
+
+const rigCDoc: ArchitectureDocument = {
+    modules: mipsTemplate?.architecture.modules ?? [],
+    nets: mipsTemplate?.architecture.nets ?? [],
+};
+const rigCEngine = new SimulationEngine(rigCDoc);
+check("rig C: compiles clean (writeback path is an edge boundary)", rigCEngine.hasErrors, false);
+check("rig C: zero warnings", rigCEngine.warnings.length, 0);
+const rigCSession = new SimulationSession(rigCEngine, scanSimulationTargets(rigCDoc));
+check("rig C: PC designator found", rigCSession.simulationTargets.pcDesignator, "pc");
+check("rig C: imem found", rigCSession.simulationTargets.instructionMemories.join(","), "imem");
+check("rig C: dmem found", rigCSession.simulationTargets.dataMemories.join(","), "dmem");
+
+/** Loads a program into the rig using the template's own configuration. */
+function rigCLoad(source: string): void {
+    const built = buildLoadPlan({
+        configuration: mipsTemplate!.architecture.configuration,
+        editors: [editor("main", source)],
+        targets: rigCSession.simulationTargets,
+    });
+    if (built.loadErrors.length > 0 || built.plan.assemblerDiagnostics.length > 0) {
+        report(
+            false,
+            "rig C: program assembles clean",
+            `loadErrors: ${built.loadErrors.join("; ")} | diagnostics: ${built.plan.assemblerDiagnostics.map((d) => d.message).join("; ")}`,
+        );
+        return;
+    }
+    report(rigCSession.load(built.plan).ok, "rig C: program loads", "load refused");
+}
+
+function rigCReg(index: number): number {
+    return (rigCEngine.getModuleState("reg") as RegisterFileState).values[index];
+}
+
+function rigCDmem(index: number): number {
+    return (rigCEngine.getModuleState("dmem") as WordMemoryState).words[index];
+}
+
+// Arithmetic + adjacent read-after-write + slt + $zero write attempt.
+const RIG_C_ARITH =
+    ".text\n" +
+    "addi $t0, $zero, 5\n" +
+    "addi $t1, $zero, 7\n" +
+    "add $t2, $t0, $t1\n" +
+    "slt $t3, $t0, $t1\n" +
+    "slt $t4, $t1, $t0\n" +
+    "add $zero, $t0, $t1\n" +
+    "halt\n";
+rigCLoad(RIG_C_ARITH);
+checkHex(
+    "rig C arith: imem word 0 golden (addi $t0, $zero, 5)",
+    (rigCEngine.getModuleState("imem") as WordMemoryState).words[0],
+    0x20080005,
+);
+checkHex(
+    "rig C arith: imem word 2 golden (add $t2, $t0, $t1)",
+    (rigCEngine.getModuleState("imem") as WordMemoryState).words[2],
+    0x01095020,
+);
+check("rig C arith: paused at instruction 0", rigCSession.status, "paused");
+check("rig C arith: load commits nothing ($t2)", rigCReg(10), 0);
+rigCSession.start();
+check("rig C arith: advance stops at the halt word", rigCSession.advance(64), 6);
+check("rig C arith: finished", rigCSession.status, "finished");
+check("rig C arith: $t0 = 5", rigCReg(8), 5);
+check("rig C arith: $t1 = 7", rigCReg(9), 7);
+check("rig C arith: $t2 = 12 (adjacent read-after-write)", rigCReg(10), 12);
+check("rig C arith: $t3 = 1 (slt 5 < 7)", rigCReg(11), 1);
+check("rig C arith: $t4 = 0 (slt 7 < 5)", rigCReg(12), 0);
+check("rig C arith: $zero write absorbed", rigCReg(0), 0);
+check("rig C arith: PC parked on the halt word", rigCEngine.getPortValue("pc", "q"), 24);
+
+// lw/sw through .data labels: bare-label addressing (base register keeps
+// its $zero default), the sw write path, and the lw→regfile writeback path.
+const RIG_C_MEMORY =
+    ".data\n" +
+    "x: .word 0x12345678\n" +
+    "y: .word 0\n" +
+    ".text\n" +
+    "lw $t0, x\n" +
+    "sw $t0, y\n" +
+    "lw $t1, y\n" +
+    "halt\n";
+rigCLoad(RIG_C_MEMORY);
+rigCSession.start();
+check("rig C memory: advance stops at the halt word", rigCSession.advance(64), 3);
+check("rig C memory: $t0 = x after lw", rigCReg(8), 0x12345678);
+check("rig C memory: y = x after sw", rigCDmem(1), 0x12345678);
+check("rig C memory: $t1 = y after lw", rigCReg(9), 0x12345678);
+check("rig C memory: x untouched", rigCDmem(0), 0x12345678);
+
+// Branches: not-taken fall-through, taken forward, and taken backward
+// (loop) — exercises the branch adder ((PC+4) + signext(imm)<<2), the
+// zero-flag AND, and the next-PC mux from both directions.
+const RIG_C_BRANCH =
+    ".text\n" +
+    "addi $t0, $zero, 3\n" +
+    "addi $t1, $zero, 0\n" +
+    "loop: add $t1, $t1, $t0\n" +
+    "addi $t0, $t0, -1\n" +
+    "beq $t0, $zero, done\n" +
+    "beq $zero, $zero, loop\n" +
+    "done: halt\n";
+rigCLoad(RIG_C_BRANCH);
+rigCSession.start();
+check("rig C branch: advance stops at the halt word (13 cycles)", rigCSession.advance(64), 13);
+check("rig C branch: finished", rigCSession.status, "finished");
+check("rig C branch: $t0 = 0 (loop exit condition)", rigCReg(8), 0);
+check("rig C branch: $t1 = 6 (3+2+1 accumulation)", rigCReg(9), 6);
+check("rig C branch: PC parked on the halt word", rigCEngine.getPortValue("pc", "q"), 24);
+
+// PC-past-end without a halt word: the fallback halt, plus proof that the
+// zero word past the program decodes to a datapath-safe no-op.
+const RIG_C_PAST_END = ".text\naddi $t0, $zero, 1\nnop\n";
+rigCLoad(RIG_C_PAST_END);
+rigCSession.start();
+check("rig C past-end: advance stops at PC-past-end", rigCSession.advance(64), 2);
+check("rig C past-end: finished", rigCSession.status, "finished");
+check("rig C past-end: $t0 = 1", rigCReg(8), 1);
+check("rig C past-end: PC 8", rigCEngine.getPortValue("pc", "q"), 8);
+check("rig C past-end: no past-end side effects ($zero intact)", rigCReg(0), 0);
+
+// Reload the arithmetic program onto the dirty state — the load must fully
+// rewind registers and memory (engine reset + images + settle).
+rigCLoad(RIG_C_ARITH);
+check("rig C reload: paused at 0", rigCSession.status, "paused");
+check("rig C reload: PC 0", rigCEngine.getPortValue("pc", "q"), 0);
+check("rig C reload: registers cleared", rigCReg(8), 0);
+check("rig C reload: dmem cleared", rigCDmem(0), 0);
+rigCSession.start();
+check("rig C reload: runs to the halt word again", rigCSession.advance(64), 6);
+check("rig C reload: $t2 = 12 again", rigCReg(10), 12);
+
+// The shipped starter program (the template's own initialSoftware): the
+// square-by-repeated-addition demo, run to its halt with exact final state.
+const starterSource = mipsTemplate?.initialSoftware?.find((e) => e.id === "main")?.sourceCode ?? "";
+rigCLoad(starterSource);
+rigCSession.start();
+check("rig C starter: advance stops at the halt word (38 cycles)", rigCSession.advance(256), 38);
+check("rig C starter: finished", rigCSession.status, "finished");
+check("rig C starter: $t0 = 7 (value)", rigCReg(8), 7);
+check("rig C starter: $t1 = 49 (7 × 7 by repeated addition)", rigCReg(9), 49);
+check("rig C starter: $t2 = 7 (loop counter)", rigCReg(10), 7);
+check("rig C starter: result word = 49", rigCDmem(1), 49);
+check("rig C starter: value word untouched", rigCDmem(0), 7);
+
+// ---------------------------------------------------------------- Rig D
+// Phase 5 cycle-level golden trace on the golden datapath itself: a mixed
+// program (arithmetic, lw/sw, not-taken and taken-forward branches, a
+// deliberately skipped instruction) stepped ONE cycle at a time, asserting
+// the exact register / memory / PC state after EVERY cycle — one
+// instruction per cycle, every writeback committing on the edge entering
+// the next cycle (hybrid regfile/dmem), and the halt word finishing
+// without consuming a cycle.
+
+const RIG_D_TRACE =
+    ".data\n" +
+    "x: .word 16\n" +
+    "y: .word 0\n" +
+    ".text\n" +
+    "addi $t0, $zero, 5\n" + // 0: $t0 = 5
+    "lw $t1, x\n" + // 1: $t1 = 16
+    "add $t2, $t0, $t1\n" + // 2: $t2 = 21
+    "sw $t2, y\n" + // 3: y = 21
+    "addi $t0, $t0, 1\n" + // 4: $t0 = 6
+    "beq $t0, $t2, skip\n" + // 5: 6 != 21 → not taken
+    "beq $zero, $zero, skip\n" + // 6: taken, forward
+    "addi $t0, $zero, 99\n" + // 7: skipped by the branch
+    "skip: halt\n"; // 8
+rigCLoad(RIG_D_TRACE);
+check("rig D trace: paused at instruction 0", rigCSession.status, "paused");
+check("rig D trace: load presents cycle 0", rigCSession.cycleCount, 0);
+check("rig D trace: load PC 0", rigCEngine.getPortValue("pc", "q"), 0);
+check("rig D trace: instruction 0 computed but NOT executed ($t0)", rigCReg(8), 0);
+check("rig D trace: load commits no memory (y)", rigCDmem(1), 0);
+
+// Cycle 1 — addi $t0 commits on the edge entering cycle 1; lw computes.
+check("rig D trace: step 1 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 1 of 7 (one instruction per cycle)", rigCSession.cycleCount, 1);
+check("rig D trace: cycle 1 PC 4", rigCEngine.getPortValue("pc", "q"), 4);
+check("rig D trace: cycle 1 $t0 = 5", rigCReg(8), 5);
+check("rig D trace: cycle 1 $t1 not yet written", rigCReg(9), 0);
+
+// Cycle 2 — lw writeback ($t1 = 16); add computes with adjacent RAW.
+check("rig D trace: step 2 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 2 PC 8", rigCEngine.getPortValue("pc", "q"), 8);
+check("rig D trace: cycle 2 $t1 = 16 (lw writeback)", rigCReg(9), 16);
+check("rig D trace: cycle 2 $t2 not yet written", rigCReg(10), 0);
+
+// Cycle 3 — add writeback ($t2 = 21); sw computes, store NOT yet visible.
+check("rig D trace: step 3 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 3 PC 12", rigCEngine.getPortValue("pc", "q"), 12);
+check("rig D trace: cycle 3 $t2 = 21 (adjacent read-after-write)", rigCReg(10), 21);
+check("rig D trace: cycle 3 sw pending (y still 0)", rigCDmem(1), 0);
+
+// Cycle 4 — sw commits on the edge entering cycle 4; addi computes.
+check("rig D trace: step 4 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 4 PC 16", rigCEngine.getPortValue("pc", "q"), 16);
+check("rig D trace: cycle 4 y = 21 (store landed exactly one cycle later)", rigCDmem(1), 21);
+check("rig D trace: cycle 4 $t0 still 5 (addi pending)", rigCReg(8), 5);
+check("rig D trace: cycle 4 x untouched by the load", rigCDmem(0), 16);
+
+// Cycle 5 — addi writeback ($t0 = 6); the not-taken beq computes.
+check("rig D trace: step 5 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 5 PC 20", rigCEngine.getPortValue("pc", "q"), 20);
+check("rig D trace: cycle 5 $t0 = 6", rigCReg(8), 6);
+
+// Cycle 6 — beq $t0, $t2 (6 != 21) falls through to PC 24.
+check("rig D trace: step 6 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 6 PC 24 (not-taken fall-through)", rigCEngine.getPortValue("pc", "q"), 24);
+check("rig D trace: cycle 6 $t2 unchanged", rigCReg(10), 21);
+
+// Cycle 7 — beq $zero, $zero taken forward to skip (PC 32).
+check("rig D trace: step 7 → paused", rigCSession.step(), "paused");
+check("rig D trace: cycle 7 PC 32 (taken forward branch)", rigCEngine.getPortValue("pc", "q"), 32);
+check("rig D trace: cycle 7 of 7", rigCSession.cycleCount, 7);
+
+// The halt word finishes the session WITHOUT executing a cycle.
+check("rig D trace: step 8 → finished on the halt word", rigCSession.step(), "finished");
+check("rig D trace: halt word consumes no cycle", rigCSession.cycleCount, 7);
+check("rig D trace: PC parked on the halt word", rigCEngine.getPortValue("pc", "q"), 32);
+check("rig D trace: skipped instruction never executed ($t0 = 6, not 99)", rigCReg(8), 6);
+check("rig D trace: final memory state (y = 21)", rigCDmem(1), 21);
 
 console.log("");
 if (failures > 0) {

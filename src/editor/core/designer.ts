@@ -139,6 +139,9 @@ export class SchematicDesigner {
     this.eventManager = new EventManager(this.stage, {
       onViewportChange: () => this.notifyViewportChange(),
       onResize: () => this.handleResize(),
+      // Viewer mode owns the primary button (nodes aren't draggable there) —
+      // left-drag pans, mirroring the right-button pan of editor mode.
+      canPanWithPrimary: () => this.mode === 'viewer',
     });
     this.contextTracker = new ContextTracker();
     this.shortcutManager = new ShortcutManager(this.contextTracker);

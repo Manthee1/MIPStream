@@ -1,6 +1,12 @@
 /** @format */
 
-import { pauseProgram, startProgram, stepProgram } from "../composables/useSimulation";
+import {
+  loadProgram,
+  pauseProgram,
+  restartProgram,
+  startProgram,
+  stepProgram,
+} from "../composables/useSimulation";
 import { useUIStore } from "../stores/UIStore";
 
 /**
@@ -30,6 +36,18 @@ keyboardShortcuts["F6"] = {
   action: simulateOnly(pauseProgram),
   label: "Pause Simulation",
   description: "Pauses continuous execution at the current cycle.",
+};
+
+keyboardShortcuts["F7"] = {
+  action: simulateOnly(loadProgram),
+  label: "Assemble and Load",
+  description: "Assembles the mapped editors and loads the program, paused at instruction 0.",
+};
+
+keyboardShortcuts["F9"] = {
+  action: simulateOnly(restartProgram),
+  label: "Restart Program",
+  description: "Rewinds to the loaded state (re-assembling when the source changed).",
 };
 
 keyboardShortcuts["F10"] = {

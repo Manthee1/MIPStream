@@ -78,6 +78,10 @@ export default defineConfig({
 				manualChunks(id) {
 					if (id.includes("node_modules")) {
 						if (id.includes("@vue")) return "vendor_vue";
+						// CodeMirror 6 (+ its @lezer parser deps) is isolated so the
+						// editor dependency never inflates vendor_misc past the PWA
+						// precache size cap (workbox.maximumFileSizeToCacheInBytes).
+						if (id.includes("@codemirror") || id.includes("/codemirror/") || id.includes("@lezer")) return "vendor_codemirror";
 						if (id.includes("monaco-editor/esm/vs")) {
 							// if (id.includes('vs/base')) return 'vendor_monaco_base';
 							// if (id.includes('vs/common')) return 'vendor_monaco_common';

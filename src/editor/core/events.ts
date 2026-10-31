@@ -9,6 +9,11 @@ export interface EventManagerOptions {
   onViewportChange: () => void;
   /** Fired when the host container should re-sync its size. */
   onResize: () => void;
+  /**
+   * True when the primary (left) button should drag-pan the viewport — the
+   * Simulate perspective's viewer mode, where nothing else uses it.
+   */
+  canPanWithPrimary?: () => boolean;
 }
 
 /** Right-click is treated as a pan when moved beyond this threshold (px). */
@@ -16,8 +21,9 @@ const CONTEXT_MENU_THRESHOLD = 8;
 /** Right-click held motionless for this long (ms) emits a context menu. */
 const CONTEXT_MENU_DELAY = 180;
 
-/** State of an in-flight right-button viewport pan. */
+/** State of an in-flight viewport pan (right button, or primary in viewer mode). */
 interface PanState {
+  button: number;
   startClient: Point;
   startStage: Point;
 }
@@ -27,7 +33,8 @@ interface PanState {
  *
  * - Pan: manual right-mouse drag (works over empty canvas AND over modules,
  *   since the stage itself is never Konva-draggable; module nodes keep the
- *   default left-button Konva drag).
+ *   default left-button Konva drag). In viewer mode — where nothing else uses
+ *   the primary button — left-mouse drag pans too (`canPanWithPrimary`).
  * - Context menu: right-mouse long-press without movement.
  * - Zoom: wheel, centered on the cursor, clamped between 0.1x and 5x.
  */
@@ -103,13 +110,18 @@ export class EventManager {
   };
 
   private readonly mouseDownHandler = (event: MouseEvent) => {
-    if (event.button !== 2) return;
+    const primaryPan = event.button === 0 && (this.options.canPanWithPrimary?.() ?? false);
+    if (event.button !== 2 && !primaryPan) return;
 
-    this.contextMenuStart = { x: event.clientX, y: event.clientY };
     this.panState = {
+      button: event.button,
       startClient: { x: event.clientX, y: event.clientY },
       startStage: { x: this.stage.x(), y: this.stage.y() },
     };
+
+    if (event.button !== 2) return;
+
+    this.contextMenuStart = { x: event.clientX, y: event.clientY };
     this.contextMenuTimer = window.setTimeout(() => {
       this.contextMenuTimer = null;
 
@@ -131,8 +143,8 @@ export class EventManager {
   };
 
   private readonly mouseMoveHandler = (event: MouseEvent) => {
-    if (event.buttons === 2 && this.panState) {
-      // Right-button drag: pan the viewport 1:1 with the cursor.
+    if (this.panState && (event.buttons & (this.panState.button === 0 ? 1 : 2)) !== 0) {
+      // Button drag: pan the viewport 1:1 with the cursor.
       this.stage.position({
         x: this.panState.startStage.x + (event.clientX - this.panState.startClient.x),
         y: this.panState.startStage.y + (event.clientY - this.panState.startClient.y),
@@ -153,7 +165,7 @@ export class EventManager {
 
   private readonly mouseUpHandler = (event: MouseEvent) => {
     this.clearContextMenuTimer();
-    if (event.button === 2) {
+    if (this.panState !== null && event.button === this.panState.button) {
       this.panState = null;
       this.options.onViewportChange();
     }
