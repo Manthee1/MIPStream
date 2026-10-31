@@ -8,9 +8,17 @@ export interface GridRenderSettings {
   show: boolean;
   /** Render style when shown: orthogonal lines or a dot lattice. */
   style: 'lines' | 'dots';
-  /** Base grid size in scene units; also drives placement/movement snapping. */
-  size: number;
 }
+
+/**
+ * The fixed snap unit. Every port, position, and waypoint lands on a whole
+ * unit, so snapping is identical at every zoom level (the visual grid may
+ * promote to coarser levels for readability — rendering only, never snapping).
+ */
+export const GRID_UNIT = 1;
+
+/** Half-length of the origin cross arms, in scene units. */
+const ORIGIN_ARM = 12;
 
 /** Below this on-screen spacing (px), a grid level promotes to a coarser one. */
 const MIN_LEVEL_SPACING_PX = 8;
@@ -35,7 +43,7 @@ export class GridManager {
   constructor(layer: Konva.Layer, settings: GridRenderSettings) {
     this.layer = layer;
     this.settings = settings;
-    this.currentVisualStep = settings.size;
+    this.currentVisualStep = GRID_UNIT;
     this.gridGroup = new Konva.Group({ listening: false });
     this.layer.add(this.gridGroup);
   }
@@ -43,7 +51,7 @@ export class GridManager {
   /** Applies new grid settings and redraws immediately. */
   public applySettings(settings: GridRenderSettings): void {
     this.settings = settings;
-    this.currentVisualStep = settings.size;
+    this.currentVisualStep = GRID_UNIT;
     this.render();
   }
 
@@ -58,19 +66,24 @@ export class GridManager {
   }
 
   /**
-   * Redraws the grid for the current viewport: one fine and one coarse
-   * level, covering exactly the visible scene rectangle.
+   * Redraws the grid for the current viewport: the origin (absolute canvas
+   * center) cross, then one fine and one coarse level, covering exactly the
+   * visible scene rectangle.
    */
   public render(): void {
     this.gridGroup.destroyChildren();
 
-    if (!this.settings.show || this.settings.size <= 0) {
-      this.currentVisualStep = this.settings.size;
-      return;
-    }
-
     const stage = this.layer.getStage();
     if (!stage || stage.width() === 0 || stage.height() === 0) return;
+
+    // The absolute center indicator marks scene (0,0) — always visible,
+    // independent of the grid's visibility and zoom-promoted density.
+    this.drawOriginMarker();
+
+    if (!this.settings.show) {
+      this.currentVisualStep = GRID_UNIT;
+      return;
+    }
 
     const scale = stage.scaleX() || 1;
     // The visible scene rectangle: grid children are drawn in scene space and
@@ -83,7 +96,7 @@ export class GridManager {
     };
 
     // Promote the fine level while its on-screen spacing becomes too dense.
-    let minorStep = this.settings.size;
+    let minorStep = GRID_UNIT;
     while (minorStep * scale < MIN_LEVEL_SPACING_PX) {
       minorStep *= MAJOR_MULTIPLE;
     }
@@ -95,6 +108,25 @@ export class GridManager {
     // Render minor grid first (subtle), then major grid on top (pronounced).
     this.drawLevel(view, scale, minorStep, color, 0.15, 0.8, false);
     this.drawLevel(view, scale, majorStep, color, 0.5, 1.6, true);
+  }
+
+  /** Draws the origin cross at scene (0,0) with ~constant on-screen weight. */
+  private drawOriginMarker(): void {
+    const stage = this.layer.getStage();
+    const scale = stage?.scaleX() || 1;
+    const theme = readRenderTheme();
+    const options = {
+      stroke: theme.accent,
+      strokeWidth: 1.5 / scale,
+      opacity: 0.9,
+      listening: false,
+    };
+    this.gridGroup.add(
+      new Konva.Line({ points: [-ORIGIN_ARM, 0, ORIGIN_ARM, 0], ...options })
+    );
+    this.gridGroup.add(
+      new Konva.Line({ points: [0, -ORIGIN_ARM, 0, ORIGIN_ARM], ...options })
+    );
   }
 
   /** Draws one grid level across the visible rectangle. */
@@ -156,8 +188,8 @@ export class GridManager {
 
   public snapPoint(x: number, y: number): { x: number, y: number } {
     return {
-      x: GridManager.snap(x, this.settings.size),
-      y: GridManager.snap(y, this.settings.size)
+      x: GridManager.snap(x, GRID_UNIT),
+      y: GridManager.snap(y, GRID_UNIT)
     };
   }
 }

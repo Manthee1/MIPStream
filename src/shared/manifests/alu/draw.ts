@@ -19,7 +19,7 @@ export const ALU_GEOMETRY = {
   tipX: 54,
   tipHalf: 6,
   notchX: -38,
-  notchY: 7.5,
+  notchY: 8,
 } as const;
 
 /** Y coordinate on the sloped top edge at the given x. */

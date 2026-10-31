@@ -13,7 +13,7 @@ import EditorToolbar from './EditorToolbar.vue';
 import EditorStatusBar from './EditorStatusBar.vue';
 
 /** Grid defaults for projects without persisted grid settings. */
-const DEFAULT_GRID_SETTINGS: GridSettings = { show: true, style: 'lines', size: 20 };
+const DEFAULT_GRID_SETTINGS: GridSettings = { show: true, style: 'lines' };
 
 /**
  * Runtime mode: 'editor' offers the full design toolset; 'viewer' mounts the
@@ -45,9 +45,10 @@ onMounted(() => {
   if (!canvasContainer.value) return;
 
   // Grid settings persist per-architecture; fall back to editor defaults.
+  // The snap unit is fixed app-wide, so a legacy stored `size` is dropped.
   const stored = projectStore.currentProject?.architecture?.configuration?.grid;
   gridSettings.value = stored
-    ? { ...DEFAULT_GRID_SETTINGS, ...stored }
+    ? { show: stored.show ?? DEFAULT_GRID_SETTINGS.show, style: stored.style ?? DEFAULT_GRID_SETTINGS.style }
     : { ...DEFAULT_GRID_SETTINGS };
 
   const instance = new SchematicDesigner({

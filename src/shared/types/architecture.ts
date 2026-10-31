@@ -37,8 +37,6 @@ export interface GridSettings {
   show: boolean;
   /** Render style when shown. */
   style: 'lines' | 'dots';
-  /** Base grid size in scene units — drives placement and movement snapping. */
-  size: number;
 }
 
 export interface ArchitectureConfiguration {

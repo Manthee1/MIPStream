@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { 
-  NButton, 
-  NSpace, 
+import {
+  NButton,
+  NSpace,
   NTooltip,
   NPopover,
   NSwitch,
   NRadioGroup,
-  NRadio,
-  NInputNumber
+  NRadio
 } from 'naive-ui';
 import { 
   IconPointer, 
@@ -90,18 +89,6 @@ const updateGrid = (patch: Partial<GridSettings>): void => {
             <n-radio value="lines">Lines</n-radio>
             <n-radio value="dots">Dots</n-radio>
           </n-radio-group>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs">Size</span>
-          <n-input-number
-            size="small"
-            class="!w-24"
-            :min="1"
-            :step="1"
-            :value="gridSettings.size"
-            :disabled="!gridSettings.show"
-            @update:value="updateGrid({ size: $event ?? gridSettings.size })"
-          />
         </div>
       </div>
     </n-popover>

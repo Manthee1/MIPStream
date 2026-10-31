@@ -38,7 +38,9 @@ export const ControlManifest: ModuleManifest<ControlConfig> = {
       bits: signal.bits,
       label: signal.label ?? signal.id,
       tooltip: `Control signal ${signal.id} (${signal.bits} bit${signal.bits > 1 ? "s" : ""})`,
-      position: { x: 50, y: (index - (config.signals.length - 1) / 2) * 18 },
+      // 20-unit port pitch, matching every other multi-port manifest, so
+      // signal pins land on the common whole-unit lattice.
+      position: { x: 50, y: (index - (config.signals.length - 1) / 2) * 20 },
     }));
     return [
       {

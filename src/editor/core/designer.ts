@@ -2,7 +2,7 @@
 
 import Konva from 'konva';
 import { DesignerConfig, EditorTool, EditorMode, ViewportState, PlacementState, Point } from './types';
-import { GridManager } from './grid';
+import { GridManager, GRID_UNIT } from './grid';
 import { EventManager } from './events';
 import { ContextTracker, ShortcutManager } from './keyboard';
 import { PlacementManager } from './placement';
@@ -493,7 +493,9 @@ export class SchematicDesigner {
     const clip = getClipboard();
     if (!clip || clip.modules.length === 0) return 0;
 
-    const step = this.getGridSize() * 2;
+    // Paste offset is deliberately coarser than the 1-unit snap so copies
+    // land clearly beside the originals (and drift further per paste).
+    const step = 40;
     const offset = step * (clip.pasteCount + 1);
     clip.pasteCount += 1;
 
@@ -1823,18 +1825,22 @@ export class SchematicDesigner {
   }
 
   /**
-   * Applies new grid settings: redraws the grid and re-targets every snapping
-   * consumer (placement, routing, wire drags, waypoint handles). Existing
-   * module positions are left untouched.
+   * Applies new grid settings: redraws the grid. The snap unit is fixed
+   * (`GRID_UNIT`) and never configurable, so no snapping consumer needs
+   * re-targeting. Existing module positions are left untouched.
    */
   public applyGridSettings(settings: GridSettings): void {
     this.gridSettings = settings;
     this.gridManager.applySettings(settings);
   }
 
-  /** Live base grid size used by every snapping consumer. */
+  /**
+   * The snap increment used by every snapping consumer (module drags,
+   * placement, routing waypoints, wire drags). Fixed and zoom-independent:
+   * the grid's *visual* promotion never leaks into snapping.
+   */
   private getGridSize(): number {
-    return this.gridManager.getVisualStep();
+    return GRID_UNIT;
   }
 
   private notifySelectionChange(): void {
