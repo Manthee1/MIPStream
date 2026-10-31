@@ -4,9 +4,11 @@
 
 
 
+
 /* Base container */
 .lm_root {
     background: var(--bg-app);
+    --tabs-height: 20px;
 }
 
 .lm_content {
@@ -17,19 +19,19 @@
 /* Header & Tabs */
 .lm_header {
     background: var(--bg-element);
-    height: 40px !important;
+    height: var(--tabs-height) !important;
     padding: 0 !important;
 }
 
 .lm_tabs {
-    height: 40px !important;
+    height: var(--tabs-height) !important;
 }
 
 .lm_tab {
     background: var(--bg-element) !important;
     color: var(--text-secondary) !important;
-    height: 40px !important;
-    line-height: 40px !important;
+    height: var(--tabs-height) !important;
+    line-height: var(--tabs-height) !important;
     padding: 0 20px !important;
     margin: 0 !important;
     border: none !important;
@@ -55,7 +57,7 @@
 
 /* Close/Popout buttons */
 .lm_controls {
-    height: 40px !important;
+    height: var(--tabs-height) !important;
     display: flex;
     align-items: center;
     padding: 0 10px !important;
