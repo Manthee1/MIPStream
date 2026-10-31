@@ -199,6 +199,19 @@ function connect(a: Terminal, b: Terminal): void {
   const busT = a.kind === 'bus' ? a : b;
   const fieldIndex = fieldIndexById(fieldT.group);
   if (fieldIndex === -1) return;
+
+  // One driver per bus bit unless overlap is legal (splitter fan-in, where
+  // several outputs may tap the same input bit). Re-running a field bit onto
+  // the bus bit it already owns stays allowed.
+  if (!props.busFanInAllowed) {
+    const alreadyDriven = props.fields.some((field, index) =>
+      field.map.some(
+        (bit, fieldBit) => bit === busT.bit && !(index === fieldIndex && fieldBit === fieldT.bit)
+      )
+    );
+    if (alreadyDriven) return;
+  }
+
   const fields = props.fields.map((field) => ({ ...field, map: [...field.map] }));
   fields[fieldIndex].map[fieldT.bit] = busT.bit;
   emit('update:fields', fields);

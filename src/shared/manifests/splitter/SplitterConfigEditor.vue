@@ -96,16 +96,43 @@ function removeField(index: number): void {
   commit();
 }
 
-/** Applies a "hi:lo" preset: resizes the field and maps it contiguously. */
+/**
+ * Applies a "hi:lo" preset: resizes the field and maps it contiguously.
+ * Ranges wider than the bus are clamped to its top bits (never silently
+ * dropped) and surface a warning notice on the field.
+ */
 function applyPreset(index: number, raw: string): void {
   const range = parseRangePreset(raw);
-  if (!range || range.hi >= working.value.inputBits) return;
+  if (!range) return;
   const field = working.value.outputs[index];
   if (!field) return;
-  field.bits = range.hi - range.lo + 1;
-  field.map = Array.from({ length: field.bits }, (_, i) => range.lo + i);
+
+  const busBits = working.value.inputBits;
+  let { hi, lo } = range;
+  let clamped = false;
+  if (hi >= busBits) {
+    hi = busBits - 1;
+    clamped = true;
+  }
+  if (lo > hi) {
+    lo = hi;
+    clamped = true;
+  }
+
+  field.bits = hi - lo + 1;
+  field.map = Array.from({ length: field.bits }, (_, i) => lo + i);
+
+  if (clamped) {
+    presetNotices[field.id] =
+      `Range [${range.hi}:${range.lo}] exceeds the ${busBits}-bit bus — clamped to [${hi}:${lo}].`;
+  } else {
+    delete presetNotices[field.id];
+  }
   commit();
 }
+
+/** Clamping notices for over-wide range presets, keyed by field id. */
+const presetNotices = reactive<Record<string, string>>({});
 
 /** Uncommitted range-preset drafts (applied on Enter / button click). */
 const presetDrafts = reactive<Record<string, string>>({});
@@ -182,6 +209,9 @@ function updateFields(fields: WiringField[]): void {
             <n-icon :size="14"><IconArrowRight /></n-icon>
           </n-button>
         </div>
+        <n-text v-if="presetNotices[field.id]" type="warning" class="text-xs">
+          {{ presetNotices[field.id] }}
+        </n-text>
       </div>
       <n-button size="tiny" dashed @click="addField">
         <template #icon><n-icon :size="14"><IconPlus /></n-icon></template>

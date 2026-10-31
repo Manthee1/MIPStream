@@ -4,6 +4,15 @@
 > **Note**: Sometimes shortcuts may not work if the editor is focused and blocking them. To use the shortcuts, click away from the editor to change the focus.
 ---
 
+## Perspectives
+These shortcuts switch between the Design and Simulate perspectives. They are active only in the workspace with an open project.
+
+- `F4`
+    **Action**: Toggle Design / Simulate
+    **Description**: Switches between the architecture designer and the simulator perspectives.
+
+---
+
 ## Simulation Controls
 These shortcuts are used to control the simulation process. They are active only in the Simulate perspective.
 

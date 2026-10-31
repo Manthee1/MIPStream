@@ -17,6 +17,12 @@ export type RoutePoint =
   | { kind: "port"; endpoint: NetEndpoint; position: Pos; node: Konva.Group }
   | { kind: "net"; netId: string; position: Pos };
 
+/** Live preview target under the cursor while a route is pending. */
+export type PreviewTarget =
+  | { kind: "port"; position: Pos; direction: "input" | "output" | null }
+  | { kind: "net"; position: Pos }
+  | { kind: "cursor"; position: Pos };
+
 export interface RoutingManagerOptions {
   /** Layer for the dashed routing preview (the interaction layer). */
   layer: Konva.Layer;
@@ -24,6 +30,11 @@ export interface RoutingManagerOptions {
   getGridSize: () => number;
   /** Resolves a module port's current scene position. */
   getPortPosition: (designator: string, portId: string) => Pos | null;
+  /**
+   * Resolves a module port's direction. The preview mirrors the committed
+   * net's driver → driven orientation, which depends on port directions.
+   */
+  getPortDirection: (designator: string, portId: string) => "input" | "output" | null;
   /** Resolves the tap point of a net closest to a scene position. */
   getNetJunction: (netId: string, scene: Pos) => Pos | null;
   /** Commits a finished route; returns true when accepted. */
@@ -62,7 +73,9 @@ interface WireHit {
  * existing wire starts routing from that net (or taps the net when finishing
  * from a free input port); empty-canvas clicks append grid-snapped waypoints;
  * clicking a second endpoint commits through `onCommit`, which the designer
- * validates against the 1-output : n-inputs rule.
+ * validates against the 1-output : n-inputs rule. The dashed preview always
+ * mirrors the geometry a commit would produce (driver → driven orientation),
+ * so the committed wire never bends differently from the ghost.
  */
 export class RoutingManager {
   private readonly stage: Konva.Stage;
@@ -72,7 +85,8 @@ export class RoutingManager {
   private enabled = false;
   private pending: { start: RoutePoint; waypoints: Pos[] } | null = null;
   private hovered: PortHit | null = null;
-  private readonly preview = createPreviewWire();
+  /** Dashed preview line; recreated on theme switches (colors bake in at creation). */
+  private preview = createPreviewWire();
 
   private readonly mouseMoveHandler = () => {
     if (!this.enabled || !this.options.isEnabled()) return;
@@ -161,6 +175,16 @@ export class RoutingManager {
     return this.pending !== null;
   }
 
+  /** Recreates the dashed preview line after a theme switch. */
+  public refreshTheme(): void {
+    const points = this.preview.points();
+    const parent = this.preview.getParent();
+    this.preview.destroy();
+    this.preview = createPreviewWire();
+    if (parent) parent.add(this.preview);
+    this.preview.points(points);
+  }
+
   // ----------------------------------------------------------------- private
 
   private start(start: RoutePoint): void {
@@ -173,6 +197,21 @@ export class RoutingManager {
   private finish(end: RoutePoint): void {
     if (!this.pending) return;
     const { start, waypoints } = this.pending;
+
+    // Draw the exact committed geometry one last frame so the ghost the
+    // user acted on is the wire that lands (guards click-without-hover).
+    const target: PreviewTarget =
+      end.kind === "port"
+        ? {
+            kind: "port",
+            position: end.position,
+            direction: this.options.getPortDirection(
+              end.endpoint.designator,
+              end.endpoint.portId
+            ),
+          }
+        : { kind: "net", position: end.position };
+    this.preview.points(this.previewPoints(target));
 
     // Attempt the commit; routing ends either way (rejected routes drop).
     this.options.onCommit(start, waypoints, end);
@@ -201,19 +240,66 @@ export class RoutingManager {
     }
   }
 
-  /** Re-draws the dashed preview from the route start through waypoints to the cursor. */
+  /** Re-draws the dashed preview through waypoints toward the cursor. */
   private updatePreview(): void {
     if (!this.pending) return;
 
     const scene = pointerScenePosition(this.stage);
     if (!scene) return;
 
-    this.preview.points(
-      composeNetPath(this.pending.start.position, this.pending.waypoints, {
+    this.preview.points(this.previewPoints(this.previewTarget(scene)));
+  }
+
+  /**
+   * Resolves the preview target under the cursor: a hovered port or net tap
+   * point when one is interactable — so the ghost already shows the exact
+   * geometry a click would commit — otherwise the grid-snapped cursor.
+   */
+  private previewTarget(scene: Pos): PreviewTarget {
+    const portHit = this.findPortHit();
+    if (portHit) {
+      return {
+        kind: "port",
+        position: portHit.position,
+        direction: this.options.getPortDirection(
+          portHit.endpoint.designator,
+          portHit.endpoint.portId
+        ),
+      };
+    }
+
+    const wireHit = this.findWireHit();
+    if (wireHit) return { kind: "net", position: wireHit.position };
+
+    return {
+      kind: "cursor",
+      position: {
         x: GridManager.snap(scene.x, this.options.getGridSize()),
         y: GridManager.snap(scene.y, this.options.getGridSize()),
-      })
-    );
+      },
+    };
+  }
+
+  /**
+   * Composes the preview polyline the *committed* net will have for the given
+   * target. The designer orients every net driver → driven (`addNet` swaps so
+   * the output port is the source; a free-input → net tap commits as a
+   * junction → input branch), so the preview mirrors that orientation —
+   * otherwise the committed wire bends the opposite way from the ghost.
+   */
+  private previewPoints(target: PreviewTarget): number[] {
+    if (!this.pending) return [];
+    const { start, waypoints } = this.pending;
+
+    const reverse =
+      start.kind === "port" &&
+      this.options.getPortDirection(start.endpoint.designator, start.endpoint.portId) ===
+        "input" &&
+      ((target.kind === "port" && target.direction === "output") || target.kind === "net");
+
+    return reverse
+      ? composeNetPath(target.position, waypoints, start.position)
+      : composeNetPath(start.position, waypoints, target.position);
   }
 
   /** Resolves the port under the cursor, or null. */

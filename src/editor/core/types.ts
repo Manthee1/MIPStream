@@ -39,6 +39,12 @@ export interface DesignerConfig {
    * with the fresh lint report for the Problems panel.
    */
   onProblemsChange?: (issues: LintIssue[]) => void;
+  /**
+   * Surfaces a user-facing error the canvas cannot express inline (e.g. why
+   * a settings-managed module refuses deletion). The host maps it to a
+   * toast/message; the designer itself stays UI-framework-free.
+   */
+  onUserError?: (message: string) => void;
 }
 
 export interface Point {

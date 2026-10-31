@@ -8,6 +8,8 @@ import {
   stepProgram,
 } from "../composables/useSimulation";
 import { useUIStore } from "../stores/UIStore";
+import { useProjectStore } from "../stores/projectStore";
+import router from "../router";
 
 /**
  * Global app-level shortcuts. Canvas-scoped bindings live in the
@@ -25,6 +27,24 @@ function simulateOnly(action: () => boolean | void): () => void {
     action();
   };
 }
+
+/** True when the workspace is open with a loaded project. */
+function workspaceWithProject(): boolean {
+  return (
+    router.currentRoute.value.path === "/workspace" &&
+    !!useProjectStore().currentProject
+  );
+}
+
+keyboardShortcuts["F4"] = {
+  action: () => {
+    if (!workspaceWithProject()) return;
+    const uiStore = useUIStore();
+    uiStore.perspective = uiStore.perspective === "design" ? "simulate" : "design";
+  },
+  label: "Toggle Design / Simulate",
+  description: "Switches between the architecture designer and the simulator perspectives.",
+};
 
 keyboardShortcuts["F5"] = {
   action: simulateOnly(startProgram),

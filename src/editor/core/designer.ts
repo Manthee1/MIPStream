@@ -96,8 +96,8 @@ export class SchematicDesigner {
 
   /** Ports highlighted as route targets (designator:portId → highlight state). */
   private readonly routeHighlightedPorts = new Map<string, PortHighlightState>();
-  /** Nets highlighted as route targets. */
-  private readonly routeHighlightedNets = new Set<string>();
+  /** Nets highlighted as route targets (netId → highlight state). */
+  private readonly routeHighlightedNets = new Map<string, "valid" | "warning">();
   /** Lint-flagged nets (persistent warning styling until fixed). */
   private readonly warnedNets = new Set<string>();
   /** Lint-flagged ports ("designator:portId") — persistent warning rings. */
@@ -182,6 +182,8 @@ export class SchematicDesigner {
       layer: this.interactionLayer,
       getGridSize: () => this.getGridSize(),
       getPortPosition: (designator, portId) => this.getPortWorldPosition(designator, portId),
+      getPortDirection: (designator, portId) =>
+        this.resolvePort({ designator, portId })?.direction ?? null,
       getNetJunction: (netId, scene) => this.getNetJunction(netId, scene),
       onCommit: (start, waypoints, end) => this.addRoute(start, waypoints, end),
       onRoutingChange: (active) => {
@@ -406,13 +408,31 @@ export class SchematicDesigner {
    * ("u*") or net ids ("n*"); nets are removed when the entry is not a module.
    */
   public deleteSelected(): void {
+    let managedBlocked: string | null = null;
     for (const id of Array.from(this.selection)) {
-      if (this.isManagedModule(id)) continue;
+      if (this.isManagedModule(id)) {
+        managedBlocked ??= id;
+        continue;
+      }
       if (!this.removeModule(id)) {
         this.removeNet(id);
       }
     }
+    if (managedBlocked) this.notifyManagedDelete(managedBlocked);
     this.notifySelectionChange();
+  }
+
+  /**
+   * Surfaces why a settings-managed stage boundary register refuses
+   * deletion — silently skipping it reads as the delete key being broken.
+   */
+  private notifyManagedDelete(designator: string): void {
+    const module = this.hydratedModules.get(designator);
+    const stageId = (module?.config as Record<string, unknown> | undefined)?.stageId;
+    const name = typeof stageId === "string" ? stageId : designator;
+    this.config.onUserError?.(
+      `${name} is a pipeline stage register managed by the architecture configuration — remove the stage in Architecture Settings to delete it.`
+    );
   }
 
   /**
@@ -629,7 +649,10 @@ export class SchematicDesigner {
     node.on('click', (e) => {
       if (this.mode !== 'editor') return;
       if (this.activeTool === 'delete') {
-        if (this.isManagedModule(designator)) return;
+        if (this.isManagedModule(designator)) {
+          this.notifyManagedDelete(designator);
+          return;
+        }
         this.removeModule(designator);
         return;
       }
@@ -1190,15 +1213,33 @@ export class SchematicDesigner {
     const rehydrated = hydrateModule(serialized);
     this.hydratedModules.set(designator, rehydrated);
 
-    // Rebuild the node in place, keeping the previous layer order, transform,
-    // and selection highlight.
+    this.rebuildModuleNodeInPlace(designator);
+
+    this.reconcileNetsForModule(designator);
+    this.logicLayer.batchDraw();
+    this.notifyNetlistChange();
+    this.notifyDocumentChange();
+
+    return true;
+  }
+
+  /**
+   * Rebuilds a module's node in place: fresh theme colors and any port
+   * changes from a preceding rehydration, keeping the previous layer order,
+   * transform, selection highlight, and interaction wiring.
+   */
+  private rebuildModuleNodeInPlace(designator: string): void {
+    const hydrated = this.hydratedModules.get(designator);
+    const node = this.moduleNodes.get(designator);
+    if (!hydrated || !node) return;
+
     const index = node.zIndex();
     const x = node.x();
     const y = node.y();
     const rotation = node.rotation();
     const wasSelected = this.selection.has(designator);
 
-    const fresh = createModuleNode(rehydrated, this.mode === 'editor' ? 'editor' : 'viewer');
+    const fresh = createModuleNode(hydrated, this.mode === 'editor' ? 'editor' : 'viewer');
     this.logicLayer.add(fresh);
     node.destroy();
     fresh.zIndex(index);
@@ -1207,13 +1248,6 @@ export class SchematicDesigner {
     this.moduleNodes.set(designator, fresh);
     this.attachModuleInteractions(fresh, designator);
     if (wasSelected) setNodeSelected(fresh, true);
-
-    this.reconcileNetsForModule(designator);
-    this.logicLayer.batchDraw();
-    this.notifyNetlistChange();
-    this.notifyDocumentChange();
-
-    return true;
   }
 
   /**
@@ -1509,7 +1543,7 @@ export class SchematicDesigner {
         ? 'valid'
         : this.routeState(sourcePort.bits, sourceBits);
       setWireValidHighlight(wire, mode);
-      this.routeHighlightedNets.add(netId);
+      this.routeHighlightedNets.set(netId, mode);
     }
   }
 
@@ -1527,7 +1561,7 @@ export class SchematicDesigner {
     }
     this.routeHighlightedPorts.clear();
 
-    for (const netId of this.routeHighlightedNets) {
+    for (const [netId] of this.routeHighlightedNets) {
       const wire = this.wireNodes.get(netId);
       if (wire) {
         setWireValidHighlight(wire, false);
@@ -1713,6 +1747,64 @@ export class SchematicDesigner {
     this.stage.width(container.offsetWidth);
     this.stage.height(container.offsetHeight);
     this.gridManager.render();
+  }
+
+  /**
+   * Re-resolves every canvas color token after a light/dark switch. Nodes
+   * bake their theme colors at creation, so each module and wire group is
+   * rebuilt in place — layer order, transforms, selection, waypoint handles,
+   * and persistent lint/route styling all restored — while the grid simply
+   * re-renders. Pure re-styling: no document mutation, no notifications.
+   */
+  public refreshTheme(): void {
+    this.gridManager.render();
+    this.routingManager.refreshTheme();
+
+    // Runtime port value labels were lifted out of their module groups into
+    // the value layer; the fresh nodes carry hidden copies of their own.
+    this.valueLayer.destroyChildren();
+
+    for (const designator of Array.from(this.moduleNodes.keys())) {
+      this.rebuildModuleNodeInPlace(designator);
+    }
+
+    for (const netId of Array.from(this.wireNodes.keys())) {
+      const net = this.nets.get(netId);
+      if (!net) continue;
+
+      const stale = this.wireNodes.get(netId);
+      if (!stale) continue;
+      const fresh = createWireNode(netId, [], []);
+      this.logicLayer.add(fresh);
+      stale.destroy();
+      this.wireNodes.set(netId, fresh);
+      this.attachWireInteractions(fresh, netId);
+      this.recomposeNet(net);
+
+      if (this.selection.has(netId)) {
+        setWireSelected(fresh, true);
+        this.showWireHandles(netId);
+      } else {
+        this.applyWireWarning(netId);
+      }
+    }
+
+    // Persistent styling reapplied on the fresh nodes — route highlights
+    // win over lint warning rings, mirroring clearRouteHighlights.
+    for (const key of this.warnedPorts) {
+      this.setPortWarningVisual(key, true);
+    }
+    for (const [key, state] of this.routeHighlightedPorts) {
+      const separator = key.indexOf(':');
+      const node = this.moduleNodes.get(key.slice(0, separator));
+      if (node) setPortHighlighted(node, key.slice(separator + 1), state);
+    }
+    for (const [netId, state] of this.routeHighlightedNets) {
+      const wire = this.wireNodes.get(netId);
+      if (wire) setWireValidHighlight(wire, state);
+    }
+
+    this.logicLayer.batchDraw();
   }
 
   private notifyViewportChange(): void {

@@ -142,11 +142,7 @@ export function busBitUsage(fields: WiringField[]): Map<number, number> {
 }
 
 /** Config sanity warnings shared by the splitter/merger editors. */
-export function wiringFieldWarnings(
-  fields: WiringField[],
-  busBits: number,
-  busFanInAllowed: boolean
-): string[] {
+export function wiringFieldWarnings(fields: WiringField[], busBits: number): string[] {
   const warnings: string[] = [];
   for (const field of fields) {
     if (field.bits < 1 || field.bits > WIRING_BITS_MAX) {
@@ -159,19 +155,21 @@ export function wiringFieldWarnings(
       warnings.push(`Field "${field.label || field.id}" is fully unmapped (always reads 0).`);
     }
   }
-  if (!busFanInAllowed) {
-    const contested: number[] = [];
-    for (const [bit, count] of busBitUsage(fields)) {
-      if (count > 1) contested.push(bit);
-    }
-    if (contested.length > 0) {
-      contested.sort((a, b) => b - a);
-      warnings.push(
-        `Output bits [${contested.join(", ")}] are driven by more than one input — overlapping inputs resolve to a wired-OR.`
-      );
-    }
-  }
   return warnings;
+}
+
+/**
+ * Bus bits mapped by more than one field bit, MSB-first. Legal for the
+ * splitter (several outputs may tap the same input bit); a hard error for
+ * the merger, where every output bit accepts exactly one driver.
+ */
+export function overlappingBusBits(fields: WiringField[]): number[] {
+  const contested: number[] = [];
+  for (const [bit, count] of busBitUsage(fields)) {
+    if (count > 1) contested.push(bit);
+  }
+  contested.sort((a, b) => b - a);
+  return contested;
 }
 
 /** Extracts a field's value out of a bus word (bus bit -> field bit). */

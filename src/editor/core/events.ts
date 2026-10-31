@@ -103,6 +103,13 @@ export class EventManager {
     this.options.onResize();
   };
 
+  /**
+   * Observes the host container's size. Golden Layout resizes panels without
+   * a window resize (splitter drags, tab collapses, undocking), so the stage
+   * must track its element directly to stay correctly sized inside panels.
+   */
+  private resizeObserver: ResizeObserver | null = null;
+
   private readonly contextMenuHandler = (event: MouseEvent) => {
     if (event.button === 2) {
       event.preventDefault();
@@ -198,6 +205,11 @@ export class EventManager {
     this.stage.on('wheel', this.wheelHandler);
 
     window.addEventListener('resize', this.resizeHandler);
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(this.resizeHandler);
+      this.resizeObserver.observe(this.container);
+    }
   }
 
   /** Unbinds all listeners. Safe to call multiple times. */
@@ -220,6 +232,9 @@ export class EventManager {
     this.stage.off('wheel', this.wheelHandler);
 
     window.removeEventListener('resize', this.resizeHandler);
+
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
   }
 
   private clearContextMenuTimer(): void {

@@ -1,5 +1,6 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { keyboardShortcuts } from '../config/keyboard-shortcuts';
+import { isTextEntryTarget } from '../editor/core/keyboard';
 
 export type KeyAction = { action: () => void; label?: string; description?: string };
 export type KeyMap = Record<string, KeyAction>;
@@ -21,6 +22,10 @@ export function useKeyboard(map: KeyMap = keyboardShortcuts) {
 
     function handler(e: KeyboardEvent) {
         if (!enabled.value) return;
+        // Bare-key shortcuts (F4, F5, …) must not hijack typing in inputs or
+        // the code editor; explicit Ctrl/Cmd combos (Ctrl+S) stay active
+        // everywhere, matching desktop editor conventions.
+        if (isTextEntryTarget(e.target) && !e.ctrlKey && !e.metaKey) return;
         const key = normalizeEventKey(e);
         lastKey.value = key;
         if (Object.prototype.hasOwnProperty.call(map, key)) {

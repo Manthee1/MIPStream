@@ -66,6 +66,10 @@ onBeforeUnmount(() => {
 watch(isDark, () => {
   lastNetValues.clear();
   lastPortValues.clear();
+  // The designer rebuilds its nodes on theme switches; the lifted port value
+  // labels belonged to the old nodes. Nulling the cache relifts the fresh
+  // nodes' labels (and repaints them with the new theme fills) next frame.
+  portLabelTargets = null;
 });
 
 function notifyCompileErrors(): void {

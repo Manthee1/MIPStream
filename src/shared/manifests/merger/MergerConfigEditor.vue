@@ -12,7 +12,7 @@ import {
   parseRangePreset,
   type WiringField,
 } from '../wiring-logic';
-import { resolveMergerFields, mergerWarnings, type MergerConfig } from './logic';
+import { resolveMergerFields, mergerWarnings, mergerErrors, type MergerConfig } from './logic';
 
 const props = defineProps<{
   config: MergerConfig;
@@ -40,8 +40,17 @@ const working = ref<MergerConfig>(clone(props.config));
 
 const warnings = computed(() => mergerWarnings(working.value));
 
-/** Emits the committed working copy (cloned to detach shared references). */
+/** Blocking errors: output bits driven by more than one input. */
+const errors = computed(() => mergerErrors(working.value));
+
+/**
+ * Emits the committed working copy (cloned to detach shared references).
+ * Refuses to emit while any blocking error exists — the applied config can
+ * never carry a multi-driven output bit, so the merger never silently
+ * resolves contested bits.
+ */
 function commit(): void {
+  if (errors.value.length > 0) return;
   emit('update:config', clone(working.value));
 }
 
@@ -96,16 +105,43 @@ function removeField(index: number): void {
   commit();
 }
 
-/** Applies a "hi:lo" preset: resizes the field and maps it contiguously. */
+/**
+ * Applies a "hi:lo" preset: resizes the field and maps it contiguously.
+ * Ranges wider than the bus are clamped to its top bits (never silently
+ * dropped) and surface a warning notice on the field.
+ */
 function applyPreset(index: number, raw: string): void {
   const range = parseRangePreset(raw);
-  if (!range || range.hi >= working.value.outputBits) return;
+  if (!range) return;
   const field = working.value.inputs[index];
   if (!field) return;
-  field.bits = range.hi - range.lo + 1;
-  field.map = Array.from({ length: field.bits }, (_, i) => range.lo + i);
+
+  const busBits = working.value.outputBits;
+  let { hi, lo } = range;
+  let clamped = false;
+  if (hi >= busBits) {
+    hi = busBits - 1;
+    clamped = true;
+  }
+  if (lo > hi) {
+    lo = hi;
+    clamped = true;
+  }
+
+  field.bits = hi - lo + 1;
+  field.map = Array.from({ length: field.bits }, (_, i) => lo + i);
+
+  if (clamped) {
+    presetNotices[field.id] =
+      `Range [${range.hi}:${range.lo}] exceeds the ${busBits}-bit bus — clamped to [${hi}:${lo}].`;
+  } else {
+    delete presetNotices[field.id];
+  }
   commit();
 }
+
+/** Clamping notices for over-wide range presets, keyed by field id. */
+const presetNotices = reactive<Record<string, string>>({});
 
 /** Uncommitted range-preset drafts (applied on Enter / button click). */
 const presetDrafts = reactive<Record<string, string>>({});
@@ -182,6 +218,9 @@ function updateFields(fields: WiringField[]): void {
             <n-icon :size="14"><IconArrowRight /></n-icon>
           </n-button>
         </div>
+        <n-text v-if="presetNotices[field.id]" type="warning" class="text-xs">
+          {{ presetNotices[field.id] }}
+        </n-text>
       </div>
       <n-button size="tiny" dashed @click="addField">
         <template #icon><n-icon :size="14"><IconPlus /></n-icon></template>
@@ -199,6 +238,13 @@ function updateFields(fields: WiringField[]): void {
         bus-side="right"
         @update:fields="updateFields"
       />
+    </div>
+
+    <!-- Blocking config errors (multi-driven output bits) -->
+    <div v-if="errors.length > 0" class="flex flex-col gap-0.5">
+      <n-text v-for="error in errors" :key="error" type="error" class="text-xs">
+        {{ error }}
+      </n-text>
     </div>
 
     <!-- Config sanity warnings -->

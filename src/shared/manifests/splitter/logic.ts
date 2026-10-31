@@ -83,9 +83,5 @@ export function resolveSplitterFields(config: SplitterConfig): WiringField[] {
 
 /** Config sanity warnings for the editor. */
 export function splitterWarnings(config: SplitterConfig): string[] {
-  return wiringFieldWarnings(
-    resolveSplitterFields(config),
-    clampWiringBits(config.inputBits),
-    true
-  );
+  return wiringFieldWarnings(resolveSplitterFields(config), clampWiringBits(config.inputBits));
 }

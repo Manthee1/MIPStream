@@ -2,6 +2,7 @@
 
 import {
   clampWiringBits,
+  overlappingBusBits,
   passThroughField,
   sanitizeWiringFields,
   wiringFieldWarnings,
@@ -10,9 +11,9 @@ import {
 
 /**
  * Jumper-mapped bit merger logic — the splitter's mirror. Each input field
- * drives individually-mapped output bus bits. Inputs should target
- * disjoint output bits; overlaps are allowed but warn (they resolve to a
- * wired-OR).
+ * drives individually-mapped output bus bits. Every output bit accepts
+ * exactly one driver: overlapping input mappings are a hard error
+ * (`mergerErrors`) and are blocked from ever being committed.
  */
 export interface MergerConfig {
   /** Width of the output bus (1-32). */
@@ -36,7 +37,20 @@ export function resolveMergerFields(config: MergerConfig): WiringField[] {
   return [passThroughField(busBits)];
 }
 
-/** Config sanity warnings for the editor (overlapping output targets). */
+/** Config sanity warnings for the editor (widths and unmapped fields). */
 export function mergerWarnings(config: MergerConfig): string[] {
-  return wiringFieldWarnings(resolveMergerFields(config), clampWiringBits(config.outputBits), false);
+  return wiringFieldWarnings(resolveMergerFields(config), clampWiringBits(config.outputBits));
+}
+
+/**
+ * Blocking config errors: output bits driven by more than one input. The
+ * config editor refuses to commit a config while any of these exist — a
+ * merger must never silently resolve contested bits.
+ */
+export function mergerErrors(config: MergerConfig): string[] {
+  const contested = overlappingBusBits(resolveMergerFields(config));
+  if (contested.length === 0) return [];
+  return [
+    `Output bits [${contested.join(", ")}] are driven by more than one input — each output bit accepts exactly one driver. Re-map the overlapping inputs.`,
+  ];
 }

@@ -3,6 +3,8 @@
 import { resolveArchitecture, type ArchitectureDocument } from "./compile/resolver";
 import { portKey } from "./compile/wire-index";
 import { topologicalSort, type TopoEdge } from "./compile/topological-sort";
+import { resolveMergerFields, type MergerConfig } from "../../shared/manifests/merger/logic";
+import { overlappingBusBits } from "../../shared/manifests/wiring-logic";
 
 /**
  * A designer-facing diagnostic with element locators for click-to-focus:
@@ -27,6 +29,23 @@ export function lintArchitecture(document: ArchitectureDocument): LintIssue[] {
     resolveArchitecture(document);
 
   const issues: LintIssue[] = [...errors, ...warnings];
+
+  // Bit merger config: every output bit accepts exactly one driver. The
+  // merger config editor blocks committing overlapping input mappings; lint
+  // catches anything that slipped in through serialized data.
+  for (const module of document.modules ?? []) {
+    if (module.typeId !== "std.merger") continue;
+    const contested = overlappingBusBits(
+      resolveMergerFields((module.config ?? {}) as MergerConfig)
+    );
+    if (contested.length > 0) {
+      issues.push({
+        severity: "error",
+        message: `Bit Merger ${module.designator}: output bits [${contested.join(", ")}] are driven by more than one input — each output bit accepts exactly one driver. Re-map the overlapping inputs in its configuration.`,
+        refs: [module.designator],
+      });
+    }
+  }
 
   // Unbuffered combinational loop — the same rule the compiler enforces.
   const combinationalIds = new Set<string>();

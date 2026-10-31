@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useMessage } from 'naive-ui';
 import { SchematicDesigner } from '../core/designer';
 import { setActiveDesigner } from '../core/designer-bridge';
 import { setSelection, bumpDocumentRevision } from '../core/selection-bridge';
@@ -24,6 +25,7 @@ const canvasContainer = ref<HTMLDivElement | null>(null);
 let designer: SchematicDesigner | null = null;
 
 const projectStore = useProjectStore();
+const message = useMessage();
 
 const activeTool = ref<EditorTool>('select');
 const viewport = ref<ViewportState>({ x: 0, y: 0, zoom: 1 });
@@ -33,6 +35,11 @@ const gridSettings = ref<GridSettings>({ ...DEFAULT_GRID_SETTINGS });
 
 /** True once the user mutates the document (drives unmount-time syncing). */
 let documentDirty = false;
+
+/** Restyles the canvas on light/dark switches — no reload required. */
+function handleThemeChange(): void {
+  designer?.refreshTheme();
+}
 
 onMounted(() => {
   if (!canvasContainer.value) return;
@@ -69,6 +76,9 @@ onMounted(() => {
     },
     onProblemsChange: (issues) => {
       setProblems(issues);
+    },
+    onUserError: (text) => {
+      message.error(text);
     }
   });
   designer = instance;
@@ -82,9 +92,17 @@ onMounted(() => {
 
   // Expose the designer to app-level flows (e.g. Ctrl+S save).
   setActiveDesigner(instance);
+
+  // Theme switches must restyle the canvas without a reload: every Konva
+  // node bakes its colors at creation, so the designer rebuilds them all.
+  // `useTheme` dispatches this app-wide CustomEvent synchronously after the
+  // `dark` class flips, so the fresh CSS vars are already resolvable here.
+  window.addEventListener('theme-change', handleThemeChange);
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('theme-change', handleThemeChange);
+
   // Carry unsaved canvas edits into the project store so a perspective
   // switch (and the simulation engine) sees the live document, not the last
   // save. The project is marked unsaved; persistence stays on explicit save.
@@ -126,7 +144,7 @@ const handleGridSettingsChange = (settings: GridSettings) => {
 
     <div
       ref="canvasContainer"
-      class="flex-1 w-full h-full cursor-default"
+      class="flex-1 w-full min-h-0 overflow-hidden cursor-default"
     ></div>
 
     <EditorStatusBar :viewport="viewport" :placement="placement" :routing="isRouting" />

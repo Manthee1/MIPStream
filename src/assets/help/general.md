@@ -62,6 +62,7 @@ Here are some useful shortcuts to control the simulator (active in the Simulate 
 - **Pause Simulation**: `F6`
 - **Step Through Simulation**: `F10`
 - **Restart Program**: `F9`
+- **Toggle Design / Simulate Perspective**: `F4`
 - **Open General Settings**: `Ctrl + ,`
 - **Open Project Settings**: `Ctrl + Alt + ,`
 - **Open Help Window**: `Ctrl + H`

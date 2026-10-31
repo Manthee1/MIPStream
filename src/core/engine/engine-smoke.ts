@@ -253,6 +253,33 @@ const smokeHybridMem: ModuleManifest<{ slots: number; state?: HybridStoreState }
   },
 };
 
+// Minimal stand-in for the real std.merger manifest: the lint pass reads the
+// config (input field maps) directly, so only port shape matters here.
+const smokeMerger: ModuleManifest<{ outputBits: number }> = {
+  typeId: "std.merger",
+  label: "Bit Merger",
+  description: "",
+  icon: "",
+  category: "wiring",
+  defaultConfig: { outputBits: 32 },
+  generatePorts: (config) => [
+    { id: "in_f1", direction: "input", bits: 16, label: "In 1", position: { x: -44, y: -10 } },
+    { id: "in_f2", direction: "input", bits: 16, label: "In 2", position: { x: -44, y: 10 } },
+    {
+      id: "out",
+      direction: "output",
+      bits: Math.min(32, Math.max(1, Math.floor(Number(config.outputBits) || 32))),
+      label: "Out",
+      position: { x: 44, y: 0 },
+    },
+  ],
+  createEvaluators: (): ModuleEvaluators => ({
+    inputPorts: ["in_f1", "in_f2"],
+    outputPorts: ["out"],
+    evaluate: (inputs) => new Uint32Array([(inputs[0] | inputs[1]) >>> 0]),
+  }),
+};
+
 registerManifest(smokeConstant);
 registerManifest(smokeAdder);
 registerManifest(smokeAnd);
@@ -261,6 +288,7 @@ registerManifest(makeRegister("both"));
 registerManifest(smokeAccumulator);
 registerManifest(smokeHybridReg);
 registerManifest(smokeHybridMem);
+registerManifest(smokeMerger);
 
 // ---------------------------------------------------------------- scenarios
 
@@ -498,6 +526,56 @@ check(
     (issue) => issue.severity === "error" && issue.message.includes("loop")
   ),
   true
+);
+
+// 8. Lint pass: bit merger configs must not drive an output bit from more
+//    than one input — overlapping input mappings report as errors with the
+//    module designator as ref; disjoint mappings stay clean.
+const bits = (lo: number, width: number) => Array.from({ length: width }, (_, i) => lo + i);
+
+const mergerOverlapDoc: ArchitectureDocument = {
+  modules: [
+    module("m1", "std.merger", {
+      outputBits: 32,
+      inputs: [
+        { id: "f1", bits: 16, map: bits(0, 16) },
+        { id: "f2", bits: 16, map: bits(0, 16) }, // both drive [15:0]
+      ],
+    }),
+  ],
+  nets: [],
+};
+
+check(
+  "lint: merger multi-driven output bits flagged as error",
+  lintArchitecture(mergerOverlapDoc).some(
+    (issue) =>
+      issue.severity === "error" &&
+      issue.message.includes("more than one input") &&
+      (issue.refs ?? []).includes("m1")
+  ),
+  true
+);
+
+const mergerCleanDoc: ArchitectureDocument = {
+  modules: [
+    module("m2", "std.merger", {
+      outputBits: 32,
+      inputs: [
+        { id: "f1", bits: 16, map: bits(0, 16) },
+        { id: "f2", bits: 16, map: bits(16, 16) }, // disjoint halves
+      ],
+    }),
+  ],
+  nets: [],
+};
+
+check(
+  "lint: disjoint merger mapping not flagged",
+  lintArchitecture(mergerCleanDoc).some((issue) =>
+    issue.message.includes("more than one input")
+  ),
+  false
 );
 
 console.log("");
