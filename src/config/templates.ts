@@ -75,7 +75,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
         icon: 'IconCpu',
         architecture: BLANK_ARCHITECTURE,
         initialSoftware: [
-            { id: 'main', name: 'main.s', sourceCode: '' }
+            // { id: 'main', name: 'main.s', sourceCode: '' }
         ]
     },
     {

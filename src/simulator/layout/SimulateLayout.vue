@@ -37,14 +37,7 @@ function bindProps<T extends Record<string, unknown>>(
   }));
 }
 
-const EmptyPanels = markRaw(defineComponent({
-  name: 'EmptyPanels',
-  render: () => h(
-    'div',
-    { class: 'h-full w-full flex items-center justify-center bg-surface' },
-    h(NEmpty, { description: 'No panel-capable modules in this architecture.' }),
-  ),
-}));
+
 
 // -------------------------------------------------------- panel tab set
 
@@ -74,10 +67,7 @@ const panelTabs: ComponentItemConfig[] = (
     };
   });
 
-if (panelTabs.length === 0) {
-  components['PanelsEmpty'] = EmptyPanels;
-  panelTabs.push({ type: 'component', componentType: 'PanelsEmpty', title: 'Panels' });
-}
+
 
 // -------------------------------------------------------- editor tab set
 

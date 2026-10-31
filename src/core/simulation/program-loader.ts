@@ -34,12 +34,16 @@ export function scanSimulationTargets(document: ArchitectureDocument): Simulatio
     let pcDesignator: string | null = null;
 
     for (const module of document.modules ?? []) {
-        if (module.typeId === INSTRUCTION_MEMORY_TYPE) {
-            instructionMemories.push(module.designator);
-        } else if (module.typeId === DATA_MEMORY_TYPE) {
-            dataMemories.push(module.designator);
-        } else if (module.typeId === PROGRAM_COUNTER_TYPE && pcDesignator === null) {
-            pcDesignator = module.designator;
+        switch (module.typeId) {
+            case INSTRUCTION_MEMORY_TYPE:
+                instructionMemories.push(module.designator);
+                break;
+            case DATA_MEMORY_TYPE:
+                dataMemories.push(module.designator);
+                break;
+            case PROGRAM_COUNTER_TYPE:
+                pcDesignator = pcDesignator ?? module.designator;
+                break;
         }
     }
 

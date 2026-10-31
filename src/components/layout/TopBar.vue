@@ -2,7 +2,7 @@
 import { computed, h, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup, useMessage } from 'naive-ui';
-import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2, IconDatabaseImport, IconRestore } from '@tabler/icons-vue';
+import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2, IconDatabaseImport, IconRestore, IconArrowUp } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useSimulationStore } from '../../stores/simulationStore';
@@ -47,6 +47,10 @@ const notifySimulationErrors = () => {
     message.error(simulationStore.loadErrors[0]);
   }
 };
+
+const projectHasAtLeastOneEditor = computed(() => {
+  return (projectStore.currentProject?.software.editors?.length ?? 0) > 0;
+});
 
 const handleRun = () => {
   if (!startSimulation()) notifySimulationErrors();
@@ -176,12 +180,21 @@ const handleSave = () => { void saveCurrentProject(); };
 
         <!-- Workspace Specific Simulation Controls -->
         <n-space :size="4" v-if="hasProject && isWorkspace && uiStore.perspective === 'simulate'" align="center">
-          <n-button quaternary circle size="tiny" type="info" title="Assemble and Load (F7)"
+          <n-button v-if="projectHasAtLeastOneEditor" quaternary circle size="tiny" type="info" title="Assemble and Load (F7)"
             @click="handleLoad">
             <template #icon><n-icon>
                 <IconDatabaseImport />
               </n-icon></template>
           </n-button>
+          <!-- If no editors then no code and no assembling required, change language to Initialize from Startup -->
+          <n-button v-else quaternary circle size="tiny" type="info" title="Initialize (F7)" @click="handleLoad">
+            <template #icon><n-icon>
+                <IconArrowUp />
+              </n-icon></template>
+          </n-button>
+          <n-divider vertical />
+
+
           <n-button quaternary circle size="tiny" type="success" :disabled="isRunning" title="Run (F5)"
             @click="handleRun">
             <template #icon><n-icon>
