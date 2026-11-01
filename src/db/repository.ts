@@ -1,8 +1,14 @@
 import { IOrderQuery, IWhereQuery } from "jsstore";
 import db from "./database";
+import { deepToRaw } from "../shared/utils/deep-to-raw";
 
 /**
  * A generic repository for common IndexedDB operations via JsStore.
+ *
+ * Every write payload is sanitized with `deepToRaw` before it reaches the
+ * connection: JsStore executes queries in a Web Worker, so values cross a
+ * `postMessage` structured-clone boundary where any lingering Vue reactive
+ * proxy throws `DataCloneError` ("Proxy object could not be cloned").
  */
 export class BaseRepository<T> {
   constructor(protected tableName: string) { }
@@ -23,7 +29,7 @@ export class BaseRepository<T> {
   }
 
   async insert(item: T | T[]): Promise<T[]> {
-    const values = Array.isArray(item) ? item : [item];
+    const values = (Array.isArray(item) ? item : [item]).map((value) => deepToRaw(value));
     return await db.insert({
       into: this.tableName,
       values,
@@ -34,7 +40,7 @@ export class BaseRepository<T> {
   async update(id: number | string, data: Partial<T>): Promise<number> {
     return await db.update({
       in: this.tableName,
-      set: data,
+      set: deepToRaw(data),
       where: { id }
     });
   }

@@ -39,6 +39,11 @@ export const getProjects = (limit = 10, order: IOrderQuery = { by: 'updatedAt', 
     return projectRepo.getAll({ limit, order, where });
 };
 
+/** Every project row, newest first — backs the Home page projects table. */
+export const getAllProjects = (order: IOrderQuery = { by: 'updatedAt', type: 'desc' }) => {
+    return projectRepo.getAll({ order });
+};
+
 export const insertProject = async (project: Partial<Project> & { name: string }) => {
     const defaultProject: Omit<Project, 'id'> = {
         name: 'Untitled',
@@ -67,5 +72,20 @@ export const updateProject = async (project: Project) => {
     await projectRepo.update(project.id, project);
 };
 
+/**
+ * Targeted write of the per-perspective Golden Layout arrangements only —
+ * deliberately does not stamp `updatedAt` (a panel drag is not a content
+ * change and must not reshuffle the recents ordering).
+ */
+export const updateProjectLayouts = async (id: number, layouts: Project['layouts']) => {
+    if (!layouts) return;
+    await projectRepo.update(id, { layouts } as Partial<Project>);
+};
+
 export const deleteProject = (id: number) => projectRepo.delete(id);
+
+/** Renames a project and stamps `updatedAt` (a rename is a metadata change). */
+export const renameProject = async (id: number, name: string) => {
+    await projectRepo.update(id, { name, updatedAt: new Date() } as Partial<Project>);
+};
 

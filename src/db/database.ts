@@ -9,7 +9,8 @@ connection.addPlugin(workerInjector);
 const database: IDataBase = {
     name: 'mipstream',
     tables: [projectTableConfig],
-    version: 4
+    // v5: nullable `layouts` column for per-project Golden Layout persistence.
+    version: 5
 }
 
 connection.initDb(database);
