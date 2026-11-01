@@ -5,7 +5,8 @@
 > assembler, program loader and the CodeMirror foundation are implemented and
 > verified). **Phase 1 completed 2026-10-31** (see §3). **Phase 2 completed
 > 2026-10-31** (see §3). **Phase 3 completed 2026-10-31** (see §3).
-> **Resynced 2026-10-31**: two newly added board
+> **Phase 4 completed 2026-10-31** (see §3). **Phase 5 completed
+> 2026-11-01** (see §3). **Resynced 2026-10-31**: two newly added board
 > tasks — editor add/link in architecture settings (`-4179`) and the stage
 > instruction visualizer bar (`-4978`), both high — are folded into §2/§3,
 > and the Phase 1/2 completions were moved to the kanban's Done column (and
@@ -40,14 +41,17 @@ That framing drives the priority vocabulary used throughout:
 
 | Priority | Definition | Count |
 | --- | --- | --- |
-| **High** | Correctness bugs that silently produce wrong results, data-loss risk, bugs that block the primary workflow, or foundational refactors that gate other work | 4 |
-| **Medium** | Core QoL / power features that improve trust or workflow but have workarounds | 10 |
+| **High** | Correctness bugs that silently produce wrong results, data-loss risk, bugs that block the primary workflow, or foundational refactors that gate other work | 1 |
+| **Medium** | Core QoL / power features that improve trust or workflow but have workarounds | 7 |
 | **Low** | Polish, layout cosmetics, and distribution | 9 |
 
 Completed tasks (viewer panning, MIPS template, the Phase 1/2 batches —
 `-12`, `-3`, `-6`, `-461`, `-10`, `-9`, `-22`, `-290` — the already-implemented
-splitter fan-in `-11`, closed during this resync, and the Phase 3 batch —
-`-93`, `-208`, `-4`, `-5` — completed 2026-10-31) are
+splitter fan-in `-11`, closed during this resync, the Phase 3 batch —
+`-93`, `-208`, `-4`, `-5` — completed 2026-10-31, the Phase 4 batch —
+`-4179`, `-0` (except "other conveniences"), `-4978`, `-532` — completed
+2026-10-31, and the Phase 5 batch — `-17` (+ the project-switch guard riding
+along), `-15`, `-16`, `-24` — completed 2026-11-01) are
 excluded from the plan; they live in the Done column of `TODO.kanban.md` and
 in the phase notes in §3.
 
@@ -59,10 +63,7 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 
 | Task | ID | Why high |
 | --- | --- | --- |
-| Assembly editor richness | `-0` | Remaining subtasks (linting, highlighting, current-instruction highlight, autocomplete, go-to-definition) are the main student-facing gap in the primary loop. |
-| Editor add/link in architecture settings | `-4179` | **New (2026-10-31)**: blank architectures currently have no code editor and no way to add one or map it to an IMem — this blocks the primary loop (assemble → load → run) for every non-template architecture and gates the rest of the editor work. Small fix (easy). |
-| Stage instruction visualizer bar | `-4978` | **New (2026-10-31)**: the top-of-diagram pipeline strip ("which instruction is in which stage") is the flagship student-facing visualization, correlating with the pipeline stage config. |
-| Autosave | `-17` | The largest data-loss risk in the app; the explicit-save funnel (`useProjectSave`) already exists to debounce onto. |
+| Assembly editor richness | `-0` | Remaining subtask ("other common code-editor conveniences") — the editor bundle itself shipped in Phase 4; this is the last open piece of the primary student loop. |
 
 ### Medium
 
@@ -73,10 +74,6 @@ Task ids refer to the `<!-- id: ... -->` markers in `TODO.kanban.md`.
 | ALU / ALU-control configurable ops | `-13` | Generalizes the §4.8 encoding tables to config; same table-editor pattern again. |
 | Control unit output port labels | `-87` | Small; slot in anytime. |
 | Architecture templates / import / export | `-14` | Design the persistence adapter so it can later back the Electron FS path. |
-| Hover highlight + educational tooltips | `-532` | Net/module hover highlighting and info tooltips; the tooltip infrastructure (`formatWord`, manifest descriptions) already exists. |
-| Resume where you left off | `-15` | URL route/params persistence. |
-| Per-project layout persistence | `-16` | **Dependency** for multiple base layouts (`-21`) and project export (`-26`). |
-| Recent Projects table | `-24` | Home-page table with search/sort/actions. |
 | Simulation-only mode / architecture switching | `-108` | Large (hard) workflow feature; do late in the designer cycle so the dynamic panel mount/unmount is not built against a moving target. |
 
 ### Low
@@ -192,18 +189,34 @@ those first would mean doing them twice.
 
 ### Phase 4 — Simulate-mode core loop (student-facing value)
 
-6. **Editor add/link in architecture settings** (`-4179`, new) — blank
+6. ✅ **Editor add/link in architecture settings** (`-4179`, new) — blank
    architectures currently cannot gain a code editor or map one to an IMem.
    Do this first in the phase: it gates every other item below for
    non-template architectures. Small (easy): a settings control to add
    editors and their IMem mappings, plus warnings for editors with no IMem
    assigned.
-7. **Assembly editor subtasks** (`-0`), in order of decreasing leverage:
+   **Done 2026-10-31:** new "Editors" tab in Architecture Settings
+   (`EditorSettings.vue` + `createEditor` in `src/shared/utils/project-editors.ts`);
+   `useArchitectureSettings` drafts and commits `software.editors` with the
+   configuration as one settings batch — the editor set rides the same undo
+   entry as the configuration (`HistoryEntry.editors`, `onEditorsRestore`,
+   `projectStore.updateSoftware`). Amended same day after review: the
+   Editors and Assembler tabs merged into one "Program" tab in
+   `ArchitectureSettingsModal` (the editor list feeds the mapping rows).
+7. ✅ **Assembly editor subtasks** (`-0`), in order of decreasing leverage:
    linting/inline error highlighting first (the diagnostics contract already
    exists), then per-ISA syntax highlighting, then current-instruction
    highlighting (`pcLineMap` already ships from the assembler), then
    autocomplete, and `Ctrl+Click` go-to-definition last.
-8. **Stage instruction visualizer bar** (`-4978`, new) — the top strip
+   **Done 2026-10-31 (except "other conveniences"):** new
+   `src/simulator/language/` bundle attached through `useCodeMirror`'s
+   support compartment — ISA StreamParser highlighting, debounced live lint
+   over `assemble()`, ISA autocomplete, Ctrl/⌘+Click go-to-definition, and
+   the current-instruction highlight fed by `pcLineMap` (now carried on
+   `LoadPlanEntry` into `simulationStore.pcLineMaps`, PC sampled via the new
+   `getProgramCounter()`). Covered headlessly by the new `language:check`
+   rig (folded into `npm run check`).
+8. ✅ **Stage instruction visualizer bar** (`-4978`, new) — the top strip
     showing each instruction moving through the pipeline stages left-to-right,
     driven by the pipeline stage config (stage order/naming, display toggle,
     and start-stage boundary as specced in
@@ -211,16 +224,72 @@ those first would mean doing them twice.
     as written in the editor with light normalization, scaled to fit the
     cell. Pairs naturally with the current-instruction highlight from `-0`
     (same `pcLineMap` seam).
-9. **Hover highlight + educational tooltips** (`-532`) — extends the existing
-    tooltip/probe infrastructure to nets and modules.
+    **Done 2026-10-31:** `StageInstructionBar.vue` + `useStageVisualizer`
+    (PC + managed boundary register sampling, byte-address/byte-index
+    fallback mapping) + `FitText.vue` auto-scaling; new
+    `pipeline.showInstructionBar` toggle; load-time program snapshots
+    (`simulationStore.loadedPrograms`) feed the text.
+9. ✅ **Hover highlight + educational tooltips** (`-532`) — extends the
+    existing tooltip/probe infrastructure to nets and modules.
+    **Done 2026-10-31:** whole-net `setWireHover` emphasis + value/connection
+    tooltip; new `setNodeHover` accent emphasis + manifest/config tooltip in
+    `SchematicViewer` (ports keep probe priority).
 
 ### Phase 5 — Project management & data safety
 
-10. **Autosave** (`-17`) — debounced save through the existing
+> **Status:** ✅ **Completed 2026-11-01** — all four items plus an
+> unsaved-changes project-switch guard that rode along with autosave, in four
+> batches (autosave + guard, resume/session, layout persistence, projects
+> table). Validated with `npm run check` (all rigs green), `vue-tsc` (no new
+> errors against the 317-error legacy baseline), a production `vite build`,
+> and 8 headless checks over the new pure `layout-reconcile` util.
+
+10. ✅ **Autosave** (`-17`) — debounced save through the existing
     `useProjectSave` funnel; removes the biggest data-loss risk.
-11. **Resume where you left off** (`-15`), **Recent Projects table** (`-24`),
-    **per-project layout persistence** (`-16`) — `-16` unblocks `-21` and
-    `-26`.
+    **Done 2026-11-01 (+ switch guard):** `useAutosave` (App.vue-hosted,
+    above the Naive providers) watches the single dirty flag
+    `projectSaved` and debounces 2 s into a new silent
+    `persistCurrentProject()` core extracted from `useProjectSave`; explicit
+    saves wrap that core with toasts — now gated by the previously dead
+    `projectSaveNotification` setting — and a recents refresh. The store's
+    new `mutationCount` epoch keeps a project dirty when edits land while a
+    write is in flight; failures re-arm with backoff and show a TopBar
+    "Saved HH:MM"/failure hint. Flushes on `visibilitychange→hidden`/
+    `pagehide`; `beforeunload` prompts while anything is unsaved (active
+    even with autosave off; the `autoSave` setting — previously declared but
+    unwired — now gates the background writer, default on). Riding along:
+    `useProjectSwitch.openProject`/`ensureSafeToSwitch` is now the single
+    funnel for every replace-the-current-project call site (Home, Open
+    modal, TopBar recents, Create modal pre-insert) with a three-way
+    Save & continue / Discard changes / Cancel dialog when dirty.
+11. ✅ **Resume where you left off** (`-15`), ✅ **Recent Projects table**
+    (`-24`), ✅ **per-project layout persistence** (`-16`) — `-16` unblocks
+    `-21` and `-26`.
+    **`-15` done 2026-11-01:** `/workspace/:projectId?` + `?perspective=`
+    query (F5/deep links restore; unknown ids land Home; Workspace's
+    onMounted redirect moved into the router guard), `useSessionPersistence`
+    mirrors `{projectId, perspective}` to localStorage and stamps
+    `settings.lastPerspective` (rides autosave; feeds the Mode column), a
+    once-per-launch Home → last-workspace redirect (gated by the new
+    `autoReopenLastProject` setting, default on; logo/Exit still reach
+    Home), and a Home `ResumeBanner` card for the exit-to-Home path.
+    **`-24` done 2026-11-01:** `RecentProjectsTable.vue` — Naive
+    `NDataTable` (Project Name / Last Modified / Mode / Open-Rename-Delete,
+    all sortable, name search, pagination); Open re-fetches rows through the
+    guarded funnel, Rename is a Naive dialog (the legacy `uiStore.prompt`
+    modal is never mounted in the active app), Delete clears stale session
+    pointers and the active-project ghost. New `getAllProjects`/
+    `renameProject` service fns.
+    **`-16` done 2026-11-01:** DB v5 nullable `layouts` column (opaque JSON
+    config — GL's recursive types kept out of Pinia's `UnwrapRef`);
+    `GoldenLayout.vue` gains `layoutId`, a `layout-bridge` registry,
+    debounced+deduped `layout-change` emission (`saveLayout` →
+    `LayoutConfig.fromResolved`) and a final unmount emit; both perspectives
+    restore through the pure `layout-reconcile.ts` (stale panels dropped,
+    missing appended — 8 headless checks); `useLayoutPersistence` writes the
+    column via targeted `updateProjectLayouts` (no `updatedAt` stamp) while
+    clean, and `persistCurrentProject`'s `syncLiveLayouts()` carries the
+    live arrangement with every row save. Flushes on pagehide and switch.
 
 ### Phase 6 — Designer power features
 

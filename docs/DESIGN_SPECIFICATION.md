@@ -1796,16 +1796,31 @@ persisted row:
    `updateProject(toRaw(project))`, persisting the whole row;
 3. `updateRecentProjects()` refreshes the Home list (latest 10 by `updatedAt`).
 
-The save is shared by the toolbar button, the File menu and Ctrl/Cmd+S, and it
-is **explicit**: there is no autosave yet (Planned, §12.3). The project title in
-the top bar shows a `*` suffix whenever `projectSaved` is false.
+The save funnel is layered: a silent core, `persistCurrentProject()` (sync the
+live schematic + live panel arrangement into the store, then write the row),
+is wrapped by `useProjectSave.saveCurrentProject()` — the explicit save
+shared by the toolbar button, the File menu and Ctrl/Cmd+S — which adds the
+success toast (gated by the `projectSaveNotification` general setting) and a
+recents refresh. On top of that, `useAutosave` (App-hosted) watches the dirty
+flag and debounces (2 s) into the silent core while the `autoSave` setting is
+on (default on); it flushes on tab hide/page close and re-arms with backoff
+after a failed write, and `beforeunload` prompts while anything is unsaved
+(a data-safety net that is also active with autosave off). The project title
+in the top bar shows a `*` suffix whenever `projectSaved` is false, plus a
+small "Saved HH:MM" / autosave-failure hint. Replacing the active project
+(open another, reopen the same row, create new) goes through
+`useProjectSwitch.openProject`, which guards a dirty project with a three-way
+dialog: Save & continue, Discard changes, or Cancel.
 
 ### 11.5 Dirty tracking and document revision
 
 Two independent "something changed" signals coexist:
 
 - `projectStore.projectSaved` — whether the project has unsaved changes, set
-  false by `markUnsaved()`/`updateArchitecture()` and true again on save;
+  false by `markUnsaved()`/`updateArchitecture()` and true again on save. A
+  monotonic `mutationCount` backs the flag: `saveProject()` compares it
+  before/after its async write so edits landing while a save is in flight
+  keep the project dirty instead of being silently marked clean;
 - `documentRevision` — the designer's commit counter, bumped on every canvas
   mutation and used to invalidate the compiled simulation (§5.9, §6.15).
 
@@ -1830,13 +1845,18 @@ export containing the architecture plus all templates, and — in the Electron
 variant — native "Save architecture as" / "Load architecture" to the file
 system (§12.3, §12.5).
 
-### 11.8 Project management gaps
+### 11.8 Project management
 
-Recorded as Planned: remembering the last project and perspective via URL
-params; persisting each project's Golden Layout state (position, size,
-collapsed) and restoring it on open; autosave; and upgrading the Home page's
-Recent Projects list into a sortable, searchable table with Open/Delete/Rename
-actions (§12.3, §12.4).
+Implemented 2026-11-01 (Phase 5): the last project and perspective are
+remembered via the URL (`/workspace/:projectId?` + `?perspective=` query —
+F5/deep links restore; a once-per-launch redirect reopens the last session,
+gated by the `autoReopenLastProject` setting, with a Home resume banner as
+the manual path); each project's Golden Layout state persists in a nullable
+`layouts` column (schema v5) per perspective, restored through
+`layout-reconcile` against the live component registry and written via
+targeted column writes that do not stamp `updatedAt`; autosave (§11.4); and
+the Home page's Recent Projects list is a sortable, searchable table with
+Open/Delete/Rename actions.
 
 ---
 

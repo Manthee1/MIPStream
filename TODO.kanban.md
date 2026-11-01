@@ -11,18 +11,21 @@
 Add a CodeMirror-based editor as a dedicated panel in Simulator mode (follows the general architecture configurator, which is already done). Must work generically with any ISA definition provided to it.
 - [x] CodeMirror 6 foundation (Phase 4): line numbers, history, token-synced theme, two-way `sourceCode` binding
 - [x] Diagnostics strip (line + column, click-to-reveal) consuming the Phase 1 assembler contract
-- [ ] Syntax highlighting and autocomplete
-- [ ] Linting and inline error highlighting
-- [ ] `Ctrl+Click` go-to-definition
-- [ ] Highlighting of the currently simulated instruction
+- [x] Syntax highlighting and autocomplete
+- [x] Linting and inline error highlighting
+- [x] `Ctrl+Click` go-to-definition
+- [x] Highlighting of the currently simulated instruction
 - [ ] Other common code-editor conveniences
 - [x] Include a compile button in the panel
 Tags: `feat` `simulator`
+<!-- priority: high -->
+<!-- done-note: Done (Phase 4, 2026-10-31, remaining: "other conveniences"): `src/simulator/language/` ships the ISA-driven support bundle (`buildAssemblySupport`) attached through `useCodeMirror`'s support compartment — StreamParser mirroring the assembler tokenizer (tokenTable→HighlightStyle on app theme vars), debounced live lint over the real `assemble()` contract, ISA autocomplete (mnemonics with operand templates at statement positions, registers + doc labels at operand positions), Ctrl/⌘+Click go-to-definition, and the current-instruction line highlight (live PC `>>> 2` → load-time `pcLineMap` threaded through `LoadPlanEntry` → `simulationStore.pcLineMaps`; cycles via the store's cycle-count ticks, no extra rAF loop). `npm run language:check` rig covers parser/lint-mapping/labels/highlight-field headlessly. -->
 <!-- priority: high -->
 
 #### Feat: Add stage instruction info to viewer
 <!-- id: task-1793457051806-4978 -->
 Just like MIPSIM or any other educational simulator. The diagram visualization should have a bar on top showing each instruction moving through the pipeline from left to right. This should corelate with the actual pipeline config in the architecture. full instructions should be shown just as they apear in the editor with light parsing to standardize them. The text should scale to fit its cell.
+- [x] Done (Phase 4, 2026-10-31): `StageInstructionBar.vue` mounted above the viewer canvas (viewer became a flex column). Driven by `useStageVisualizer` — stage 0 samples the `std.pc` q output, stage i samples the managed boundary register with `stageIndex = i-1`; values resolve to the source line by exact match against the program's assembled instruction words (registers that latch the fetched word itself), then the byte-addressed PC (`>>> 2`), then a bare index — unresolvable values show an empty cell, never raw hex (amended same day after review). `startStageBoundary` blanks pre-identity stages. Instruction text comes from the load-time program snapshot (`simulationStore.loadedPrograms`: per-editor `pcLineMap` + source lines + flattened `instructionWords`, the halt-detection first-entry convention) normalized with `normalizeInstructionText` (comments stripped, whitespace collapsed). Text auto-fits via `FitText.vue` (transform-scale, ResizeObserver). New `showInstructionBar` pipeline config toggle in Pipeline Settings (default shown, legacy-safe). 60fps sampling loop dirty-checks before touching reactive state.
 Tags: `uiux` `simulation` `simulator` `feat`
 <!-- priority: high -->
 
@@ -84,22 +87,6 @@ Tags: `QOL` `designer`
 
 ## Project Management
 
-#### Feat: Resume where you left off
-<!-- id: task-1792838400000-15 -->
-Remember the last project and mode, encoded in the URL route/params, and restore them on launch.
-Tags: `feat` `project-management`
-
-#### Feat: Per-project layout persistence
-<!-- id: task-1792838400000-16 -->
-Remember each project's Golden Layout panel state (position, size, collapsed state, etc.) and restore it when the project is opened.
-Tags: `feat` `project-management` `layout`
-
-#### Feat: Autosave
-<!-- id: task-1792838400000-17 -->
-Automatically persist project state.
-Tags: `feat` `project-management`
-<!-- priority: high -->
-
 #### Feat: Architecture Simulation Project Integration & Workflow Refinement
 <!-- id: task-1793439728114-108 -->
 Introduce a Simulation-Only project Mode and a dynamic architecture switching workflow to streamline the user experience when testing code against different hardware models. By decoupling code execution from circuit editing, the interface will simplify into an IDE-focused visualizer when full schematic access is not required. Swapping architectures directly from the topbar will trigger compatibility checks that dynamically adjust the active UI panels—protecting editor buffers and alerting users whenever hardware shifts remove or add components like Instruction Memory, Data Memory, or Register Files.
@@ -118,6 +105,7 @@ Tags: `QOL` `uiux` `simulator` `feat`
 <!-- id: task-1793456337313-4179 -->
 Right now empty design has no editor and its not possible to add one and connect it to an IMem.
 this has to be fixed. Add warnings if editors have no imem assigned.
+- [x] Done (Phase 4, 2026-10-31): Architecture Settings gained an "Editors" tab (add/rename/remove, popconfirm on remove, per-row "No instruction memory" warning tag; removal strips the drafted assembler mappings). `useArchitectureSettings` drafts `software.editors` beside the configuration and commits them together; when a designer is active the editor set rides the same `withSettingsBatch` undo entry (`HistoryEntry.editors` + `onEditorsRestore`), so undo restores document, configuration AND editors as one step. `projectStore.updateSoftware` is the new software-layer mutation funnel. Amended same day: the Editors and Assembler tabs were merged into one "Program" tab in `ArchitectureSettingsModal` (the editor list feeds the mapping rows — one topic).
 Tags: `feat-fix` `settings`
 <!-- priority: high -->
 <!-- workload: easy -->
@@ -152,19 +140,11 @@ Let the simulation control buttons pop out of the topbar into a movable floating
 Tags: `feat` `uiux` `simulation`
 <!-- priority: low -->
 
-#### Feat: Recent Projects table (Home page)
-<!-- id: task-1792838400000-24 -->
-Replace the Recent Projects section with a searchable, sortable table.
-- [ ] Columns: Project Name, Last Modified, Mode, Actions
-- [ ] Actions: "Open", "Delete", "Rename"
-- [ ] Sortable by every column
-- [ ] Search bar (by project name) at the top
-Tags: `feat` `uiux` `project-management`
-
 #### Feat: Diagarm educational element info
 <!-- id: task-1793275237015-532 -->
 - Higlight the netlist or module currently being hoverd over to better see where it connects or ends.
 - Show a tooltip of information about the netlist or module. Module will show its normal manifest and or architecture specific info while the netlist will show its value in different formats and list what modules it connects
+- [x] Done (Phase 4, 2026-10-31): `SchematicViewer` hover layer restructured — port probes keep priority; otherwise the cursor resolves to a wire group (walking up to the `netId` attr) or a module group (`designator`+`typeId` attrs). Nets highlight across every segment (`setWireHover`, existing styler) and show a tooltip with the live value in hex/bin/dec (bit width from the driving source port) plus the full connection list (`source → targets`, capped at 6). Modules highlight via the new `setNodeHover` (accent stroke on `.module-body`, mirroring `setNodeDangerHover`) and show the manifest label/description first line + config summary (`managed` excluded). Both dirty-checked, cleared on leave and re-applied after theme flips.
 Tags: `feat` `mips` `uiux`
 
 ## Electron App
@@ -297,3 +277,40 @@ The Visualization diagram in simulation mode has a bottom bar that spills over t
 Tags: `fix` `uiux`
 <!-- priority: high -->
 <!-- workload: easy -->
+
+#### Feat: Recent Projects table (Home page)
+<!-- id: task-1792838400000-24 -->
+Replace the Recent Projects section with a searchable, sortable table.
+- [x] Columns: Project Name, Last Modified, Mode, Actions
+- [x] Actions: "Open", "Delete", "Rename"
+- [x] Sortable by every column
+- [x] Search bar (by project name) at the top
+- [x] Done (Phase 5, 2026-11-01): `RecentProjectsTable.vue` replaces the Home button list — Naive UI `NDataTable` with Project Name (clickable, description beneath), Last Modified (default sort desc), Mode (`settings.lastPerspective` tag, `—` for legacy rows) and right-aligned Open/Rename/Delete actions; every column sortable, name search bar on top, 10-row pagination and contextual empty states. Open re-fetches the row (a stale snapshot can't clobber newer autosaved state) and routes through the guarded `openProject` funnel; Rename is a Naive dialog with inline validation (the legacy `uiStore.prompt` modal is never mounted in the active app) and stamps `updatedAt`; Delete is popconfirm-guarded, clears a stale `lastSession` pointer and drops a deleted active project from the session (in-flight autosaves cannot resurrect the row — update-by-id is a no-op once gone). New service fns `getAllProjects`/`renameProject`; the store's 10-item `recentProjects` still feeds the TopBar dropdown.
+Tags: `feat` `uiux` `project-management`
+
+### Project Management
+
+#### Feat: Autosave
+<!-- id: task-1792838400000-17 -->
+Automatically persist project state.
+- [x] Done (Phase 5, 2026-11-01): `useAutosave` (hosted once from `App.vue`, above the providers) watches the single dirty flag `projectSaved` and debounces 2s into the new silent `persistCurrentProject()` core extracted from `useProjectSave` — explicit saves wrap that core with toasts (now gated by the `projectSaveNotification` setting) and a recents refresh. The store gained a `mutationCount` epoch so edits landing while a write is in flight keep the project dirty (`saveProject` can no longer self-clear a flag it outran); failed writes re-arm with backoff and surface a TopBar hint (which also shows "Saved HH:MM"). Flushes on `visibilitychange→hidden` and `pagehide`; `beforeunload` prompts while anything is unsaved (data-safety net active even with autosave off). The previously dead `autoSave` general setting now gates it, default on.
+Tags: `feat` `project-management`
+<!-- priority: high -->
+
+#### Feat: Unsaved-changes guard on project switch
+<!-- id: task-1792838400000-17-guard -->
+Riding along with autosave: replacing the active project (open another, reopen the same row, create new) discards unsaved in-memory state, so it is guarded.
+- [x] Done (Phase 5, 2026-11-01): `useProjectSwitch.openProject`/`ensureSafeToSwitch` is the single funnel for every `setCurrentProject` call site (Home, OpenProjectModal, TopBar File ▸ Recent, CreateProjectModal pre-insert). When dirty, a three-way Naive dialog offers Save & continue (persists via the silent core, aborts the switch on failure), Discard changes (drops the pending autosave; the DB keeps the last saved row) and Cancel. Switches also flush pending targeted layout writes first, and `openProject` navigates to the id'd session URL.
+Tags: `feat` `project-management`
+
+#### Feat: Resume where you left off
+<!-- id: task-1792838400000-15 -->
+Remember the last project and mode, encoded in the URL route/params, and restore them on launch.
+- [x] Done (Phase 5, 2026-11-01): route is `/workspace/:projectId?` with a `?perspective=` query — F5 and shared deep links restore the exact session (router guard loads the row by id, applies the perspective, unknown ids land on Home; `Workspace.vue`'s onMounted redirect moved into the guard). `useSessionPersistence` (App.vue) mirrors `{projectId, perspective}` to localStorage and stamps `settings.lastPerspective` in-memory (rides autosave — feeds the table's Mode column). On launch, the first navigation redirects Home → last workspace once per launch (one-time flag, so logo/File ▸ Exit still reach Home), gated by the new `autoReopenLastProject` general setting (default on); Home also gained a `ResumeBanner` card for the exit-to-Home path and the setting-off mode. TopBar/keyboard `path === '/workspace'` checks fixed to accept id'd URLs.
+Tags: `feat` `project-management`
+
+#### Feat: Per-project layout persistence
+<!-- id: task-1792838400000-16 -->
+Remember each project's Golden Layout panel state (position, size, collapsed state, etc.) and restore it when the project is opened.
+- [x] Done (Phase 5, 2026-11-01): DB v5 adds a nullable `layouts` object column (`Project.layouts` holds an opaque JSON config — golden-layout's recursive interfaces are kept out of Pinia's UnwrapRef to avoid TS2589). `GoldenLayout.vue` gains a `layoutId` prop: it registers the instance in the new `layout-bridge`, emits debounced + deduped `layout-change` events (`saveLayout()` → `LayoutConfig.fromResolved`), and emits a final state synchronously on unmount. Both perspectives reconcile the saved config against their live component registry via the pure `layout-reconcile.ts` (stale componentTypes dropped, emptied branches pruned with `activeItemIndex` clamping, missing types appended from the default config; 8 headless checks). `useLayoutPersistence` mirrors arrangements into `project.layouts` WITHOUT dirtying the project and, while clean, writes the column via the targeted `updateProjectLayouts` (no `updatedAt` stamp — panel drags don't reshuffle recents); while dirty, `persistCurrentProject`'s new `syncLiveLayouts()` carries the live arrangement with the row save. Flushes on pagehide and project switch.
+Tags: `feat` `project-management` `layout`
