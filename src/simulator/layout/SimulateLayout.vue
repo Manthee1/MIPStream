@@ -8,6 +8,8 @@ import SchematicViewer from '../../editor/components/SchematicViewer.vue';
 import { LayoutConfig, type ComponentItemConfig } from 'golden-layout';
 import { useProjectStore } from '../../stores/projectStore';
 import { getManifest } from '../../shared/manifestRegistry';
+import { reconcileLayoutConfig } from '../../shared/utils/layout-reconcile';
+import { useLayoutPersistence } from '../../composables/useLayoutPersistence';
 
 /**
  * Simulate perspective layout (Phase 4). Panel discovery is data-driven:
@@ -84,7 +86,7 @@ const editorTabs: ComponentItemConfig[] = editorIds.map((editorId) => {
 
 // ----------------------------------------------------------- root config
 
-const config: LayoutConfig = {
+const defaultConfig: LayoutConfig = {
   root: {
     type: 'row',
     content: [
@@ -113,10 +115,25 @@ const config: LayoutConfig = {
     ],
   },
 };
+
+// -------------------------------------------- persisted layout restoration
+
+/**
+ * A saved arrangement may predate architecture changes, so it is reconciled
+ * against the component registry built above: stale panels drop, new panels
+ * append. Falls back to the default arrangement when nothing was saved.
+ */
+const { handleLayoutChange } = useLayoutPersistence();
+
+const savedLayout = projectStore.currentProject?.layouts?.simulate;
+const config: LayoutConfig = savedLayout
+  ? reconcileLayoutConfig(savedLayout as unknown as LayoutConfig, defaultConfig, Object.keys(components))
+  : defaultConfig;
 </script>
 
 <template>
   <div class="w-full h-full">
-    <GoldenLayout :config="config" :components="components" />
+    <GoldenLayout :config="config" :components="components" layout-id="simulate"
+      @layout-change="(c) => handleLayoutChange('simulate', c)" />
   </div>
 </template>

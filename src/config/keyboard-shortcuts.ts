@@ -31,7 +31,7 @@ function simulateOnly(action: () => boolean | void): () => void {
 /** True when the workspace is open with a loaded project. */
 function workspaceWithProject(): boolean {
   return (
-    router.currentRoute.value.path === "/workspace" &&
+    router.currentRoute.value.path.startsWith("/workspace") &&
     !!useProjectStore().currentProject
   );
 }

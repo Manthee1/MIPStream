@@ -1,23 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useMessage } from 'naive-ui';
-import { useProjectStore } from '../stores/projectStore';
-import { useUIStore } from '../stores/UIStore';
 import DesignLayout from '../editor/layout/DesignLayout.vue';
 import SimulateLayout from '../simulator/layout/SimulateLayout.vue';
+import { useUIStore } from '../stores/UIStore';
 
-const router = useRouter();
-const message = useMessage();
-const projectStore = useProjectStore();
+// Project/perspective presence is enforced by the router guard (a workspace
+// URL without a loadable project redirects to Home), so this component only
+// picks the layout for the active perspective.
 const uiStore = useUIStore();
-
-onMounted(() => {
-  if (!projectStore.currentProject) {
-    message.warning('No project loaded. Redirecting to home...');
-    router.push('/');
-  }
-});
 </script>
 
 <template>

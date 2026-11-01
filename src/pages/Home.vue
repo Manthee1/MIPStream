@@ -2,25 +2,17 @@
 import { onMounted } from 'vue';
 import { useProjectStore } from '../stores/projectStore';
 import { useUIStore } from '../stores/UIStore';
-import { useRouter } from 'vue-router';
 import { IconPlus, IconFolderOpen } from '@tabler/icons-vue';
-import { NLayout, NLayoutContent, NSpace, NCard, NText, NH1, NH2, useMessage, NButton, NFlex } from 'naive-ui';
-import { Project } from '../shared/types/project';
+import { NLayout, NLayoutContent, NSpace, NH1, NH2 } from 'naive-ui';
 import StartActionButton from '../components/projects/StartActionButton.vue';
+import ResumeBanner from '../components/projects/ResumeBanner.vue';
+import RecentProjectsTable from '../components/projects/RecentProjectsTable.vue';
 
 const projectStore = useProjectStore();
 const uiStore = useUIStore();
-const router = useRouter();
-const message = useMessage();
 
 const createNewProject = () => {
   uiStore.showCreateProjectModal = true;
-};
-
-const openProject = (project: Project) => {
-  projectStore.setCurrentProject(project);
-  message.success(`Loaded project: ${project.name}`);
-  router.push('/workspace');
 };
 
 const handleFileOpen = () => {
@@ -41,6 +33,8 @@ onMounted(() => {
         </header>
 
         <main class="grid gap-8">
+          <ResumeBanner />
+
           <section>
             <n-h2 class="text-xl font-semibold mb-4">Start</n-h2>
             <n-space vertical :size="16">
@@ -57,25 +51,7 @@ onMounted(() => {
 
           <section>
             <n-h2 class="text-xl font-semibold mb-4">Recent Projects</n-h2>
-            <n-card v-if="projectStore.recentProjects.length > 0" class="" content-style="padding: 0;">
-              <n-flex vertical :size="2">
-                <n-button v-for="project in projectStore.recentProjects" size="large" :key="project.id"
-                  @click="openProject(project)" class="recent-project-button border-b last:border-0" block>
-                  <div class="w-full flex items-center justify-between cursor-pointer transition-colors">
-                    <div class="">
-                      <n-text strong>{{ project.name }}</n-text>
-                      <div v-if="project.description" class="text-xs mt-1">{{ project.description }}</div>
-                    </div>
-                    <n-text depth="3" class="text-xs text-right">Last updated: {{ new
-                      Date(project.updatedAt).toLocaleDateString()
-                    }}</n-text>
-                  </div>
-                </n-button>
-              </n-flex>
-            </n-card>
-            <n-card v-else class="">
-              <n-text depth="3">No recent projects found. Start by creating a new project.</n-text>
-            </n-card>
+            <RecentProjectsTable />
           </section>
         </main>
       </div>
@@ -87,9 +63,5 @@ onMounted(() => {
 :deep(.n-h1),
 :deep(.n-h2) {
   margin-top: 0;
-}
-
-:deep(.recent-project-button .n-button__content) {
-  width: 100%;
 }
 </style>

@@ -4,6 +4,7 @@ import { computed, ref, watch } from "vue";
 import { useProjectStore } from "../stores/projectStore";
 import { useUIStore } from "../stores/UIStore";
 import type { ArchitectureConfiguration } from "../shared/types/architecture";
+import type { ProjectEditor } from "../shared/types/project";
 import { ensureConfiguration } from "../config/default-configuration";
 import { isaWarnings } from "../shared/utils/isa-validation";
 import { pipelineWarnings } from "../shared/utils/pipeline-stages";
@@ -25,6 +26,13 @@ export function useArchitectureSettings() {
   });
 
   const draft = ref<ArchitectureConfiguration | null>(null);
+  /**
+   * Drafted project editors (software layer). Editors live outside the
+   * architecture configuration but are committed with it — one settings
+   * confirm, one undo entry — so the editor set and the assembler mappings
+   * can never drift apart.
+   */
+  const editorDraft = ref<ProjectEditor[] | null>(null);
 
   // A fresh draft is taken every time the modal opens.
   watch(
@@ -35,8 +43,12 @@ export function useArchitectureSettings() {
         draft.value = ensureConfiguration(
           JSON.parse(JSON.stringify(projectStore.currentProject.architecture.configuration ?? {}))
         );
+        editorDraft.value = JSON.parse(
+          JSON.stringify(projectStore.currentProject.software?.editors ?? [])
+        ) as ProjectEditor[];
       } else {
         draft.value = null;
+        editorDraft.value = null;
       }
     }
   );
@@ -52,6 +64,12 @@ export function useArchitectureSettings() {
       ? (JSON.parse(
           JSON.stringify(projectStore.currentProject.architecture.configuration ?? {})
         ) as ArchitectureConfiguration)
+      : undefined;
+    // The prior editor set rides the same undo entry when the batch changed it.
+    const previousEditors = designer
+      ? (JSON.parse(
+          JSON.stringify(projectStore.currentProject.software?.editors ?? [])
+        ) as ProjectEditor[])
       : undefined;
 
     projectStore.updateArchitecture((architecture) => {
@@ -103,12 +121,21 @@ export function useArchitectureSettings() {
       };
 
       if (designer) {
-        // One undo entry covering the canvas cascade AND the configuration.
-        designer.withSettingsBatch(applySync, previousConfiguration!);
+        // One undo entry covering the canvas cascade AND the configuration
+        // (AND the editor set when the batch changed it).
+        designer.withSettingsBatch(applySync, previousConfiguration!, previousEditors);
       } else {
         applySync();
       }
     });
+
+    // Software layer: the drafted editor set lands in the project. New
+    // editors immediately gain a Simulate-mode tab; removed editors take
+    // their assembler mappings (already stripped from the draft) with them.
+    projectStore.updateSoftware((software) => {
+      software.editors = editorDraft.value ?? [];
+    });
+
     uiStore.closeArchitectureSettings();
   }
 
@@ -120,5 +147,5 @@ export function useArchitectureSettings() {
     ];
   });
 
-  return { show, draft, warnings, commit };
+  return { show, draft, editorDraft, warnings, commit };
 }

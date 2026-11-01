@@ -7,9 +7,17 @@ import CreateProjectModal from './components/projects/CreateProjectModal.vue'
 import OpenProjectModal from './components/projects/OpenProjectModal.vue'
 import ArchitectureSettingsModal from './editor/components/settings/ArchitectureSettingsModal.vue'
 import { useUIStore } from './stores/UIStore'
+import { useAutosave } from './composables/useAutosave'
+import { useSessionPersistence } from './composables/useSessionPersistence'
 
 const { isDark } = useTheme()
 const uiStore = useUIStore()
+
+// App-lifetime background autosave watcher + data-safety unload guards.
+// Hosted here (above the providers) because it never needs message/dialog.
+useAutosave()
+// Session mirror: last project/perspective → localStorage + workspace URL.
+useSessionPersistence()
 
 const theme = ref(isDark ? darkTheme : null)
 

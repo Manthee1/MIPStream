@@ -5,8 +5,13 @@ import SchematicEditor from '../components/SchematicEditor.vue';
 import InspectorPanel from '../components/InspectorPanel.vue';
 import ProblemsPanel from '../components/ProblemsPanel.vue';
 import { LayoutConfig } from 'golden-layout';
+import { useProjectStore } from '../../stores/projectStore';
+import { reconcileLayoutConfig } from '../../shared/utils/layout-reconcile';
+import { useLayoutPersistence } from '../../composables/useLayoutPersistence';
 
-const config: LayoutConfig = {
+const projectStore = useProjectStore();
+
+const defaultConfig: LayoutConfig = {
   root: {
     type: 'row',
     content: [
@@ -50,10 +55,21 @@ const components = {
   Problems: ProblemsPanel,
   Inspector: InspectorPanel
 };
+
+// Restore the project's saved Design arrangement when one exists, reconciled
+// against the fixed component registry above (stale panels drop, missing
+// panels append). Falls back to the default arrangement otherwise.
+const { handleLayoutChange } = useLayoutPersistence();
+
+const savedLayout = projectStore.currentProject?.layouts?.design;
+const config: LayoutConfig = savedLayout
+  ? reconcileLayoutConfig(savedLayout as unknown as LayoutConfig, defaultConfig, Object.keys(components))
+  : defaultConfig;
 </script>
 
 <template>
   <div class="w-full h-full">
-    <GoldenLayout :config="config" :components="components" />
+    <GoldenLayout :config="config" :components="components" layout-id="design"
+      @layout-change="(c) => handleLayoutChange('design', c)" />
   </div>
 </template>

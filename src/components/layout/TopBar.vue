@@ -5,20 +5,25 @@ import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NBut
 import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2, IconDatabaseImport, IconRestore, IconArrowUp } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { useSimulationStore } from '../../stores/simulationStore';
 import { useSimulation } from '../../composables/useSimulation';
 import useTheme from '../../composables/useTheme';
 import { useProjectSave } from '../../composables/useProjectSave';
+import { useProjectSwitch } from '../../composables/useProjectSwitch';
+import { autosaveError, lastAutosavedAt } from '../../composables/useAutosave';
 import { useKeyboard } from '../../composables/useKeyboard';
 
 const uiStore = useUIStore();
 const projectStore = useProjectStore();
+const settingsStore = useSettingsStore();
 const router = useRouter();
 const route = useRoute();
 const message = useMessage();
 const { isDark, toggleTheme } = useTheme();
 
 const { saveCurrentProject } = useProjectSave();
+const { openProject } = useProjectSwitch();
 const { setShortcut, removeShortcut } = useKeyboard();
 
 // Simulation controls (Simulate perspective only).
@@ -80,7 +85,7 @@ onUnmounted(() => {
 });
 
 const hasProject = computed(() => !!projectStore.currentProject);
-const isWorkspace = computed(() => route.path === '/workspace');
+const isWorkspace = computed(() => route.path === '/workspace' || route.path.startsWith('/workspace/'));
 const currentProjectName = computed(() => projectStore.currentProject?.name || 'No Project');
 
 const handleFileMenu = (key: string) => {
@@ -105,7 +110,7 @@ const fileOptions = computed(() => [
     label: 'Recent Projects', key: 'recent', icon: () => h(NIcon, null, { default: () => h(IconHistory) }),
     children: projectStore.recentProjects.map(p => ({
       label: p.name, key: `recent-${p.id}`,
-      props: { onClick: () => { projectStore.setCurrentProject(p); router.push('/workspace'); } }
+      props: { onClick: () => { void openProject(p); } }
     }))
   },
   { type: 'divider', key: 'd1' },
@@ -142,6 +147,19 @@ const helpOptions = [
 ];
 
 const handleSave = () => { void saveCurrentProject(); };
+
+// Autosave status hint next to the project title (workspace only).
+const autosaveStatus = computed(() => {
+  if (!hasProject.value || !isWorkspace.value || !settingsStore.autoSave) return null;
+  if (autosaveError.value) return { text: autosaveError.value, error: true };
+  if (lastAutosavedAt.value) {
+    return {
+      text: `Saved ${lastAutosavedAt.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      error: false,
+    };
+  }
+  return null;
+});
 </script>
 
 
@@ -166,9 +184,13 @@ const handleSave = () => { void saveCurrentProject(); };
     </div>
 
     <!-- Center Section -->
-    <div class="flex justify-center min-w-0 px-4">
+    <div class="flex justify-center min-w-0 px-4 items-baseline">
       <n-text depth="3" class="text-xs font-medium truncate max-w-[40vw]">
         {{ currentProjectName }}{{ projectStore.projectSaved ? '' : '*' }}
+      </n-text>
+      <n-text v-if="autosaveStatus" :type="autosaveStatus.error ? 'error' : 'default'" depth="3"
+        class="text-xs ml-2 shrink-0 tabular-nums">
+        {{ autosaveStatus.text }}
       </n-text>
     </div>
 

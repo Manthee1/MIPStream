@@ -9,9 +9,17 @@ export const generalSettingTabs: SettingTab[] = [
                 key: 'autoSave',
                 label: 'Auto Save',
                 type: 'checkbox',
-                default: false,
-                description: 'Enable or disable auto-saving of your work after any code change.',
+                default: true,
+                description: 'Automatically save the project a few seconds after any change (canvas, code, or configuration).',
                 icon: 'save'
+            },
+            {
+                key: 'autoReopenLastProject',
+                label: 'Reopen Last Project on Launch',
+                type: 'checkbox',
+                default: true,
+                description: 'When the app starts, jump straight back into the last opened project and perspective. Home stays reachable via the logo or File > Exit.',
+                icon: 'history'
             }
         ]
     },

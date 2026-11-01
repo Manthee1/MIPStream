@@ -5,6 +5,7 @@ import { PROJECT_TEMPLATES } from '../../config/templates';
 import { insertProject } from '../../services/projectsService';
 import { useRouter } from 'vue-router';
 import { useProjectStore } from '../../stores/projectStore';
+import { useProjectSwitch } from '../../composables/useProjectSwitch';
 import * as TablerIcons from '@tabler/icons-vue';
 
 const props = defineProps<{
@@ -16,6 +17,7 @@ const emit = defineEmits(['update:show', 'created']);
 const router = useRouter();
 const message = useMessage();
 const projectStore = useProjectStore();
+const { ensureSafeToSwitch } = useProjectSwitch();
 
 const formRef = ref<any>(null);
 const loading = ref(false);
@@ -45,6 +47,8 @@ const handleCancel = () => {
 const handleCreate = async () => {
   formRef.value?.validate(async (errors: any) => {
     if (!errors) {
+      // Replacing the active project discards its unsaved state — guard first.
+      if (!(await ensureSafeToSwitch())) return;
       loading.value = true;
       try {
         const template = selectedTemplate.value;
@@ -63,7 +67,8 @@ const handleCreate = async () => {
         projectStore.setCurrentProject(newProject);
         emit('update:show', false);
         emit('created', newProject);
-        router.push('/workspace');
+        // Session URL form so F5/deep-links restore this project immediately.
+        router.push({ path: `/workspace/${newProject.id}` });
       } catch (error: any) {
         message.error('Failed to create project: ' + error.message);
       } finally {

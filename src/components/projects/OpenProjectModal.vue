@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { NModal, NCard, NList, NListItem, NText, NButton, NSpace, useMessage, NIcon, NThing } from 'naive-ui';
 import { getProjects } from '../../services/projectsService';
 import { Project } from '../../shared/types/project';
-import { useProjectStore } from '../../stores/projectStore';
-import { useRouter } from 'vue-router';
 import { IconFolder, IconClock } from '@tabler/icons-vue';
+import { useProjectSwitch } from '../../composables/useProjectSwitch';
 
 const props = defineProps<{
   show: boolean;
@@ -13,9 +12,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:show']);
 
-const projectStore = useProjectStore();
-const router = useRouter();
 const message = useMessage();
+const { openProject } = useProjectSwitch();
 
 const projects = ref<Project[]>([]);
 const loading = ref(false);
@@ -31,11 +29,12 @@ const loadProjects = async () => {
   }
 };
 
-const handleOpen = (project: Project) => {
-  projectStore.setCurrentProject(project);
-  message.success(`Loaded project: ${project.name}`);
-  emit('update:show', false);
-  router.push('/workspace');
+const handleOpen = async (project: Project) => {
+  // Close only on success — cancelling the unsaved-changes guard keeps the
+  // picker open so the user can reconsider.
+  if (await openProject(project)) {
+    emit('update:show', false);
+  }
 };
 
 const handleCancel = () => {
@@ -49,7 +48,6 @@ onMounted(() => {
 });
 
 // Watch for show prop to refresh list
-import { watch } from 'vue';
 watch(() => props.show, (newVal) => {
   if (newVal) {
     loadProjects();
