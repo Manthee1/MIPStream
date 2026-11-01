@@ -21,16 +21,19 @@ import type { LoadPlan, LoadPlanEntry, SimulationTargets } from "./types";
 const INSTRUCTION_MEMORY_TYPE = "std.imem";
 const DATA_MEMORY_TYPE = "std.dmem";
 const PROGRAM_COUNTER_TYPE = "std.pc";
+const STAGE_REGISTER_TYPE = "std.register";
 
 /**
  * Scans a document for the modules a loaded program interacts with. The PC
  * is identified purely by its fixed `std.pc` typeId (see the manifest); when
  * the netlist has none, halt detection is disabled — generic netlists run
- * until the user stops them.
+ * until the user stops them. Settings-managed stage boundary registers are
+ * collected for the session's pipeline-drain halt semantics.
  */
 export function scanSimulationTargets(document: ArchitectureDocument): SimulationTargets {
     const instructionMemories: string[] = [];
     const dataMemories: string[] = [];
+    const boundaryRegisters: string[] = [];
     let pcDesignator: string | null = null;
 
     for (const module of document.modules ?? []) {
@@ -44,10 +47,15 @@ export function scanSimulationTargets(document: ArchitectureDocument): Simulatio
             case PROGRAM_COUNTER_TYPE:
                 pcDesignator = pcDesignator ?? module.designator;
                 break;
+            case STAGE_REGISTER_TYPE:
+                if ((module.config as Record<string, unknown> | undefined)?.managed === true) {
+                    boundaryRegisters.push(module.designator);
+                }
+                break;
         }
     }
 
-    return { instructionMemories, dataMemories, pcDesignator };
+    return { instructionMemories, dataMemories, pcDesignator, boundaryRegisters };
 }
 
 /** Input bundle for `buildLoadPlan`. */

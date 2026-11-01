@@ -22,6 +22,13 @@ export interface SimulationTargets {
      * Stop).
      */
     pcDesignator: string | null;
+    /**
+     * Designators of the settings-managed pipeline boundary registers
+     * (`std.register` with `managed: true`), in document order. Empty for
+     * single-cycle and generic netlists; their presence switches halt
+     * handling to pipeline-drain semantics (see `SimulationSession`).
+     */
+    boundaryRegisters: string[];
 }
 
 /** One mapping row's assembled contribution to the machine images. */

@@ -9,6 +9,7 @@
 #### Feat: Assembly code editor panel
 <!-- id: task-1792838400000-0 -->
 Add a CodeMirror-based editor as a dedicated panel in Simulator mode (follows the general architecture configurator, which is already done). Must work generically with any ISA definition provided to it.
+<!-- done-note: Done (Phase 4, 2026-10-31, remaining: "other conveniences"): `src/simulator/language/` ships the ISA-driven support bundle (`buildAssemblySupport`) attached through `useCodeMirror`'s support compartment — StreamParser mirroring the assembler tokenizer (tokenTable→HighlightStyle on app theme vars), debounced live lint over the real `assemble()` contract, ISA autocomplete (mnemonics with operand templates at statement positions, registers + doc labels at operand positions), Ctrl/⌘+Click go-to-definition, and the current-instruction line highlight (live PC `>>> 2` → load-time `pcLineMap` threaded through `LoadPlanEntry` → `simulationStore.pcLineMaps`; cycles via the store's cycle-count ticks, no extra rAF loop). `npm run language:check` rig covers parser/lint-mapping/labels/highlight-field headlessly. -->
 - [x] CodeMirror 6 foundation (Phase 4): line numbers, history, token-synced theme, two-way `sourceCode` binding
 - [x] Diagnostics strip (line + column, click-to-reveal) consuming the Phase 1 assembler contract
 - [x] Syntax highlighting and autocomplete
@@ -18,15 +19,6 @@ Add a CodeMirror-based editor as a dedicated panel in Simulator mode (follows th
 - [ ] Other common code-editor conveniences
 - [x] Include a compile button in the panel
 Tags: `feat` `simulator`
-<!-- priority: high -->
-<!-- done-note: Done (Phase 4, 2026-10-31, remaining: "other conveniences"): `src/simulator/language/` ships the ISA-driven support bundle (`buildAssemblySupport`) attached through `useCodeMirror`'s support compartment — StreamParser mirroring the assembler tokenizer (tokenTable→HighlightStyle on app theme vars), debounced live lint over the real `assemble()` contract, ISA autocomplete (mnemonics with operand templates at statement positions, registers + doc labels at operand positions), Ctrl/⌘+Click go-to-definition, and the current-instruction line highlight (live PC `>>> 2` → load-time `pcLineMap` threaded through `LoadPlanEntry` → `simulationStore.pcLineMaps`; cycles via the store's cycle-count ticks, no extra rAF loop). `npm run language:check` rig covers parser/lint-mapping/labels/highlight-field headlessly. -->
-<!-- priority: high -->
-
-#### Feat: Add stage instruction info to viewer
-<!-- id: task-1793457051806-4978 -->
-Just like MIPSIM or any other educational simulator. The diagram visualization should have a bar on top showing each instruction moving through the pipeline from left to right. This should corelate with the actual pipeline config in the architecture. full instructions should be shown just as they apear in the editor with light parsing to standardize them. The text should scale to fit its cell.
-- [x] Done (Phase 4, 2026-10-31): `StageInstructionBar.vue` mounted above the viewer canvas (viewer became a flex column). Driven by `useStageVisualizer` — stage 0 samples the `std.pc` q output, stage i samples the managed boundary register with `stageIndex = i-1`; values resolve to the source line by exact match against the program's assembled instruction words (registers that latch the fetched word itself), then the byte-addressed PC (`>>> 2`), then a bare index — unresolvable values show an empty cell, never raw hex (amended same day after review). `startStageBoundary` blanks pre-identity stages. Instruction text comes from the load-time program snapshot (`simulationStore.loadedPrograms`: per-editor `pcLineMap` + source lines + flattened `instructionWords`, the halt-detection first-entry convention) normalized with `normalizeInstructionText` (comments stripped, whitespace collapsed). Text auto-fits via `FitText.vue` (transform-scale, ResizeObserver). New `showInstructionBar` pipeline config toggle in Pipeline Settings (default shown, legacy-safe). 60fps sampling loop dirty-checks before touching reactive state.
-Tags: `uiux` `simulation` `simulator` `feat`
 <!-- priority: high -->
 
 ## Architecture Designer
@@ -52,12 +44,20 @@ Tags: `feat` `designer` `wiring`
 #### Feat: Configurable pin count
 <!-- id: task-1792838400000-7 -->
 Stage registers should support a configurable number of input/output pins (input and output counts must stay in sync). Reuse the control unit's UI pattern.
+- [x] Done (Phase 5, 2026-11-01): pins are configurable from the Inspector via a new control-unit-style editor (`RegisterConfigEditor.vue` — uncontrolled rows, whole-config commits). Each pin is a D/Q pair with its own label + width (1–32, count capped at 16). The first pin is the main pair and keeps the legacy `d`/`q` port ids, so saved projects, existing nets and the stage visualizer load byte-identical until edited; extra pins derive `d_<id>`/`q_<id>` from a stable generated id, so deleting one only drops its own nets (reconciled by `setModuleConfig`, one undo entry). The main pin cannot be deleted while siblings exist (it would silently rewire whatever inherits `d`/`q`). Ports ride the common 20-unit pitch; the body and per-pin labels grow with the count. All port/evaluator construction lives in pure `register/logic.ts` (shared by the manifest, the editor and the visualizer) and is covered headlessly by `npm run engine:check` (multi-pin latch, per-pin width masking, legacy-shape regression).
 Tags: `feat` `designer` `stage-registers`
 
 #### Feat: Toggleable reset pin
 <!-- id: task-1792838400000-8 -->
 Add an optional reset pin on top of the stage register, togglable from configuration.
+- [x] Done (Phase 5, 2026-11-01): optional 1-bit `rst` input rendered on the top edge (mux-`sel` precedent), toggled from the same Inspector editor. Synchronous + active-high: an asserted `rst` clears every pin to 0 at the rising edge instead of latching D; left unconnected it binds to the engine's constant-zero rail and stays inert — pure manifest evaluator, zero engine changes. `useStageVisualizer` boundary sampling now falls back through every pin's output (extra pins trusted only on exact instruction-word matches, so narrow control pins can't mislabel cells). The engine rig proves latch-then-clear via a register-driven reset (reads the pre-edge value, then clears both pins while the data inputs stay driven).
 Tags: `feat` `designer` `stage-registers`
+
+#### Feat: Classic pipelined MIPS template
+<!-- id: task-1792838400000-9 -->
+A classic five-stage pipelined MIPS template — real pipeline boundary registers between the stages, not the single-cycle datapath.
+- [x] Done (Phase 5, 2026-11-01): `mips-pipelined` template (`src/config/mips-pipelined-datapath.ts`, 24 modules / 67 nets) — each stage boundary is ONE multi-pin managed `std.register` (the reconciler keeps exactly one per boundary index) whose main pin is the 32-bit instruction word (port `q`), so the instruction bar samples every stage and the halt drain reads the same slot; the ID/EX wall carries the operands, PC+4, sign-extended immediate and all eight control signals as individual pins. Control decodes once in ID and pipelines down; branches resolve in EX (pipelined `branch` ∧ ALU zero) and flush IF/ID + ID/EX through their new synchronous `rst` pins while the PC takes the target (2-cycle penalty). Deliberately classic: no forwarding, no stalls — the regfile's hybrid commit gives a 4-instruction hazard window, documented in the netlist header and padded with nops in the hazard-free starter program (square-by-addition, result 49, taken backward branch every iteration). The session gained pipeline-drain halt semantics (finish only once every managed boundary `q` reads 0; trivially true without them, so single-cycle behavior is byte-identical — Rig D regression intact). Covered by Rig E in `npm run simulation:check`: per-cycle boundary-word positions, flush zeroes + PC redirect, exact cycle counts (18/9/144), starter-program final state, restart via `advance()`.
+Tags: `feat` `designer` `stage-registers` `templates`
 
 ### ALU & ALU Control Unit
 
@@ -215,6 +215,13 @@ Add the ability to change the style of a net to dotted, dashed, solid or other o
 - [x] Done (Phase 3, 2026-10-31): optional `style` ('solid' | 'dashed' | 'dotted', default solid — fully back-compat) on `SerializedNet`; dash rendering in `render/wire.ts` survives the selection/hover/lint/signal stylers and theme rebuilds; `setNetStyle` restyles a whole multi-selection as ONE document change; the Inspector gained a "Wire style" section for net selections (shows "mixed" until one is picked); styles survive save/load, copy/paste and paste-offset moves.
 Tags: `feat` `designer` `control-unit`
 <!-- priority: low -->
+
+#### Feat: Add stage instruction info to viewer
+<!-- id: task-1793457051806-4978 -->
+Just like MIPSIM or any other educational simulator. The diagram visualization should have a bar on top showing each instruction moving through the pipeline from left to right. This should corelate with the actual pipeline config in the architecture. full instructions should be shown just as they apear in the editor with light parsing to standardize them. The text should scale to fit its cell.
+- [x] Done (Phase 4, 2026-10-31): `StageInstructionBar.vue` mounted above the viewer canvas (viewer became a flex column). Driven by `useStageVisualizer` — stage 0 samples the `std.pc` q output, stage i samples the managed boundary register with `stageIndex = i-1`; values resolve to the source line by exact match against the program's assembled instruction words (registers that latch the fetched word itself), then the byte-addressed PC (`>>> 2`), then a bare index — unresolvable values show an empty cell, never raw hex (amended same day after review). `startStageBoundary` blanks pre-identity stages. Instruction text comes from the load-time program snapshot (`simulationStore.loadedPrograms`: per-editor `pcLineMap` + source lines + flattened `instructionWords`, the halt-detection first-entry convention) normalized with `normalizeInstructionText` (comments stripped, whitespace collapsed). Text auto-fits via `FitText.vue` (transform-scale, ResizeObserver). New `showInstructionBar` pipeline config toggle in Pipeline Settings (default shown, legacy-safe). 60fps sampling loop dirty-checks before touching reactive state.
+Tags: `uiux` `simulation` `simulator` `feat`
+<!-- priority: high -->
 
 #### Fix: Wire ghost fidelity
 <!-- id: task-1792838400000-3 -->

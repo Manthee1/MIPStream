@@ -21,6 +21,10 @@
  *   a time through the golden datapath — exact register/memory/PC state
  *   asserted after every cycle (one instruction per cycle, hybrid writeback
  *   timing, halt word consuming no cycle).
+ * - Rig E (golden pipeline): the shipped mips-pipelined template — boundary
+ *   registers advancing one stage per cycle, taken-branch flush (IF/ID +
+ *   ID/EX cleared while the PC takes the target), hazard-free spacing, and
+ *   the session draining the pipe past the halt word before finishing.
  */
 
 import { MIPS_ASSEMBLER_CONFIG } from "@/config/isa-presets";
@@ -53,7 +57,9 @@ import { aluEvaluate } from "@/shared/manifests/alu/logic";
 import { selectMuxInput } from "@/shared/manifests/mux/logic";
 import { gateEvaluate } from "@/shared/manifests/logic/logic";
 import { MIPS_SINGLE_CYCLE_MODULES, MIPS_SINGLE_CYCLE_NETS } from "@/config/mips-single-cycle-datapath";
+import { MIPS_PIPELINED_MODULES, MIPS_PIPELINED_NETS } from "@/config/mips-pipelined-datapath";
 import { PROJECT_TEMPLATES } from "@/config/templates";
+import { createRegisterEvaluators, generateRegisterPorts, type RegisterConfig } from "@/shared/manifests/register/logic";
 import type {
     ModuleEvaluators,
     ModuleManifest,
@@ -544,6 +550,20 @@ const mirrorAnd: ModuleManifest<{ op: "and" }> = {
     }),
 };
 
+const mirrorRegister: ModuleManifest<RegisterConfig> = {
+    typeId: "std.register",
+    label: "Stage Register",
+    description: "",
+    icon: "",
+    category: "memory",
+    defaultConfig: { bitWidth: 32 },
+    // The boundary walls ride the production port/evaluator factories —
+    // pins, reset and timing are the real shipped logic (the same imports
+    // engine-smoke exercises).
+    generatePorts: generateRegisterPorts,
+    createEvaluators: createRegisterEvaluators,
+};
+
 registerManifest(mirrorConstant);
 registerManifest(mirrorAdder);
 registerManifest(mirrorImem);
@@ -558,6 +578,7 @@ registerManifest(mirrorMux2);
 registerManifest(mirrorExtender);
 registerManifest(mirrorShifter);
 registerManifest(mirrorAnd);
+registerManifest(mirrorRegister);
 
 // ---------------------------------------------------------------- Rig A
 // No PC: image write-through, one-to-many mappings, `.data` packing,
@@ -1156,6 +1177,182 @@ check("rig D trace: halt word consumes no cycle", rigCSession.cycleCount, 7);
 check("rig D trace: PC parked on the halt word", rigCEngine.getPortValue("pc", "q"), 32);
 check("rig D trace: skipped instruction never executed ($t0 = 6, not 99)", rigCReg(8), 6);
 check("rig D trace: final memory state (y = 21)", rigCDmem(1), 21);
+
+// ---------------------------------------------------------------- Rig E
+// The golden pipelined datapath: THE shipped mips-pipelined template — its
+// own architecture (netlist + configuration) and starter program, compiled
+// with the mirror manifests (std.register rides the production factories).
+//
+// Timing model: the boundary walls are empty at load, so instruction k
+// (0-based) sits in IF/ID during cycle k+1, ID/EX during k+2, EX/MEM
+// during k+3, MEM/WB during k+4, and its hybrid writeback commits on the
+// edge entering cycle k+5 — readable by a consumer in ID from 4
+// instructions of separation on (the hazard window the starter program
+// pads for; there is deliberately no forwarding). A taken beq resolves in
+// EX: the edge redirects the PC and clears IF/ID + ID/EX through their
+// synchronous rst pins (2-cycle penalty). The session keeps clocking past
+// the halt word until every boundary q reads 0, then finishes.
+
+const pipelineTemplate = PROJECT_TEMPLATES.find((template) => template.id === "mips-pipelined");
+check("rig E: mips-pipelined template found", pipelineTemplate !== undefined, true);
+check(
+    "rig E: template ships the golden pipeline by reference",
+    pipelineTemplate?.architecture.modules === MIPS_PIPELINED_MODULES &&
+        pipelineTemplate.architecture.nets === MIPS_PIPELINED_NETS,
+    true,
+);
+
+const rigEDoc: ArchitectureDocument = {
+    modules: pipelineTemplate?.architecture.modules ?? [],
+    nets: pipelineTemplate?.architecture.nets ?? [],
+};
+const rigEEngine = new SimulationEngine(rigEDoc);
+check("rig E: compiles clean (every stage cone edge-bounded)", rigEEngine.hasErrors, false);
+check("rig E: zero warnings (every net width-matched)", rigEEngine.warnings.length, 0);
+const rigESession = new SimulationSession(rigEEngine, scanSimulationTargets(rigEDoc));
+check("rig E: PC designator found", rigESession.simulationTargets.pcDesignator, "pc");
+check(
+    "rig E: boundary registers scanned in document order",
+    rigESession.simulationTargets.boundaryRegisters.join(","),
+    "ifId,idEx,exMem,memWb",
+);
+
+/** Loads a program into the rig using the pipelined template's configuration. */
+function rigELoad(source: string): void {
+    const built = buildLoadPlan({
+        configuration: pipelineTemplate!.architecture.configuration,
+        editors: [editor("main", source)],
+        targets: rigESession.simulationTargets,
+    });
+    if (built.loadErrors.length > 0 || built.plan.assemblerDiagnostics.length > 0) {
+        report(
+            false,
+            "rig E: program assembles clean",
+            `loadErrors: ${built.loadErrors.join("; ")} | diagnostics: ${built.plan.assemblerDiagnostics.map((d) => d.message).join("; ")}`
+        );
+        return;
+    }
+    report(rigESession.load(built.plan).ok, "rig E: program loads", "load refused");
+}
+
+function rigEReg(index: number): number {
+    return (rigEEngine.getModuleState("reg") as RegisterFileState).values[index];
+}
+
+function rigEDmem(index: number): number {
+    return (rigEEngine.getModuleState("dmem") as WordMemoryState).words[index];
+}
+
+function rigEImem(index: number): number {
+    return (rigEEngine.getModuleState("imem") as WordMemoryState).words[index];
+}
+
+/** Boundary instruction-word slot (main pin `q`), -1 when unreadable. */
+function rigEQ(designator: string): number {
+    return rigEEngine.getPortValue(designator, "q") ?? -1;
+}
+
+/** Steps a paused session until the drained finish (or a rejected step). */
+function stepUntilFinished(session: SimulationSession): void {
+    while (session.status === "paused") session.step();
+}
+
+// -- P1: straight-line hazard-free add — one stage per cycle, then drain.
+const RIG_E_LINEAR =
+    ".text\n" +
+    "addi $t0, $zero, 3\n" + // 0
+    "nop\n" +                // 1
+    "nop\n" +                // 2
+    "nop\n" +                // 3
+    "nop\n" +                // 4   (fill: $t0 readable by a consumer in ID)
+    "addi $t1, $zero, 4\n" + // 5
+    "nop\n" +                // 6
+    "nop\n" +                // 7
+    "nop\n" +                // 8   (fill: $t1 readable)
+    "add  $t2, $t0, $t1\n" + // 9
+    "nop\n" +                // 10
+    "nop\n" +                // 11
+    "nop\n" +                // 12
+    "halt\n";                // 13
+rigELoad(RIG_E_LINEAR);
+check("rig E linear: paused at instruction 0", rigESession.status, "paused");
+rigESession.step();
+check("rig E linear: step 1 — instruction 0 in IF/ID, pipe behind empty", rigEQ("ifId"), rigEImem(0));
+check("rig E linear: step 1 — ID/EX still empty", rigEQ("idEx"), 0);
+check("rig E linear: step 1 — cycle 1, PC advanced", rigESession.cycleCount, 1);
+rigESession.step();
+check("rig E linear: step 2 — instruction 1 in IF/ID", rigEQ("ifId"), rigEImem(1));
+check("rig E linear: step 2 — instruction 0 in ID/EX", rigEQ("idEx"), rigEImem(0));
+rigESession.step();
+check("rig E linear: step 3 — instruction 0 reaches EX/MEM", rigEQ("exMem"), rigEImem(0));
+check("rig E linear: step 3 — instruction 1 in ID/EX", rigEQ("idEx"), rigEImem(1));
+rigESession.step();
+check("rig E linear: step 4 — instruction 0 in MEM/WB (full pipe)", rigEQ("memWb"), rigEImem(0));
+check("rig E linear: step 4 — instruction 3 in IF/ID", rigEQ("ifId"), rigEImem(3));
+rigESession.step();
+check("rig E linear: step 5 — $t0 committed at the edge entering cycle 5", rigEReg(8), 3);
+rigESession.step();
+rigESession.step();
+rigESession.step();
+rigESession.step();
+rigESession.step();
+check("rig E linear: step 10 — $t1 committed (add decoded with both values)", rigEReg(9), 4);
+stepUntilFinished(rigESession);
+check("rig E linear: finished after the pipe drained", rigESession.status, "finished");
+check("rig E linear: exact cycle count (halt word rides the pipe as a zero slot)", rigESession.cycleCount, 18);
+check("rig E linear: PC ran past the halt word while draining", rigEEngine.getPortValue("pc", "q")!, 72);
+check("rig E linear: $t2 = 7 (add retired before finish)", rigEReg(10), 7);
+
+// -- P2: taken branch — the two young slots clear through rst while the
+// PC takes the target; the skipped adds never reach their writeback edges.
+const RIG_E_FLUSH =
+    ".text\n" +
+    "beq $zero, $zero, skip\n" + // 0 taken — flushes the two wrong-path slots
+    "addi $t0, $zero, 99\n" +    // 1 wrong-path — cleared in IF/ID at the edge
+    "addi $t1, $zero, 77\n" +    // 2 wrong-path — cleared in ID/EX at the edge
+    "skip:\n" +
+    "add $t2, $t0, $t1\n" +      // 3 — reads the flushed zeros: $t2 = 0
+    "halt\n";                    // 4
+rigELoad(RIG_E_FLUSH);
+rigESession.step();
+rigESession.step();
+check("rig E flush: before EX resolves, wrong-path words sit in the walls", rigEQ("ifId"), rigEImem(1));
+check("rig E flush: ...and in ID/EX", rigEQ("idEx"), rigEImem(0));
+rigESession.step(); // the beq's EX cycle: branchAnd drives pcMux.sel + both rst pins
+check("rig E flush: taken branch cleared IF/ID at the edge", rigEQ("ifId"), 0);
+check("rig E flush: taken branch cleared ID/EX at the edge", rigEQ("idEx"), 0);
+check("rig E flush: PC redirected to the skip target", rigEEngine.getPortValue("pc", "q")!, 12);
+check("rig E flush: the branch itself proceeds to EX/MEM", rigEQ("exMem"), rigEImem(0));
+check("rig E flush: 2-cycle penalty (PC revisits nothing)", rigESession.cycleCount, 3);
+stepUntilFinished(rigESession);
+check("rig E flush: finished after drain", rigESession.status, "finished");
+check("rig E flush: exact cycle count", rigESession.cycleCount, 9);
+check("rig E flush: skipped add never wrote $t0", rigEReg(8), 0);
+check("rig E flush: skipped add never wrote $t1", rigEReg(9), 0);
+check("rig E flush: $t2 = 0 + 0 (flush made the adds read zeros)", rigEReg(10), 0);
+
+// -- P0: the shipped starter program — hazard-free square-by-addition over
+// the full pipeline (lw/addi/add/slt/beq/sw/nop/halt, taken backward loop
+// branch every iteration). Final state must match the single-cycle golden.
+const starter = pipelineTemplate!.initialSoftware?.[0]?.sourceCode ?? "";
+check("rig E starter: template ships a program", starter.length > 0, true);
+rigELoad(starter);
+rigESession.start();
+check("rig E starter: load → running", rigESession.status, "running");
+check("rig E starter: advance drains and stops at the halt word", rigESession.advance(512), 144);
+check("rig E starter: finished (drain, not truncation)", rigESession.status, "finished");
+check("rig E starter: exact cycle count", rigESession.cycleCount, 144);
+check("rig E starter: $t0 = 7 (value)", rigEReg(8), 7);
+check("rig E starter: $t1 = 49 (7 iterations of += 7)", rigEReg(9), 49);
+check("rig E starter: $t2 = 7 (loop counter)", rigEReg(10), 7);
+check("rig E starter: result word = 49 (sw retired before finish)", rigEDmem(1), 49);
+
+// Restart through the batched advance() path: same program, same exacts.
+check("rig E starter: restart from finished", rigESession.restart(), true);
+rigESession.start();
+check("rig E starter: advance drains and stops at the halt word", rigESession.advance(512), 144);
+check("rig E starter: finished after batched run", rigESession.status, "finished");
+check("rig E starter: result word still 49 after restart", rigEDmem(1), 49);
 
 console.log("");
 if (failures > 0) {

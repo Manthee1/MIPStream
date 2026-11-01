@@ -2,8 +2,10 @@
 
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { getEngine } from '@/composables/useSimulation';
+import type { SimulationEngine } from '@/core/engine/engine';
 import { getActiveDesigner } from '@/editor/core/designer-bridge';
 import { normalizeInstructionText } from '@/shared/utils/instruction-text';
+import { registerOutputPortIds, type RegisterPinsConfig } from '@/shared/manifests/register/logic';
 import type { LoadedProgramSnapshot } from '@/stores/simulationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useSimulationStore } from '@/stores/simulationStore';
@@ -118,6 +120,34 @@ export function useStageVisualizer() {
     return sourceLine === undefined ? null : normalizeInstructionText(sourceLine);
   }
 
+  /** Exact encoded-instruction-word match — extra pins are trusted on this alone. */
+  function resolveWordCell(raw: number | null, program: LoadedProgramSnapshot | null): string | null {
+    if (raw === null || !program) return null;
+    const wordHit = wordIndexMap(program).get(raw);
+    return wordHit === undefined ? null : lineText(program, wordHit);
+  }
+
+  /**
+   * Boundary-register cell. The main pin keeps the legacy loose resolution
+   * (word → PC → index); additional configured pins are only consulted on
+   * exact instruction-word matches — narrow control pins would otherwise
+   * resolve through the bare-index fallback and mislabel the cell.
+   */
+  function boundaryCell(
+    boundary: ModuleLike,
+    engine: SimulationEngine,
+    program: LoadedProgramSnapshot | null
+  ): string | null {
+    const portIds = registerOutputPortIds((boundary.config ?? {}) as RegisterPinsConfig);
+    const main = resolveCell(engine.getPortValue(boundary.designator, portIds[0]), program);
+    if (main !== null) return main;
+    for (let i = 1; i < portIds.length; i += 1) {
+      const text = resolveWordCell(engine.getPortValue(boundary.designator, portIds[i]), program);
+      if (text !== null) return text;
+    }
+    return null;
+  }
+
   /** Encoded word → first instruction index, rebuilt only per program load. */
   let wordIndexCache: { program: LoadedProgramSnapshot | null; map: Map<number, number> } = {
     program: null,
@@ -156,13 +186,24 @@ export function useStageVisualizer() {
     }
 
     const next: StageInstructionCell[] = pipeline.stages.map((stage, index) => {
-      if (index < startIndex) {
+      if (index < startIndex || !engine) {
         return { stageId: stage.id, stageName: stage.name, instruction: null };
       }
-      const designator =
-        index === 0 ? pcDesignator : boundaryRegister(modules, index - 1)?.designator ?? null;
-      const raw = designator && engine ? engine.getPortValue(designator, 'q') : null;
-      return { stageId: stage.id, stageName: stage.name, instruction: resolveCell(raw, program) };
+      if (index === 0) {
+        return {
+          stageId: stage.id,
+          stageName: stage.name,
+          instruction: pcDesignator
+            ? resolveCell(engine.getPortValue(pcDesignator, 'q'), program)
+            : null,
+        };
+      }
+      const boundary = boundaryRegister(modules, index - 1);
+      return {
+        stageId: stage.id,
+        stageName: stage.name,
+        instruction: boundary ? boundaryCell(boundary, engine, program) : null,
+      };
     });
 
     commit(next);

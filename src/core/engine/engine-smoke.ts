@@ -23,6 +23,11 @@ import {
   resolveSplitterFields,
   type SplitterConfig,
 } from "@/shared/manifests/splitter/logic";
+import {
+  createRegisterEvaluators,
+  generateRegisterPorts,
+  type RegisterConfig,
+} from "@/shared/manifests/register/logic";
 import type { ArchitectureDocument } from "./compile/compiler";
 import { SimulationEngine } from "./engine";
 import { lintArchitecture } from "./lint";
@@ -333,6 +338,20 @@ const smokeSplitter: ModuleManifest<SplitterConfig> = {
   },
 };
 
+// Stand-in for the real std.register manifest, but driven by the production
+// port/evaluator factories (`register/logic`): multi-pin D/Q pairs with
+// derived `d_<id>`/`q_<id>` port ids plus the optional synchronous reset.
+const smokeStageRegister: ModuleManifest<RegisterConfig> = {
+  typeId: "std.register",
+  label: "Stage Register",
+  description: "",
+  icon: "",
+  category: "memory",
+  defaultConfig: { bitWidth: 32 },
+  generatePorts: generateRegisterPorts,
+  createEvaluators: createRegisterEvaluators,
+};
+
 registerManifest(smokeConstant);
 registerManifest(smokeAdder);
 registerManifest(smokeAnd);
@@ -343,6 +362,7 @@ registerManifest(smokeHybridReg);
 registerManifest(smokeHybridMem);
 registerManifest(smokeMerger);
 registerManifest(smokeSplitter);
+registerManifest(smokeStageRegister);
 
 // ---------------------------------------------------------------- scenarios
 
@@ -670,6 +690,95 @@ check(
   ),
   false
 );
+
+// 10. Stage register pins + synchronous reset, through the production pin
+//     logic (`register/logic.ts`): the main pair keeps the legacy `d`/`q`
+//     port ids, extra pins derive `d_<id>`/`q_<id>`, every pin latches its
+//     own width on the rising edge, an asserted reset overrides the data
+//     inputs and clears all outputs, and an unconnected reset binds to the
+//     zero rail (inert). The narrow pins trigger the expected 32-bit-constant
+//     width-mismatch warnings — asserted below so the rigs stay honest.
+const pinsRegisterDoc: ArchitectureDocument = {
+  modules: [
+    module("dMain", "smoke.constant", { value: 0xcafe }),
+    module("dAux", "smoke.constant", { value: 0x1ff }),
+    module("sr", "std.register", {
+      bitWidth: 32,
+      pins: [
+        { id: "main", bits: 32 }, // main pair → ports d/q regardless of id
+        { id: "aux", bits: 8, label: "Aux" }, // → ports d_aux/q_aux
+      ],
+    }),
+  ],
+  nets: [
+    net("s1", ["dMain", "out"], ["sr", "d"]),
+    net("s2", ["dAux", "out"], ["sr", "d_aux"]),
+  ],
+};
+const pinsEngine = new SimulationEngine(pinsRegisterDoc);
+check("stage-register: multi-pin compiles clean", pinsEngine.hasErrors, false);
+check(
+  "stage-register: only the expected narrow-pin width-mismatch warning",
+  pinsEngine.warnings.length,
+  1
+);
+check("stage-register: main q starts at 0", pinsEngine.getPortValue("sr", "q"), 0);
+check("stage-register: extra q starts at 0 (private slot)", pinsEngine.getPortValue("sr", "q_aux"), 0);
+pinsEngine.step();
+check("stage-register: main pin latches at the edge", pinsEngine.getPortValue("sr", "q"), 0xcafe);
+check(
+  "stage-register: extra pin latches and masks to its width",
+  pinsEngine.getPortValue("sr", "q_aux"),
+  0xff
+);
+
+// Reset variant: `rst` is driven by a register so it deasserts on the first
+// edge (simultaneous-edge semantics — the reset reads the PRE-edge value),
+// proving latch-then-clear: q rises to 0xcafe with rst low, then a reset
+// edge clears every pin despite the data inputs still being driven.
+const resetRegisterDoc: ArchitectureDocument = {
+  modules: [
+    module("dMain", "smoke.constant", { value: 0xcafe }),
+    module("dAux", "smoke.constant", { value: 0x2a }),
+    module("dOne", "smoke.constant", { value: 1 }),
+    module("rr", "smoke.register", { bitWidth: 32 }),
+    module("sr", "std.register", {
+      bitWidth: 32,
+      reset: true,
+      pins: [
+        { id: "main", bits: 32 },
+        { id: "aux", bits: 8 },
+      ],
+    }),
+  ],
+  nets: [
+    net("s1", ["dMain", "out"], ["sr", "d"]),
+    net("s2", ["dAux", "out"], ["sr", "d_aux"]),
+    net("s3", ["dOne", "out"], ["rr", "d"]),
+    net("s4", ["rr", "q"], ["sr", "rst"]),
+  ],
+};
+const resetEngine = new SimulationEngine(resetRegisterDoc);
+check("stage-register: reset variant compiles clean", resetEngine.hasErrors, false);
+resetEngine.step();
+check("stage-register: inactive reset latches the main pin", resetEngine.getPortValue("sr", "q"), 0xcafe);
+check("stage-register: inactive reset latches the extra pin", resetEngine.getPortValue("sr", "q_aux"), 0x2a);
+resetEngine.step();
+check("stage-register: asserted reset clears the main pin", resetEngine.getPortValue("sr", "q"), 0);
+check("stage-register: asserted reset clears the extra pin", resetEngine.getPortValue("sr", "q_aux"), 0);
+
+// Legacy regression: no `pins` key must produce the exact pre-pins shape —
+// a single 32-bit d/q pair at `bitWidth`, zero warnings.
+const legacyRegisterDoc: ArchitectureDocument = {
+  modules: [module("lD", "smoke.constant", { value: 7 }), module("legacy", "std.register", {})],
+  nets: [net("l1", ["lD", "out"], ["legacy", "d"])],
+};
+const legacyEngine = new SimulationEngine(legacyRegisterDoc);
+check("stage-register: legacy config compiles clean", legacyEngine.hasErrors, false);
+check("stage-register: legacy config has no warnings", legacyEngine.warnings.length, 0);
+check("stage-register: legacy q starts at 0", legacyEngine.getPortValue("legacy", "q"), 0);
+legacyEngine.step();
+check("stage-register: legacy single pin latches", legacyEngine.getPortValue("legacy", "q"), 7);
 
 console.log("");
 if (failures > 0) {

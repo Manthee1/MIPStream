@@ -450,9 +450,19 @@ function firstDescriptionLine(description: string): string {
 function configSummary(config: Record<string, unknown> | undefined): string[] {
   const lines = Object.entries(config ?? {})
     .filter(([key]) => key !== 'managed')
-    .map(([key, value]) =>
-      `${key}: ${typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}`,
-    );
+    .map(([key, value]) => {
+      // Pin lists read as a count with display names, not raw JSON.
+      if (key === 'pins' && Array.isArray(value)) {
+        const names = value
+          .map((pin) => {
+            const def = pin as { label?: string; id?: string };
+            return def.label ?? def.id ?? '?';
+          })
+          .join(', ');
+        return `pins: ${value.length} (${names})`;
+      }
+      return `${key}: ${typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}`;
+    });
   const shown = lines.slice(0, 6);
   if (lines.length > shown.length) shown.push(`+ ${lines.length - shown.length} more`);
   return shown;

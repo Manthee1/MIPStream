@@ -18,8 +18,17 @@ import type { LoadPlan, LoadReport, SimulationStatus, SimulationTargets } from "
  * to execute is the ISA's `halt` encoding (derived by the loader onto the
  * plan — no opcode constant lives here), the session finishes just before
  * executing it, the natural terminator for programs that never run past
- * their last instruction (loops). Single-cycle semantics — pipeline
- * in-flight draining is a later extension at this seam.
+ * their last instruction (loops).
+ *
+ * Pipeline drain: a pipelined datapath (one or more settings-managed
+ * boundary registers in the targets) still holds in-flight instructions
+ * when the halt condition first fires — finishing immediately would
+ * truncate their writebacks. The session therefore keeps clocking until
+ * every boundary register's main output is 0 (the zeros the PC fetches
+ * past the program ripple down as inert no-ops) before reporting
+ * `finished`. Netlists without boundary registers drain trivially,
+ * preserving the single-cycle behavior exactly: the halt word consumes
+ * no cycle.
  *
  * Load attribution note: register-file and data-memory writes are hybrid
  * commits — sampled at the rising clock edge, never during the settle right
@@ -176,13 +185,34 @@ export class SimulationSession {
     /** Executes one cycle and runs the halt checks. */
     private tick(): void {
         // Dedicated halt word: finish just BEFORE executing it — it decodes
-        // to no-op control signals anyway, so no state ever changes.
-        if (this.isHaltInstruction()) {
+        // to no-op control signals anyway, so no state ever changes. A
+        // pipeline only finishes once its in-flight instructions drained.
+        if (this.isHaltInstruction() && this.pipelineDrained()) {
             this.statusValue = "finished";
             return;
         }
         this.engine.step();
-        if (this.isHalted()) this.statusValue = "finished";
+        if (this.isHalted() && this.pipelineDrained()) {
+            this.statusValue = "finished";
+        }
+    }
+
+    /**
+     * Pipeline drain: a halt condition may only end the session once no
+     * boundary register still holds an instruction. Netlists without
+     * managed boundary registers (single-cycle / generic datapaths) are
+     * trivially drained — byte-identical legacy behavior. In a pipeline
+     * the PC keeps advancing past the program while the pipe empties, and
+     * the zeros it fetches (out-of-range imem reads read as 0) flush every
+     * slot; the main output (port `q`) of each boundary register is the
+     * instruction-word slot by the template convention.
+     */
+    private pipelineDrained(): boolean {
+        for (const designator of this.targets.boundaryRegisters) {
+            const value = this.engine.getPortValue(designator, "q");
+            if (value !== null && value !== 0) return false;
+        }
+        return true;
     }
 
     /**

@@ -617,8 +617,9 @@ A manifest can expose configuration in three escalating degrees of specificity:
    entirely. It receives `{ config, onUpdate:config }` and must route every
    mutation through `setModuleConfig`, never mutating the object in place
    (`ModuleConfigEditorProps`). The control unit (signal table + opcode rows),
-   the bit splitter and the bit merger use custom editors because their
-   configuration is a table, not a flat property list.
+   the bit splitter, the bit merger and the stage register (pin list + reset
+   toggle) use custom editors because their configuration is a table, not a
+   flat property list.
 
 A `panel` component follows the same philosophy for the Simulate perspective:
 it receives the resolved `config`, the engine-owned `state` and a `revision`
@@ -677,7 +678,7 @@ compiled at hydration time into a flat `Uint32Array` lookup indexed by
 | `std.regfile` | Register File | rs, rt, rd (*cfg*: 5), wd (*cfg*: 32), we (1) | readA, readB (*cfg*: 32) | Comb (side-effecting) | `registerCount` 2–64 (32), `bitWidth` |
 | `std.imem` | Instruction Memory | addr (32) | instruction (*cfg*: 32) | Comb (ROM read) | `wordCount` 1–65536 (256), `bitWidth` |
 | `std.dmem` | Data Memory | addr (32), wd (*cfg*), memWrite (1), memRead (1) | rdata (*cfg*) | Comb (side-effecting) | `wordCount` 1–65536 (1024), `bitWidth` |
-| `std.register` | Stage Register | d (*cfg*: 32) | q (*cfg*: 32) | Rise | `bitWidth` 1–64; `managed`/`stageIndex`/`stageId` |
+| `std.register` | Stage Register | d + `d_<id>`… (per-pin widths), rst (1, optional) | q + `q_<id>`… | Rise | `bitWidth` (legacy main pin); `pins[]` (id/label/bits); `reset` (sync); `managed`/`stageIndex`/`stageId` |
 | `std.pc` | Program Counter | d (32) | q (32) | Rise | none (width fixed at 32) |
 
 The register-file read addresses are `⌈log₂(registerCount)⌉` bits wide (5 for the
@@ -1532,7 +1533,8 @@ This section is the honest record of where the PDL/assembler currently stands:
   mapped editor and writes the instruction/data images into the engine-owned
   memory state; `SimulationSession` implements the full control table
   (SIMULATOR_OVERVIEW §4), validated end-to-end on the shipped single-cycle
-  datapath by Rigs C/D in `npm run simulation:check`.
+  datapath by Rigs C/D and on the shipped five-stage pipeline by Rig E in
+  `npm run simulation:check`.
 - The Simulate perspective's CodeMirror editor (§9.8) binds the mapped
   `ProjectEditor` and surfaces those diagnostics verbatim (error strip with
   click-to-reveal). The instruction-memory panel can still edit words
@@ -1774,13 +1776,21 @@ select/insert/update/delete/count operations used by `ProjectRepository`.
 
 ### 11.3 Templates and project creation
 
-`src/config/templates.ts` defines two project templates — `blank` (empty
-architecture, one empty `main.s` editor) and `mips-basic` (a complete
+`src/config/templates.ts` defines three project templates — `blank` (empty
+architecture, one empty `main.s` editor), `mips-basic` (a complete
 single-cycle MIPS datapath — the golden 18-module / 33-net netlist defined
 in `src/config/mips-single-cycle-datapath.ts` — with a five-stage
 pipeline configuration, an `imem` mapping, the MIPS ISA preset and a
-starter program) — and the two underlying `ArchitectureConfig` values
-`BLANK_ARCHITECTURE` and `BASIC_MIPS_ARCHITECTURE`. `insertProject`
+starter program) and `mips-pipelined` (the classic five-stage pipelined
+datapath — the golden 24-module / 67-net netlist in
+`src/config/mips-pipelined-datapath.ts`, whose stage boundaries are single
+multi-pin managed `std.register` walls carrying the instruction word and
+the pipelined control signals, with EX-resolved branches flushing IF/ID +
+ID/EX through their synchronous `rst` pins — the same configuration pieces
+plus `pipeline.enabled`, a hazard-free starter program and Rig E headless
+coverage) — and the three underlying `ArchitectureConfig` values
+`BLANK_ARCHITECTURE`, `BASIC_MIPS_ARCHITECTURE` and
+`MIPS_PIPELINED_ARCHITECTURE`. `insertProject`
 deep-copies the chosen architecture and settings into a fresh project so
 templates are never mutated by reference.
 
