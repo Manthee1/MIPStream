@@ -19,6 +19,7 @@ import type { SerializedModule, Pos, PortDefinition, HydratedModule } from '@/sh
 import type { NetEndpoint, SerializedNet, NetBranch, NetStyle } from '@/shared/types/netlist';
 import { isSameEndpoint, netDrivingInput } from '@/shared/utils/netlist';
 import type { GridSettings, ArchitectureConfiguration } from '@/shared/types/architecture';
+import type { ProjectEditor } from '@/shared/types/project';
 import { closestPointOnPolyline, rectsIntersect, SceneRect } from '@/shared/utils/geometry';
 import { composeNetPath, composeNetPathVerbatim } from './render/orthogonal-path';
 import {
@@ -624,7 +625,11 @@ export class SchematicDesigner {
    * out into several designer calls: multi-delete, paste, and the
    * architecture-settings cascade.
    */
-  private runBatched(action: () => void, configuration?: ArchitectureConfiguration): void {
+  private runBatched(
+    action: () => void,
+    configuration?: ArchitectureConfiguration,
+    editors?: ProjectEditor[],
+  ): void {
     if (this.historyBatching) {
       // Already inside a batch — fold into the enclosing entry.
       action();
@@ -639,16 +644,21 @@ export class SchematicDesigner {
       this.historyBatching = false;
     }
     if (!pre || !this.historyBatchMutated) return;
-    this.history.push(configuration ? { ...pre, configuration } : pre);
+    this.history.push(configuration || editors ? { ...pre, configuration, editors } : pre);
     this.lastCommitted = this.captureHistoryEntry();
   }
 
   /**
    * Wraps an architecture-settings cascade so it commits as ONE undo entry
-   * that also restores the prior configuration when undone.
+   * that also restores the prior configuration (and, when the batch changed
+   * the editor set, the prior project editors) when undone.
    */
-  public withSettingsBatch(action: () => void, configuration: ArchitectureConfiguration): void {
-    this.runBatched(action, configuration);
+  public withSettingsBatch(
+    action: () => void,
+    configuration: ArchitectureConfiguration,
+    editors?: ProjectEditor[],
+  ): void {
+    this.runBatched(action, configuration, editors);
   }
 
   public canUndo(): boolean {
@@ -701,6 +711,9 @@ export class SchematicDesigner {
 
     if (entry.configuration) {
       this.config.onConfigurationRestore?.(entry.configuration);
+    }
+    if (entry.editors) {
+      this.config.onEditorsRestore?.(entry.editors);
     }
     // Marks the project unsaved and bumps the revision — without recording
     // (restoring guards recordHistory); lint already ran inside load.

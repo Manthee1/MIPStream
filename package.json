@@ -9,13 +9,19 @@
     "preview": "vite preview",
     "engine:check": "vite build --config vite.engine-check.config.ts && node .engine-check/engine-smoke.js",
     "assembler:check": "vite build --config vite.assembler-check.config.ts && node .assembler-check/assembler-smoke.js",
+    "language:check": "vite build --config vite.language-check.config.ts && node .language-check/language-smoke.js",
     "simulation:check": "vite build --config vite.simulation-check.config.ts && node .simulation-check/simulation-smoke.js",
-    "check": "npm run engine:check && npm run assembler:check && npm run simulation:check"
+    "check": "npm run engine:check && npm run assembler:check && npm run language:check && npm run simulation:check"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/commands": "^6.11.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/search": "^6.7.2",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
     "@tabler/icons-vue": "^3.48.0",
     "@tailwindcss/postcss": "^4.3.3",
     "autoprefixer": "^10.6.1",

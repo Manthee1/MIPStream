@@ -44,6 +44,12 @@ export interface ArchitectureConfiguration {
     enabled: boolean;
     stages: PipelineStageConfig[];
     startStageBoundary?: string;
+    /**
+     * Global switch for the stage instruction visualizer bar (the
+     * SIMULATOR_OVERVIEW §2 "Instruction Display Toggle"). Defaults to shown
+     * when absent (legacy projects); only meaningful while `enabled`.
+     */
+    showInstructionBar?: boolean;
   };
   assembler: {
     /**

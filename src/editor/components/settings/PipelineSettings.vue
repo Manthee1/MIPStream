@@ -25,6 +25,10 @@ function setEnabled(value: boolean): void {
   pipeline().enabled = value;
 }
 
+function setShowInstructionBar(value: boolean): void {
+  pipeline().showInstructionBar = value;
+}
+
 function addStage(): void {
   const config = pipeline();
   const id = makeStageId(`STAGE${config.stages.length + 1}`, config.stages);
@@ -82,6 +86,16 @@ const warnings = () => pipelineWarnings(pipeline().stages, pipeline().startStage
         <n-text depth="3" class="block text-xs">Enables the stage instruction visualizer.</n-text>
       </div>
       <n-switch :value="configuration.pipeline.enabled" @update:value="setEnabled" />
+    </div>
+
+    <div class="flex items-center justify-between">
+      <div>
+        <n-text strong class="text-sm">Instruction display bar</n-text>
+        <n-text depth="3" class="block text-xs">Shows each instruction moving through the stages above the
+          diagram.</n-text>
+      </div>
+      <n-switch :value="configuration.pipeline.showInstructionBar !== false"
+        :disabled="!configuration.pipeline.enabled" @update:value="setShowInstructionBar" />
     </div>
 
     <div class="flex flex-col gap-2">

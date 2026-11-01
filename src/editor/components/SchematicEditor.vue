@@ -91,6 +91,14 @@ onMounted(() => {
       projectStore.updateArchitecture((architecture) => {
         architecture.configuration = configuration;
       });
+    },
+    onEditorsRestore: (editors) => {
+      // Undoing a settings batch that changed the editor set also restores
+      // the prior project editors, so the software layer never drifts from
+      // the committed settings.
+      projectStore.updateSoftware((software) => {
+        software.editors = editors;
+      });
     }
   });
   designer = instance;

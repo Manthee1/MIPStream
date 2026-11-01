@@ -8,7 +8,7 @@ import { SimulationSession } from "@/core/simulation/simulation-session";
 import { requestArchitectureSnapshot } from "@/editor/core/designer-bridge";
 import { documentRevision } from "@/editor/core/selection-bridge";
 import { useProjectStore } from "@/stores/projectStore";
-import { useSimulationStore } from "@/stores/simulationStore";
+import { useSimulationStore, type LoadedProgramSnapshot } from "@/stores/simulationStore";
 
 /**
  * Single owner of the simulation session lifecycle (STYLE_GUIDE §4) — the
@@ -103,11 +103,13 @@ function sourcesChanged(): boolean {
 }
 
 // Any committed architecture edit invalidates the compiled engine and the
-// loaded program — the next control call recompiles fresh.
+// loaded program — the next control call recompiles fresh. The load-time
+// pcLineMaps go stale with the program.
 watch(documentRevision, () => {
   stopLoop();
   session = null;
   compiledRevision = -1;
+  useSimulationStore().setLoadedPrograms({});
   mirrorSession();
 });
 
@@ -163,6 +165,25 @@ function reportLoad(built: BuiltPlan, ok: boolean, loadErrors: string[]): boolea
   const store = useSimulationStore();
   store.setLoadReport([...built.loadErrors, ...loadErrors], built.plan.assemblerDiagnostics);
   store.setHaltedAtCycle(null);
+  // Load-time program snapshots exist only for a successful load — they drive
+  // the current-instruction highlight and the stage instruction visualizer.
+  const programs: Record<string, LoadedProgramSnapshot> = {};
+  if (ok) {
+    for (const entry of built.plan.entries) {
+      // Flatten the assembled instruction words (image order) so the stage
+      // visualizer can match registers that latch the encoded word itself.
+      const instructionWords: number[] = [];
+      for (const image of entry.imemImages.values()) {
+        for (let index = 0; index < image.length; index += 1) instructionWords.push(image[index]);
+      }
+      programs[entry.editorId] = {
+        pcLineMap: entry.pcLineMap,
+        sourceLines: entry.source.replace(/\r\n?/g, "\n").split("\n"),
+        instructionWords,
+      };
+    }
+  }
+  store.setLoadedPrograms(programs);
   mirrorSession();
   return ok;
 }
@@ -276,6 +297,18 @@ export function restartProgram(): boolean {
 /** Live engine for read-only sampling (null before the first compile). */
 export function getEngine(): SimulationEngine | null {
   return session?.engine ?? null;
+}
+
+/**
+ * Live program counter of the loaded session (byte address, the `std.pc` q
+ * port), or null when nothing is loaded / no PC exists. The instruction
+ * index is `pc >>> 2` — the same contract halt detection uses.
+ */
+export function getProgramCounter(): number | null {
+  if (!session?.hasProgram) return null;
+  const designator = session.simulationTargets.pcDesignator;
+  if (designator === null) return null;
+  return session.engine.getPortValue(designator, "q");
 }
 
 /**

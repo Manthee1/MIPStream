@@ -108,6 +108,7 @@ export function buildLoadPlan({ configuration, editors, targets }: LoadPlanInput
             imemImages,
             dataWords: packBytesToWords(result.memory),
             source: editor.sourceCode,
+            pcLineMap: result.pcLineMap,
         });
     }
 

@@ -198,6 +198,17 @@ export function setNodeDangerHover(group: Konva.Group, danger: boolean): void {
   body.strokeScaleEnabled(false);
 }
 
+/** Viewer/editor hover emphasis on a module node's body (accent stroke). */
+export function setNodeHover(group: Konva.Group, hovered: boolean): void {
+  const body = group.findOne(".module-body");
+  if (!(body instanceof Konva.Shape)) return;
+
+  const theme = readRenderTheme();
+  body.stroke(hovered ? theme.accent : theme.bodyStroke);
+  body.strokeWidth(hovered ? SELECTED_STROKE_WIDTH : 1.5);
+  body.strokeScaleEnabled(false);
+}
+
 /** Visual states a port can render in while interacting with the canvas. */
 export type PortHighlightState = "idle" | "hover" | "valid" | "warning";
 

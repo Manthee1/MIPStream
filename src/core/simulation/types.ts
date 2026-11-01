@@ -33,6 +33,12 @@ export interface LoadPlanEntry {
     dataWords: Uint32Array;
     /** Source snapshot at assemble time (the restart staleness check). */
     source: string;
+    /**
+     * Instruction index → 1-based source line of this editor's program (the
+     * assembler's `pcLineMap`). The UI maps the live PC (`pc >>> 2`) through
+     * it for the current-instruction highlight and the stage visualizer.
+     */
+    pcLineMap: number[];
 }
 
 /**

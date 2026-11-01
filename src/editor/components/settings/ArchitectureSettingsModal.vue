@@ -3,20 +3,26 @@
 
 import { computed, ref } from 'vue';
 import { NButton, NCard, NModal, NScrollbar, NTabs, NTabPane, NText, NIcon } from 'naive-ui';
-import { IconAdjustments, IconBinary, IconCpu } from '@tabler/icons-vue';
+import { IconAdjustments, IconCpu, IconFileCode } from '@tabler/icons-vue';
 import { useProjectStore } from '@/stores/projectStore';
 import { useArchitectureSettings } from '@/composables/useArchitectureSettings';
 import PipelineSettings from './PipelineSettings.vue';
 import AssemblerSettings from './AssemblerSettings.vue';
+import EditorSettings from './EditorSettings.vue';
 import ISASettings from './ISASettings.vue';
 
 const projectStore = useProjectStore();
-const { show, draft, warnings, commit } = useArchitectureSettings();
+const { show, draft, editorDraft, warnings, commit } = useArchitectureSettings();
 
 const activeTab = ref('pipeline');
 
+/**
+ * Editor options from the DRAFTED editor set (not the live project) — the
+ * Editors tab must be able to add/remove entries and have the Assembler
+ * mapping matrix react before anything is committed.
+ */
 const editorOptions = computed(() =>
-  (projectStore.currentProject?.software?.editors ?? []).map((editor) => ({
+  (editorDraft.value ?? []).map((editor) => ({
     label: editor.name || editor.id,
     value: editor.id,
   }))
@@ -62,13 +68,17 @@ const memoryOptions = computed(() =>
               <PipelineSettings :configuration="draft" />
             </div>
           </n-tab-pane>
-          <n-tab-pane name="assembler" tab="Assembler">
+          <n-tab-pane name="program" tab="Program">
             <template #tab>
               <div class="flex items-center gap-1.5">
-                <n-icon :size="14"><IconBinary /></n-icon> Assembler
+                <n-icon :size="14"><IconFileCode /></n-icon> Program
               </div>
             </template>
-            <div class="pt-3">
+            <div class="pt-3 flex flex-col gap-5">
+              <!-- Editors and the assembler mapping matrix share one tab: the
+                   editor list feeds the mapping rows, so they are one topic. -->
+              <EditorSettings v-if="editorDraft && draft" :editors="editorDraft" :configuration="draft" />
+              <div class="border-t border-border-color" />
               <AssemblerSettings
                 :configuration="draft"
                 :editor-options="editorOptions"

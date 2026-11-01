@@ -1,7 +1,29 @@
 import { onBeforeUnmount, shallowRef, watch, type Ref } from 'vue';
-import { EditorView } from '@codemirror/view';
-import { Compartment, EditorState } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
+import {
+  EditorView,
+  crosshairCursor,
+  drawSelection,
+  dropCursor,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  keymap,
+  lineNumbers,
+  rectangularSelection,
+} from '@codemirror/view';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  bracketMatching,
+  defaultHighlightStyle,
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+  syntaxHighlighting,
+} from '@codemirror/language';
+import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
+import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import { lintKeymap } from '@codemirror/lint';
 
 type Theme = 'light' | 'dark';
 
@@ -12,15 +34,56 @@ interface UseCodeMirrorOptions {
   initialDoc: () => string;
   /** Fires on every document change (user edit or external replacement). */
   onDocChange: (doc: string) => void;
+  /**
+   * Language-specific support bundle, built once at view creation (the
+   * assembly editor passes `buildAssemblySupport`). NOTE: this base list is
+   * `basicSetup` minus `autocompletion()` — the support bundle owns the
+   * single autocompletion instance, so there is never a duplicate
+   * registration.
+   */
+  support?: () => Extension[];
 }
 
 /**
- * CodeMirror 6 host (Phase 4 foundation — every later editor feature attaches
- * here as an extension: highlighting, lint, completion, current-instruction
- * highlighting). Owns view creation, the token-synced light/dark theme via a
- * Compartment (retheming never rebuilds the document state), and the
- * diagnostics-reveal primitive (1-based line / 0-based column range — the
- * assembler diagnostics contract).
+ * `basicSetup` minus `autocompletion()` — the support bundle registers the
+ * one and only completion source (an `override` source over the ISA).
+ */
+const baseExtensions: Extension[] = [
+  lineNumbers(),
+  highlightActiveLineGutter(),
+  highlightSpecialChars(),
+  history(),
+  foldGutter(),
+  drawSelection(),
+  dropCursor(),
+  EditorState.allowMultipleSelections.of(true),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching(),
+  closeBrackets(),
+  rectangularSelection(),
+  crosshairCursor(),
+  highlightActiveLine(),
+  highlightSelectionMatches(),
+  keymap.of([
+    ...closeBracketsKeymap,
+    ...defaultKeymap,
+    ...searchKeymap,
+    ...historyKeymap,
+    ...foldKeymap,
+    ...completionKeymap,
+    ...lintKeymap,
+  ]),
+];
+
+/**
+ * CodeMirror 6 host (the editor foundation — every editor feature attaches
+ * here as an extension through the support bundle: highlighting, lint,
+ * completion, current-instruction highlighting). Owns view creation, the
+ * token-synced light/dark theme via a Compartment (retheming never rebuilds
+ * the document state), the support compartment (same guarantee for ISA
+ * swaps) and the diagnostics-reveal primitive (1-based line / 0-based column
+ * range — the assembler diagnostics contract).
  *
  * The component supplies the document through the model; this composable
  * never owns project state.
@@ -28,6 +91,9 @@ interface UseCodeMirrorOptions {
 export function useCodeMirror(options: UseCodeMirrorOptions) {
   const view = shallowRef<EditorView | null>(null);
   const themeCompartment = new Compartment();
+  const supportCompartment = new Compartment();
+  /** Support bundle applied before the view existed (replayed at creation). */
+  let pendingSupport: Extension[] = [];
 
   /**
    * Initial theme read from the document element (`useTheme` applies the
@@ -79,6 +145,10 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
         color: 'var(--text-primary)',
       },
       '&.cm-focused': { outline: 'none' },
+      '.cm-current-instruction': {
+        backgroundColor: dark ? 'rgba(245, 158, 11, 0.18)' : 'rgba(245, 158, 11, 0.15)',
+        boxShadow: 'inset 2px 0 0 var(--color-warning)',
+      },
       '.cm-cursor, .cm-dropCursor': {
         borderLeft: '2px solid var(--color-primary)',
       },
@@ -89,13 +159,15 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
   }
 
   function createView(parent: HTMLElement): EditorView {
+    pendingSupport = options.support?.() ?? [];
     return new EditorView({
       parent,
       state: EditorState.create({
         doc: options.initialDoc(),
         extensions: [
-          basicSetup,
+          baseExtensions,
           themeCompartment.of(editorTheme(initialDark)),
+          supportCompartment.of(pendingSupport),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               options.onDocChange(update.state.doc.toString());
@@ -134,6 +206,16 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
   }
 
   /**
+   * Swaps the language support bundle (e.g. a new ISA after a settings
+   * commit) in place — the document state, history and selection survive.
+   * Recorded and replayed if the view does not exist yet.
+   */
+  function setSupport(extensions: Extension[]): void {
+    pendingSupport = extensions;
+    view.value?.dispatch({ effects: supportCompartment.reconfigure(extensions) });
+  }
+
+  /**
    * Reveals and selects a 1-based line / 0-based column range (the assembler
    * diagnostics contract), centering it in the viewport.
    */
@@ -151,5 +233,5 @@ export function useCodeMirror(options: UseCodeMirrorOptions) {
     editor.focus();
   }
 
-  return { view, setDoc, revealPosition };
+  return { view, setDoc, setSupport, revealPosition };
 }

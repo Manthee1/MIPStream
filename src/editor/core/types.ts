@@ -2,6 +2,7 @@
 
 import type { SerializedNet } from "@/shared/types/netlist";
 import type { GridSettings, ArchitectureConfiguration } from "@/shared/types/architecture";
+import type { ProjectEditor } from "@/shared/types/project";
 import type { LintIssue } from "@/core/engine/lint";
 
 export type EditorTool = 'select' | 'wire' | 'place' | 'delete';
@@ -56,6 +57,13 @@ export interface DesignerConfig {
    * into the project store so the canvas and configuration stay in sync.
    */
   onConfigurationRestore?: (configuration: ArchitectureConfiguration) => void;
+  /**
+   * Fires when undoing a settings batch restores a prior project editor set
+   * (software layer) alongside the document and configuration. The host must
+   * write it back into the project store so the editors and settings never
+   * drift apart.
+   */
+  onEditorsRestore?: (editors: ProjectEditor[]) => void;
 }
 
 export interface Point {

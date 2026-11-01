@@ -3,6 +3,7 @@
 import type { SerializedModule } from "@/shared/types/manifest";
 import type { SerializedNet } from "@/shared/types/netlist";
 import type { ArchitectureConfiguration } from "@/shared/types/architecture";
+import type { ProjectEditor } from "@/shared/types/project";
 
 /**
  * Committed-document snapshot: everything a document restore needs. Entries
@@ -19,6 +20,11 @@ export interface HistoryEntry {
    * on settings-batch entries (the cascade mutates canvas AND configuration).
    */
   configuration?: ArchitectureConfiguration;
+  /**
+   * Project editors (software layer) to restore alongside the configuration.
+   * Set only on settings-batch entries that also changed the editor set.
+   */
+  editors?: ProjectEditor[];
 }
 
 /** Maximum committed-change entries kept per direction. */
