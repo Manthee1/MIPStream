@@ -95,7 +95,10 @@ export default defineConfig({
 							return "vendor_monaco";
 						}
 						if (id.includes("monaco-themes")) return "vendor_monaco_themes";
-						if (id.includes("feather-icons")) return "vendor_icons";
+						if (id.includes("konva")) return "vendor_konva";
+						if (id.includes("naive-ui")) return "vendor_ui";
+						if (id.includes("@tabler")) return "vendor_icons";
+						
 						return "vendor_misc";
 					}
 				},
