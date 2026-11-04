@@ -77,7 +77,7 @@ export const useUIStore = defineStore('ui', {
 
         setTheme(newTheme: string) {
             document.documentElement.classList.add('theme-transition');
-            this.theme = newTheme;
+            // this.theme = newTheme;
             document.documentElement.classList.remove('theme-light', 'theme-dark');
             document.documentElement.classList.add(`theme-${this.theme}`);
 

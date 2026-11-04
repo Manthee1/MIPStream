@@ -1,6 +1,6 @@
-import { Project } from '../services/projectsService';
+import { Project } from '@/shared/types/project';
 import { useUIStore } from '../stores/UIStore';
-import { useNotification } from '@kyvg/vue3-notification';
+// import { useNotification } from '@kyvg/vue3-notification';
 
 export const promptProjectName = async (title: string, message: string, defaultName: string = ''): Promise<string | null> => {
     const UIStore = useUIStore();
@@ -30,13 +30,13 @@ export const confirmAction = async (title: string, message: string, confirmText:
     });
 };
 
-export const notify = (type: 'success' | 'error', title: string, text: string) => {
-    useNotification().notify({
-        type,
-        title,
-        text,
-    });
-};
+// export const notify = (type: 'success' | 'error', title: string, text: string) => {
+//     useNotification().notify({
+//         type,
+//         title,
+//         text,
+//     });
+// };
 
 
 export const downloadProject = (project: Project) => {
