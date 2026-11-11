@@ -39,26 +39,6 @@ Tags: `feat` `designer` `wiring`
 <!-- priority: low -->
 <!-- workload: hard -->
 
-### Stage Registers
-
-#### Feat: Configurable pin count
-<!-- id: task-1792838400000-7 -->
-Stage registers should support a configurable number of input/output pins (input and output counts must stay in sync). Reuse the control unit's UI pattern.
-- [x] Done (Phase 5, 2026-11-01): pins are configurable from the Inspector via a new control-unit-style editor (`RegisterConfigEditor.vue` — uncontrolled rows, whole-config commits). Each pin is a D/Q pair with its own label + width (1–32, count capped at 16). The first pin is the main pair and keeps the legacy `d`/`q` port ids, so saved projects, existing nets and the stage visualizer load byte-identical until edited; extra pins derive `d_<id>`/`q_<id>` from a stable generated id, so deleting one only drops its own nets (reconciled by `setModuleConfig`, one undo entry). The main pin cannot be deleted while siblings exist (it would silently rewire whatever inherits `d`/`q`). Ports ride the common 20-unit pitch; the body and per-pin labels grow with the count. All port/evaluator construction lives in pure `register/logic.ts` (shared by the manifest, the editor and the visualizer) and is covered headlessly by `npm run engine:check` (multi-pin latch, per-pin width masking, legacy-shape regression).
-Tags: `feat` `designer` `stage-registers`
-
-#### Feat: Toggleable reset pin
-<!-- id: task-1792838400000-8 -->
-Add an optional reset pin on top of the stage register, togglable from configuration.
-- [x] Done (Phase 5, 2026-11-01): optional 1-bit `rst` input rendered on the top edge (mux-`sel` precedent), toggled from the same Inspector editor. Synchronous + active-high: an asserted `rst` clears every pin to 0 at the rising edge instead of latching D; left unconnected it binds to the engine's constant-zero rail and stays inert — pure manifest evaluator, zero engine changes. `useStageVisualizer` boundary sampling now falls back through every pin's output (extra pins trusted only on exact instruction-word matches, so narrow control pins can't mislabel cells). The engine rig proves latch-then-clear via a register-driven reset (reads the pre-edge value, then clears both pins while the data inputs stay driven).
-Tags: `feat` `designer` `stage-registers`
-
-#### Feat: Classic pipelined MIPS template
-<!-- id: task-1792838400000-9 -->
-A classic five-stage pipelined MIPS template — real pipeline boundary registers between the stages, not the single-cycle datapath.
-- [x] Done (Phase 5, 2026-11-01): `mips-pipelined` template (`src/config/mips-pipelined-datapath.ts`, 24 modules / 67 nets) — each stage boundary is ONE multi-pin managed `std.register` (the reconciler keeps exactly one per boundary index) whose main pin is the 32-bit instruction word (port `q`), so the instruction bar samples every stage and the halt drain reads the same slot; the ID/EX wall carries the operands, PC+4, sign-extended immediate and all eight control signals as individual pins. Control decodes once in ID and pipelines down; branches resolve in EX (pipelined `branch` ∧ ALU zero) and flush IF/ID + ID/EX through their new synchronous `rst` pins while the PC takes the target (2-cycle penalty). Deliberately classic: no forwarding, no stalls — the regfile's hybrid commit gives a 4-instruction hazard window, documented in the netlist header and padded with nops in the hazard-free starter program (square-by-addition, result 49, taken backward branch every iteration). The session gained pipeline-drain halt semantics (finish only once every managed boundary `q` reads 0; trivially true without them, so single-cycle behavior is byte-identical — Rig D regression intact). Covered by Rig E in `npm run simulation:check`: per-cycle boundary-word positions, flush zeroes + PC redirect, exact cycle counts (18/9/144), starter-program final state, restart via `advance()`.
-Tags: `feat` `designer` `stage-registers` `templates`
-
 ### ALU & ALU Control Unit
 
 #### Feat: Configurable operations and signal mapping
@@ -81,9 +61,29 @@ Tags: `feat` `designer` `import-export`
 <!-- id: task-1793271154991-190 -->
 <!-- group:  -->
 The designers cordinates are not very usable and specify the cordinates of the screen and not the mouse.
-Tags: `QOL` `designer`
+Tags: `QoL` `designer`
 <!-- priority: low -->
 <!-- workload: easy -->
+
+#### Reorderable ports
+<!-- id: task-1794387089367-246 -->
+<!-- group:  -->
+Make ports reorderable any many modules like the stage registers, control unit, bit spliter...
+<!-- done-note: Done (2026-11-11): every list-driven manifest gained up/down reorder in its Inspector editor via the new pure `moveItem` helper (`src/shared/utils/move-array-item.ts`, the `moveStage` pattern generalized) — control-unit signals (ports + opcode-table columns follow), splitter outputs and merger inputs (canvas pins and the jumper-board stacks follow; `out_<id>`/`in_<id>` ids stable, so no net is ever rewired). The stage register was rewritten main-pin-free (`register/logic.ts`): port ids are now id-based — the pin id'd `main` derives the classic `d`/`q` wherever it sits, everything else `d_<id>`/`q_<id>` — so pins reorder AND delete freely (`pins: []` is a valid pin-less register; `addRectBody` gained a zero-port body guard, the stage visualizer early-nulls empty registers). Legacy configs (no `pins` key) still resolve to the single main@bitWidth shape byte-identically; the pipelined template's boundary pins were renamed `instr`→`main` (labels kept) so the halt drain / visualizer `q` reads are untouched (Rig E regression green). Covered headlessly by `npm run engine:check`: pin-less compile/step, reorder invariance per port id, non-main custom-id pins. -->
+Tags: `QoL` `designer` `stage-registers` `splitter-merger` `control-unit`
+
+#### reorderable multiplexer ports
+<!-- id: task-1794387317629-373 -->
+<!-- group:  -->
+Make multiplexer ports reorderable or more specifically configurable so that we can specify which input gets forwarded on what control signal. Make sure to also draw the signal bits next to all input ports. for 2to1 its just '1' or '0'. Make it also possible to move the control port from bottom to top and vice versa.
+<!-- done-note: Done (2026-11-11): `MuxConfig` (moved to pure `mux/logic.ts`) gained optional `selMap` (input index → selector value, validated permutation, identity fallback) and `selPosition` (top/bottom Sel edge). The evaluator compiles the map into a flattened LUT (`buildMuxLut`/`selectMappedMuxInput`; `selectMuxInput` kept for the simulation-smoke mirror). New `MuxConfigEditor.vue` replaces the schema form (owns bit width): per-input sel-code select with swap semantics (permutation always valid) + Sel-position radio. `drawMuxBody` annotates every input pin with its binary selector code ("0"/"1" on a 2:1) and input tooltips state the forwarding code. Covered by `npm run engine:check` (swapped/identity/invalid-map/sel-position rigs through the real logic). Follow-up: an input-stacking (`stack`) option was added then deliberately removed again — reordering is redundant when each input can already be assigned any selector code. -->
+Tags: `mux/index.ts` `designer` `feat`
+
+#### Ensure manifests respect GRID_UNIT size
+<!-- id: task-1794388477850-503 -->
+<!-- group:  -->
+GO through all manifest port and draw functions and ensure they are aligned to the GRID_UNIT size which is 5
+Tags: `fix` `designer`
 
 ## Project Management
 
@@ -98,7 +98,7 @@ Introduce a Simulation-Only project Mode and a dynamic architecture switching wo
 - [ ] Implement a warning confirmation modal alerting users when an architecture switch will drop un-supported panels or un-link code editors due to missing Instruction Memory. The editor warning should be red since the code should get removed, while the panel warning can be yellow since they don't have saveable state anyway.
 - [ ] Refactor the simulation UI layout engine to dynamically mount or unmount panels based on the target architecture's active capabilities.
 - [ ] Handle safe state preservation, un-linking, or cleanup of active code buffers and breakpoints during dynamic layout transitions.
-Tags: `QOL` `uiux` `simulator` `feat`
+Tags: `QoL` `uiux` `simulator` `feat`
 <!-- workload: hard -->
 
 #### Feat/FIx: Add option to add editor in the architecture settings
@@ -186,6 +186,26 @@ Update the architecture template to match the updated architecture configuration
 - [x] Done (Phase 3, 2026-10-24): `mips-basic` ships the golden single-cycle datapath (`src/config/mips-single-cycle-datapath.ts`), validated headlessly by Rig C/D in `npm run simulation:check`
 Tags: `fix` `project-management` `mips`
 
+### Stage Registers
+
+#### Feat: Configurable pin count
+<!-- id: task-1792838400000-7 -->
+Stage registers should support a configurable number of input/output pins (input and output counts must stay in sync). Reuse the control unit's UI pattern.
+- [x] Done (Phase 5, 2026-11-01): pins are configurable from the Inspector via a new control-unit-style editor (`RegisterConfigEditor.vue` — uncontrolled rows, whole-config commits). Each pin is a D/Q pair with its own label + width (1–32, count capped at 16). The first pin is the main pair and keeps the legacy `d`/`q` port ids, so saved projects, existing nets and the stage visualizer load byte-identical until edited; extra pins derive `d_<id>`/`q_<id>` from a stable generated id, so deleting one only drops its own nets (reconciled by `setModuleConfig`, one undo entry). The main pin cannot be deleted while siblings exist (it would silently rewire whatever inherits `d`/`q`). Ports ride the common 20-unit pitch; the body and per-pin labels grow with the count. All port/evaluator construction lives in pure `register/logic.ts` (shared by the manifest, the editor and the visualizer) and is covered headlessly by `npm run engine:check` (multi-pin latch, per-pin width masking, legacy-shape regression).
+Tags: `feat` `designer` `stage-registers`
+
+#### Feat: Toggleable reset pin
+<!-- id: task-1792838400000-8 -->
+Add an optional reset pin on top of the stage register, togglable from configuration.
+- [x] Done (Phase 5, 2026-11-01): optional 1-bit `rst` input rendered on the top edge (mux-`sel` precedent), toggled from the same Inspector editor. Synchronous + active-high: an asserted `rst` clears every pin to 0 at the rising edge instead of latching D; left unconnected it binds to the engine's constant-zero rail and stays inert — pure manifest evaluator, zero engine changes. `useStageVisualizer` boundary sampling now falls back through every pin's output (extra pins trusted only on exact instruction-word matches, so narrow control pins can't mislabel cells). The engine rig proves latch-then-clear via a register-driven reset (reads the pre-edge value, then clears both pins while the data inputs stay driven).
+Tags: `feat` `designer` `stage-registers`
+
+#### Feat: Classic pipelined MIPS template
+<!-- id: task-1792838400000-9 -->
+A classic five-stage pipelined MIPS template — real pipeline boundary registers between the stages, not the single-cycle datapath.
+- [x] Done (Phase 5, 2026-11-01): `mips-pipelined` template (`src/config/mips-pipelined-datapath.ts`, 24 modules / 67 nets) — each stage boundary is ONE multi-pin managed `std.register` (the reconciler keeps exactly one per boundary index) whose main pin is the 32-bit instruction word (port `q`), so the instruction bar samples every stage and the halt drain reads the same slot; the ID/EX wall carries the operands, PC+4, sign-extended immediate and all eight control signals as individual pins. Control decodes once in ID and pipelines down; branches resolve in EX (pipelined `branch` ∧ ALU zero) and flush IF/ID + ID/EX through their new synchronous `rst` pins while the PC takes the target (2-cycle penalty). Deliberately classic: no forwarding, no stalls — the regfile's hybrid commit gives a 4-instruction hazard window, documented in the netlist header and padded with nops in the hazard-free starter program (square-by-addition, result 49, taken backward branch every iteration). The session gained pipeline-drain halt semantics (finish only once every managed boundary `q` reads 0; trivially true without them, so single-cycle behavior is byte-identical — Rig D regression intact). Covered by Rig E in `npm run simulation:check`: per-cycle boundary-word positions, flush zeroes + PC redirect, exact cycle counts (18/9/144), starter-program final state, restart via `advance()`.
+Tags: `feat` `designer` `stage-registers` `templates`
+
 ### Architecture Designer
 
 #### Feat: Edit history
@@ -207,7 +227,7 @@ Tags: `feat-fix` `designer`
 <!-- group:  -->
 While holding CTRL, clicking on multiple modules/netlist segments, it should select them.
 - [x] Done (Phase 3, 2026-10-31): Ctrl/⌘+click now toggles modules and nets exactly like Shift+click, and Ctrl/⌘ marquee drags are additive. Group drag, multi-delete, multi-copy and the Inspector's multi-selection view already handled N selected items.
-Tags: `designer` `QOL`
+Tags: `designer` `QoL`
 
 #### Feat: Add the ability to configure net styles
 <!-- id: task-1792877912661-208 -->
@@ -266,7 +286,7 @@ The grid is usable but needs some QOF fixes and improvements.
 - [x] Remove the grid size config fields and set a fixed size of 1 unit
 - [x] Standardize all port locations and schematic symbols to use whole units
 - [x] Done (Phase 2, 2026-10-31): fixed `GRID_UNIT = 1` snap (zoom-independent — `getGridSize` no longer returns the zoom-promoted visual step), size field removed from `GridSettings`/toolbar with legacy stored values stripped, origin cross always marks scene (0,0), control unit moved to the common 20-unit pitch, and the ALU's fractional sloped-edge ports (`op`, `zero`) and notch geometry now land on whole units. Paste offsets use a dedicated 40-unit step.
-Tags: `feat-fix` `QOL` `designer`
+Tags: `feat-fix` `QoL` `designer`
 
 ### Other
 

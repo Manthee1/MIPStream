@@ -6,7 +6,8 @@ import { drawDefaultBody } from "./default-body";
 import { readRenderTheme } from "./theme";
 
 const PORT_RADIUS = 4;
-const PORT_HIT_RADIUS = 9;
+/** Port pin hit-zone radius (scene units) — shared with the viewer's geometric probing. */
+export const PORT_HIT_RADIUS = 9;
 const SELECTED_STROKE_WIDTH = 2;
 const PORT_VALUE_FONT_SIZE = 9;
 /** Gap between the port pin and its runtime value label. */

@@ -134,6 +134,26 @@ export function addRectBody(
   minHeight = BODY_MIN_HEIGHT
 ): Bounds {
   const anchors = portAnchors(options.ports);
+
+  // Port-less module (e.g. an emptied stage register): a fixed default body,
+  // so the min/max folds below never see an empty list.
+  if (anchors.length === 0) {
+    group.add(
+      new Konva.Rect({
+        x: -40,
+        y: -20,
+        width: 80,
+        height: 40,
+        cornerRadius: 0,
+        fill: options.theme.bodyFill,
+        stroke: options.theme.bodyStroke,
+        strokeWidth: BODY_STROKE_WIDTH,
+        name: "module-body",
+      })
+    );
+    return { minX: -40, minY: -20, maxX: 40, maxY: 20, width: 80, height: 40 };
+  }
+
   const xs = anchors.map((a) => a.position.x);
   const ys = anchors.map((a) => a.position.y);
   const minX = Math.min(...xs);

@@ -28,6 +28,12 @@ import {
   generateRegisterPorts,
   type RegisterConfig,
 } from "@/shared/manifests/register/logic";
+import {
+  buildMuxLut,
+  resolveMuxSelMap,
+  selectMappedMuxInput,
+  type MuxConfig,
+} from "@/shared/manifests/mux/logic";
 import type { ArchitectureDocument } from "./compile/compiler";
 import { SimulationEngine } from "./engine";
 import { lintArchitecture } from "./lint";
@@ -352,6 +358,33 @@ const smokeStageRegister: ModuleManifest<RegisterConfig> = {
   createEvaluators: createRegisterEvaluators,
 };
 
+// Stand-in for the real std.mux2 manifest, driven by the production
+// selection logic (`mux/logic`): the configurable sel→input assignment is
+// compiled into a flattened lookup; invalid maps fall back to the identity.
+const smokeMux2: ModuleManifest<MuxConfig> = {
+  typeId: "std.mux2",
+  label: "Mux 2:1",
+  description: "",
+  icon: "",
+  category: "logic",
+  defaultConfig: { bitWidth: 32, numInputs: 2 },
+  generatePorts: (config) => [
+    { id: "in0", direction: "input", bits: config.bitWidth, label: "In 0", position: { x: -40, y: -10 } },
+    { id: "in1", direction: "input", bits: config.bitWidth, label: "In 1", position: { x: -40, y: 10 } },
+    { id: "sel", direction: "input", bits: 1, label: "Sel", position: { x: 0, y: 40 } },
+    { id: "out", direction: "output", bits: config.bitWidth, label: "Out", position: { x: 40, y: 0 } },
+  ],
+  createEvaluators: (config): ModuleEvaluators => {
+    const lut = buildMuxLut(resolveMuxSelMap(config.selMap, config.numInputs));
+    return {
+      inputPorts: ["in0", "in1", "sel"],
+      outputPorts: ["out"],
+      evaluate: (inputs) =>
+        new Uint32Array([selectMappedMuxInput(inputs, inputs[2], lut)]),
+    };
+  },
+};
+
 registerManifest(smokeConstant);
 registerManifest(smokeAdder);
 registerManifest(smokeAnd);
@@ -363,6 +396,7 @@ registerManifest(smokeHybridMem);
 registerManifest(smokeMerger);
 registerManifest(smokeSplitter);
 registerManifest(smokeStageRegister);
+registerManifest(smokeMux2);
 
 // ---------------------------------------------------------------- scenarios
 
@@ -779,6 +813,106 @@ check("stage-register: legacy config has no warnings", legacyEngine.warnings.len
 check("stage-register: legacy q starts at 0", legacyEngine.getPortValue("legacy", "q"), 0);
 legacyEngine.step();
 check("stage-register: legacy single pin latches", legacyEngine.getPortValue("legacy", "q"), 7);
+
+// Pin-less register: `pins: []` is a valid (inert) register — no data ports,
+// compiles and steps cleanly, exposes no legacy `q`.
+const pinlessDoc: ArchitectureDocument = {
+  modules: [
+    module("empty", "std.register", { pins: [] }),
+    module("emptyR", "std.register", { pins: [], reset: true }),
+  ],
+  nets: [],
+};
+const pinlessEngine = new SimulationEngine(pinlessDoc);
+check("stage-register: pin-less register compiles clean", pinlessEngine.hasErrors, false);
+pinlessEngine.step();
+check("stage-register: pin-less register steps clean", pinlessEngine.hasErrors, false);
+check("stage-register: pin-less register has no q port", pinlessEngine.getPortValue("empty", "q"), null);
+
+// Reorder invariance: the same pins in a different order — port ids (and
+// therefore values) follow the pin ids, never the list position.
+const reorderDoc = (pins: { id: string; bits?: number }[]): ArchitectureDocument => ({
+  modules: [
+    module("dMain", "smoke.constant", { value: 0xcafe }),
+    module("dAux", "smoke.constant", { value: 0x1ff }),
+    module("sr", "std.register", { bitWidth: 32, pins }),
+  ],
+  nets: [
+    net("r1", ["dMain", "out"], ["sr", "d"]),
+    net("r2", ["dAux", "out"], ["sr", "d_aux"]),
+  ],
+});
+const orderedEngine = new SimulationEngine(
+  reorderDoc([{ id: "main", bits: 32 }, { id: "aux", bits: 8 }])
+);
+const reorderedEngine = new SimulationEngine(
+  reorderDoc([{ id: "aux", bits: 8 }, { id: "main", bits: 32 }])
+);
+check("stage-register: reordered pins compile clean", reorderedEngine.hasErrors, false);
+orderedEngine.step();
+reorderedEngine.step();
+check("stage-register: reorder keeps q on the main pin", reorderedEngine.getPortValue("sr", "q"), 0xcafe);
+check(
+  "stage-register: reorder keeps q_aux on the aux pin",
+  reorderedEngine.getPortValue("sr", "q_aux"),
+  0xff
+);
+check(
+  "stage-register: reorder preserves values per port id",
+  orderedEngine.getPortValue("sr", "q") === reorderedEngine.getPortValue("sr", "q") &&
+    orderedEngine.getPortValue("sr", "q_aux") === reorderedEngine.getPortValue("sr", "q_aux"),
+  true
+);
+
+// Pin id rule: without a `main`-id pin nobody inherits the legacy `d`/`q`
+// ports — the ids are predictable, never silently migrated.
+const customIdDoc: ArchitectureDocument = {
+  modules: [
+    module("dC", "smoke.constant", { value: 0x55 }),
+    module("cr", "std.register", { bitWidth: 32, pins: [{ id: "instr", bits: 32 }] }),
+  ],
+  nets: [net("c1", ["dC", "out"], ["cr", "d_instr"])],
+};
+const customIdEngine = new SimulationEngine(customIdDoc);
+check("stage-register: non-main pin ids compile clean", customIdEngine.hasErrors, false);
+customIdEngine.step();
+check("stage-register: non-main pin latches on d_<id>", customIdEngine.getPortValue("cr", "q_instr"), 0x55);
+check("stage-register: non-main pin exposes no legacy q", customIdEngine.getPortValue("cr", "q"), null);
+
+// 11. Mux selection mapping through the production logic (`mux/logic.ts`):
+//     a swapped 2:1 forwards the OTHER input for a given selector value,
+//     invalid maps fall back to the identity, and the selector edge is
+//     layout-only (the evaluator is unchanged).
+const muxDoc = (selMap?: number[], selPosition?: "top" | "bottom"): ArchitectureDocument => ({
+  modules: [
+    module("a", "smoke.constant", { value: 0x11 }),
+    module("b", "smoke.constant", { value: 0x22 }),
+    module("selOne", "smoke.constant", { value: 1 }),
+    module("mx", "std.mux2", {
+      bitWidth: 32,
+      numInputs: 2,
+      ...(selMap ? { selMap } : {}),
+      ...(selPosition ? { selPosition } : {}),
+    }),
+  ],
+  nets: [
+    net("m1", ["a", "out"], ["mx", "in0"]),
+    net("m2", ["b", "out"], ["mx", "in1"]),
+    net("m3", ["selOne", "out"], ["mx", "sel"]),
+  ],
+});
+const muxIdentityEngine = new SimulationEngine(muxDoc());
+check("mux: identity config compiles clean", muxIdentityEngine.hasErrors, false);
+check("mux: identity map forwards in1 on Sel=1", muxIdentityEngine.getPortValue("mx", "out"), 0x22);
+const muxSwappedEngine = new SimulationEngine(muxDoc([1, 0]));
+check("mux: swapped map compiles clean", muxSwappedEngine.hasErrors, false);
+check("mux: swapped map forwards in0 on Sel=1", muxSwappedEngine.getPortValue("mx", "out"), 0x11);
+const muxInvalidEngine = new SimulationEngine(muxDoc([0, 0]));
+check("mux: invalid map compiles clean", muxInvalidEngine.hasErrors, false);
+check("mux: invalid map falls back to identity", muxInvalidEngine.getPortValue("mx", "out"), 0x22);
+const muxLayoutEngine = new SimulationEngine(muxDoc(undefined, "top"));
+check("mux: sel-position is layout-only, compiles clean", muxLayoutEngine.hasErrors, false);
+check("mux: sel-position leaves selection unchanged", muxLayoutEngine.getPortValue("mx", "out"), 0x22);
 
 console.log("");
 if (failures > 0) {

@@ -64,21 +64,21 @@ export const DataMemoryManifest: ModuleManifest<DataMemoryConfig> = {
       bits: 32,
       label: "Address",
       tooltip: "Byte address (word-aligned)",
-      position: { x: -50, y: -25 },
+      position: { x: -50, y: -15 },
     },
     {
       id: "wd",
       direction: "input",
       bits: config.bitWidth,
       label: "Write Data",
-      position: { x: -50, y: 25 },
+      position: { x: -50, y: 40 },
     },
     {
       id: "rdata",
       direction: "output",
       bits: config.bitWidth,
       label: "Read Data",
-      position: { x: 50, y: 0 },
+      position: { x: 50, y: 40 },
     },
     {
       id: "memWrite",
@@ -86,7 +86,7 @@ export const DataMemoryManifest: ModuleManifest<DataMemoryConfig> = {
       bits: 1,
       label: "MemWrite",
       tooltip: "Write control",
-      position: { x: -25, y: 55 },
+      position: { x: -25, y: -40 },
     },
     {
       id: "memRead",
@@ -94,7 +94,7 @@ export const DataMemoryManifest: ModuleManifest<DataMemoryConfig> = {
       bits: 1,
       label: "MemRead",
       tooltip: "Read control",
-      position: { x: 25, y: 55 },
+      position: { x: 25, y: -40 },
     },
   ],
 

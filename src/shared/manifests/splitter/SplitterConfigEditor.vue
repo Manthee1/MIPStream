@@ -4,6 +4,7 @@
 import { computed, reactive, ref } from 'vue';
 import { NButton, NIcon, NInput, NInputNumber, NText } from 'naive-ui';
 import { IconArrowRight, IconPlus, IconX } from '@tabler/icons-vue';
+import ReorderableList from '@/shared/components/ReorderableList.vue';
 import BitJumperEditor from '../../components/BitJumperEditor.vue';
 import {
   clampWiringBits,
@@ -172,47 +173,52 @@ function updateFields(fields: WiringField[]): void {
     <!-- Output fields -->
     <div class="flex flex-col gap-1">
       <n-text strong class="text-xs uppercase tracking-widest opacity-50">Outputs</n-text>
-      <div
-        v-for="(field, index) in working.outputs"
-        :key="field.id"
-        class="flex flex-col gap-1 border border-white/10 dark:border-white/5 p-1.5"
+      <ReorderableList
+        v-model="working.outputs"
+        :item-key="(field: WiringField) => field.id"
+        @reorder="commit"
       >
-        <div class="flex items-center gap-1">
-          <n-input
-            size="small"
-            :default-value="field.label ?? ''"
-            placeholder="Label"
-            @change="(v: string) => setFieldLabel(index, v)"
-          />
-          <n-input-number
-            size="small"
-            :default-value="field.bits"
-            :min="1"
-            :max="32"
-            :show-button="false"
-            :update-value-on-input="false"
-            @update:value="(v: number | null) => setFieldBits(index, v)"
-          />
-          <n-button size="tiny" quaternary type="error" @click="removeField(index)">
-            <n-icon :size="14"><IconX /></n-icon>
-          </n-button>
-        </div>
-        <div class="flex items-center gap-1">
-          <n-input
-            size="small"
-            placeholder="hi:lo"
-            :default-value="presetDrafts[field.id] ?? ''"
-            @update:value="(v: string) => (presetDrafts[field.id] = v)"
-            @keydown.enter="applyPresetDraft(field.id)"
-          />
-          <n-button size="tiny" dashed @click="applyPresetDraft(field.id)">
-            <n-icon :size="14"><IconArrowRight /></n-icon>
-          </n-button>
-        </div>
-        <n-text v-if="presetNotices[field.id]" type="warning" class="text-xs">
-          {{ presetNotices[field.id] }}
-        </n-text>
-      </div>
+        <template #default="{ item: field, index }">
+          <div class="flex flex-1 flex-col gap-1 border border-white/10 dark:border-white/5 p-1.5">
+            <div class="flex items-center gap-1">
+              <n-input
+                size="small"
+                class="flex-1"
+                :default-value="field.label ?? ''"
+                placeholder="Label"
+                @change="(v: string) => setFieldLabel(index, v)"
+              />
+              <n-input-number
+                size="small"
+                :default-value="field.bits"
+                :min="1"
+                :max="32"
+                :show-button="false"
+                :update-value-on-input="false"
+                @update:value="(v: number | null) => setFieldBits(index, v)"
+              />
+              <n-button size="tiny" quaternary type="error" @click="removeField(index)">
+                <n-icon :size="14"><IconX /></n-icon>
+              </n-button>
+            </div>
+            <div class="flex items-center gap-1">
+              <n-input
+                size="small"
+                placeholder="hi:lo"
+                :default-value="presetDrafts[field.id] ?? ''"
+                @update:value="(v: string) => (presetDrafts[field.id] = v)"
+                @keydown.enter="applyPresetDraft(field.id)"
+              />
+              <n-button size="tiny" dashed @click="applyPresetDraft(field.id)">
+                <n-icon :size="14"><IconArrowRight /></n-icon>
+              </n-button>
+            </div>
+            <n-text v-if="presetNotices[field.id]" type="warning" class="text-xs">
+              {{ presetNotices[field.id] }}
+            </n-text>
+          </div>
+        </template>
+      </ReorderableList>
       <n-button size="tiny" dashed @click="addField">
         <template #icon><n-icon :size="14"><IconPlus /></n-icon></template>
         Add output

@@ -26,7 +26,14 @@ export function registerTransfer(data: number, bitWidth: number): number {
 /** Upper bound on configured pins (keeps the drawn body height sane). */
 export const REGISTER_PIN_LIMIT = 16;
 
-/** Reserved id of the implicit main D/Q pair. */
+/**
+ * Reserved pin id wired as the classic D/Q pair: the pin carrying it derives
+ * the legacy `d`/`q` port ids (wherever it sits in the list), every other
+ * pin derives `d_<id>`/`q_<id>`. It is a naming convention, not a structural
+ * role — the pin can be reordered or deleted like any other, and
+ * `nextPinId` never regenerates it, so the `d`/`q` ports can never silently
+ * migrate to a different pin.
+ */
 export const MAIN_PIN_ID = "main";
 
 /** Port id of the optional synchronous reset input. */
@@ -47,7 +54,11 @@ export interface RegisterPin {
 export interface RegisterPinsConfig {
   /** Legacy: width of the implicit main pin when `pins` is absent. */
   bitWidth?: number;
-  /** When absent or empty the register keeps the single legacy pin. */
+  /**
+   * Explicit pin list. `[]` is a valid, deliberately pin-less register (no
+   * data ports — latches nothing); an absent key is the legacy single-pair
+   * shape resolved from `bitWidth`.
+   */
   pins?: RegisterPin[];
   /** Toggles the synchronous reset input (`rst`) on the top edge. */
   reset?: boolean;
@@ -78,47 +89,57 @@ export function nextPinId(usedIds: Iterable<string>): string {
 }
 
 /**
- * Resolves the effective pin list. Absent/empty `pins` yields a single main
- * pin at the legacy `bitWidth` — a port shape byte-identical to pre-pin
- * projects, so saved architectures load unchanged. Widths are clamped to
- * 1–32, empty/duplicate ids of pins after the first are regenerated, and the
- * count is capped at `REGISTER_PIN_LIMIT`.
+ * Resolves the effective pin list.
+ * - No `pins` key (legacy configs): a single main pin at `bitWidth` — a port
+ *   shape byte-identical to pre-pin projects, so saved architectures load
+ *   unchanged.
+ * - `pins: []`: an empty register — no data ports, latches nothing.
+ * - Otherwise: widths clamped to 1-32, empty/duplicate ids regenerated and
+ *   the count capped at `REGISTER_PIN_LIMIT`. Port identity is id-based and
+ *   order-free: reordering the list only re-stacks the drawn rows, never
+ *   rewires a net.
  */
 export function resolveRegisterPins(config: RegisterPinsConfig): RegisterPin[] {
-  if (Array.isArray(config.pins) && config.pins.length > 0) {
-    const used = new Set<string>();
-    return config.pins.slice(0, REGISTER_PIN_LIMIT).map((raw, index) => {
-      const bits = clampWiringBits(raw?.bits);
-      const id = typeof raw?.id === "string" ? raw.id.trim() : "";
-      // Pin 0 is the main D/Q pair — its ports stay the legacy `d`/`q`
-      // regardless of id, so any (even empty) id is accepted as-is.
-      const resolved =
-        index === 0 ? id || MAIN_PIN_ID : !id || used.has(id) ? nextPinId(used) : id;
-      used.add(resolved);
-      return { id: resolved, ...(raw?.label ? { label: raw.label } : {}), bits };
-    });
+  if (!Array.isArray(config.pins)) {
+    return [{ id: MAIN_PIN_ID, bits: clampWiringBits(Number(config.bitWidth) || 32) }];
   }
-  return [{ id: MAIN_PIN_ID, bits: clampWiringBits(Number(config.bitWidth) || 32) }];
+  if (config.pins.length === 0) return [];
+
+  const used = new Set<string>();
+  let mainTaken = false;
+  return config.pins.slice(0, REGISTER_PIN_LIMIT).map((raw) => {
+    const bits = clampWiringBits(raw?.bits);
+    let id = typeof raw?.id === "string" ? raw.id.trim() : "";
+    // The reserved `main` id owns the classic d/q ports — only the first
+    // pin carrying it keeps it; later duplicates are regenerated.
+    if (id === MAIN_PIN_ID) {
+      if (mainTaken) id = "";
+      else mainTaken = true;
+    }
+    if (!id || used.has(id)) id = nextPinId(used);
+    used.add(id);
+    return { id, ...(raw?.label ? { label: raw.label } : {}), bits };
+  });
 }
 
-/** Input port id of the pin at `index`: the main pin keeps the legacy `d`. */
-export function registerInputPortId(pin: RegisterPin, index: number): string {
-  return index === 0 ? "d" : `d_${pin.id}`;
+/** Input port id of a pin: the `main` pin keeps the legacy `d`. */
+export function registerInputPortId(pin: RegisterPin): string {
+  return pin.id === MAIN_PIN_ID ? "d" : `d_${pin.id}`;
 }
 
-/** Output port id of the pin at `index`: the main pin keeps the legacy `q`. */
-export function registerOutputPortId(pin: RegisterPin, index: number): string {
-  return index === 0 ? "q" : `q_${pin.id}`;
+/** Output port id of a pin: the `main` pin keeps the legacy `q`. */
+export function registerOutputPortId(pin: RegisterPin): string {
+  return pin.id === MAIN_PIN_ID ? "q" : `q_${pin.id}`;
 }
 
-/** Output port ids in sampling order (main pin first). */
+/** Output port ids in pin order (the `main` pin's `q` included wherever it sits). */
 export function registerOutputPortIds(config: RegisterPinsConfig): string[] {
   return resolveRegisterPins(config).map(registerOutputPortId);
 }
 
-/** Human name of a pin: the user label or the generated id. */
-export function registerPinLabel(pin: RegisterPin, index: number): string {
-  return pin.label || (index === 0 ? "D" : pin.id);
+/** Human name of a pin: the user label, "D" for `main`, else the id. */
+export function registerPinLabel(pin: RegisterPin): string {
+  return pin.label || (pin.id === MAIN_PIN_ID ? "D" : pin.id);
 }
 
 /** Config sanity warnings for the editor (duplicate display names). */
@@ -126,7 +147,7 @@ export function registerConfigWarnings(config: RegisterPinsConfig): string[] {
   const warnings: string[] = [];
   const seen = new Map<string, number>();
   resolveRegisterPins(config).forEach((pin, index) => {
-    const name = pin.label?.trim() || pin.id;
+    const name = pin.label?.trim() || (pin.id === MAIN_PIN_ID ? "D" : pin.id);
     const first = seen.get(name);
     if (first === undefined) seen.set(name, index);
     else warnings.push(`Pins ${first + 1} and ${index + 1} share the name "${name}".`);
@@ -148,9 +169,9 @@ export function generateRegisterPorts(config: RegisterConfig): PortDefinition[] 
 
   pins.forEach((pin, index) => {
     const y = (index - (pins.length - 1) / 2) * 20;
-    const name = index === 0 ? undefined : registerPinLabel(pin, index);
+    const name = pin.id === MAIN_PIN_ID ? undefined : registerPinLabel(pin);
     ports.push({
-      id: registerInputPortId(pin, index),
+      id: registerInputPortId(pin),
       direction: "input",
       bits: pin.bits,
       label: name ?? "D",
@@ -158,7 +179,7 @@ export function generateRegisterPorts(config: RegisterConfig): PortDefinition[] 
       position: { x: -40, y },
     });
     ports.push({
-      id: registerOutputPortId(pin, index),
+      id: registerOutputPortId(pin),
       direction: "output",
       bits: pin.bits,
       label: name ?? "Q",

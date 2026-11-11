@@ -6,7 +6,13 @@ import SchematicEditor from './SchematicEditor.vue';
 import { getActiveDesigner } from '../core/designer-bridge';
 import type { SchematicDesigner } from '../core/designer';
 import { setWireSignalState, setWireHover } from '../core/render/wire';
-import { liftPortValueLabel, setPortValueLabel, setNodeHover } from '../core/render/module-node';
+import {
+  liftPortValueLabel,
+  setPortValueLabel,
+  setNodeHover,
+  PORT_HIT_RADIUS,
+} from '../core/render/module-node';
+import type { SerializedNet } from '@/shared/types/netlist';
 import { ensureCompiled, getEngine } from '@/composables/useSimulation';
 import type { SimulationEngine } from '@/core/engine/engine';
 import { useSimulationStore } from '@/stores/simulationStore';
@@ -24,7 +30,9 @@ import StageInstructionBar from '@/simulator/components/StageInstructionBar.vue'
  *    every port (1-bit controls as 0/1, buses as hex) — always visible, not
  *    only on hover.
  * 3. Port probing: hovering any port shows its live value in hex / binary /
- *    decimal, exactly as specified in UI_AND_UX §2.
+ *    decimal, exactly as specified in UI_AND_UX §2. Hover detection is a
+ *    single top-most hit read plus static per-port geometry — never Konva's
+ *    `getAllIntersections`, which redraws every shape on every call.
  *
  * The canvas never drives the simulation; it only samples the engine.
  */
@@ -49,8 +57,27 @@ interface PortLabelTarget {
   label: Konva.Text;
 }
 
-/** Cached port label targets (null until the first sample; rebuilt if empty). */
-let portLabelTargets: PortLabelTarget[] | null = null;
+/**
+ * One port's probe geometry in scene units. The viewer canvas is locked and
+ * pan/zoom live on the stage transform above the layers, so scene-space pin
+ * positions are static for the mount's lifetime — hover probing tests them
+ * with plain distance math instead of canvas hit-testing.
+ */
+interface PortProbeTarget {
+  designator: string;
+  portId: string;
+  bits: number;
+  x: number;
+  y: number;
+}
+
+/** Cached port label + probe targets (built once per mount / theme flip). */
+let portTargetsBuilt = false;
+let portLabelTargets: PortLabelTarget[] = [];
+let portProbeTargets: PortProbeTarget[] = [];
+
+/** netId → net lookup cache; the locked viewer's netlist is static per mount. */
+let netById: Map<string, SerializedNet> | null = null;
 
 let frameRequestId: number | null = null;
 
@@ -68,9 +95,11 @@ watch(isDark, () => {
   lastNetValues.clear();
   lastPortValues.clear();
   // The designer rebuilds its nodes on theme switches; the lifted port value
-  // labels belonged to the old nodes. Nulling the cache relifts the fresh
-  // nodes' labels (and repaints them with the new theme fills) next frame.
-  portLabelTargets = null;
+  // labels belonged to the old nodes. Resetting the build flag relifts the
+  // fresh nodes' labels (and repaints them with the new theme fills) next
+  // frame, and re-resolves the static probe geometry of the fresh nodes.
+  portTargetsBuilt = false;
+  netById = null;
   // Hover highlights baked the old theme's colors; drop the tracking so the
   // next pointer move re-applies them with fresh theme colors.
   hoveredNetId = null;
@@ -123,9 +152,17 @@ function applySignalStates(): void {
 
 // ------------------------------------------------------- port value labels
 
-/** Resolves every placed module port into a label target (once per mount). */
-function buildPortLabelTargets(designer: SchematicDesigner): PortLabelTarget[] {
-  const targets: PortLabelTarget[] = [];
+/**
+ * Resolves every placed module port into its label and probe targets. Runs
+ * once per mount and again after theme flips (the designer recreates every
+ * node then); the viewer canvas is locked, so nothing else can move a pin.
+ */
+function ensurePortTargets(designer: SchematicDesigner): void {
+  if (portTargetsBuilt) return;
+  portTargetsBuilt = true;
+
+  const labels: PortLabelTarget[] = [];
+  const probes: PortProbeTarget[] = [];
   const valueLayer = designer.getValueLayer();
   for (const designator of designer.getModuleDesignators()) {
     const node = designer.getModuleNode(designator);
@@ -137,11 +174,17 @@ function buildPortLabelTargets(designer: SchematicDesigner): PortLabelTarget[] {
       // the numbers render above the wires (wire groups draw after module
       // groups in the logic layer).
       const label = liftPortValueLabel(node, port.id, valueLayer);
-      if (!label) continue;
-      targets.push({ designator, portId: port.id, bits: port.bits, label });
+      if (label) labels.push({ designator, portId: port.id, bits: port.bits, label });
+      const world = designer.getPortWorldPosition(designator, port.id);
+      if (world) {
+        probes.push({ designator, portId: port.id, bits: port.bits, x: world.x, y: world.y });
+      }
     }
   }
-  return targets;
+  portLabelTargets = labels;
+  portProbeTargets = probes;
+  // A fresh cache repaints every label (also re-resolves theme fills).
+  lastPortValues.clear();
 }
 
 /**
@@ -151,11 +194,7 @@ function buildPortLabelTargets(designer: SchematicDesigner): PortLabelTarget[] {
  * ride private slots).
  */
 function applyPortValueLabels(designer: SchematicDesigner, engine: SimulationEngine): void {
-  if (!portLabelTargets || portLabelTargets.length === 0) {
-    portLabelTargets = buildPortLabelTargets(designer);
-    // A fresh cache repaints every label (also re-resolves theme fills).
-    lastPortValues.clear();
-  }
+  ensurePortTargets(designer);
 
   for (const target of portLabelTargets) {
     const value = engine.getPortValue(target.designator, target.portId);
@@ -233,6 +272,14 @@ function handlePointerMove(event: MouseEvent): void {
     return;
   }
 
+  // Any held button is a viewport pan in viewer mode. Skip the probe work
+  // entirely while dragging — hover feedback under a pan is noise, and heavy
+  // per-move handlers are exactly what stutters the drag.
+  if (event.buttons !== 0) {
+    hideHoverState();
+    return;
+  }
+
   const stage = designer.getStage();
   const pointer = stage.getPointerPosition();
   if (!pointer) {
@@ -240,46 +287,58 @@ function handlePointerMove(event: MouseEvent): void {
     return;
   }
 
-  const intersections = stage.getAllIntersections(pointer);
-  const portHit = intersections.find((shape) => shape.name() === 'port-hit');
+  // Ports take priority: the live-value probe, no net/module emphasis. The
+  // oversized pin zones sit beneath the wires (wire groups draw above module
+  // groups), so a top-most hit test would report the wire at every pin —
+  // instead the static scene-space pin geometry is probed with distance math.
+  ensurePortTargets(designer);
+  const scene = stage.getAbsoluteTransform().copy().invert().point(pointer);
+  const portProbe = findPortProbeTarget(scene);
 
-  if (portHit) {
-    // Ports take priority: the live-value probe, no net/module emphasis.
+  if (portProbe !== null) {
     clearHoverHighlights(designer);
     infoTooltip.visible = false;
-    showPortProbe(portHit, event, container, engine);
+    showPortProbe(portProbe, event, container, engine);
     return;
   }
 
   tooltip.visible = false;
-  updateInfoHover(designer, engine, intersections, event, container);
+
+  // Single top-most hit — one hit-canvas pixel read. Never use
+  // `stage.getAllIntersections` here: it clears a scratch canvas and
+  // re-renders EVERY shape per call (Konva documents it as very slow).
+  const hit = stage.getIntersection(pointer);
+  updateInfoHover(designer, engine, hit, event, container);
+}
+
+/** First port pin zone containing the scene point, or null. */
+function findPortProbeTarget(scene: { x: number; y: number }): PortProbeTarget | null {
+  const radiusSquared = PORT_HIT_RADIUS * PORT_HIT_RADIUS;
+  for (const target of portProbeTargets) {
+    const deltaX = scene.x - target.x;
+    const deltaY = scene.y - target.y;
+    if (deltaX * deltaX + deltaY * deltaY <= radiusSquared) return target;
+  }
+  return null;
 }
 
 /** Port probe: live port value in hex / binary / decimal. */
 function showPortProbe(
-  hit: Konva.Shape,
+  target: PortProbeTarget,
   event: MouseEvent,
   container: HTMLDivElement,
   engine: SimulationEngine,
 ): void {
-  const designator = hit.getParent()?.getAttr('designator') as string | undefined;
-  const portId = hit.getAttr('portId') as string | undefined;
-  const bits = (hit.getAttr('bits') as number | undefined) ?? 32;
-  if (!designator || !portId) {
-    tooltip.visible = false;
-    return;
-  }
-
-  const value = engine.getPortValue(designator, portId);
+  const value = engine.getPortValue(target.designator, target.portId);
   if (value === null) {
     tooltip.visible = false;
     return;
   }
 
-  const formatted = formatWord(value, bits);
+  const formatted = formatWord(value, target.bits);
   tooltip.visible = true;
-  tooltip.title = `${designator} · ${portId}`;
-  tooltip.bits = bits;
+  tooltip.title = `${target.designator} · ${target.portId}`;
+  tooltip.bits = target.bits;
   tooltip.hex = formatted.hex;
   tooltip.bin = formatted.bin;
   tooltip.dec = formatted.dec;
@@ -295,12 +354,12 @@ function showPortProbe(
 function updateInfoHover(
   designer: SchematicDesigner,
   engine: SimulationEngine,
-  intersections: Konva.Shape[],
+  hit: Konva.Node | null,
   event: MouseEvent,
   container: HTMLDivElement,
 ): void {
-  const netId = findWireHit(designer, intersections);
-  const designator = netId === null ? findModuleHit(intersections) : null;
+  const netId = hit !== null ? findWireHit(designer, hit) : null;
+  const designator = netId === null && hit !== null ? findModuleHit(hit) : null;
 
   applyHoverHighlights(designer, netId, designator);
 
@@ -314,27 +373,23 @@ function updateInfoHover(
 }
 
 /** Finds the wire group under the cursor by walking up to the `netId` attr. */
-function findWireHit(designer: SchematicDesigner, intersections: Konva.Shape[]): string | null {
-  for (const shape of intersections) {
-    let node: Konva.Node | null = shape;
-    while (node) {
-      const netId = node.getAttr('netId') as string | undefined;
-      if (netId && designer.getWireNode(netId)) return netId;
-      node = node.getParent();
-    }
+function findWireHit(designer: SchematicDesigner, hit: Konva.Node): string | null {
+  let node: Konva.Node | null = hit;
+  while (node) {
+    const netId = node.getAttr('netId') as string | undefined;
+    if (netId && designer.getWireNode(netId)) return netId;
+    node = node.getParent();
   }
   return null;
 }
 
 /** Finds the module group under the cursor (`designator` + `typeId` attrs). */
-function findModuleHit(intersections: Konva.Shape[]): string | null {
-  for (const shape of intersections) {
-    let node: Konva.Node | null = shape;
-    while (node) {
-      const designator = node.getAttr('designator') as string | undefined;
-      if (designator && (node.getAttr('typeId') as string | undefined)) return designator;
-      node = node.getParent();
-    }
+function findModuleHit(hit: Konva.Node): string | null {
+  let node: Konva.Node | null = hit;
+  while (node) {
+    const designator = node.getAttr('designator') as string | undefined;
+    if (designator && (node.getAttr('typeId') as string | undefined)) return designator;
+    node = node.getParent();
   }
   return null;
 }
@@ -382,6 +437,14 @@ function hideHoverState(): void {
   infoTooltip.visible = false;
 }
 
+/** Net lookup for tooltips; the locked viewer's netlist is static per mount. */
+function netForId(designer: SchematicDesigner, netId: string): SerializedNet | null {
+  if (netById === null) {
+    netById = new Map(designer.getNets().map((net) => [net.id, net]));
+  }
+  return netById.get(netId) ?? null;
+}
+
 /** Net tooltip: live value in three formats + every module it connects. */
 function showNetInfo(
   designer: SchematicDesigner,
@@ -390,7 +453,7 @@ function showNetInfo(
   event: MouseEvent,
   container: HTMLDivElement,
 ): void {
-  const net = designer.getNets().find((candidate) => candidate.id === netId);
+  const net = netForId(designer, netId);
   if (!net) {
     infoTooltip.visible = false;
     return;

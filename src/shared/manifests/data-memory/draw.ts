@@ -23,7 +23,19 @@ export function drawDataMemoryBody(
   // Vertical extent: top clears the "Address" label above the topmost pin,
   // bottom lands exactly on the MemWrite/MemRead control pins.
   const bounds = addFoldedMemoryBody(group, options, -40, 55);
-  addModuleLabel(group, options, bounds);
+  // addModuleLabel(group, options, {
+  //   ...bounds,
+
+  // });
+
+  // Add label to the center
+  addBodyText(group, (bounds.minX + bounds.maxX) / 2 - 20, (bounds.minY + bounds.maxY) / 2 - 10, options.label, options, {
+    fontSize: 10,
+    bold: true,
+    align: "center",
+    width: 40,
+  });
+
 
   addBodyText(group, addr.x + 8, addr.y - 5, "Address", options);
   addBodyText(group, wd.x + 8, wd.y - 5, "Write data", options);
@@ -31,8 +43,8 @@ export function drawDataMemoryBody(
     align: "right",
     width: 48,
   });
-  addBodyText(group, memWrite.x - 44, memWrite.y - 12, "MemWrite", options, { width: 40 });
-  addBodyText(group, memRead.x + 8, memRead.y - 12, "MemRead", options, { width: 34 });
+  addBodyText(group, memWrite.x - 20, memWrite.y + 6, "MemWrite", options, { width: 40 });
+  addBodyText(group, memRead.x-20, memRead.y + 6, "MemRead", options, { width: 40 });
 
   return { width: bounds.width, height: bounds.height };
 }

@@ -40,11 +40,11 @@ export const AluManifest: ModuleManifest<AluConfig> = {
   // under the port radius, and whole-unit alignment is what keeps wires
   // bending cleanly on the grid.
   generatePorts: (config) => [
-    { id: "a", direction: "input", bits: config.bitWidth, label: "A", position: { x: ALU_GEOMETRY.left, y: -20 } },
-    { id: "b", direction: "input", bits: config.bitWidth, label: "B", position: { x: ALU_GEOMETRY.left, y: 20 } },
-    { id: "op", direction: "input", bits: 4, label: "Op", tooltip: "ALU operation control", position: { x: -25, y: Math.round(aluBottomEdgeY(-25)) } },
+    { id: "a", direction: "input", bits: config.bitWidth, label: "A", position: { x: ALU_GEOMETRY.left, y: ALU_GEOMETRY.top + ALU_GEOMETRY.inputSpacing } },
+    { id: "b", direction: "input", bits: config.bitWidth, label: "B", position: { x: ALU_GEOMETRY.left, y:  ALU_GEOMETRY.bottom - ALU_GEOMETRY.inputSpacing } },
+    { id: "op", direction: "input", bits: 4, label: "Op", tooltip: "ALU operation control", position: { x: 0, y: Math.round(aluBottomEdgeY(0)) } },
     { id: "result", direction: "output", bits: config.bitWidth, label: "Result", position: { x: ALU_GEOMETRY.tipX, y: 0 } },
-    { id: "zero", direction: "output", bits: 1, label: "Zero", tooltip: "Asserted when the result is zero", position: { x: 30, y: Math.round(aluBottomEdgeY(30)) } },
+    { id: "zero", direction: "output", bits: 1, label: "Zero", tooltip: "Asserted when the result is zero", position: { x: ALU_GEOMETRY.tipX, y: -10 } },
   ],
 
   createEvaluators: (config): ModuleEvaluators => {

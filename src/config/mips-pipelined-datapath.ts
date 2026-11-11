@@ -13,7 +13,7 @@
  *
  * Boundary registers: each stage boundary is ONE multi-pin `std.register`
  * (the settings reconciler keeps exactly one managed register per boundary
- * index) whose MAIN pin is the 32-bit instruction word — port `q`. That
+ * index) whose `main`-id pin is the 32-bit instruction word — port `q`. That
  * convention drives two features: the stage visualizer samples `q` for the
  * instruction bar, and the session's halt logic waits for every `q` to
  * read 0 before finishing (pipeline drain). IF/ID and ID/EX additionally
@@ -62,8 +62,10 @@ function n(id: string, source: [string, string], ...targets: [string, string][])
 
 /**
  * The 24 datapath modules, laid out left-to-right (see file header). The
- * four `std.register` walls use pin ids matching the control-signal ids, so
- * their derived ports read `d_regWrite` / `q_regWrite` and so on.
+ * four `std.register` walls carry a pin id'd `main` (the instruction word —
+ * it derives the classic `d`/`q` ports the visualizer and halt drain read)
+ * plus pins whose ids match the control-signal ids, so their derived ports
+ * read `d_regWrite` / `q_regWrite` and so on.
  */
 export const MIPS_PIPELINED_MODULES: SerializedModule[] = [
     // -- Fetch ----------------------------------------------------------------
@@ -80,7 +82,7 @@ export const MIPS_PIPELINED_MODULES: SerializedModule[] = [
         bitWidth: 32,
         reset: true,
         pins: [
-            { id: "instr", bits: 32, label: "Instr" },
+            { id: "main", bits: 32, label: "Instr" },
             { id: "pc4", bits: 32, label: "PC+4" },
         ],
     }),
@@ -118,7 +120,7 @@ export const MIPS_PIPELINED_MODULES: SerializedModule[] = [
         bitWidth: 32,
         reset: true,
         pins: [
-            { id: "instr", bits: 32, label: "Instr" },
+            { id: "main", bits: 32, label: "Instr" },
             { id: "rd1", bits: 32, label: "RD1" },
             { id: "rd2", bits: 32, label: "RD2" },
             { id: "imm", bits: 32, label: "Imm" },
@@ -159,7 +161,7 @@ export const MIPS_PIPELINED_MODULES: SerializedModule[] = [
         stageId: "EX/MEM",
         bitWidth: 32,
         pins: [
-            { id: "instr", bits: 32, label: "Instr" },
+            { id: "main", bits: 32, label: "Instr" },
             { id: "aluResult", bits: 32, label: "ALU" },
             { id: "storeData", bits: 32, label: "Store" },
             { id: "rd", bits: 5, label: "Dest" },
@@ -178,7 +180,7 @@ export const MIPS_PIPELINED_MODULES: SerializedModule[] = [
         stageId: "MEM/WB",
         bitWidth: 32,
         pins: [
-            { id: "instr", bits: 32, label: "Instr" },
+            { id: "main", bits: 32, label: "Instr" },
             { id: "aluResult", bits: 32, label: "ALU" },
             { id: "memData", bits: 32, label: "Mem" },
             { id: "rd", bits: 5, label: "Dest" },

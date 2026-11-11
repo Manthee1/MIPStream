@@ -128,10 +128,11 @@ export function useStageVisualizer() {
   }
 
   /**
-   * Boundary-register cell. The main pin keeps the legacy loose resolution
+   * Boundary-register cell. The `main` pin keeps the legacy loose resolution
    * (word → PC → index); additional configured pins are only consulted on
    * exact instruction-word matches — narrow control pins would otherwise
-   * resolve through the bare-index fallback and mislabel the cell.
+   * resolve through the bare-index fallback and mislabel the cell. A
+   * pin-less boundary register shows an empty cell.
    */
   function boundaryCell(
     boundary: ModuleLike,
@@ -139,6 +140,7 @@ export function useStageVisualizer() {
     program: LoadedProgramSnapshot | null
   ): string | null {
     const portIds = registerOutputPortIds((boundary.config ?? {}) as RegisterPinsConfig);
+    if (portIds.length === 0) return null;
     const main = resolveCell(engine.getPortValue(boundary.designator, portIds[0]), program);
     if (main !== null) return main;
     for (let i = 1; i < portIds.length; i += 1) {

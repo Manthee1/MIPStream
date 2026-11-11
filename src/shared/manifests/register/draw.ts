@@ -4,6 +4,7 @@ import Konva from "konva";
 import type { ModuleRenderOptions, ModuleRenderOutput } from "../../types/manifest";
 import type { RegisterConfig } from "./logic";
 import {
+  MAIN_PIN_ID,
   registerInputPortId,
   registerOutputPortId,
   registerPinLabel,
@@ -37,13 +38,13 @@ export function drawStageRegisterBody(
     })
   );
 
-  // Per-pin labels: the main pair keeps the classic D/Q; extra pins show
+  // Per-pin labels: the `main` pair keeps the classic D/Q; other pins show
   // their label on both halves (the same signal before/after the edge).
   const pins = resolveRegisterPins(options.config);
-  pins.forEach((pin, index) => {
-    const d = portPosition(options.ports, registerInputPortId(pin, index));
-    const q = portPosition(options.ports, registerOutputPortId(pin, index));
-    const name = index === 0 ? undefined : registerPinLabel(pin, index);
+  pins.forEach((pin) => {
+    const d = portPosition(options.ports, registerInputPortId(pin));
+    const q = portPosition(options.ports, registerOutputPortId(pin));
+    const name = pin.id === MAIN_PIN_ID ? undefined : registerPinLabel(pin);
     addBodyText(group, d.x + 8, d.y - 5, name ?? "D", options, { width: 40 });
     addBodyText(group, q.x - 48, q.y - 5, name ?? "Q", options, { align: "right", width: 40 });
   });

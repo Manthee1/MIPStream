@@ -4,6 +4,7 @@
 import { computed, ref } from 'vue';
 import { NButton, NIcon, NInput, NInputNumber, NText } from 'naive-ui';
 import { IconPlus, IconTrash, IconX } from '@tabler/icons-vue';
+import ReorderableList from '@/shared/components/ReorderableList.vue';
 import { widthMask } from '../../utils/bit-ops';
 import {
   ControlConfig,
@@ -21,12 +22,39 @@ const emit = defineEmits<{
   (e: 'update:config', config: ControlConfig): void;
 }>();
 
-/** Structural deep copy (plain JSON data only). */
-function clone(config: ControlConfig): ControlConfig {
+/**
+ * Working signal row — `key` is a client-side v-for key for the drag-and-drop
+ * list (ids are user-editable and can transiently duplicate, index keys
+ * would misplace uncontrolled input values across a drag).
+ */
+interface WorkingSignal extends ControlSignalDef {
+  key: number;
+}
+
+/** Working-copy shape: signals carry the client-side row keys. */
+interface ControlWorkingConfig extends Omit<ControlConfig, 'signals'> {
+  signals: WorkingSignal[];
+}
+
+/** Working copy — a structural deep copy plus client-side row keys. */
+function toWorking(config: ControlConfig): ControlWorkingConfig {
   return {
     opcodeBits: config.opcodeBits,
-    signals: config.signals.map((signal) => ({ ...signal })),
+    signals: config.signals.map((signal, index) => ({ ...signal, key: index })),
     rows: config.rows.map((row) => ({ ...row, values: { ...row.values } })),
+  };
+}
+
+/** Serialized copy — client-side row keys stripped. */
+function toConfig(working: ControlWorkingConfig): ControlConfig {
+  return {
+    opcodeBits: working.opcodeBits,
+    signals: working.signals.map((signal) => ({
+      id: signal.id,
+      bits: signal.bits,
+      ...(signal.label ? { label: signal.label } : {}),
+    })),
+    rows: working.rows.map((row) => ({ ...row, values: { ...row.values } })),
   };
 }
 
@@ -37,7 +65,7 @@ function clone(config: ControlConfig): ControlConfig {
  * Cell inputs are uncontrolled (default-value + change), mirroring
  * WordMemoryTable, so typing never re-renders mid-edit.
  */
-const working = ref<ControlConfig>(clone(props.config));
+const working = ref<ControlWorkingConfig>(toWorking(props.config));
 
 const opcodeMax = computed(() => opcodeMask(working.value.opcodeBits));
 const warnings = computed(() => controlConfigWarnings(working.value));
@@ -48,7 +76,7 @@ function signalMax(signal: ControlSignalDef): number {
 
 /** Emits the committed working copy (cloned to detach shared references). */
 function commit(): void {
-  emit('update:config', clone(working.value));
+  emit('update:config', toConfig(working.value));
 }
 
 // ------------------------------------------------------------ opcode width
@@ -65,7 +93,9 @@ function addSignal(): void {
   let n = working.value.signals.length + 1;
   let id = `sig${n}`;
   while (working.value.signals.some((signal) => signal.id === id)) id = `sig${++n}`;
-  working.value.signals.push({ id, bits: 1 });
+  // Fresh client-side row key (keys never repeat, so drags keep their rows).
+  const key = working.value.signals.reduce((max, signal) => Math.max(max, signal.key), -1) + 1;
+  working.value.signals.push({ key, id, bits: 1 });
   commit();
 }
 
@@ -155,28 +185,34 @@ function removeRow(index: number): void {
     <!-- Signal definitions -->
     <div class="flex flex-col gap-1">
       <n-text strong class="text-xs uppercase tracking-widest opacity-50">Signals</n-text>
-      <div v-for="(signal, index) in working.signals" :key="index" class="flex items-center gap-2">
-        <n-input
-          size="small"
-          :default-value="signal.id"
-          class="flex-1"
-          placeholder="id"
-          @change="(v: string) => setSignalId(index, v)"
-        />
-        <n-input-number
-          size="small"
-          :default-value="signal.bits"
-          :min="1"
-          :max="32"
-          :show-button="false"
-          :update-value-on-input="false"
-          class="w-16"
-          @update:value="(v: number | null) => setSignalBits(index, v)"
-        />
-        <n-button size="tiny" quaternary type="error" @click="removeSignal(index)">
-          <n-icon :size="14"><IconX /></n-icon>
-        </n-button>
-      </div>
+      <ReorderableList
+        v-model="working.signals"
+        :item-key="(signal: WorkingSignal) => signal.key"
+        @reorder="commit"
+      >
+        <template #default="{ item: signal, index }">
+          <n-input
+            size="small"
+            :default-value="signal.id"
+            class="flex-1"
+            placeholder="id"
+            @change="(v: string) => setSignalId(index, v)"
+          />
+          <n-input-number
+            size="small"
+            :default-value="signal.bits"
+            :min="1"
+            :max="32"
+            :show-button="false"
+            :update-value-on-input="false"
+            class="w-16"
+            @update:value="(v: number | null) => setSignalBits(index, v)"
+          />
+          <n-button size="tiny" quaternary type="error" @click="removeSignal(index)">
+            <n-icon :size="14"><IconX /></n-icon>
+          </n-button>
+        </template>
+      </ReorderableList>
       <n-button size="tiny" dashed @click="addSignal">
         <template #icon><n-icon :size="14"><IconPlus /></n-icon></template>
         Add signal

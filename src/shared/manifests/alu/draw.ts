@@ -13,13 +13,14 @@ import { addBodyText, portPosition } from "../draw-helpers";
  * silhouette edges.
  */
 export const ALU_GEOMETRY = {
-  left: -52,
-  top: -30,
-  bottom: 42,
-  tipX: 54,
-  tipHalf: 6,
-  notchX: -38,
-  notchY: 8,
+  left: -30,
+  top: -45,
+  bottom: 45,
+  tipX: 30,
+  tipHalf: 12,
+  notchX: -15,
+  notchY: 0,
+  inputSpacing: 15, // vertical spacing between the A and B input pins
 } as const;
 
 /** Y coordinate on the sloped top edge at the given x. */
@@ -53,9 +54,9 @@ export function drawAluBody(
         tipX, -tipHalf,
         tipX, tipHalf,
         left, bottom,
-        left, b.y + 7,
+        left, b.y - ALU_GEOMETRY.inputSpacing,
         notchX, notchY,
-        left, a.y - 7,
+        left, a.y + ALU_GEOMETRY.inputSpacing ,
       ],
       closed: true,
       fill: options.theme.bodyFill,

@@ -4,6 +4,7 @@
 import { computed, ref } from 'vue';
 import { NButton, NIcon, NInput, NInputNumber, NSwitch, NText } from 'naive-ui';
 import { IconPlus, IconX } from '@tabler/icons-vue';
+import ReorderableList from '@/shared/components/ReorderableList.vue';
 import { clampWiringBits } from '../wiring-logic';
 import {
   MAIN_PIN_ID,
@@ -53,6 +54,17 @@ if (!Array.isArray(working.value.pins) || working.value.pins.length === 0) {
 
 const warnings = computed(() => registerConfigWarnings(working.value));
 
+/**
+ * Pin-list accessor for the drag-and-drop wrapper — always an array after
+ * the legacy seeding above.
+ */
+const pins = computed({
+  get: () => working.value.pins ?? [],
+  set: (value: RegisterPin[]) => {
+    working.value.pins = value;
+  },
+});
+
 /** Emits the committed working copy (cloned to detach shared references). */
 function commit(): void {
   emit('update:config', clone(working.value));
@@ -73,7 +85,7 @@ function setPinBits(index: number, value: number | null): void {
   if (!pin || value === null) return;
   pin.bits = clampWiringBits(value);
   // Keep the legacy field coherent with the main pin for old readers.
-  if (index === 0) working.value.bitWidth = pin.bits;
+  if (pin.id === MAIN_PIN_ID) working.value.bitWidth = pin.bits;
   commit();
 }
 
@@ -84,9 +96,8 @@ function addPin(): void {
   commit();
 }
 
-/** Only non-main pins are removable — the main pair anchors legacy `d`/`q`. */
+/** Every pin is removable — an empty pin list is a valid (inert) register. */
 function removePin(index: number): void {
-  if (index === 0) return;
   working.value.pins?.splice(index, 1);
   commit();
 }
@@ -102,28 +113,33 @@ function toggleReset(value: boolean): void {
     <!-- Pin list -->
     <div class="flex flex-col gap-1">
       <n-text strong class="text-xs uppercase tracking-widest opacity-50">Pins</n-text>
-      <div v-for="(pin, index) in working.pins" :key="pin.id" class="flex items-center gap-1">
-        <n-input
-          size="small"
-          class="flex-1"
-          :default-value="pin.label ?? pin.id"
-          :placeholder="index === 0 ? 'D / Q' : 'Name'"
-          @change="(v: string) => setPinLabel(index, v)"
-        />
-        <n-input-number
-          size="small"
-          class="w-20 shrink-0"
-          :default-value="pin.bits"
-          :min="1"
-          :max="32"
-          :show-button="false"
-          :update-value-on-input="false"
-          @update:value="(v: number | null) => setPinBits(index, v)"
-        />
-        <n-button size="tiny" quaternary type="error" :disabled="index === 0" @click="removePin(index)">
-          <n-icon :size="14"><IconX /></n-icon>
-        </n-button>
-      </div>
+      <n-text v-if="(working.pins?.length ?? 0) === 0" depth="3" class="text-xs">
+        No pins — this register latches nothing until a pin is added.
+      </n-text>
+      <ReorderableList v-model="pins" :item-key="(pin: RegisterPin) => pin.id" @reorder="commit">
+        <template #default="{ item: pin, index }">
+          <n-input
+            size="small"
+            class="flex-1"
+            :default-value="pin.label ?? pin.id"
+            placeholder="Name"
+            @change="(v: string) => setPinLabel(index, v)"
+          />
+          <n-input-number
+            size="small"
+            class="w-20 shrink-0"
+            :default-value="pin.bits"
+            :min="1"
+            :max="32"
+            :show-button="false"
+            :update-value-on-input="false"
+            @update:value="(v: number | null) => setPinBits(index, v)"
+          />
+          <n-button size="tiny" quaternary type="error" @click="removePin(index)">
+            <n-icon :size="14"><IconX /></n-icon>
+          </n-button>
+        </template>
+      </ReorderableList>
       <n-button
         size="tiny"
         dashed
@@ -134,8 +150,9 @@ function toggleReset(value: boolean): void {
         Add pin
       </n-button>
       <n-text depth="3" class="text-xs">
-        Each pin is an input/output pair that latches on the rising edge. The first pin is the
-        main D/Q pair and cannot be removed.
+        Each pin is an input/output pair that latches on the rising edge; drag rows to restack the
+        drawn order. The pin id'd "main" is wired as the classic D/Q pair — every pin can be
+        removed or reordered without rewiring anything else.
       </n-text>
     </div>
 
