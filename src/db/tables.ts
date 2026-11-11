@@ -49,3 +49,46 @@ export const projectTableConfig: ITable = {
     },
 }
 
+/**
+ * User-made architecture templates ("save as template", DB v6). Each row is a
+ * frozen `ArchitectureConfig` reusable at project creation; the whole table
+ * is snapshotted into every architecture export and restored wholesale on
+ * import. See `src/shared/types/architecture-template.ts`.
+ */
+export const architectureTemplatesTableConfig: ITable = {
+    name: 'architecture_templates',
+    columns: {
+        id: {
+            dataType: 'string',
+            primaryKey: true,
+        },
+        name: {
+            dataType: 'string',
+            notNull: true,
+        },
+        description: {
+            dataType: 'string',
+            notNull: true,
+            default: '',
+        },
+        icon: {
+            dataType: 'string',
+            notNull: true,
+            default: 'IconCpu',
+        },
+        architecture: {
+            dataType: 'object',
+            notNull: true,
+        },
+        createdAt: {
+            dataType: 'date_time',
+            notNull: true,
+        },
+        updatedAt: {
+            dataType: 'date_time',
+            notNull: true,
+        },
+    },
+}
+
+

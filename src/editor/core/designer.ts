@@ -1434,6 +1434,31 @@ export class SchematicDesigner {
     return warnings;
   }
 
+  /**
+   * Replaces the whole canvas document with an externally sourced
+   * architecture (e.g. an imported architecture file): clears every module
+   * and net, resets the designator counters so restored ids stay
+   * collision-free, and loads the netlist as the new undo baseline — a
+   * wholesale load is not an editable gesture, so nothing can be undone back
+   * before it (mirroring a project open). Marks the project unsaved and
+   * bumps the document revision (invalidating the compiled simulation).
+   * Returns the load's per-element skip warnings.
+   */
+  public replaceArchitecture(
+    arch: { modules?: SerializedModule[]; nets?: SerializedNet[] }
+  ): string[] {
+    this.clearDocument();
+    this.moduleCounter = 0;
+    this.netCounter = 0;
+    const warnings = this.loadArchitecture(arch, { resetHistory: true });
+
+    // Marks the project unsaved and bumps the revision — without recording
+    // history (loading suppresses notifications); lint already ran in load.
+    this.config.onDocumentChange?.();
+    this.notifySelectionChange();
+    return warnings;
+  }
+
   // ----------------------------------------------------------------- config
 
   /** Read-only access to a module instance (e.g. for Inspector panels). */

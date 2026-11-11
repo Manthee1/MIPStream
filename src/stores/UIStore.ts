@@ -15,6 +15,7 @@ export const useUIStore = defineStore('ui', {
         showCreateProjectModal: false,
         showOpenProjectModal: false,
         showArchitectureSettings: false,
+        showSaveTemplateModal: false,
         perspective: 'design' as 'design' | 'simulate',
         settingsWindowConfig: {} as SettingWindowConfig,
         theme: useTheme().theme,

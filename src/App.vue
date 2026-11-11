@@ -6,6 +6,7 @@ import TopBar from './components/layout/TopBar.vue'
 import CreateProjectModal from './components/projects/CreateProjectModal.vue'
 import OpenProjectModal from './components/projects/OpenProjectModal.vue'
 import ArchitectureSettingsModal from './editor/components/settings/ArchitectureSettingsModal.vue'
+import SaveTemplateModal from './components/projects/SaveTemplateModal.vue'
 import { useUIStore } from './stores/UIStore'
 import { useAutosave } from './composables/useAutosave'
 import { useSessionPersistence } from './composables/useSessionPersistence'
@@ -99,6 +100,7 @@ window.addEventListener('theme-change', (event: any) => {
           <CreateProjectModal v-model:show="uiStore.showCreateProjectModal" />
           <OpenProjectModal v-model:show="uiStore.showOpenProjectModal" />
           <ArchitectureSettingsModal />
+          <SaveTemplateModal />
         </NDialogProvider>
       </NNotificationProvider>
     </NMessageProvider>

@@ -1849,11 +1849,20 @@ defaults apply to old projects without an explicit migration step.
 
 ### 11.7 Export, import and templates
 
-There is currently no export/import. The Planned design (todo.md) adds an
-`architecture templates` IndexedDB table for "save as template", a single-file
-export containing the architecture plus all templates, and — in the Electron
-variant — native "Save architecture as" / "Load architecture" to the file
-system (§12.3, §12.5).
+Implemented 2026-11-11: DB v6 adds an `architecture_templates` table for
+user-made templates. "Save Architecture as Template…" (File menu) snapshots
+the live document into a template row; the Create Project picker lists them
+under "My Templates" (hardware only — no code editors), with popconfirm
+delete. Export downloads a single versioned `.miparch` JSON bundle
+(`mipstream-architecture-bundle` v1: the project's architecture plus a full
+snapshot of the template table); Import validates the bundle, confirms both
+restore effects, then replaces the template table wholesale and the current
+project's architecture in place (mounted canvas: `replaceArchitecture` =
+clear + load as the new undo baseline; otherwise a store-only write plus a
+document-revision bump). Exports never dirty the project; imports do and
+invalidate the compiled simulation. Remaining: the Electron variant's native
+"Save architecture as" / "Load architecture" (§12.5) — browser file IO is
+isolated in `src/shared/utils/file-io.ts` as the swap point.
 
 ### 11.8 Project management
 

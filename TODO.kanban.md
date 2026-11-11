@@ -51,10 +51,11 @@ Tags: `feat` `designer` `alu`
 
 #### Feat: Architecture configuration import, export, and "save as template"
 <!-- id: task-1792838400000-14 -->
-- [ ] Add a new IndexedDB table for user-made architecture templates
-- [ ] "Save as template" stores the current architecture configuration in that table
-- [ ] Export produces a single file containing the architecture configuration plus all templates from that table; import restores both to the state they were in when exported
+- [x] Add a new IndexedDB table for user-made architecture templates
+- [x] "Save as template" stores the current architecture configuration in that table
+- [x] Export produces a single file containing the architecture configuration plus all templates from that table; import restores both to the state they were in when exported
 - [ ] On Electron, expose this as "Save architecture as" / "Load architecture" backed by the local file system
+<!-- done-note: Done (2026-11-11, minus the Electron item — blocked by the "Electron build" card; browser file IO is isolated in `src/shared/utils/file-io.ts` as the native swap point): DB v6 adds the `architecture_templates` table; "Save Architecture as Template…" (File menu → `SaveTemplateModal` + `useArchitectureTransfer`) snapshots the LIVE document (`requestArchitectureSnapshot` + `serializeArchitecture` — never lags unsaved edits, never dirties the project) into a row reusable from Create Project's new "My Templates" group (popconfirm delete on the info card). Export bundles the architecture plus the whole template table into a versioned `.miparch` JSON (`mipstream-architecture-bundle` v1, `architecture-bundle.ts` build/validate — hard-fails wrong format/newer schema/malformed shape, warns on unknown module typeIds); Import validates, names both restore effects in a confirm dialog, then replaces the template table wholesale AND the current project's architecture in place — mounted canvas: new `designer.replaceArchitecture` (clearDocument + load as the fresh undo baseline, marks unsaved + bumps the revision via the commit seam); Simulate perspective: store-only write + `bumpDocumentRevision` so the compiled session always invalidates. Imports are real mutations (project unsaved until saved); the last DB row remains the pre-import state. -->
 Tags: `feat` `designer` `import-export`
 
 #### Improve Cordinates functionality

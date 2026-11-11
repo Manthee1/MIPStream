@@ -2,7 +2,7 @@
 import { computed, h, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { NLayoutHeader, NSpace, NDropdown, NButton, NIcon, NText, NDivider, NButtonGroup, useMessage } from 'naive-ui';
-import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2, IconDatabaseImport, IconRestore, IconArrowUp } from '@tabler/icons-vue';
+import { IconPlus, IconFolderOpen, IconDeviceFloppy, IconHistory, IconLogout, IconSettings, IconSun, IconMoon, IconAdjustments, IconPlayerPlay, IconPlayerPause, IconTool, IconPlayerStop, IconPlayerSkipForward, IconSettings2, IconDatabaseImport, IconRestore, IconArrowUp, IconTemplate, IconFileExport, IconFileImport } from '@tabler/icons-vue';
 import { useUIStore } from '../../stores/UIStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -10,6 +10,7 @@ import { useSimulationStore } from '../../stores/simulationStore';
 import { useSimulation } from '../../composables/useSimulation';
 import useTheme from '../../composables/useTheme';
 import { useProjectSave } from '../../composables/useProjectSave';
+import { useArchitectureTransfer } from '../../composables/useArchitectureTransfer';
 import { useProjectSwitch } from '../../composables/useProjectSwitch';
 import { autosaveError, lastAutosavedAt } from '../../composables/useAutosave';
 import { useKeyboard } from '../../composables/useKeyboard';
@@ -24,6 +25,8 @@ const { isDark, toggleTheme } = useTheme();
 
 const { saveCurrentProject } = useProjectSave();
 const { openProject } = useProjectSwitch();
+// Architecture transfer flows (File ▸ template / export / import).
+const { openSaveAsTemplate, exportArchitecture, importArchitecture } = useArchitectureTransfer();
 const { setShortcut, removeShortcut } = useKeyboard();
 
 // Simulation controls (Simulate perspective only).
@@ -93,6 +96,12 @@ const handleFileMenu = (key: string) => {
   else if (key === 'open') uiStore.showOpenProjectModal = true;
   else if (key === 'save') {
     void saveCurrentProject();
+  } else if (key === 'save-template') {
+    openSaveAsTemplate();
+  } else if (key === 'export-architecture') {
+    void exportArchitecture();
+  } else if (key === 'import-architecture') {
+    void importArchitecture();
   } else if (key === 'exit') router.push('/');
 };
 
@@ -116,6 +125,24 @@ const fileOptions = computed(() => [
   { type: 'divider', key: 'd1' },
   { label: 'Save Project', key: 'save', disabled: !hasProject.value, icon: () => h(NIcon, null, { default: () => h(IconDeviceFloppy) }) },
   { type: 'divider', key: 'd2' },
+  // Architecture transfer actions need an open project in the workspace:
+  // exports snapshot the live document, imports replace it in place.
+  {
+    label: 'Save Architecture as Template…', key: 'save-template',
+    disabled: !hasProject.value || !isWorkspace.value,
+    icon: () => h(NIcon, null, { default: () => h(IconTemplate) })
+  },
+  {
+    label: 'Export Architecture…', key: 'export-architecture',
+    disabled: !hasProject.value || !isWorkspace.value,
+    icon: () => h(NIcon, null, { default: () => h(IconFileExport) })
+  },
+  {
+    label: 'Import Architecture…', key: 'import-architecture',
+    disabled: !hasProject.value || !isWorkspace.value,
+    icon: () => h(NIcon, null, { default: () => h(IconFileImport) })
+  },
+  { type: 'divider', key: 'd3' },
   { label: 'Exit', key: 'exit', icon: () => h(NIcon, null, { default: () => h(IconLogout) }) }
 ]);
 
