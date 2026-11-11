@@ -3,6 +3,7 @@
 import { ModuleManifest, ModuleEvaluators } from "../../types/manifest";
 import description from "./description.md?raw";
 import icon from "./icon.svg?raw";
+import { drawAluControlBody } from "./draw";
 import { decodeAluControl } from "./logic";
 
 export interface AluControlConfig {}
@@ -13,6 +14,7 @@ export const AluControlManifest: ModuleManifest<AluControlConfig> = {
   description,
   icon,
   category: "logic",
+  render: drawAluControlBody,
 
   defaultConfig: {},
 

@@ -20,8 +20,8 @@ import norIcon from "./icon-nor.svg?raw";
 /** Shared port layout for all gate variants (NOR's bubble widens the body). */
 function gateGeneratePorts(config: LogicGateConfig): PortDefinition[] {
   return [
-    { id: "a", direction: "input", bits: GATE_BIT_WIDTH, label: "A", position: { x: -44, y: -10 } },
-    { id: "b", direction: "input", bits: GATE_BIT_WIDTH, label: "B", position: { x: -44, y: 10 } },
+    { id: "a", direction: "input", bits: GATE_BIT_WIDTH, label: "A", position: { x: -48, y: -10 } },
+    { id: "b", direction: "input", bits: GATE_BIT_WIDTH, label: "B", position: { x: -48, y: 10 } },
     { id: "out", direction: "output", bits: GATE_BIT_WIDTH, label: "Out", position: { x: config.op === "nor" ? 46 : 44, y: 0 } },
   ];
 }

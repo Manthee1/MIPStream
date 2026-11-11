@@ -2,11 +2,15 @@
 
 import Konva from "konva";
 import type { ModuleRenderOptions, Pos, PortDefinition } from "../types/manifest";
-import { portAnchors, portBounds, type Bounds } from "../utils/port-math";
+import { portAnchors, type Bounds } from "../utils/port-math";
 
 const LABEL_HEIGHT = 14;
 const BODY_STROKE_WIDTH = 1.5;
 const MEMORY_FOLD = 12;
+/** Minimum body height so single-row modules never collapse to a flat line. */
+const BODY_MIN_HEIGHT = 40;
+/** Vertical margin so pin rows don't touch the body's top/bottom edges. */
+const BODY_VERTICAL_PADDING = 10;
 
 /** Looks up a port's module-local position by id (falls back to the origin). */
 export function portPosition(ports: PortDefinition[], id: string): Pos {
@@ -69,22 +73,30 @@ export function addBodyText(
 
 /**
  * Classic memory symbol: a sharp rectangle with a folded top-right corner.
- * Returns the body bounds so callers can annotate pins.
+ * Horizontal edges are derived from the port layout so pins sit exactly on
+ * the left/right edges; the vertical extent is caller-supplied so each
+ * memory can size itself (taller instruction memory, etc.). Returns the body
+ * bounds so callers can annotate pins.
  */
 export function addFoldedMemoryBody(
   group: Konva.Group,
-  options: ModuleRenderOptions
+  options: ModuleRenderOptions,
+  minY: number,
+  maxY: number
 ): Bounds {
-  const bounds = portBounds(portAnchors(options.ports), 20);
+  const anchors = portAnchors(options.ports);
+  const xs = anchors.map((a) => a.position.x);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
 
   group.add(
     new Konva.Line({
       points: [
-        bounds.minX, bounds.minY,
-        bounds.maxX - MEMORY_FOLD, bounds.minY,
-        bounds.maxX, bounds.minY + MEMORY_FOLD,
-        bounds.maxX, bounds.maxY,
-        bounds.minX, bounds.maxY,
+        minX, minY,
+        maxX - MEMORY_FOLD, minY,
+        maxX, minY + MEMORY_FOLD,
+        maxX, maxY,
+        minX, maxY,
       ],
       closed: true,
       fill: options.theme.bodyFill,
@@ -98,8 +110,8 @@ export function addFoldedMemoryBody(
   group.add(
     new Konva.Line({
       points: [
-        bounds.maxX - MEMORY_FOLD, bounds.minY,
-        bounds.maxX - MEMORY_FOLD, bounds.minY + MEMORY_FOLD,
+        maxX - MEMORY_FOLD, minY,
+        maxX - MEMORY_FOLD, minY + MEMORY_FOLD,
       ],
       stroke: options.theme.bodyStroke,
       strokeWidth: 1,
@@ -107,22 +119,38 @@ export function addFoldedMemoryBody(
     })
   );
 
-  return bounds;
+  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
 }
 
-/** Plain sharp rectangle body derived from the port layout. */
+/**
+ * Plain sharp rectangle body. Horizontal edges coincide with the left/right
+ * port x positions so pins sit exactly on the edge; vertical extent wraps
+ * the pin rows with a small margin and a minimum height for single-row
+ * modules.
+ */
 export function addRectBody(
   group: Konva.Group,
   options: ModuleRenderOptions,
-  padding = 20
+  minHeight = BODY_MIN_HEIGHT
 ): Bounds {
-  const bounds = portBounds(portAnchors(options.ports), padding);
+  const anchors = portAnchors(options.ports);
+  const xs = anchors.map((a) => a.position.x);
+  const ys = anchors.map((a) => a.position.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const rawMinY = Math.min(...ys);
+  const rawMaxY = Math.max(...ys);
+  const height = Math.max(rawMaxY - rawMinY + BODY_VERTICAL_PADDING * 2, minHeight);
+  const centerY = (rawMinY + rawMaxY) / 2;
+  const minY = centerY - height / 2;
+  const maxY = centerY + height / 2;
+
   group.add(
     new Konva.Rect({
-      x: bounds.minX,
-      y: bounds.minY,
-      width: bounds.width,
-      height: bounds.height,
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height,
       cornerRadius: 0,
       fill: options.theme.bodyFill,
       stroke: options.theme.bodyStroke,
@@ -130,5 +158,5 @@ export function addRectBody(
       name: "module-body",
     })
   );
-  return bounds;
+  return { minX, minY, maxX, maxY, width: maxX - minX, height };
 }

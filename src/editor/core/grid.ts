@@ -15,7 +15,7 @@ export interface GridRenderSettings {
  * unit, so snapping is identical at every zoom level (the visual grid may
  * promote to coarser levels for readability — rendering only, never snapping).
  */
-export const GRID_UNIT = 1;
+export const GRID_UNIT = 5;
 
 /** Half-length of the origin cross arms, in scene units. */
 const ORIGIN_ARM = 12;

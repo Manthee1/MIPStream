@@ -20,7 +20,9 @@ export function drawDataMemoryBody(
   const rdata = portPosition(options.ports, "rdata");
   const memWrite = portPosition(options.ports, "memWrite");
   const memRead = portPosition(options.ports, "memRead");
-  const bounds = addFoldedMemoryBody(group, options);
+  // Vertical extent: top clears the "Address" label above the topmost pin,
+  // bottom lands exactly on the MemWrite/MemRead control pins.
+  const bounds = addFoldedMemoryBody(group, options, -40, 55);
   addModuleLabel(group, options, bounds);
 
   addBodyText(group, addr.x + 8, addr.y - 5, "Address", options);

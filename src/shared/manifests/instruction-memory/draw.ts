@@ -17,7 +17,9 @@ export function drawInstructionMemoryBody(
 ): ModuleRenderOutput {
   const addr = portPosition(options.ports, "addr");
   const instruction = portPosition(options.ports, "instruction");
-  const bounds = addFoldedMemoryBody(group, options);
+  // Taller than the single-row ports would imply, matching the data memory's
+  // proportions for a recognizable memory block.
+  const bounds = addFoldedMemoryBody(group, options, -40, 40);
   addModuleLabel(group, options, bounds);
 
   addBodyText(group, addr.x + 8, addr.y - 5, "Address", options);

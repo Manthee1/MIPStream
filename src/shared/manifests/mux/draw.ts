@@ -3,36 +3,39 @@
 import Konva from "konva";
 import type { ModuleRenderOptions, ModuleRenderOutput } from "../../types/manifest";
 import type { MuxConfig } from "./index";
-import { portAnchors, portBounds } from "../../utils/port-math";
+import { addModuleLabel, portPosition } from "../draw-helpers";
 
-const BODY_PADDING = 20;
-const LABEL_HEIGHT = 14;
-/** Fraction of the body height cut away on the narrow (output) side. */
+/** Fraction of the data-input span cut away on the narrow (output) side. */
 const SLANT_RATIO = 0.3;
 
 /**
  * Custom draw function for the Multiplexer: a trapezoid body whose tall left
  * edge spans the data inputs and whose narrow right edge meets the output.
- * All dimensions derive from the port layout, so resizing `numInputs`
- * automatically rescales the body.
+ * The trapezoid is derived only from the data inputs/output so the output pin
+ * sits vertically centered on the right edge; the selector pin hangs below
+ * the body rather than stretching it downward.
  */
 export function drawMuxBody(
   group: Konva.Group,
   options: ModuleRenderOptions<MuxConfig>
 ): ModuleRenderOutput {
-  const anchors = portAnchors(options.ports);
-  const bounds = portBounds(anchors, BODY_PADDING);
-  const width = bounds.maxX - bounds.minX;
-  const height = bounds.maxY - bounds.minY;
-  const slant = height * SLANT_RATIO;
+  const dataInputs = options.ports.filter(
+    (port) => port.direction === "input" && port.id !== "sel"
+  );
+  const inputYs = dataInputs.map((port) => portPosition(options.ports, port.id).y);
+  const topY = Math.min(...inputYs) - 15;
+  const botY = Math.max(...inputYs) + 15;
+  const inX = portPosition(options.ports, "in0").x;
+  const outPos = portPosition(options.ports, "out");
+  const slant = (botY - topY) * SLANT_RATIO;
 
   group.add(
     new Konva.Line({
       points: [
-        bounds.minX, bounds.minY,
-        bounds.maxX, bounds.minY + slant,
-        bounds.maxX, bounds.maxY - slant,
-        bounds.minX, bounds.maxY,
+        inX, topY,
+        outPos.x, topY + slant,
+        outPos.x, botY - slant,
+        inX, botY,
       ],
       closed: true,
       fill: options.theme.bodyFill,
@@ -42,19 +45,14 @@ export function drawMuxBody(
     })
   );
 
-  group.add(
-    new Konva.Text({
-      x: bounds.minX,
-      y: bounds.minY - LABEL_HEIGHT - 2,
-      width,
-      text: options.label,
-      fontSize: 11,
-      fontStyle: "bold",
-      align: "center",
-      fill: options.theme.text,
-      listening: false,
-    })
-  );
+  addModuleLabel(group, options, {
+    minX: inX,
+    minY: topY,
+    maxX: outPos.x,
+    maxY: botY,
+    width: outPos.x - inX,
+    height: botY - topY,
+  });
 
-  return { width, height };
+  return { width: outPos.x - inX, height: botY - topY };
 }

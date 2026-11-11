@@ -4,6 +4,7 @@ import { ModuleManifest, ModuleEvaluators, PortDefinition } from "../../types/ma
 import description from "./description.md?raw";
 import icon from "./icon.svg?raw";
 import ControlConfigEditor from "./ControlConfigEditor.vue";
+import { drawControlBody } from "./draw";
 import {
   CONTROL_ROWS,
   CONTROL_SIGNALS,
@@ -20,6 +21,7 @@ export const ControlManifest: ModuleManifest<ControlConfig> = {
   description,
   icon,
   category: "logic",
+  render: drawControlBody,
 
   // The signal list + opcode table form one coherent spreadsheet-style
   // editor, so it replaces the generic schema-driven form entirely.

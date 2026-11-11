@@ -32,14 +32,18 @@ function muxGeneratePorts(config: MuxConfig): PortDefinition[] {
     });
   }
 
+  const lastPortY = (config.numInputs - 1) / 2 * 20;
   const selBits = Math.ceil(Math.log2(config.numInputs)) || 1;
+  // Selector hangs below the bottom data input, keeping the data inputs
+  // vertically centered so the output lands centered on the right edge.
+  const selY = (lastPortY + 15)*0.7;
   ports.push({
     id: "sel",
     direction: "input",
     bits: selBits,
     label: "Sel",
     tooltip: "Selection control",
-    position: { x: 0, y: 40 },
+    position: { x: 0, y: selY },
   });
 
   ports.push({

@@ -34,19 +34,31 @@ export const BitSplitterManifest: ModuleManifest<SplitterConfig> = {
         bits: busBits,
         label: "In",
         tooltip: `Input bus [${busBits - 1}:0]`,
-        position: { x: -44, y: 0 },
+        position: { x: -45, y: 0 },
       },
     ];
 
+    const PORT_SPACING = 15;
+
+    const isEvenPortCount = fields.length % 2 === 0;
+    let basePortOffset = (PORT_SPACING * (fields.length - 1)) / 2;
+
     fields.forEach((field, i) => {
+      let currentPortOffset = i * PORT_SPACING - basePortOffset;
+      if(isEvenPortCount)
+        currentPortOffset += (i < fields.length/2 ? -1: 1) * PORT_SPACING/5;
+      
+      
+
       ports.push({
         id: `out_${field.id}`,
         direction: "output",
         bits: field.bits,
         label: field.label || `Out ${i + 1}`,
         tooltip: fieldMappingTooltip(field),
-        position: { x: 44, y: (i - (fields.length - 1) / 2) * 20 },
+        position: { x: 45, y: currentPortOffset },
       });
+
     });
 
     return ports;

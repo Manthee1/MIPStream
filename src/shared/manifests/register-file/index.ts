@@ -65,12 +65,12 @@ export const RegisterFileManifest: ModuleManifest<RegisterFileConfig> = {
     const addressBits = Math.max(1, Math.ceil(Math.log2(config.registerCount)));
     return [
       { id: "rs", direction: "input", bits: addressBits, label: "Read Reg 1", tooltip: "First read address ($rs)", position: { x: -50, y: -50 } },
-      { id: "rt", direction: "input", bits: addressBits, label: "Read Reg 2", tooltip: "Second read address ($rt)", position: { x: -50, y: -30 } },
-      { id: "rd", direction: "input", bits: addressBits, label: "Write Reg", tooltip: "Write address ($rd)", position: { x: -50, y: 30 } },
-      { id: "wd", direction: "input", bits: config.bitWidth, label: "Write Data", position: { x: 50, y: 30 } },
-      { id: "we", direction: "input", bits: 1, label: "Write Enable", tooltip: "RegWrite control", position: { x: 0, y: 60 } },
+      { id: "rt", direction: "input", bits: addressBits, label: "Read Reg 2", tooltip: "Second read address ($rt)", position: { x: -50, y: -20 } },
+      { id: "rd", direction: "input", bits: addressBits, label: "Write Reg", tooltip: "Write address ($rd)", position: { x: -50, y: 20 } },
+      { id: "wd", direction: "input", bits: config.bitWidth, label: "Write Data", position: { x: -50, y: 50 } },
+      { id: "we", direction: "input", bits: 1, label: "Write Enable", tooltip: "RegWrite control", position: { x: 0, y: -70 } },
       { id: "readA", direction: "output", bits: config.bitWidth, label: "Read Data 1", position: { x: 50, y: -50 } },
-      { id: "readB", direction: "output", bits: config.bitWidth, label: "Read Data 2", position: { x: 50, y: -30 } },
+      { id: "readB", direction: "output", bits: config.bitWidth, label: "Read Data 2", position: { x: 50, y: -20 } },
     ];
   },
 

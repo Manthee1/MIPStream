@@ -41,7 +41,7 @@ for (const item of paletteItems) {
 /** Item class: pending placement gets a persistent accent highlight. */
 const itemClass = (id: string) =>
   clsx(
-    'p-4 flex flex-col items-center justify-center gap-2 border transition-colors group aspect-square select-none',
+    'p-4 flex flex-col items-center justify-center gap-2 border transition-colors group select-none',
     pendingPlacementTypeId.value === id
       ? 'border-blue-500 bg-blue-500/10 cursor-pointer'
       : 'bg-element hover:bg-app cursor-pointer border-transparent hover:border-blue-500/50'

@@ -44,8 +44,8 @@ export function drawStageRegisterBody(
     const d = portPosition(options.ports, registerInputPortId(pin, index));
     const q = portPosition(options.ports, registerOutputPortId(pin, index));
     const name = index === 0 ? undefined : registerPinLabel(pin, index);
-    addBodyText(group, d.x + 8, d.y - 5, name ?? "D", options, { width: 12 });
-    addBodyText(group, q.x - 20, q.y - 5, name ?? "Q", options, { align: "right", width: 12 });
+    addBodyText(group, d.x + 8, d.y - 5, name ?? "D", options, { width: 40 });
+    addBodyText(group, q.x - 48, q.y - 5, name ?? "Q", options, { align: "right", width: 40 });
   });
 
   // Optional synchronous reset pin marker beside the top port.
@@ -60,7 +60,7 @@ export function drawStageRegisterBody(
   const stageId = options.config?.stageId;
   if (stageId) {
     const resetY = hasReset ? portPosition(options.ports, RESET_PORT_ID).y : -Infinity;
-    addBodyText(group, 0, Math.max(bounds.minY + 4, resetY + 10), stageId, options, {
+    addBodyText(group, bounds.minX, bounds.maxY + 4, stageId, options, {
       align: "center",
       width: bounds.width,
       bold: true,
