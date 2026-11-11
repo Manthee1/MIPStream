@@ -35,10 +35,12 @@ export const MIPS_PIPELINED_ARCHITECTURE: ArchitectureConfig = {
     // The golden pipelined datapath — the same serialized netlist the
     // headless golden-pipeline check executes (see
     // src/config/mips-pipelined-datapath.ts for the layout, wiring, hazard
-    // and drain documentation). The designators `imem` (assembler mapping
-    // target) and `pc` (halt detection) are load-bearing and must stay
-    // stable, as are the managed boundary registers
-    // `ifId`/`idEx`/`exMem`/`memWb` (stage-visualizer sampling + halt drain).
+    // and delay-slot documentation). The designators `imem` (assembler
+    // mapping target) and `pc` (halt detection) are load-bearing and must
+    // stay stable, as are the managed boundary registers
+    // `ifId`/`idEx`/`exMem`/`memWb` (settings reconciliation + stage
+    // visualizer). Branches resolve in MEM and nothing is flushed — the
+    // three instructions behind a taken branch execute as delay slots.
     modules: MIPS_PIPELINED_MODULES,
     nets: MIPS_PIPELINED_NETS,
     configuration: {
@@ -158,8 +160,11 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
         // Classic semantics — no forwarding, no stalls: every read-after-
         // write pair is padded to 4+ instructions of separation (the
         // register-file write commits at the edge and ID reads it the cycle
-        // after WB), and the taken loop branch pays its 2-cycle flush
-        // (watch IF/ID + ID/EX clear in the instruction bar).
+        // after WB). Branches resolve in MEM and nothing is flushed, so
+        // each taken branch carries three nop delay slots that always
+        // execute; and the halt check fires the moment the PC reaches the
+        // halt word, so the tail pads the final store until its MEM write
+        // has landed.
         initialSoftware: [
             {
                 id: 'main', name: 'main.s', sourceCode:
@@ -169,7 +174,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
                     '\n' +
                     '.text\n' +
                     'main:\n' +
-                    '    lw   $t0, value        # $t0 = 7\n' +
+                    '    lw   $t0, value         # $t0 = 7\n' +
                     '    nop\n' +
                     '    nop\n' +
                     '    nop\n' +
@@ -191,19 +196,22 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
                     '    slt  $t3, $t2, $t0     # $t3 = i < value\n' +
                     '    nop\n' +
                     '    nop\n' +
-                    '    nop                    # fill\n' +
-                    '    beq  $t3, $zero, done  # exit when i >= value\n' +
-                    '    nop\n' +
-                    '    nop                    # branch-window padding\n' +
-                    '    beq  $zero, $zero, loop # always taken (2-cycle flush)\n' +
+                    '    nop                    # fill: $t3 readable by the branch\n' +
+                    '    beq  $t3, $zero, done  # exit when i >= value (taken on exit)\n' +
+                    '    nop                    # delay slot 1 (always executes)\n' +
+                    '    nop                    # delay slot 2\n' +
+                    '    nop                    # delay slot 3\n' +
+                    '    beq  $zero, $zero, loop # always taken (3 delay slots)\n' +
+                    '    nop                    # delay slot 1 (re-executed every iteration)\n' +
+                    '    nop                    # delay slot 2\n' +
+                    '    nop                    # delay slot 3\n' +
                     'done:\n' +
-                    '    nop\n' +
-                    '    nop\n' +
-                    '    nop\n' +
-                    '    nop                    # fill: last sum readable\n' +
                     '    sw   $t1, result       # result = 49\n' +
                     '    nop\n' +
-                    '    halt                   # the pipe drains past this word\n'
+                    '    nop\n' +
+                    '    nop\n' +
+                    '    nop                    # the store lands its MEM write before the halt\n' +
+                    '    halt\n'
             }
         ],
     }

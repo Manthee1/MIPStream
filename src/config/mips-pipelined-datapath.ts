@@ -1,46 +1,58 @@
 /**
- * The classic five-stage pipelined MIPS datapath — the netlist behind the
- * `mips-pipelined` template. Pure serialized data (no manifest imports):
+ * The classic five-stage pipelined MIPS datapath behind the `mips-pipelined`
+ * template — a faithful transcription of the hand-authored
+ * `Pipelined-MIPS.miparch` schematic export (module positions, pin schemes,
+ * wiring and hand-drawn routing preserved verbatim). Pure serialized data:
  * the same object is consumed by the project template and by the headless
  * golden-pipeline check (`npm run simulation:check`, Rig E), so the shipped
  * template IS the tested netlist.
  *
- * Layout: classic Patterson & Hennessy left-to-right flow with the four
- * pipeline boundary registers drawn as vertical walls between the stage
- * columns (fetch / decode / execute / memory / writeback). Nets carry no
- * waypoints — orthogonal routing is editor polish and never affects
- * connectivity.
+ * Layout: classic left-to-right fetch / decode / execute / memory /
+ * writeback with the four managed boundary walls (`ifId`, `idEx`, `exMem`,
+ * `memWb`) between the stage columns. The control unit decodes once in ID
+ * and its signals ride the ID/EX wall as 1/2-bit pins; the writeback
+ * results and the next-PC selection route back around the outside.
  *
- * Boundary registers: each stage boundary is ONE multi-pin `std.register`
- * (the settings reconciler keeps exactly one managed register per boundary
- * index) whose `main`-id pin is the 32-bit instruction word — port `q`. That
- * convention drives two features: the stage visualizer samples `q` for the
- * instruction bar, and the session's halt logic waits for every `q` to
- * read 0 before finishing (pipeline drain). IF/ID and ID/EX additionally
- * carry a synchronous `rst` input wired to the branch-taken signal — a
- * taken branch clears both young slots at the edge while the PC loads the
- * target (2-cycle penalty, the classic EX-resolved branch).
+ * Boundary registers: multi-pin `std.register` walls with field-oriented
+ * pin ids (`p1`…`p14`). Unlike earlier templates there is NO `main`
+ * instruction-word pin — only IF/ID carries the raw instruction (`instr`
+ * pin); EX re-derives `funct` from the sign-extended immediate (bits [5:0]
+ * of the imm field overlap the funct field), and rt/rd ride the ID/EX wall
+ * as dedicated 5-bit pins (p12/p13 — their display labels are historical;
+ * the wiring feeds p12 from the splitter's `rd` output and p13 from `rt`,
+ * and u1 maps RegDst = 1 onto p12, the true destination field). With no
+ * `q` port the session's pipeline-drain check is trivially satisfied: the
+ * session finishes as soon as the PC reaches the halt word, so programs
+ * must land register writes ≥ 5 and stores ≥ 4 instructions before it.
+ *
+ * Branch: resolved in MEM, not EX — the Branch signal and the ALU Zero
+ * flag are latched into EX/MEM and ANDed there (`branchAnd`), driving the
+ * next-PC mux (`u3`) between PC+4 and the pre-computed branch target
+ * (computed in EX off PC+4 and imm<<2, also latched into EX/MEM). There
+ * are no reset pins and nothing is flushed: the three instructions behind
+ * a taken branch execute as delay slots (3-cycle penalty). The starter
+ * program and the Rig E programs are written delay-slot-safe.
  *
  * Hazards: deliberately NONE — this is the base pipeline. The register
- * file commits writes at the rising edge and reads combinationally, so a
- * write becomes visible to ID reads the cycle after WB: dependent
- * instructions need 4 instructions of separation (WB→ID same cycle works,
- * distance 3 does not). No forwarding, no stall logic — starter programs
- * and the Rig E programs are written hazard-free with nops.
+ * file commits writes at the rising clock edge and reads
+ * combinationally, so a write becomes visible to an ID read from 4
+ * instructions of separation on (WB→ID same cycle works, distance 3 does
+ * not). No forwarding, no stall logic — starter programs pad with nops.
  *
  * Timing model (hybrid modules): the register file and data memory commit
- * their asserted writes at the rising clock edge. Instruction k fetched in
- * cycle k retires (writeback commit) on the edge entering cycle k+5.
+ * their asserted writes at the rising clock edge. Instruction k fetched
+ * in cycle k retires (writeback commit) on the edge entering cycle k+5.
  *
  * Designator stability contract: `imem` is the assembler mapping target
  * (main → imem) and `pc` is the first `std.pc` the halt detector samples —
  * these two designators must not be renamed. `ifId`/`idEx`/`exMem`/`memWb`
- * are the managed boundary registers the drain logic samples.
+ * are the settings-managed boundary registers (exactly one per stage
+ * boundary index) the settings reconciler and stage visualizer rely on.
  */
 
-import type { SerializedModule } from "../shared/types/manifest";
-import type { SerializedNet } from "../shared/types/netlist";
-import { CONTROL_ROWS, CONTROL_SIGNALS } from "../shared/manifests/control/logic";
+import type { Pos, SerializedModule } from "../shared/types/manifest";
+import type { NetStyle, SerializedNet } from "../shared/types/netlist";
+import { CONTROL_ROWS } from "../shared/manifests/control/logic";
 import { contiguousField } from "../shared/manifests/wiring-logic";
 
 function m(
@@ -52,241 +64,345 @@ function m(
     return { designator, typeId, position, rotation: 0, config };
 }
 
-function n(id: string, source: [string, string], ...targets: [string, string][]): SerializedNet {
-    return {
+/** Scene point shorthand for the hand-drawn routing below. */
+function w(x: number, y: number): Pos {
+    return { x, y };
+}
+
+/** A fan-out branch: routes one of `targets[1..n]` off a trunk junction. */
+interface NetBranchSpec {
+    target: [string, string];
+    junction: Pos;
+    waypoints?: Pos[];
+}
+
+/** Optional routing/style extras appended after a net's target tuples. */
+interface NetExtras {
+    style?: NetStyle;
+    waypoints?: Pos[];
+    branches?: NetBranchSpec[];
+}
+
+function n(
+    id: string,
+    source: [string, string],
+    ...targets: Array<[string, string] | NetExtras>
+): SerializedNet {
+    const endpoints = targets.filter((entry): entry is [string, string] => Array.isArray(entry));
+    const extras = targets.find((entry) => !Array.isArray(entry)) as NetExtras | undefined;
+    const net: SerializedNet = {
         id,
         source: { designator: source[0], portId: source[1] },
-        targets: targets.map(([designator, portId]) => ({ designator, portId })),
+        targets: endpoints.map(([designator, portId]) => ({ designator, portId })),
     };
+    if (extras?.waypoints) net.waypoints = extras.waypoints;
+    if (extras?.branches) {
+        net.branches = extras.branches.map((branch) => ({
+            target: { designator: branch.target[0], portId: branch.target[1] },
+            junction: branch.junction,
+            ...(branch.waypoints ? { waypoints: branch.waypoints } : {}),
+        }));
+    }
+    if (extras?.style) net.style = extras.style;
+    return net;
 }
 
 /**
- * The 24 datapath modules, laid out left-to-right (see file header). The
- * four `std.register` walls carry a pin id'd `main` (the instruction word —
- * it derives the classic `d`/`q` ports the visualizer and halt drain read)
- * plus pins whose ids match the control-signal ids, so their derived ports
- * read `d_regWrite` / `q_regWrite` and so on.
+ * The 23 datapath modules, laid out left-to-right (see file header). The
+ * four `std.register` walls carry the hand-made field-oriented pin ids; the
+ * four `std.mux2` instances keep their palette-assigned designators u1–u4
+ * with explicit `selMap` assignments so each selector polarity matches the
+ * classic datapath (RegDst/AluSrc/next-PC/MemToReg).
  */
 export const MIPS_PIPELINED_MODULES: SerializedModule[] = [
-    // -- Fetch ----------------------------------------------------------------
-    m("pcMux", "std.mux2", { x: -1180, y: 160 }, { bitWidth: 32, numInputs: 2 }),
-    m("pc", "std.pc", { x: -1000, y: 0 }),
-    m("four", "std.constant", { x: -1000, y: 240 }, { value: 4, bitWidth: 32 }),
-    m("pcPlus4", "std.adder", { x: -820, y: 120 }, { bitWidth: 32 }),
-    m("imem", "std.imem", { x: -820, y: -220 }, { wordCount: 256, bitWidth: 32 }),
-    // -- IF/ID boundary: instruction + PC+4, flushable ------------------------
-    m("ifId", "std.register", { x: -580, y: -80 }, {
+    // -- Fetch -----------------------------------------------------------------
+    // PC → imem; the +4 constant feeds the PC+4 adder whose sum latches
+    // into the IF/ID wall (and fans out to the next-PC mux).
+    m("pc", "std.pc", { x: -985, y: 30 }, { bitWidth: 32 }),
+    m("four", "std.constant", { x: -965, y: -140 }, { value: 4, bitWidth: 32 }),
+    m("pcPlus4", "std.adder", { x: -832, y: -130 }, { bitWidth: 32 }),
+    m("imem", "std.imem", { x: -790, y: 25 }, { wordCount: 256, bitWidth: 32 }),
+
+    // -- IF/ID boundary: PC+4 (for the branch target) + the instruction word.
+    m("ifId", "std.register", { x: -635, y: 15 }, {
+        bitWidth: 32,
         managed: true,
         stageIndex: 0,
         stageId: "IF/ID",
-        bitWidth: 32,
-        reset: true,
         pins: [
-            { id: "main", bits: 32, label: "Instr" },
-            { id: "pc4", bits: 32, label: "PC+4" },
+            { id: "pc4", bits: 32, label: "NextPC" },
+            { id: "instr", bits: 32, label: "Instr" },
         ],
     }),
+
     // -- Decode ----------------------------------------------------------------
-    // The splitter dissects the instruction word into every field the
-    // datapath needs; the rd [15:11] and imm [15:0] fields deliberately
-    // overlap.
-    m("split", "std.splitter", { x: -420, y: -220 }, {
+    // The splitter dissects the instruction word; the rd [15:11] and imm
+    // [15:0] fields deliberately overlap.
+    m("split", "std.splitter", { x: -485, y: 30 }, {
         inputBits: 32,
         outputs: [
             contiguousField(31, 26, "opcode"),
             contiguousField(25, 21, "rs"),
             contiguousField(20, 16, "rt"),
             contiguousField(15, 11, "rd"),
-            contiguousField(5, 0, "funct"),
             contiguousField(15, 0, "imm"),
         ],
     }),
-    // Decode table: R-type (add/slt/nop ride the opcode-0 row), addi, lw, sw,
-    // beq. Opcodes without a row (e.g. the assembler's halt) decode to
-    // all-zero signals — datapath-safe no-ops (which is what makes a flushed
-    // slot and the halt word itself inert while it rides the pipe).
-    m("control", "std.control", { x: -420, y: -520 }, {
+    // Decode table: R-type (add/slt/nop ride the opcode-0 row), addi, lw,
+    // sw, beq — CONTROL_ROWS verbatim. The signal list repeats
+    // CONTROL_SIGNALS in the hand-drawn stacking order (regWrite above
+    // memToReg) so the routed control wires land where they were drawn.
+    m("control", "std.control", { x: -220, y: -220 }, {
         opcodeBits: 6,
-        signals: CONTROL_SIGNALS,
+        signals: [
+            { id: "regDst", bits: 1 },
+            { id: "aluSrc", bits: 1 },
+            { id: "regWrite", bits: 1 },
+            { id: "memToReg", bits: 1 },
+            { id: "memRead", bits: 1 },
+            { id: "memWrite", bits: 1 },
+            { id: "branch", bits: 1 },
+            { id: "aluOp", bits: 2 },
+        ],
         rows: CONTROL_ROWS,
     }),
-    m("reg", "std.regfile", { x: -180, y: 0 }, { registerCount: 32, bitWidth: 32 }),
-    m("ext", "std.extender", { x: -180, y: 320 }, { inputBits: 16, outputBits: 32, isSigned: true }),
-    // -- ID/EX boundary: operands, extended immediate, PC+4, control ----------
-    m("idEx", "std.register", { x: -20, y: 0 }, {
+    m("reg", "std.regfile", { x: -250, y: 50 }, { registerCount: 32, bitWidth: 32 }),
+    m("ext", "std.extender", { x: -140, y: 205 }, { inputBits: 16, outputBits: 32, isSigned: true }),
+
+    // -- ID/EX boundary: operands, extended immediate, PC+4, rt/rd, control.
+    // NOTE: the p12/p13 display labels are historical — the wiring feeds
+    // p12 from the splitter's `rd` output and p13 from `rt`, so u1's
+    // RegDst = 1 lands on the true destination field.
+    m("idEx", "std.register", { x: 35, y: -180 }, {
+        bitWidth: 32,
         managed: true,
         stageIndex: 1,
         stageId: "ID/EX",
-        bitWidth: 32,
-        reset: true,
         pins: [
-            { id: "main", bits: 32, label: "Instr" },
-            { id: "rd1", bits: 32, label: "RD1" },
-            { id: "rd2", bits: 32, label: "RD2" },
-            { id: "imm", bits: 32, label: "Imm" },
-            { id: "pc4", bits: 32, label: "PC+4" },
-            { id: "regDst", bits: 1, label: "RdDst" },
-            { id: "aluSrc", bits: 1, label: "ALUSrc" },
-            { id: "regWrite", bits: 1, label: "RegWr" },
-            { id: "memToReg", bits: 1, label: "M2R" },
-            { id: "memRead", bits: 1, label: "MemRd" },
-            { id: "memWrite", bits: 1, label: "MemWr" },
-            { id: "branch", bits: 1, label: "Br" },
-            { id: "aluOp", bits: 2, label: "ALUOp" },
+            { id: "p14", bits: 32, label: "NextPC" },
+            { id: "p1", bits: 1, label: "RegDst" },
+            { id: "p2", bits: 1, label: "AluSrc" },
+            { id: "p4", bits: 1, label: "RegWrite" },
+            { id: "p3", bits: 1, label: "MemToReg" },
+            { id: "p5", bits: 1, label: "MemRead" },
+            { id: "p6", bits: 1, label: "MemWrite" },
+            { id: "p7", bits: 1, label: "Branch" },
+            { id: "p8", bits: 2, label: "AluOp" },
+            { id: "p9", bits: 32, label: "Reg1Data" },
+            { id: "p10", bits: 32, label: "Reg2Data" },
+            { id: "p11", bits: 32, label: "Imm" },
+            { id: "p12", bits: 5, label: "Rt" },
+            { id: "p13", bits: 5, label: "Rd" },
         ],
     }),
-    // -- Execute ----------------------------------------------------------------
-    // The stage splitter re-derives the fields the EX stage needs from the
-    // pipelined instruction word (rt/rd for the destination mux, funct for
-    // the ALU control).
-    m("splitEx", "std.splitter", { x: 220, y: -220 }, {
+
+    // -- Execute ---------------------------------------------------------------
+    // funct is re-derived in EX off the sign-extended immediate (imm bits
+    // [5:0] overlap the funct field) — no instruction word rides past ID.
+    m("splitEx", "std.splitter", { x: 350, y: 5 }, {
         inputBits: 32,
-        outputs: [
-            contiguousField(20, 16, "rt"),
-            contiguousField(15, 11, "rd"),
-            contiguousField(5, 0, "funct"),
-        ],
+        outputs: [contiguousField(5, 0, "funct")],
     }),
-    m("aluControl", "std.alu-control", { x: 380, y: -520 }),
-    m("regDstMux", "std.mux2", { x: 440, y: 160 }, { bitWidth: 5, numInputs: 2 }),
-    m("aluSrcMux", "std.mux2", { x: 660, y: 80 }, { bitWidth: 32, numInputs: 2 }),
-    m("shift2", "std.shifter", { x: 660, y: 360 }, { bitWidth: 32, mode: "logical_left", shamt: 2 }),
-    m("alu", "std.alu", { x: 900, y: 0 }, { bitWidth: 32 }),
-    m("branchAdder", "std.adder", { x: 900, y: 480 }, { bitWidth: 32 }),
-    m("branchAnd", "std.and", { x: 1160, y: -140 }),
-    // -- EX/MEM boundary: ALU result, store data, destination, control --------
-    m("exMem", "std.register", { x: 1300, y: 0 }, {
+    m("aluControl", "std.alu-control", { x: 480, y: -5 }),
+    m("shift2", "std.shifter", { x: 255, y: -305 }, { bitWidth: 32, mode: "logical_left", shamt: 2 }),
+    m("alu", "std.alu", { x: 495, y: -110 }, { bitWidth: 32 }),
+    m("branchAdder", "std.adder", { x: 440, y: -315 }, { bitWidth: 32 }),
+    m("branchAnd", "std.and", { x: 865, y: -285 }, { op: "and" }),
+    // u1: destination register (RegDst = 1 forwards in0, the rd field).
+    // u2: ALU second operand (AluSrc = 1 forwards in1, the immediate).
+    m("u1", "std.mux2", { x: 210, y: 75 }, { bitWidth: 5, numInputs: 2, selMap: [1, 0], selPosition: "top" }),
+    m("u2", "std.mux2", { x: 325, y: -80 }, { bitWidth: 32, numInputs: 2, selMap: [0, 1], selPosition: "top" }),
+
+    // -- EX/MEM boundary: control, ALU result/zero, store data, target, dest.
+    m("exMem", "std.register", { x: 685, y: -160 }, {
+        bitWidth: 32,
         managed: true,
         stageIndex: 2,
         stageId: "EX/MEM",
-        bitWidth: 32,
         pins: [
-            { id: "main", bits: 32, label: "Instr" },
-            { id: "aluResult", bits: 32, label: "ALU" },
-            { id: "storeData", bits: 32, label: "Store" },
-            { id: "rd", bits: 5, label: "Dest" },
-            { id: "regWrite", bits: 1, label: "RegWr" },
-            { id: "memToReg", bits: 1, label: "M2R" },
-            { id: "memRead", bits: 1, label: "MemRd" },
-            { id: "memWrite", bits: 1, label: "MemWr" },
+            { id: "instr", bits: 1, label: "RegWrite" },
+            { id: "p1", bits: 1, label: "MemToReg" },
+            { id: "p2", bits: 1, label: "MemRead" },
+            { id: "p3", bits: 1, label: "MemWrite" },
+            { id: "p4", bits: 1, label: "Branch" },
+            { id: "p5", bits: 32, label: "TargetPC" },
+            { id: "aluResult", bits: 1, label: "Zero" },
+            { id: "storeData", bits: 32, label: "ALUResult" },
+            { id: "rd", bits: 32, label: "MemWrData" },
+            { id: "p6", bits: 5, label: "DestReg" },
         ],
     }),
+
     // -- Memory ----------------------------------------------------------------
-    m("dmem", "std.dmem", { x: 1500, y: 0 }, { wordCount: 256, bitWidth: 32 }),
-    // -- MEM/WB boundary: result, loaded data, destination, control ------------
-    m("memWb", "std.register", { x: 1700, y: 0 }, {
+    m("dmem", "std.dmem", { x: 875, y: -50 }, { wordCount: 256, bitWidth: 32 }),
+
+    // -- MEM/WB boundary: control, loaded data, ALU result, destination.
+    m("memWb", "std.register", { x: 1045, y: 45 }, {
+        bitWidth: 32,
         managed: true,
         stageIndex: 3,
         stageId: "MEM/WB",
-        bitWidth: 32,
         pins: [
-            { id: "main", bits: 32, label: "Instr" },
-            { id: "aluResult", bits: 32, label: "ALU" },
-            { id: "memData", bits: 32, label: "Mem" },
-            { id: "rd", bits: 5, label: "Dest" },
-            { id: "regWrite", bits: 1, label: "RegWr" },
-            { id: "memToReg", bits: 1, label: "M2R" },
+            { id: "regWrite", bits: 1, label: "RegWrite" },
+            { id: "memToReg", bits: 1, label: "MemToReg" },
+            { id: "p1", bits: 32, label: "MemReadData" },
+            { id: "p2", bits: 32, label: "ALUResult" },
+            { id: "rd", bits: 5, label: "DestReg" },
         ],
     }),
-    // -- Write back --------------------------------------------------------------
-    m("wbMux", "std.mux2", { x: 1920, y: 0 }, { bitWidth: 32, numInputs: 2 }),
+
+    // -- Write back / next PC --------------------------------------------------
+    // u3: next PC (in0 = PC+4, in1 = the branch target when Branch ∧ Zero
+    // — asserted during the branch's MEM stage, so three delay slots
+    // execute behind a taken branch and nothing is flushed).
+    // u4: writeback result (MemToReg = 1 forwards in0, the loaded word).
+    m("u3", "std.mux2", { x: 865, y: -365 }, { bitWidth: 32, numInputs: 2, selMap: [0, 1], selPosition: "bottom" }),
+    m("u4", "std.mux2", { x: 1145, y: 55 }, { bitWidth: 32, numInputs: 2, selMap: [1, 0], selPosition: "top" }),
 ];
 
 /**
  * The complete netlist: fetch path, IF/ID latch, decode/control fan-out,
- * ID/EX latch, execute + branch/flush, EX/MEM latch, memory path, MEM/WB
- * latch, and writeback.
+ * ID/EX latch, execute + branch-target computation, EX/MEM latch, memory
+ * path + MEM-resolved branch, MEM/WB latch, and writeback — with the
+ * hand-drawn orthogonal routing (trunk waypoints, junction branches and
+ * dotted control styles) exactly as exported.
  *
  * Cycle audit (why this compiles): every combinational cone is bounded by
  * an edge-sampled input. The next-PC loop closes through the sequential
- * `pc`; the writeback loop (memWb → wbMux → reg.wd) targets the hybrid
- * register file's clocked write port; the dmem inputs come from the EX/MEM
- * register; and the flush nets target the boundary registers' `rst` clocked
- * inputs. Instruction k fetched in cycle k retires on the edge entering
- * cycle k+5; a taken beq redirects the PC and clears IF/ID + ID/EX in the
- * same edge (2-cycle penalty).
+ * `pc` — the branch AND reads EX/MEM outputs, so it is asserted during
+ * the branch's MEM stage; the writeback loop (memWb → u4 → reg.wd)
+ * targets the hybrid register file's clocked write port; and the
+ * data-memory inputs come from the EX/MEM register. Instruction k fetched
+ * in cycle k retires on the edge entering cycle k+5; a taken beq
+ * redirects the PC at the edge ending its MEM stage while the three
+ * younger instructions keep executing (delay slots — nothing is flushed).
  */
 export const MIPS_PIPELINED_NETS: SerializedNet[] = [
-    // Fetch: PC → imem, PC + 4, next-PC selection.
-    n("n01", ["pc", "q"], ["imem", "addr"]),
-    n("n02", ["pc", "q"], ["pcPlus4", "a"]),
-    n("n03", ["four", "out"], ["pcPlus4", "b"]),
-    n("n04", ["pcPlus4", "sum"], ["pcMux", "in0"], ["ifId", "d_pc4"]),
-    n("n05", ["imem", "instruction"], ["ifId", "d"]),
-    n("n06", ["pcMux", "out"], ["pc", "d"]),
+    // Fetch: PC → imem and the +4 adder; PC+4 latches into IF/ID and fans
+    // out to the next-PC mux; the fetched word latches into IF/ID.
+    n("n01", ["pc", "q"], ["imem", "addr"], ["pcPlus4", "b"], {
+        branches: [
+            { target: ["pcPlus4", "b"], junction: w(-910, 30), waypoints: [w(-900, -120), w(-880, -120)] },
+        ],
+    }),
+    n("n68", ["four", "out"], ["pcPlus4", "a"]),
+    n("n71", ["pcPlus4", "sum"], ["ifId", "d_pc4"], ["u3", "in0"], {
+        waypoints: [w(-700, -130), w(-700, 5)],
+        branches: [
+            { target: ["u3", "in0"], junction: w(-700, -128.01610963535614), waypoints: [w(-700, -375), w(815, -375), w(815, -375)] },
+        ],
+    }),
+    n("n110", ["imem", "instruction"], ["ifId", "d_instr"], {
+        waypoints: [w(-740, 25), w(-700, 25)],
+    }),
+
     // Decode: the IF/ID word is dissected; control decodes once, in ID.
-    // (out_rd/out_funct are deliberately unused here — the EX stage
-    // re-derives them from the pipelined instruction word.)
-    n("n07", ["ifId", "q"], ["split", "in"], ["idEx", "d"]),
-    n("n08", ["split", "out_opcode"], ["control", "opcode"]),
-    n("n09", ["split", "out_rs"], ["reg", "rs"]),
-    n("n10", ["split", "out_rt"], ["reg", "rt"]),
-    n("n11", ["split", "out_imm"], ["ext", "in"]),
-    // Register-file reads and the sign-extended immediate latch into the
-    // ID/EX boundary, alongside PC+4 for the EX branch-target adder.
-    n("n12", ["reg", "readA"], ["idEx", "d_rd1"]),
-    n("n13", ["reg", "readB"], ["idEx", "d_rd2"]),
-    n("n14", ["ext", "out"], ["idEx", "d_imm"]),
-    n("n15", ["ifId", "q_pc4"], ["idEx", "d_pc4"]),
-    // Control fan-out into the ID/EX boundary (the pipelined control wires).
-    n("n16", ["control", "regDst"], ["idEx", "d_regDst"]),
-    n("n17", ["control", "aluSrc"], ["idEx", "d_aluSrc"]),
-    n("n18", ["control", "memToReg"], ["idEx", "d_memToReg"]),
-    n("n19", ["control", "regWrite"], ["idEx", "d_regWrite"]),
-    n("n20", ["control", "memRead"], ["idEx", "d_memRead"]),
-    n("n21", ["control", "memWrite"], ["idEx", "d_memWrite"]),
-    n("n22", ["control", "branch"], ["idEx", "d_branch"]),
-    n("n23", ["control", "aluOp"], ["idEx", "d_aluOp"]),
-    // Execute: fields re-derived from the pipelined instruction word.
-    n("n24", ["idEx", "q"], ["splitEx", "in"]),
-    n("n25", ["splitEx", "out_rt"], ["regDstMux", "in0"]),
-    n("n26", ["splitEx", "out_rd"], ["regDstMux", "in1"]),
-    n("n27", ["splitEx", "out_funct"], ["aluControl", "funct"]),
-    n("n28", ["idEx", "q_regDst"], ["regDstMux", "sel"]),
-    n("n29", ["idEx", "q_aluSrc"], ["aluSrcMux", "sel"]),
-    n("n30", ["idEx", "q_aluOp"], ["aluControl", "aluop"]),
-    n("n31", ["aluControl", "operation"], ["alu", "op"]),
-    // ALU operand selection: register operand + (register | immediate).
-    n("n32", ["idEx", "q_rd1"], ["alu", "a"]),
-    n("n33", ["idEx", "q_rd2"], ["aluSrcMux", "in0"]),
-    n("n34", ["idEx", "q_imm"], ["aluSrcMux", "in1"], ["shift2", "in"]),
-    n("n35", ["idEx", "q_pc4"], ["branchAdder", "a"]),
-    n("n36", ["aluSrcMux", "out"], ["alu", "b"]),
-    n("n37", ["shift2", "out"], ["branchAdder", "b"]),
-    n("n38", ["branchAdder", "sum"], ["pcMux", "in1"]),
-    // EX → EX/MEM boundary.
-    n("n39", ["regDstMux", "out"], ["exMem", "d_rd"]),
-    n("n40", ["alu", "result"], ["exMem", "d_aluResult"]),
-    n("n41", ["idEx", "q_rd2"], ["exMem", "d_storeData"]),
-    n("n42", ["idEx", "q"], ["exMem", "d"]),
-    n("n43", ["idEx", "q_regWrite"], ["exMem", "d_regWrite"]),
-    n("n44", ["idEx", "q_memToReg"], ["exMem", "d_memToReg"]),
-    n("n45", ["idEx", "q_memRead"], ["exMem", "d_memRead"]),
-    n("n46", ["idEx", "q_memWrite"], ["exMem", "d_memWrite"]),
-    // Branch (resolved in EX) and flush: pipelined branch control AND the
-    // ALU zero flag drives the next-PC mux AND clears the two young slots.
-    n("n47", ["alu", "zero"], ["branchAnd", "b"]),
-    n("n48", ["idEx", "q_branch"], ["branchAnd", "a"]),
-    n("n49", ["branchAnd", "out"], ["pcMux", "sel"]),
-    n("n50", ["branchAnd", "out"], ["ifId", "rst"]),
-    n("n51", ["branchAnd", "out"], ["idEx", "rst"]),
-    // Memory: effective address, store data and control from EX/MEM.
-    n("n52", ["exMem", "q_aluResult"], ["dmem", "addr"]),
-    n("n53", ["exMem", "q_storeData"], ["dmem", "wd"]),
-    n("n54", ["exMem", "q_memRead"], ["dmem", "memRead"]),
-    n("n55", ["exMem", "q_memWrite"], ["dmem", "memWrite"]),
-    // EX/MEM → MEM/WB boundary.
-    n("n56", ["dmem", "rdata"], ["memWb", "d_memData"]),
-    n("n57", ["exMem", "q"], ["memWb", "d"]),
-    n("n58", ["exMem", "q_aluResult"], ["memWb", "d_aluResult"]),
-    n("n59", ["exMem", "q_rd"], ["memWb", "d_rd"]),
-    n("n60", ["exMem", "q_regWrite"], ["memWb", "d_regWrite"]),
-    n("n61", ["exMem", "q_memToReg"], ["memWb", "d_memToReg"]),
-    // Writeback: result mux and the hybrid register file's write port.
-    n("n62", ["memWb", "q_aluResult"], ["wbMux", "in0"]),
-    n("n63", ["memWb", "q_memData"], ["wbMux", "in1"]),
-    n("n64", ["memWb", "q_memToReg"], ["wbMux", "sel"]),
-    n("n65", ["wbMux", "out"], ["reg", "wd"]),
-    n("n66", ["memWb", "q_rd"], ["reg", "rd"]),
-    n("n67", ["memWb", "q_regWrite"], ["reg", "we"]),
+    n("n111", ["ifId", "q_instr"], ["split", "in"]),
+    n("n08", ["split", "out_opcode"], ["control", "opcode"], {
+        waypoints: [w(-405, -15.5), w(-405, -220), w(-270, -220)],
+    }),
+    n("n77", ["split", "out_rs"], ["reg", "rs"]),
+    n("n91", ["split", "out_rt"], ["reg", "rt"], ["idEx", "d_p13"], {
+        branches: [
+            { target: ["idEx", "d_p13"], junction: w(-385, 30), waypoints: [w(-385, 30), w(-385, 275), w(-25, 275), w(-25, -50)] },
+        ],
+    }),
+    n("n90", ["split", "out_rd"], ["idEx", "d_p12"], {
+        waypoints: [w(-400, 45), w(-400, 255), w(-50, 255), w(-50, -70)],
+    }),
+    n("n76", ["split", "out_imm"], ["ext", "in"], {
+        waypoints: [w(-415, 60), w(-415, 205)],
+    }),
+
+    // Control fan-out + decode results latch into the ID/EX wall (the
+    // pipelined control wires ride the pipe as 1/2-bit pins).
+    n("n79", ["control", "regDst"], ["idEx", "d_p1"]),
+    n("n80", ["control", "aluSrc"], ["idEx", "d_p2"]),
+    n("n81", ["control", "memToReg"], ["idEx", "d_p3"]),
+    n("n82", ["control", "regWrite"], ["idEx", "d_p4"]),
+    n("n83", ["control", "memRead"], ["idEx", "d_p5"]),
+    n("n84", ["control", "memWrite"], ["idEx", "d_p6"]),
+    n("n85", ["control", "branch"], ["idEx", "d_p7"]),
+    n("n86", ["control", "aluOp"], ["idEx", "d_p8"]),
+    n("n87", ["reg", "readA"], ["idEx", "d_p9"], { waypoints: [w(-125, 0), w(-125, -130)] }),
+    n("n88", ["reg", "readB"], ["idEx", "d_p10"], { waypoints: [w(-100, 30), w(-100, -110)] }),
+    n("n89", ["ext", "out"], ["idEx", "d_p11"], { waypoints: [w(-75, 205), w(-75, -90)] }),
+    n("n95", ["ifId", "q_pc4"], ["idEx", "d_p14"], {
+        waypoints: [w(-575, 5), w(-575, -330), w(-35, -330), w(-35, -310)],
+    }),
+
+    // Execute: destination selection (u1), ALU operand selection (u2), the
+    // branch-target adder, and the funct re-derivation off the immediate.
+    n("n96", ["idEx", "q_p10"], ["exMem", "d_rd"], ["u2", "in0"], {
+        waypoints: [w(75, -105), w(270, -105), w(270, 55), w(575, 55), w(575, -90)],
+        branches: [
+            { target: ["u2", "in0"], junction: w(270, -90), waypoints: [w(285.2954641661453, -90), w(310, -90)] },
+        ],
+    }),
+    n("n97", ["idEx", "q_p9"], ["alu", "a"], { waypoints: [w(435, -130), w(435, -140), w(465, -140)] }),
+    n("n99", ["splitEx", "out_funct"], ["aluControl", "funct"]),
+    n("n101", ["idEx", "q_p11"], ["shift2", "in"], ["splitEx", "in"], ["u2", "in1"], {
+        waypoints: [w(175, -90), w(175, -305)],
+        branches: [
+            { target: ["splitEx", "in"], junction: w(175, -90), waypoints: [w(175, -90), w(175, 5)] },
+            { target: ["u2", "in1"], junction: w(175, -70), waypoints: [w(175, -70), w(310, -70)] },
+        ],
+    }),
+    n("n102", ["idEx", "q_p14"], ["branchAdder", "a"], {
+        waypoints: [w(120, -310), w(120, -350), w(380, -350), w(380, -325)],
+    }),
+    n("n103", ["shift2", "out"], ["branchAdder", "b"], { waypoints: [w(350, -305), w(395, -305)] }),
+    n("n107", ["idEx", "q_p8"], ["aluControl", "aluop"], { style: "dotted", waypoints: [w(395, -150), w(395, -15)] }),
+    n("n108", ["aluControl", "operation"], ["alu", "op"], { style: "dotted", waypoints: [w(530, -5), w(530, -71)] }),
+    n("n141", ["idEx", "q_p12"], ["u1", "in0"], { waypoints: [w(100, -70), w(100, 65)] }),
+    n("n142", ["idEx", "q_p13"], ["u1", "in1"], { waypoints: [w(90, -50), w(90, 85)] }),
+    n("n144", ["idEx", "q_p1"], ["u1", "sel"], { style: "dotted", waypoints: [w(115, -290), w(115, 30), w(210, 30)] }),
+    n("n145", ["u2", "out"], ["alu", "b"]),
+    n("n146", ["idEx", "q_p2"], ["u2", "sel"], { style: "dotted" }),
+
+    // EX → EX/MEM wall: control, ALU result/zero, store data, branch
+    // target and the selected destination register.
+    n("n112", ["idEx", "q_p3"], ["exMem", "d_p1"], { style: "dotted" }),
+    n("n113", ["idEx", "q_p4"], ["exMem", "d_instr"], { style: "dotted" }),
+    n("n114", ["idEx", "q_p5"], ["exMem", "d_p2"], { style: "dotted" }),
+    n("n115", ["idEx", "q_p6"], ["exMem", "d_p3"], { style: "dotted" }),
+    n("n116", ["idEx", "q_p7"], ["exMem", "d_p4"], { style: "dotted" }),
+    n("n117", ["alu", "zero"], ["exMem", "d_aluResult"], { waypoints: [w(630, -120), w(630, -130)] }),
+    n("n118", ["alu", "result"], ["exMem", "d_storeData"], { waypoints: [w(570, -110), w(645, -110)] }),
+    n("n126", ["branchAdder", "sum"], ["exMem", "d_p5"], { waypoints: [w(610, -315), w(610, -150)] }),
+    n("n143", ["u1", "out"], ["exMem", "d_p6"], { waypoints: [w(225, 75), w(610, 75), w(610, -70)] }),
+
+    // Memory: effective address, store data and control from EX/MEM; the
+    // branch resolves here (Branch ∧ Zero latched in EX/MEM gate the
+    // next-PC mux; the target was pre-computed in EX and latched too).
+    n("n123", ["exMem", "q_p4"], ["branchAnd", "a"], { style: "dotted", waypoints: [w(785, -170), w(785, -295)] }),
+    n("n124", ["exMem", "q_aluResult"], ["branchAnd", "b"], { waypoints: [w(805, -130), w(805, -275)] }),
+    n("n125", ["exMem", "q_storeData"], ["dmem", "addr"], ["memWb", "d_p2"], {
+        waypoints: [w(775, -65)],
+        branches: [
+            { target: ["memWb", "d_p2"], junction: w(775.0929891729495, -65), waypoints: [w(775.0929891729495, 65), w(1005, 65)] },
+        ],
+    }),
+    n("n128", ["exMem", "q_rd"], ["dmem", "wd"], { waypoints: [w(755, -90), w(755, -10)] }),
+    n("n131", ["exMem", "q_p2"], ["dmem", "memRead"], { style: "dotted" }),
+    n("n134", ["exMem", "q_p3"], ["dmem", "memWrite"]),
+    n("n148", ["exMem", "q_p5"], ["u3", "in1"], { waypoints: [w(750, -150), w(750, -355)] }),
+    n("n149", ["branchAnd", "out"], ["u3", "sel"], { style: "dotted", waypoints: [w(930, -285), w(930, -330), w(865, -330)] }),
+    n("n147", ["u3", "out"], ["pc", "d"], {
+        waypoints: [w(880, -365), w(905, -365), w(905, -400), w(-1110, -400), w(-1110, 25), w(-1025, 25)],
+    }),
+
+    // EX/MEM → MEM/WB wall, then writeback: the result mux (u4) and the
+    // hybrid register file's write port, routed back along the bottom.
+    n("n129", ["dmem", "rdata"], ["memWb", "d_p1"], { waypoints: [w(950, -10), w(950, 45), w(1005, 45)] }),
+    n("n133", ["exMem", "q_p1"], ["memWb", "d_memToReg"], { style: "dotted", waypoints: [w(975, -230), w(975, 25)] }),
+    n("n135", ["exMem", "q_instr"], ["memWb", "d_regWrite"], { style: "dotted", waypoints: [w(995, -250), w(995, 5)] }),
+    n("n130", ["exMem", "q_p6"], ["memWb", "d_rd"], { waypoints: [w(740, -70), w(740, 85)] }),
+    n("n150", ["memWb", "q_memToReg"], ["u4", "sel"], { style: "dotted" }),
+    n("n151", ["memWb", "q_p1"], ["u4", "in0"]),
+    n("n152", ["memWb", "q_p2"], ["u4", "in1"]),
+    n("n153", ["u4", "out"], ["reg", "wd"], { waypoints: [w(1175, 55), w(1175, 295), w(-320, 295), w(-320, 100)] }),
+    n("n140", ["memWb", "q_rd"], ["reg", "rd"], { style: "solid", waypoints: [w(1110, 85), w(1110, 310), w(-335, 310), w(-335, 70)] }),
+    n("n137", ["memWb", "q_regWrite"], ["reg", "we"], { style: "dotted", waypoints: [w(1110, 5), w(1110, -425), w(-315, -425), w(-315, -65), w(-250, -65)] }),
+
 ];
