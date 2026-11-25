@@ -31,7 +31,7 @@ defineEmits<{
     </n-button>
 </template>
 
-<style>
+<style scoped lang="scss">
 .start-action-button {
     height: auto;
 }

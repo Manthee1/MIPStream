@@ -75,33 +75,38 @@ export default defineConfig({
 				entryFileNames: "assets/[name]-[hash].js",
 				chunkFileNames: "assets/[name]-[hash].js",
 				assetFileNames: "assets/[name]-[hash].[ext]",
-				manualChunks(id) {
-					if (id.includes("node_modules")) {
-						if (id.includes("@vue")) return "vendor_vue";
-						// CodeMirror 6 (+ its @lezer parser deps) is isolated so the
-						// editor dependency never inflates vendor_misc past the PWA
-						// precache size cap (workbox.maximumFileSizeToCacheInBytes).
-						if (id.includes("@codemirror") || id.includes("/codemirror/") || id.includes("@lezer")) return "vendor_codemirror";
-						if (id.includes("monaco-editor/esm/vs")) {
-							// if (id.includes('vs/base')) return 'vendor_monaco_base';
-							// if (id.includes('vs/common')) return 'vendor_monaco_common';
-							// if (id.includes('vs/platform')) return 'vendor_monaco_platform';
-							// if (id.includes('model')) return 'vendor_monaco_model';
-							// if (id.includes("vs/editor")) {
-								// if (id.includes("vs/editor/browser")) return "vendor_monaco-browser";
-								// if (id.includes("vs/editor/contrib")) return "vendor_monaco-contrib";
-								// return "vendor_monaco-editor";
-							// }
-							return "vendor_monaco";
+
+				codeSplitting: {
+					minSize: 100 * 1024, // Minimum size for a chunk to be created (in bytes)
+					groups: [
+
+						{
+							name: '@tabler',
+							priority: 25,
+							test: /@tabler/,
+							maxSize: 200 * 1024, // Limit the size of this chunk to 100 KB
+						},
+						{
+							name: 'naive-ui',
+							priority: 20,
+							test: /node_modules[\\/]naive-ui[\\/]es/,
+							maxSize: 400 * 1024, // Limit the size of this chunk to 100 KB
+						},
+						{
+							name: '@codemirror',
+							priority: 20,
+							test: /@codemirror/,
+						},
+						{
+							name: 'vendor',
+							test: /node_modules/,
+							priority: 10,
 						}
-						if (id.includes("monaco-themes")) return "vendor_monaco_themes";
-						if (id.includes("konva")) return "vendor_konva";
-						if (id.includes("naive-ui")) return "vendor_ui";
-						if (id.includes("@tabler")) return "vendor_icons";
-						
-						return "vendor_misc";
-					}
-				},
+
+					],
+
+				}
+
 			},
 		},
 	},
